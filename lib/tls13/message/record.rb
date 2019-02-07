@@ -46,15 +46,67 @@ module TLS13
       attr_accessor :content
       attr_accessor :cryptographer
 
-      def initialize(**settings)
-        # TODO
+      # @param type [Integer]
+      # @param legacy_record_version [Array of Integer]
+      # @param fragment [Array of Integer]
+      # @param content [Content]
+      # @param cryptographer [TLS13::Cryptograph::$Object]
+      #
+      # @raise [RuntimeError]
+      #
+      # @return [TLS13::Message::Record]
+      def initialize(type: ContentType::INVALID,
+                     legacy_record_version: ProtocolVersion::TLS_1_2,
+                     fragment: [],
+                     content: nil,
+                     cryptographer: nil)
+        @type = type
+        @legacy_record_version = legacy_record_version
+        @content = content
+        @cryptographer = cryptographer
+        @fragment = fragment
+        @fragment = @content.serialize if fragment.nil? &&
+                                          !@content.nil?
+        @length = 0
+        @length = @fragment.length unless @fragment.nil?
       end
 
       def serialize
-        # TODO
+        binary = []
+        binary << @type
+        binary += @legacy_record_version
+        binary += [@length / (1 << 8), @length % (1 << 8)]
+        binary += @fragment
+        binary
       end
 
-      def self.deserialize(data)
+      # @param binary [Array of Integer]
+      # @param cryptographer [TLS13::Cryptograph::$Object]
+      #
+      # @raise [RuntimeError]
+      #
+      # @return [TLS13::Message::Record]
+      def self.deserialize(binary, cryptographer)
+        raise 'Record Header is too short' if binary.nil? || binary.length < 5
+
+        type = binary[0]
+        legacy_record_version = [binary[1], binary[2]]
+        length = (binary[3] << 8) + binary[4]
+        fragment = binary[5..binary.size]
+        # TODO
+        # plaintext = cryptographer.decrypt(fragment)
+        # content = deserialize_content(plaintext, type)
+        content = nil
+        raise 'Record Header is invalid' unless length == fragment.length
+
+        Record.new(type: type,
+                   legacy_record_version: legacy_record_version,
+                   fragment: fragment,
+                   content: content,
+                   cryptographer: cryptographer)
+      end
+
+      def self.deserialize_content(binary, type)
         # TODO
       end
     end
