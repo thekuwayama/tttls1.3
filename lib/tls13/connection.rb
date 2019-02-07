@@ -3,6 +3,7 @@ module TLS13
     attr_reader :state
     attr_reader :security_parameters
     attr_reader :socket
+    attr_reader :handshake_hash
 
     def initialize(**settings)
       # TODO
