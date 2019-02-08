@@ -93,10 +93,8 @@ module TLS13
         legacy_record_version = [binary[1], binary[2]]
         length = (binary[3] << 8) + binary[4]
         fragment = binary[5..binary.size]
-        # TODO
-        # plaintext = cryptographer.decrypt(fragment)
-        # content = deserialize_content(plaintext, type)
-        content = nil
+        plaintext = cryptographer.decrypt(fragment)
+        content = deserialize_content(plaintext, type)
         raise 'Record Header is invalid' unless length == fragment.length
 
         Record.new(type: type,
@@ -106,8 +104,27 @@ module TLS13
                    cryptographer: cryptographer)
       end
 
+      # @param binary [Array of Integer]
+      # @param type [Integer]
+      #
+      # @return [TLS13::Message::$Object, nil]
       def self.deserialize_content(binary, type)
-        # TODO
+        return nil if binary.nil? || binary.empty?
+
+        content = nil
+        if type == ContentType::HANDSHAKE
+          msg_type = binary[0]
+          if msg_type == HandshakeType::CLIENT_HELLO
+            ClientHello.deserialize(binary)
+          else
+            # TODO
+            content = nil
+          end
+        else
+          # TODO
+          content = nil
+        end
+        content
       end
     end
   end
