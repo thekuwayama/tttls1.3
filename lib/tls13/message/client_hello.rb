@@ -1,8 +1,8 @@
+require 'openssl'
+
 module TLS13
   module Message
     class ClientHello
-      attr_accessor :msg_type
-      attr_accessor :length
       attr_accessor :legacy_version
       attr_accessor :random
       attr_accessor :legacy_session_id
@@ -17,7 +17,18 @@ module TLS13
       # @param legacy_compression_methods [Integer]
       # @param extensions [Array of TLS13::Message::Extension]
       def initialize(**settings)
-        # TODO
+        default_settings = {
+          legacy_version: ProtocolVersion::TLS_1_2,
+          legacy_compression_methods: 0
+        }
+        settings = default_settings.merge(settings)
+        @legacy_version = settings[:legacy_version]
+        @randome = settings[:randome] \
+                   || OpenSSL::Random.random_bytes(32).unpack('C*')
+        @legacy_session_id = settings[:legacy_session_id] || Array.new(32, 0)
+        @cipher_suites = settings[:cipher_suites]
+        @legacy_compression_methods = settings[:legacy_compression_methods]
+        @extensions = settings[:extensions]
       end
 
       def serialize
