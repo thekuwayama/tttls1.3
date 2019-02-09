@@ -45,7 +45,34 @@ module TLS13
 
       # @param binary [Array of Integer]
       def self.deserialize(binary)
+        check = binary[0] == HandshakeType::CLIENT_HELLO
+        raise 'HandshakeType is not ClientHello' unless check
+
         # TODO
+        # length = (binary[1] << 16) + (binary[2] << 8) + binary[3]
+        legacy_version = [binary[4], binary[5]]
+        random = binary.slice(6, 32)
+        l = binary[38]
+        legacy_session_id = binary.slice(39, l)
+        itr = 39 + l
+        l = (binary[itr] << 8) + binary[itr + 1]
+        # TODO
+        # serialized_cipher_suites = binary.slice(itr + 2, l)
+        # cipher_suites = deserialize_cipher_suites(serialized_cipher_suites)
+        itr += l + 2
+        l = binary[itr]
+        legacy_compression_methods = binary.slice(itr + 1, l)
+        # TODO
+        # itr += l + 1
+        # l = (binary[itr] << 8) + binary[itr + 1]
+        # serialized_extensions = binary.slice(itr + 2, l)
+        # extensions = deserialize_extensions(serialized_extensions)
+        ClientHello.new(legacy_version: legacy_version,
+                        random: random,
+                        legacy_session_id: legacy_session_id,
+                        # cipher_suites: cipher_suites,
+                        legacy_compression_methods: legacy_compression_methods)
+        # extensions: extensions)
       end
     end
   end
