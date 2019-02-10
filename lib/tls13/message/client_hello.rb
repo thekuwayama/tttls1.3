@@ -15,7 +15,7 @@ module TLS13
       # @param legacy_version [Array of Integer]
       # @param random [Array of Integer]
       # @param legacy_session_id [Array of Integer]
-      # @param cipher_suites [TLS13::Message::CipherSuite]
+      # @param cipher_suites [Array of TLS13::Message::CipherSuites]
       # @param extensions [Array of TLS13::Message::Extension]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32).unpack('C*'),
@@ -36,7 +36,7 @@ module TLS13
         # TODO
         # + @cipher_suites.serialize.length \
         # TODO
-        # @extensions.map(&:serialize).flatten.length
+        # + @extensions.map(&:serialize).flatten.length
       end
 
       def serialize
