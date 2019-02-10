@@ -40,7 +40,26 @@ module TLS13
       end
 
       def serialize
+        binary = []
+        binary << @msg_type
+        binary += [@length / (1 << 16), @length / (1 << 8), @length % (1 << 8)]
+        binary += @legacy_version
+        binary += @random
+        binary << @legacy_session_id.length
+        binary += @legacy_session_id
         # TODO
+        # serialized_cipher_suites = @cipher_suites.serialize
+        # l = serialized_cipher_suites.length
+        # binary += [l / (1 << 8), l % (1 << 8)]
+        # binary += serialized_cipher_suites
+        binary << 1 # compression methods length
+        binary << @legacy_compression_methods
+        # TODO
+        # serialized_extensions = @extensions.map(&:serialize).flatten
+        # l = serialized_extensions.length
+        # binary += [l / (1 << 8), l % (1 << 8)]
+        # binary += serialized_extensions
+        binary
       end
 
       # @param binary [Array of Integer]
