@@ -16,7 +16,34 @@ RSpec.describe CipherSuites do
     end
   end
 
-  context 'deserialize' do
-    # TODO
+  context 'valid cipher suites binary' do
+    let(:cs) do
+      CipherSuites.deserialize(TESTBINARY_CIPHER_SUITES)
+    end
+
+    it 'should generate valid cipher suites' do
+      expect(cs.length).to eq 6
+      expect(cs.cipher_suites).to eq DEFALT_CIPHER_SUITES
+    end
+  end
+
+  context 'invalid cipher suites binary, too short' do
+    let(:cs) do
+      CipherSuites.deserialize(TESTBINARY_CIPHER_SUITES[0...-1])
+    end
+
+    it 'should not generate cipher suites' do
+      expect { cs }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'invalid cipher suites binary, binary is nil' do
+    let(:cs) do
+      CipherSuites.deserialize(nil)
+    end
+
+    it 'should not generate cipher suites' do
+      expect { cs }.to raise_error(RuntimeError)
+    end
   end
 end

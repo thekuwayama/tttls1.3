@@ -29,8 +29,15 @@ module TLS13
         binary
       end
 
+      # @param binary [Array of Integer]
       def self.deserialize(binary)
-        # TODO
+        raise 'CipherSuites: too short' if binary.nil? || binary.length < 2
+
+        length = (binary[0] << 8) + binary[1]
+        raise 'CipherSuites: invalid format' unless binary.length == length + 2
+
+        cipher_suites = binary[2..-1].each_slice(2).to_a
+        CipherSuites.new(cipher_suites: cipher_suites)
       end
     end
   end
