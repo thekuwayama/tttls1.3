@@ -92,7 +92,7 @@ module TLS13
         type = binary[0]
         legacy_record_version = [binary[1], binary[2]]
         length = (binary[3] << 8) + binary[4]
-        fragment = binary[5..binary.size]
+        fragment = binary[5..-1]
         plaintext = cryptographer.decrypt(fragment)
         content = deserialize_content(plaintext, type)
         raise 'Record Header is invalid' unless length == fragment.length

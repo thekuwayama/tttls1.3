@@ -22,7 +22,7 @@ RSpec.describe Record do
 
   context 'valid record header binary' do
     let(:record) do
-      Record.deserialize(RECORD_HEADER, Passer.new)
+      Record.deserialize(TESTBINARY_RECORD_HEADER, Passer.new)
     end
 
     it 'should generate valid record' do
@@ -34,7 +34,7 @@ RSpec.describe Record do
 
   context 'invalid record header binary, too short' do
     let(:record) do
-      Record.deserialize(RECORD_HEADER[0...RECORD_HEADER.length - 1],
+      Record.deserialize(TESTBINARY_RECORD_HEADER[0...-1],
                          Passer.new)
     end
 
