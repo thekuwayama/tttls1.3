@@ -15,12 +15,12 @@ module TLS13
       # @param legacy_version [Array of Integer]
       # @param random [Array of Integer]
       # @param legacy_session_id [Array of Integer]
-      # @param cipher_suites [Array of TLS13::Message::CipherSuites]
+      # @param cipher_suites [TLS13::Message::CipherSuites]
       # @param extensions [Array of TLS13::Message::Extension]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32).unpack('C*'),
                      legacy_session_id: Array.new(32, 0),
-                     cipher_suites: [],
+                     cipher_suites: DEFALT_CIPHER_SUITES,
                      extensions: [])
         @msg_type = HandshakeType::CLIENT_HELLO
         @legacy_version = legacy_version
@@ -31,10 +31,8 @@ module TLS13
         @extensions = extensions
         @length = @legacy_version.length \
                   + @random.length \
-                  + @legacy_session_id.length \
-                  + 2
-        # TODO
-        # + @cipher_suites.serialize.length \
+                  + 2 + @legacy_session_id.length \
+                  + 2 + @cipher_suites.serialize.length \
         # TODO
         # + @extensions.map(&:serialize).flatten.length
       end
@@ -47,11 +45,7 @@ module TLS13
         binary += @random
         binary << @legacy_session_id.length
         binary += @legacy_session_id
-        # TODO
-        # serialized_cipher_suites = @cipher_suites.serialize
-        # l = serialized_cipher_suites.length
-        # binary += [l / (1 << 8), l % (1 << 8)]
-        # binary += serialized_cipher_suites
+        binary += @cipher_suites.serialize
         binary << 1 # compression methods length
         binary << @legacy_compression_methods
         # TODO
@@ -75,9 +69,8 @@ module TLS13
         legacy_session_id = binary.slice(39, l)
         itr = 39 + l
         l = (binary[itr] << 8) + binary[itr + 1]
-        # TODO
-        # serialized_cipher_suites = binary.slice(itr + 2, l)
-        # cipher_suites = deserialize_cipher_suites(serialized_cipher_suites)
+        serialized_cipher_suites = binary.slice(itr, l + 2)
+        cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
         itr += l + 2
         l = binary[itr]
         legacy_compression_methods = binary.slice(itr + 1, l)
@@ -89,7 +82,7 @@ module TLS13
         ClientHello.new(legacy_version: legacy_version,
                         random: random,
                         legacy_session_id: legacy_session_id,
-                        # cipher_suites: cipher_suites,
+                        cipher_suites: cipher_suites,
                         legacy_compression_methods: legacy_compression_methods)
         # extensions: extensions)
       end
