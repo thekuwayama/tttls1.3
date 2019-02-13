@@ -1,3 +1,5 @@
+Dir[File.dirname(__FILE__) + '/extension/*.rb'].each { |f| require f }
+
 module TLS13
   module Message
     module ExtensionType
