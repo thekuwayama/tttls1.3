@@ -90,9 +90,7 @@ module TLS13
 
         # TODO
         if extension_type == ExtensionType::SERVER_NAME
-          # TODO
-          # return Extension::ServerName.deserialize(binary)
-          return nil
+          return Extension::ServerName.deserialize(binary)
         end
 
         Extension::UknownExtension.deserialize(binary, extension_type)
