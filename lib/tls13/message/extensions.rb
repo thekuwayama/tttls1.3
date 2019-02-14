@@ -29,23 +29,75 @@ module TLS13
 
     class Extensions
       attr_accessor :length
-      attr_accessor :extensions # Hash
+      attr_accessor :extensions
 
-      def initialize(**settings)
-        # TODO
+      # @param length [Integer]
+      # @param extensions [Hash]
+      #
+      # @return [TLS13::Message::Extensions]
+      def initialize(length: 0, extensions: {})
+        @length = length
+        @extensions = extensions
       end
 
+      # @return [Array of Integer]
       def serialize
-        # TODO
+        binary = []
+        binary += @length
+        @extensions.each_value do |ex|
+          binary += ex.serialize
+        end
       end
 
+      # @param binary [Array of Integer]
+      #
+      # @raise [RuntimeError]
+      #
+      # @return [TLS13::Message::Extensions]
       def self.deserialize(binary)
-        # TODO
+        raise 'Extensions: too short' if binary.nil? || binary.length < 2
+
+        length = binary[0] << 8 + binary[1]
+        itr = 2
+        extensions = {}
+        while itr < length + 2
+          extension_type = [binary[itr], binary[itr + 1]]
+          itr += 2
+          l = [binary[itr], binary[itr + 1]]
+          itr += 2
+          extensions = binary.slice(itr, l)
+          extensions[extension_type] \
+          = deserialize_extension(extensions, extension_type)
+          itr += l
+        end
+        Extensions.new(length: length, extensions: extensions)
       end
 
+      # @param extension_type [Array of Integer]
+      #
+      # @return [TLS13::Message::Extension::$Object, nil]
       def [](extension_type)
+        key = extension_type[0] << 8 + extension_type[1]
+        @extensions[key]
+      end
+
+      # @param binary [Array of Integer]
+      # @param extension_type [Array of Integer]
+      #
+      # @return [TLS13::Message::Extension::$Object]
+      def self.deserialize_extension(binary, extension_type)
+        return nil if binary.nil? || binary.empty?
+
         # TODO
-        # @extensions[extension_type]
+        if extension_type == ExtensionType::SERVER_NAME
+          # TODO
+          # return Extension::ServerName.deserialize(binary)
+          return nil
+        end
+
+        # TODO
+        # Extension::UnknownExtension.deserialize(binary)
+        nil
       end
     end
   end
