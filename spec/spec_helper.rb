@@ -4,6 +4,7 @@ RSpec.configure(&:disable_monkey_patching!)
 require 'tls13'
 include TLS13
 include TLS13::Message
+include TLS13::Message::Extension
 include TLS13::Cryptograph
 # rubocop: enable Style/MixinUsage
 

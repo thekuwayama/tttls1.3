@@ -95,9 +95,7 @@ module TLS13
           return nil
         end
 
-        # TODO
-        # Extension::UnknownExtension.deserialize(binary)
-        nil
+        Extension::UknownExtension.deserialize(binary, extension_type)
       end
     end
   end
