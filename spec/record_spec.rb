@@ -15,7 +15,7 @@ RSpec.describe Record do
       expect(record.length).to eq 0
     end
 
-    it 'should serialize binary' do
+    it 'should serialize' do
       expect(record.serialize).to eq [0x16, 0x03, 0x03, 0x00, 0x00]
     end
   end

@@ -10,6 +10,7 @@ RSpec.describe ServerName do
 
     it 'should generate valid server_name' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
+      expect(extension.length).to eq 16
       expect(extension.server_name.keys).to include NameType::HOST_NAME
       expect(extension.server_name[NameType::HOST_NAME]).to eq 'example.com'
     end
@@ -34,6 +35,7 @@ RSpec.describe ServerName do
 
     it 'should generate valid server_name' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
+      expect(extension.length).to eq 15
       expect(extension.server_name.keys).to include NameType::HOST_NAME
       expect(extension.server_name[NameType::HOST_NAME]).to eq 'github.com'
     end

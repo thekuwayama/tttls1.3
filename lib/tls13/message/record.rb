@@ -75,7 +75,7 @@ module TLS13
         binary = []
         binary << @type
         binary += @legacy_record_version
-        binary += [@length / (1 << 8), @length % (1 << 8)]
+        binary += i2uint16(@length)
         binary += @fragment
         binary
       end
@@ -87,15 +87,15 @@ module TLS13
       #
       # @return [TLS13::Message::Record]
       def self.deserialize(binary, cryptographer)
-        raise 'Record Header is too short' if binary.nil? || binary.length < 5
+        raise 'too short binary' if binary.nil? || binary.length < 5
 
         type = binary[0]
         legacy_record_version = [binary[1], binary[2]]
-        length = (binary[3] << 8) + binary[4]
+        length = arr2i([binary[3], binary[4]])
         fragment = binary[5..-1]
         plaintext = cryptographer.decrypt(fragment)
         content = deserialize_content(plaintext, type)
-        raise 'Record Header is invalid' unless length == fragment.length
+        raise 'malformed binary' unless length == fragment.length
 
         Record.new(type: type,
                    legacy_record_version: legacy_record_version,

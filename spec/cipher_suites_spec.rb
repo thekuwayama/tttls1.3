@@ -11,7 +11,7 @@ RSpec.describe CipherSuites do
       expect(cs.cipher_suites).to eq DEFALT_CIPHER_SUITES
     end
 
-    it 'should serialize binary' do
+    it 'should serialize' do
       expect(cs.serialize).to eq [0x00, 0x06] + DEFALT_CIPHER_SUITES
     end
   end

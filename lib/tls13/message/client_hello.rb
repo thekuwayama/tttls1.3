@@ -40,7 +40,7 @@ module TLS13
       def serialize
         binary = []
         binary << @msg_type
-        binary += [@length / (1 << 16), @length / (1 << 8), @length % (1 << 8)]
+        binary += i2uint24(@length)
         binary += @legacy_version
         binary += @random
         binary << @legacy_session_id.length
@@ -51,7 +51,7 @@ module TLS13
         # TODO
         # serialized_extensions = @extensions.map(&:serialize).flatten
         # l = serialized_extensions.length
-        # binary += [l / (1 << 8), l % (1 << 8)]
+        # binary += i2uint16(l)
         # binary += serialized_extensions
         binary
       end
@@ -59,21 +59,23 @@ module TLS13
       # @param binary [Array of Integer]
       def self.deserialize(binary)
         check = binary[0] == HandshakeType::CLIENT_HELLO
-        raise 'HandshakeType is not ClientHello' unless check
+        raise 'msg_type is invalid' unless check
 
         # TODO
-        # length = (binary[1] << 16) + (binary[2] << 8) + binary[3]
+        # length = arr2i([binary[1], binary[2], binary[3]])
         legacy_version = [binary[4], binary[5]]
         random = binary.slice(6, 32)
         l = binary[38]
         legacy_session_id = binary.slice(39, l)
         itr = 39 + l
-        l = (binary[itr] << 8) + binary[itr + 1]
-        serialized_cipher_suites = binary.slice(itr, l + 2)
+        l = arr2i([binary[itr], binary[itr + 1]])
+        itr += 2
+        serialized_cipher_suites = binary.slice(itr, l)
         cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
-        itr += l + 2
+        itr += l
         l = binary[itr]
-        legacy_compression_methods = binary.slice(itr + 1, l)
+        itr += 1
+        legacy_compression_methods = binary.slice(itr, l)
         # TODO
         # itr += l + 1
         # l = (binary[itr] << 8) + binary[itr + 1]

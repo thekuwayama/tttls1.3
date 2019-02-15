@@ -33,9 +33,8 @@ module TLS13
           @server_name = server_name
           @length = 0
           @server_name.each do |name_type, value|
-            if name_type == NameType::HOST_NAME
-              @length += (2 + 1 + 2)
-              @length += value.length
+            if name_type == NameType::HOST_NAME # rubocop:disable all
+              @length += 5 + value.length
             end
           end
         end
@@ -44,7 +43,7 @@ module TLS13
         def serialize
           binary = []
           binary += @extension_type
-          binary += [@length / (1 << 8), @length % (1 << 8)]
+          binary += i2uint16(@length)
           @server_name.each do |name_type, value|
             binary << name_type
             if name_type == NameType::HOST_NAME # rubocop:disable all
@@ -60,10 +59,10 @@ module TLS13
         #
         # @return [TLS13::Message::Extensions]
         def self.deserialize(binary)
-          raise 'invalid binary' if binary.nil? || binary.length < 2
+          raise 'too short binary' if binary.nil? || binary.length < 2
 
-          snlist_len = (binary[0] << 8) + binary[1]
-          raise 'invalid binary' unless snlist_len + 2 == binary.length
+          snlist_len = arr2i([binary[0], binary[1]])
+          raise 'malformed binary' unless snlist_len + 2 == binary.length
 
           server_name = {}
           itr = 2
@@ -71,7 +70,7 @@ module TLS13
             name_type = binary[itr]
             itr += 1
             if name_type == NameType::HOST_NAME
-              l = (binary[itr] << 8) + binary[itr + 1]
+              l = arr2i([binary[itr], binary[itr + 1]])
               itr += 2
               host_name = binary.slice(itr, l).map(&:chr).join
               itr += l

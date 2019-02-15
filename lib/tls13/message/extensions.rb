@@ -55,9 +55,9 @@ module TLS13
       #
       # @return [TLS13::Message::Extensions]
       def self.deserialize(binary)
-        raise 'Extensions: too short' if binary.nil? || binary.length < 2
+        raise 'too short binary' if binary.nil? || binary.length < 2
 
-        length = binary[0] << 8 + binary[1]
+        length = arr2i([binary[0], binary[1]])
         itr = 2
         extensions = {}
         while itr < length + 2
@@ -77,7 +77,7 @@ module TLS13
       #
       # @return [TLS13::Message::Extension::$Object, nil]
       def [](extension_type)
-        key = extension_type[0] << 8 + extension_type[1]
+        key = arr2i([extension_type[0], extension_type[1]])
         @extensions[key]
       end
 

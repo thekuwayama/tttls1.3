@@ -24,17 +24,17 @@ module TLS13
 
       def serialize
         binary = []
-        binary += [@length / (1 << 8), @length % (1 << 8)]
+        binary += i2uint16(@length)
         binary += @cipher_suites
         binary
       end
 
       # @param binary [Array of Integer]
       def self.deserialize(binary)
-        raise 'CipherSuites: too short' if binary.nil? || binary.length < 2
+        raise 'too short binary' if binary.nil? || binary.length < 2
 
-        length = (binary[0] << 8) + binary[1]
-        raise 'CipherSuites: invalid format' unless binary.length == length + 2
+        length = arr2i([binary[0], binary[1]])
+        raise 'malformed binary' unless binary.length == length + 2
 
         cipher_suites = binary[2..-1].each_slice(2).to_a
         CipherSuites.new(cipher_suites: cipher_suites)
