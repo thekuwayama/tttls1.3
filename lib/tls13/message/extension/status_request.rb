@@ -69,7 +69,7 @@ module TLS13
 
         # @param binary [Array of Integer]
         #
-        # @return [TLS13::Message::StatusRequest]
+        # @return [TLS13::Message::Extension::StatusRequest]
         def self.deserialize(binary)
           return StatusRequest.new(request: nil) if binary.nil? || binary.empty?
 

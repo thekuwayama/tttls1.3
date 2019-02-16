@@ -14,9 +14,9 @@ module TLS13
         # @return [TLS13::Message::Extension::UknownExtension]
         def initialize(extension_type: nil,
                        extension_data: nil)
-          raise 'extension_typ is required argument' if extension_type.nil?
+          raise 'extension_type is required argument' if extension_type.nil?
 
-          raise 'defined extension_typ' if
+          raise 'defined extension_type' if
             ExtensionType.constants.include?(extension_type)
 
           @extension_type = extension_type
@@ -37,7 +37,7 @@ module TLS13
         # @param binary [Array of Integer]
         # @param extension_type [Array of Integer]
         #
-        # @return [TLS13::Message::UknownExtension]
+        # @return [TLS13::Message::Extension::UknownExtension]
         def self.deserialize(binary, extension_type)
           UknownExtension.new(extension_type: extension_type,
                               extension_data: binary)

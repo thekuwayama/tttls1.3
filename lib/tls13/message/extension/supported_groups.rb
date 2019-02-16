@@ -42,9 +42,9 @@ module TLS13
           binary
         end
 
-        # @param extension_type [Array of Integer]
+        # @param binary [Array of Integer]
         #
-        # @return [TLS13::Message::UknownExtension]
+        # @return [TLS13::Message::Extension::SupportedGroups]
         def self.deserialize(binary)
           raise 'too short binary' if binary.nil? || binary.length < 2
 

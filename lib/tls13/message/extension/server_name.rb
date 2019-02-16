@@ -57,7 +57,7 @@ module TLS13
         #
         # @raise [RuntimeError]
         #
-        # @return [TLS13::Message::Extensions]
+        # @return [TLS13::Message::Extension::ServerName]
         def self.deserialize(binary)
           raise 'too short binary' if binary.nil? || binary.length < 2
 
