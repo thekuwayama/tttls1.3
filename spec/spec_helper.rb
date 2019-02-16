@@ -14,5 +14,8 @@ TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).freeze
   00 0d 00 00 0a 67 69 74    68 75 62 2e 63 6f 6d
 BIN
 TESTBINARY_STATUS_REQUEST = '01 00 00 00 00'.split.map(&:hex).freeze
+TESTBINARY_SUPPORTED_GROUPS = <<BIN.split.map(&:hex).freeze
+  00 08 00 17 00 18 00 19    00 1d
+BIN
 
 # https://tools.ietf.org/html/rfc8448#page-3
