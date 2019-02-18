@@ -6,9 +6,7 @@ module TLS13
         attr_accessor :length
         attr_accessor :versions
 
-        # @param versions [Array of Array of Integer]
-        #
-        # @return [TLS13::Message::Extension::SupportedVersions]
+        # @param versions [Array of ProtocolVersion]
         def initialize(versions: [ProtocolVersion::TLS_1_3])
           @extension_type = ExtensionType::SUPPORTED_VERSIONS
           @versions = versions || []
@@ -25,6 +23,8 @@ module TLS13
         end
 
         # @param binary [Array of Integer]
+        #
+        # @raise [RuntimeError]
         #
         # @return [TLS13::Message::Extensions::SupportedVersions]
         def self.deserialize(binary)

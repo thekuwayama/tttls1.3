@@ -46,15 +46,13 @@ module TLS13
       attr_accessor :content
       attr_accessor :cryptographer
 
-      # @param type [Integer]
-      # @param legacy_record_version [Array of Integer]
+      # @param type [TLS13::Message::ContentType]
+      # @param legacy_record_version [TLS13::Message::ProtocolVersion]
       # @param fragment [Array of Integer]
-      # @param content [Content]
+      # @param content [TLS13::Message::$Object]
       # @param cryptographer [TLS13::Cryptograph::$Object]
       #
       # @raise [RuntimeError]
-      #
-      # @return [TLS13::Message::Record]
       def initialize(type: ContentType::INVALID,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
                      fragment: [],
@@ -71,6 +69,7 @@ module TLS13
         @length = @fragment.length unless @fragment.nil?
       end
 
+      # @return [Array of Integer]
       def serialize
         binary = []
         binary << @type

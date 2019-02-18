@@ -19,8 +19,6 @@ module TLS13
         #
         # @raise [RuntimeError]
         #
-        # @return [TLS13::Message::Extension::StatusRequest]
-        #
         # @example
         #   StatusRequest.new(
         #     request: { CertificateStatusType::OCSP => [

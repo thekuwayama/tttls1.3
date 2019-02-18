@@ -21,9 +21,7 @@ module TLS13
         attr_accessor :length
         attr_accessor :named_group_list
 
-        # @param named_group_list [Array of Array of Integer]
-        #
-        # @return [TLS13::Message::Extension::SupportedGroups]
+        # @param named_group_list [Array of NamedGroup]
         def initialize(named_group_list: [NamedGroup::SECP256R1,
                                           NamedGroup::SECP384R1,
                                           NamedGroup::SECP521R1,
@@ -43,6 +41,8 @@ module TLS13
         end
 
         # @param binary [Array of Integer]
+        #
+        # @raise [RuntimeError]
         #
         # @return [TLS13::Message::Extension::SupportedGroups]
         def self.deserialize(binary)

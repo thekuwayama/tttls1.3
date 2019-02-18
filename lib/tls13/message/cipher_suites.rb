@@ -16,12 +16,14 @@ module TLS13
       attr_accessor :length
       attr_accessor :cipher_suites
 
+      # @param cipher_suites [Array of CipherSuite]
       def initialize(cipher_suites: DEFALT_CIPHER_SUITES)
         @cipher_suites = cipher_suites
         @length = 0
         @length = @cipher_suites.length * 2 unless @cipher_suites.nil?
       end
 
+      # @return [Array of Integer]
       def serialize
         binary = []
         binary += i2uint16(@length)
@@ -30,6 +32,10 @@ module TLS13
       end
 
       # @param binary [Array of Integer]
+      #
+      # @raise [RuntimeError]
+      #
+      # @return [TLS13::Message::CipherSuites]
       def self.deserialize(binary)
         raise 'too short binary' if binary.nil? || binary.length < 2
 

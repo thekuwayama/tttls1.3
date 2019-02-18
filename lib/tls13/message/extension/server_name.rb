@@ -19,8 +19,6 @@ module TLS13
         #
         # @raise [RuntimeError]
         #
-        # @return [TLS13::Message::Extension::ServerName]
-        #
         # @example
         #   ServerName.new(
         #     server_name: { NameType::HOST_NAME => 'example.com' }

@@ -33,7 +33,12 @@ module TLS13
 
       # @param extensions [Hash]
       #
-      # @return [TLS13::Message::Extensions]
+      # @example
+      #   Extensions.new(
+      #     extensions: {
+      #       ExtensionType::SUPPORTED_VERSIONS => SupportedVersions.new
+      #     }
+      #   )
       def initialize(extensions: {})
         @length = 0
         @extensions = extensions
@@ -77,7 +82,7 @@ module TLS13
         Extensions.new(extensions: extensions)
       end
 
-      # @param extension_type [Array of Integer]
+      # @param extension_type [TLS13::Message::ExtensionType]
       #
       # @return [TLS13::Message::Extension::$Object, nil]
       def [](extension_type)

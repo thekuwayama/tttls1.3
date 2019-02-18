@@ -16,7 +16,7 @@ module TLS13
       # @param random [Array of Integer]
       # @param legacy_session_id [Array of Integer]
       # @param cipher_suites [TLS13::Message::CipherSuites]
-      # @param extensions [Array of TLS13::Message::Extension]
+      # @param extensions [Array of Extension]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32).unpack('C*'),
                      legacy_session_id: Array.new(32, 0),
@@ -37,6 +37,7 @@ module TLS13
                                    .sum
       end
 
+      # @return [Array of Integer]
       def serialize
         binary = []
         binary << @msg_type
@@ -57,6 +58,11 @@ module TLS13
       end
 
       # @param binary [Array of Integer]
+      #
+      # @raise [RuntimeError]
+      #
+      # @return [TLS13::Message::ClientHello]
+      # rubocop: disable Metrics/AbcSize, Metrics/MethodLength
       def self.deserialize(binary)
         check = binary[0] == HandshakeType::CLIENT_HELLO
         raise 'msg_type is invalid' unless check
@@ -86,6 +92,7 @@ module TLS13
                         cipher_suites: cipher_suites,
                         extensions: extensions)
       end
+      # rubocop: enable Metrics/AbcSize, Metrics/MethodLength
     end
   end
 end

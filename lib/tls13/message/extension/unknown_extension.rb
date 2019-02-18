@@ -10,8 +10,6 @@ module TLS13
         # @param extension_data [Array of Integer]
         #
         # @raise [RuntimeError]
-        #
-        # @return [TLS13::Message::Extension::UknownExtension]
         def initialize(extension_type: nil,
                        extension_data: nil)
           raise 'extension_type is required argument' if extension_type.nil?

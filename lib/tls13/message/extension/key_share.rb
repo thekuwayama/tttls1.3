@@ -11,8 +11,6 @@ module TLS13
         # @param key_share_entry [Array of KeyShareEntry]
         #
         # @raise [RuntimeError]
-        #
-        # @return [TLS13::Message::Extension::KeyShare]
         def initialize(msg_type: ContentType::INVALID,
                        key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
@@ -63,13 +61,12 @@ module TLS13
                        key_share_entry: key_share_entry)
         end
 
-        # @param binary [Array of Integer]
-        #
-        # @return [Array of KeyShareEntry]
-        #
         # struct {
         #     KeyShareEntry client_shares<0..2^16-1>;
         # } KeyShareClientHello;
+        # @param binary [Array of Integer]
+        #
+        # @return [Array of KeyShareEntry]
         def self.deserialize_keysharech(binary)
           key_share_entry = []
           itr = 0
@@ -86,14 +83,13 @@ module TLS13
           key_share_entry
         end
 
-        # @param binary [Array of Integer]
-        #
-        # @return [Array of KeyShareEntry]
-        #
         # struct {
         #     KeyShareEntry server_share;
         # } KeyShareServerHello;
-        def self.deserialize_keysharesh(**)
+        # @param binary [Array of Integer]
+        #
+        # @return [Array of KeyShareEntry]
+        def self.deserialize_keysharesh(binary)
           itr = 0
           group = [binary[itr] + binary[itr + 1]]
           itr += 2
@@ -103,14 +99,14 @@ module TLS13
           [KeyShareEntry.new(group: group, key_exchange: key_exchange)]
         end
 
-        # @param binary [Array of Integer]
-        #
-        # @return [Array of KeyShareEntry]
-        #
         # struct {
         #     NamedGroup selected_group;
         # } KeyShareHelloRetryRequest;
-        def self.deserialize_keysharehrr(**)
+        #
+        # @param binary [Array of Integer]
+        #
+        # @return [Array of KeyShareEntry]
+        def self.deserialize_keysharehrr(binary)
           group = [binary[0] + binary[1]]
           [KeyShareEntry.new(group: group)]
         end
@@ -122,8 +118,6 @@ module TLS13
 
         # @param group [TLS13::Message::Extension::NamedGroup]
         # @param key_exchange [Array of Integer]
-        #
-        # @return [TLS13::Message::Extension::KeyShareEntry]
         def initialize(group: [], key_exchange: [])
           @group = group
           @key_exchange = key_exchange
