@@ -16,9 +16,6 @@ module TLS13
                        extension_data: nil)
           raise 'extension_type is required argument' if extension_type.nil?
 
-          raise 'defined extension_type' if
-            ExtensionType.constants.include?(extension_type)
-
           @extension_type = extension_type
           @extension_data = extension_data
           @length = 0
