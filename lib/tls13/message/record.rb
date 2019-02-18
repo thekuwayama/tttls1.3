@@ -92,11 +92,9 @@ module TLS13
         type = binary[0]
         legacy_record_version = [binary[1], binary[2]]
         length = arr2i([binary[3], binary[4]])
-        fragment = binary[5..-1]
+        fragment = binary.slice(5, length)
         plaintext = cryptographer.decrypt(fragment)
         content = deserialize_content(plaintext, type)
-        raise 'malformed binary' unless length == fragment.length
-
         Record.new(type: type,
                    legacy_record_version: legacy_record_version,
                    fragment: fragment,

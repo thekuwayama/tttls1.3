@@ -36,7 +36,7 @@ module TLS13
         length = arr2i([binary[0], binary[1]])
         raise 'malformed binary' unless binary.length == length + 2
 
-        cipher_suites = binary[2..-1].each_slice(2).to_a
+        cipher_suites = binary.slice(2, length).each_slice(2).to_a
         CipherSuites.new(cipher_suites: cipher_suites)
       end
     end
