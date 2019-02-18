@@ -33,8 +33,8 @@ module TLS13
                   + @random.length \
                   + 2 + @legacy_session_id.length \
                   + 2 + @cipher_suites.serialize.length \
-        # TODO
-        # + @extensions.map(&:serialize).flatten.length
+                  + 2 + @extensions.extensions.map { |x| x.length + 4 }
+                                   .sum
       end
 
       def serialize
@@ -50,8 +50,8 @@ module TLS13
         binary << @legacy_compression_methods
         # TODO
         # serialized_extensions = @extensions.map(&:serialize).flatten
-        # l = serialized_extensions.length
-        # binary += i2uint16(l)
+        # exs_len = serialized_extensions.length
+        # binary += i2uint16(exs_len)
         # binary += serialized_extensions
         binary
       end
@@ -61,32 +61,29 @@ module TLS13
         check = binary[0] == HandshakeType::CLIENT_HELLO
         raise 'msg_type is invalid' unless check
 
-        # TODO
+        # TODO: check length
         # length = arr2i([binary[1], binary[2], binary[3]])
         legacy_version = [binary[4], binary[5]]
         random = binary.slice(6, 32)
-        l = binary[38]
-        legacy_session_id = binary.slice(39, l)
-        itr = 39 + l
-        l = arr2i([binary[itr], binary[itr + 1]])
-        itr += 2
-        serialized_cipher_suites = binary.slice(itr, l)
+        lsid_len = binary[38]
+        legacy_session_id = binary.slice(39, lsid_len)
+        itr = 39 + lsid_len
+        cs_len = arr2i([binary[itr], binary[itr + 1]])
+        serialized_cipher_suites = binary.slice(itr, cs_len + 2)
         cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
-        itr += l
-        l = binary[itr]
-        itr += 1
-        legacy_compression_methods = binary.slice(itr, l)
-        # TODO
-        # itr += l + 1
-        # l = (binary[itr] << 8) + binary[itr + 1]
-        # serialized_extensions = binary.slice(itr + 2, l)
-        # extensions = deserialize_extensions(serialized_extensions)
+        itr += cs_len + 2
+        raise 'legacy_compression_methods is not 0' unless \
+          binary[itr] == 1 && binary[itr + 1].zero?
+
+        itr += 2
+        exs_len = arr2i([binary[itr], binary[itr + 1]])
+        serialized_extensions = binary.slice(itr, exs_len + 2)
+        extensions = Extensions.deserialize(serialized_extensions)
         ClientHello.new(legacy_version: legacy_version,
                         random: random,
                         legacy_session_id: legacy_session_id,
                         cipher_suites: cipher_suites,
-                        legacy_compression_methods: legacy_compression_methods)
-        # extensions: extensions)
+                        extensions: extensions)
       end
     end
   end

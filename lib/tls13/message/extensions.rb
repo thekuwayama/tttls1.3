@@ -31,13 +31,14 @@ module TLS13
       attr_accessor :length
       attr_accessor :extensions
 
-      # @param length [Integer]
       # @param extensions [Hash]
       #
       # @return [TLS13::Message::Extensions]
-      def initialize(length: 0, extensions: {})
-        @length = length
+      def initialize(extensions: {})
+        @length = 0
         @extensions = extensions
+        @length = @extensions.map { |x| x.length + 4 }.sum \
+          unless @extensions.nil? || @extensions.empty?
       end
 
       # @return [Array of Integer]
@@ -63,14 +64,14 @@ module TLS13
         while itr < length + 2
           extension_type = [binary[itr], binary[itr + 1]]
           itr += 2
-          l = [binary[itr], binary[itr + 1]]
+          ex_len = arr2i([binary[itr], binary[itr + 1]])
           itr += 2
-          extensions = binary.slice(itr, l)
+          serialized_extension = binary.slice(itr, ex_len)
           extensions[extension_type] \
-          = deserialize_extension(extensions, extension_type)
-          itr += l
+          = deserialize_extension(serialized_extension, extension_type)
+          itr += ex_len
         end
-        Extensions.new(length: length, extensions: extensions)
+        Extensions.new(extensions: extensions)
       end
 
       # @param extension_type [Array of Integer]
@@ -84,7 +85,7 @@ module TLS13
       # @param binary [Array of Integer]
       # @param extension_type [Array of Integer]
       #
-      # @return [TLS13::Message::Extension::$Object]
+      # @return [TLS13::Message::Extension::$Object, nil]
       def self.deserialize_extension(binary, extension_type)
         return nil if binary.nil? || binary.empty?
 
