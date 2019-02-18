@@ -90,11 +90,16 @@ module TLS13
         return nil if binary.nil? || binary.empty?
 
         # TODO
-        if extension_type == ExtensionType::SERVER_NAME
+        case extension_type
+        when ExtensionType::SERVER_NAME
           return Extension::ServerName.deserialize(binary)
+        when ExtensionType::SUPPORTED_GROUPS
+          return Extension::SupportedGroups.deserialize(binary)
+        when ExtensionType::SUPPORTED_VERSIONS
+          return Extension::SupportedVersions.deserialize(binary)
+        else
+          return Extension::UknownExtension.deserialize(binary, extension_type)
         end
-
-        Extension::UknownExtension.deserialize(binary, extension_type)
       end
     end
   end

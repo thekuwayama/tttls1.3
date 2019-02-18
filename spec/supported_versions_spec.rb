@@ -8,7 +8,7 @@ RSpec.describe SupportedVersions do
 
     it 'should generate valid supported_versions' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 4
+      expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
     end
   end
@@ -20,7 +20,7 @@ RSpec.describe SupportedVersions do
 
     it 'should generate valid supported_versions' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 4
+      expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
     end
   end
@@ -32,7 +32,7 @@ RSpec.describe SupportedVersions do
 
     it 'should generate valid supported_versions' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 4
+      expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
     end
   end
