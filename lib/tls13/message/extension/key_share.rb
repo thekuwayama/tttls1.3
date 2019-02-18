@@ -6,13 +6,11 @@ module TLS13
         attr_accessor :length
         attr_accessor :msg_type
         attr_accessor :key_share_entry
-        # struct {
-        #     NamedGroup group;
-        #     opaque key_exchange<1..2^16-1>;
-        # } KeyShareEntry;
 
         # @param msg_type [TLS13::Message::ContentType]
-        # @param key_share_entry [Array of pair of uint16, opaque]
+        # @param key_share_entry [Array of KeyShareEntry]
+        #
+        # @raise [RuntimeError]
         #
         # @return [TLS13::Message::Extension::KeyShare]
         def initialize(msg_type: ContentType::INVALID,
@@ -21,8 +19,17 @@ module TLS13
           @msg_type = msg_type
           @length = 0
           @key_share_entry = key_share_entry || []
-          @length = @key_share_entry.map { |x| 4 + x[1].length }.sum
-          # TODO: check with @msg_type
+          case @msg_type
+          when HandshakeType::CLIENT_HELLO
+            @length = @key_share_entry.map { |x| 4 + x.key_exchange.length }.sum
+          when HandshakeType::SERVER_HELLO
+            @length += 4
+            @length = @key_share_entry.first.key_exchange.length
+          when HandshakeType::HELLO_RETRY_REQUEST
+            @length = 2
+          else
+            raise 'invalid msg_type'
+          end
         end
 
         # @return [Array of Integer]
@@ -31,13 +38,6 @@ module TLS13
           binary += @extension_type
           binary += i2uint16(@length)
           @key_share_entry.each do |entry|
-            # @msg_type == HandshakeType::HELLO_RETRY_REQUEST
-            # extension_data is single NamedGroup
-            named_group = entry[0]
-            binary += named_group
-            key_exchange = entry[1]
-            binary += i2uint16(key_exchange.length) + key_exchange \
-              unless key_exchange.nil?
           end
           binary
         end
@@ -65,38 +65,79 @@ module TLS13
 
         # @param binary [Array of Integer]
         #
-        # @return [Array of pair of uint16, opaque]
+        # @return [Array of KeyShareEntry]
         #
         # struct {
         #     KeyShareEntry client_shares<0..2^16-1>;
         # } KeyShareClientHello;
-        def self.deserialize_keysharech(**)
-          # TODO
-          []
+        def self.deserialize_keysharech(binary)
+          key_share_entry = []
+          itr = 0
+          while itr < binary.length
+            group = [binary[itr] + binary[itr + 1]]
+            itr += 2
+            ke_len = arr2i([binary[itr] + binary[itr + 1]])
+            itr += 2
+            key_exchange = binary.slice(itr, ke_len)
+            key_share_entry << KeyShareEntry.new(group: group,
+                                                 key_exchange: key_exchange)
+            itr += ke_len
+          end
+          key_share_entry
         end
 
         # @param binary [Array of Integer]
         #
-        # @return [Array of pair of uint16, opaque]
+        # @return [Array of KeyShareEntry]
         #
         # struct {
         #     KeyShareEntry server_share;
         # } KeyShareServerHello;
         def self.deserialize_keysharesh(**)
-          # TODO
-          []
+          itr = 0
+          group = [binary[itr] + binary[itr + 1]]
+          itr += 2
+          ke_len = arr2i([binary[itr] + binary[itr + 1]])
+          itr += 2
+          key_exchange = binary.slice(itr, ke_len)
+          [KeyShareEntry.new(group: group, key_exchange: key_exchange)]
         end
 
         # @param binary [Array of Integer]
         #
-        # @return [Array of pair of uint16, opaque]
+        # @return [Array of KeyShareEntry]
         #
         # struct {
         #     NamedGroup selected_group;
         # } KeyShareHelloRetryRequest;
         def self.deserialize_keysharehrr(**)
-          # TODO
-          []
+          group = [binary[0] + binary[1]]
+          [KeyShareEntry.new(group: group)]
+        end
+      end
+
+      class KeyShareEntry
+        attr_accessor :group
+        attr_accessor :key_exchange
+
+        # @param group [TLS13::Message::Extension::NamedGroup]
+        # @param key_exchange [Array of Integer]
+        #
+        # @return [TLS13::Message::Extension::KeyShareEntry]
+        def initialize(group: [], key_exchange: [])
+          @group = group
+          @key_exchange = key_exchange
+        end
+
+        # @return [Array of Integer]
+        def serialize
+          binary = []
+          # @msg_type == HandshakeType::HELLO_RETRY_REQUEST
+          # extension_data is single NamedGroup
+          binary += @group
+          binary += i2uint16(@key_exchange.length) + @key_exchange \
+            unless @key_exchange.nil? || @key_exchange.empty?
+          binary
         end
       end
     end

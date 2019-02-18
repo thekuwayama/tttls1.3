@@ -51,11 +51,12 @@ module TLS13
       end
 
       # @param binary [Array of Integer]
+      # @param msg_type [TLS13::Message::HandshakeType]
       #
       # @raise [RuntimeError]
       #
       # @return [TLS13::Message::Extensions]
-      def self.deserialize(binary)
+      def self.deserialize(binary, msg_type)
         raise 'too short binary' if binary.nil? || binary.length < 2
 
         length = arr2i([binary[0], binary[1]])
@@ -68,7 +69,9 @@ module TLS13
           itr += 2
           serialized_extension = binary.slice(itr, ex_len)
           extensions[extension_type] \
-          = deserialize_extension(serialized_extension, extension_type)
+          = deserialize_extension(serialized_extension,
+                                  extension_type,
+                                  msg_type)
           itr += ex_len
         end
         Extensions.new(extensions: extensions)
@@ -83,10 +86,12 @@ module TLS13
       end
 
       # @param binary [Array of Integer]
-      # @param extension_type [Array of Integer]
+      # @param extension_type [TLS13::Message::ExtensionType]
+      # @param msg_type [TLS13::Message::HandshakeType]
       #
       # @return [TLS13::Message::Extension::$Object, nil]
-      def self.deserialize_extension(binary, extension_type)
+      # rubocop: disable Metrics/CyclomaticComplexity
+      def self.deserialize_extension(binary, extension_type, msg_type)
         return nil if binary.nil? || binary.empty?
 
         # TODO
@@ -97,10 +102,13 @@ module TLS13
           return Extension::SupportedGroups.deserialize(binary)
         when ExtensionType::SUPPORTED_VERSIONS
           return Extension::SupportedVersions.deserialize(binary)
+        when ExtensionType::KEY_SHARE
+          return Extension::KeyShare.deserialize(binary, msg_type)
         else
           return Extension::UknownExtension.deserialize(binary, extension_type)
         end
       end
+      # rubocop: enable Metrics/CyclomaticComplexity
     end
   end
 end

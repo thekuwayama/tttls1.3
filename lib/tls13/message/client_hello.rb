@@ -78,7 +78,8 @@ module TLS13
         itr += 2
         exs_len = arr2i([binary[itr], binary[itr + 1]])
         serialized_extensions = binary.slice(itr, exs_len + 2)
-        extensions = Extensions.deserialize(serialized_extensions)
+        extensions = Extensions.deserialize(serialized_extensions,
+                                            HandshakeType::CLIENT_HELLO)
         ClientHello.new(legacy_version: legacy_version,
                         random: random,
                         legacy_session_id: legacy_session_id,
