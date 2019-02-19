@@ -38,7 +38,7 @@ RSpec.describe SignatureAlgorithmsCert do
 
   context 'valid signature_algorithms binary' do
     let(:extension) do
-      SignatureAlgorithmsCert.deserialize(TESTBINARY_SIGNATURE_ALGORITHMS)
+      SignatureAlgorithmsCert.deserialize(TESTBINARY_SIGNATURE_ALGORITHMS_CERT)
     end
 
     let(:supported_signature_algorithms) do
