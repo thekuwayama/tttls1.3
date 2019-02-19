@@ -8,16 +8,24 @@ include TLS13::Message::Extension
 include TLS13::Cryptograph
 # rubocop: enable Style/MixinUsage
 
-TESTBINARY_RECORD_HEADER = '16 03 03 00 00'.split.map(&:hex).freeze
-TESTBINARY_CIPHER_SUITES = '00 06 13 02 13 03 13 01'.split.map(&:hex).freeze
+TESTBINARY_RECORD_HEADER = <<BIN.split.map(&:hex).freeze
+  16 03 03 00 00
+BIN
+TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).freeze
+  00 06 13 02 13 03 13 01
+BIN
 TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).freeze
   00 0d 00 00 0a 67 69 74     68 75 62 2e 63 6f 6d
 BIN
-TESTBINARY_STATUS_REQUEST = '01 00 00 00 00'.split.map(&:hex).freeze
+TESTBINARY_STATUS_REQUEST = <<BIN.split.map(&:hex).freeze
+  01 00 00 00 00
+BIN
 TESTBINARY_SUPPORTED_GROUPS = <<BIN.split.map(&:hex).freeze
   00 08 00 17 00 18 00 19    00 1d
 BIN
-TESTBINARY_SUPPORTED_VERSIONS = '02 03 04'.split.map(&:hex).freeze
+TESTBINARY_SUPPORTED_VERSIONS = <<BIN.split.map(&:hex).freeze
+  02 03 04
+BIN
 TESTBINARY_KEY_SHARE = <<BIN.split.map(&:hex).freeze
   00 24 00 1d 00 20 99 38     1d e5 60 e4 bd 43 d2 3d
   8e 43 5a 7d ba fe b3 c0     6e 51 c1 3c ae 4d 54 13
