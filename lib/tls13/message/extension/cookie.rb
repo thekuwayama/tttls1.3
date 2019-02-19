@@ -6,7 +6,7 @@ module TLS13
         attr_accessor :length
         attr_accessor :cookie
 
-        # @param versions [Array of Integer]
+        # @param cookie [Array of Integer]
         def initialize(cookie: [])
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || []
