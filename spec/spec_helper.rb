@@ -23,6 +23,10 @@ TESTBINARY_KEY_SHARE = <<BIN.split.map(&:hex).freeze
   8e 43 5a 7d ba fe b3 c0     6e 51 c1 3c ae 4d 54 13
   69 1e 52 9a af 2c
 BIN
+TESTBINARY_SIGNATURE_ALGORITHMS = <<BIN.split.map(&:hex).freeze
+  00 12 04 03 08 04 04 01     05 03 08 05 05 01 08 06
+  06 01 02 01
+BIN
 
 # https://tools.ietf.org/html/rfc8448#page-3
 

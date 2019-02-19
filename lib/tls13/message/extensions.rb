@@ -105,6 +105,8 @@ module TLS13
           return Extension::ServerName.deserialize(binary)
         when ExtensionType::SUPPORTED_GROUPS
           return Extension::SupportedGroups.deserialize(binary)
+        when ExtensionType::SIGNATURE_ALGORITHMS
+          return Extension::SignatureAlgorithms.deserialize(binary)
         when ExtensionType::SUPPORTED_VERSIONS
           return Extension::SupportedVersions.deserialize(binary)
         when ExtensionType::KEY_SHARE
