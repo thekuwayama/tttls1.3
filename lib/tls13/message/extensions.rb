@@ -109,6 +109,8 @@ module TLS13
           return Extension::SignatureAlgorithms.deserialize(binary)
         when ExtensionType::SUPPORTED_VERSIONS
           return Extension::SupportedVersions.deserialize(binary)
+        when ExtensionType::SIGNATURE_ALGORITHMS_CERT
+          return Extension::SignatureAlgorithmsCert.deserialize(binary)
         when ExtensionType::KEY_SHARE
           return Extension::KeyShare.deserialize(binary, msg_type)
         else
