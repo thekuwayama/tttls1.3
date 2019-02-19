@@ -18,6 +18,7 @@ module TLS13
           binary = []
           binary += @extension_type
           binary += i2uint16(@length)
+          binary << @versions.length * 2
           binary += @versions.flatten
           binary
         end
@@ -28,7 +29,7 @@ module TLS13
         #
         # @return [TLS13::Message::Extensions::SupportedVersions]
         def self.deserialize(binary)
-          raise 'too short binary' if binary.nil? || binary.length < 2
+          raise 'too short binary' if binary.nil? || binary.empty?
 
           versions_len = binary[0]
           itr = 1
