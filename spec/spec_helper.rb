@@ -36,6 +36,11 @@ TESTBINARY_SIGNATURE_ALGORITHMS = <<BIN.split.map(&:hex).freeze
   06 01 02 01
 BIN
 TESTBINARY_SIGNATURE_ALGORITHMS_CERT = TESTBINARY_SIGNATURE_ALGORITHMS
+TESTBINARY_COOKIE = <<BIN.split.map(&:hex).freeze
+  00 20 6a d9 1d 2c d6 cc     f1 3b 3d 48 cc 5d cb bd
+  84 77 6b c3 f4 f0 9f 8d     53 dc 11 7a dd c0 9c 40
+  8d 4a
+BIN
 
 # https://tools.ietf.org/html/rfc8448#page-3
 
