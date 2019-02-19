@@ -41,6 +41,9 @@ TESTBINARY_COOKIE = <<BIN.split.map(&:hex).freeze
   84 77 6b c3 f4 f0 9f 8d     53 dc 11 7a dd c0 9c 40
   8d 4a
 BIN
+TESTBINARY_PSK_KEY_EXCHANGE_MODES = <<BIN.split.map(&:hex).freeze
+  02 00 01
+BIN
 
 # https://tools.ietf.org/html/rfc8448#page-3
 

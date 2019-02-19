@@ -95,7 +95,7 @@ module TLS13
       # @param msg_type [TLS13::Message::HandshakeType]
       #
       # @return [TLS13::Message::Extension::$Object, nil]
-      # rubocop: disable Metrics/CyclomaticComplexity
+      # rubocop: disable Metrics/CyclomaticComplexity, Metrics/MethodLength
       def self.deserialize_extension(binary, extension_type, msg_type)
         return nil if binary.nil? || binary.empty?
 
@@ -111,6 +111,8 @@ module TLS13
           return Extension::SupportedVersions.deserialize(binary)
         when ExtensionType::COOKIE
           return Extension::Cookie.deserialize(binary)
+        when ExtensionType::PSK_KEY_EXCHANGE_MODES
+          return Extension::PskKeyExchangeModes.deserialize(binary)
         when ExtensionType::SIGNATURE_ALGORITHMS_CERT
           return Extension::SignatureAlgorithmsCert.deserialize(binary)
         when ExtensionType::KEY_SHARE
@@ -119,7 +121,7 @@ module TLS13
           return Extension::UknownExtension.deserialize(binary, extension_type)
         end
       end
-      # rubocop: enable Metrics/CyclomaticComplexity
+      # rubocop: enable Metrics/CyclomaticComplexity, Metrics/MethodLength
     end
   end
 end
