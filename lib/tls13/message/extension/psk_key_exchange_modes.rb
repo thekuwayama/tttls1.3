@@ -37,6 +37,8 @@ module TLS13
           raise 'too short binary' if binary.nil? || binary.empty?
 
           kem_len = binary[0]
+          raise 'malformed binary' unless binary.length == kem_len + 1
+
           ke_modes = binary.slice(1, kem_len)
           PskKeyExchangeModes.new(ke_modes: ke_modes)
         end

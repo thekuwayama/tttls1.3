@@ -108,12 +108,13 @@ module TLS13
         #
         # @return [Array of KeyShareEntry]
         def self.deserialize_keysharesh(binary)
-          itr = 0
-          group = [binary[itr] + binary[itr + 1]]
-          itr += 2
-          ke_len = arr2i([binary[itr] + binary[itr + 1]])
-          itr += 2
-          key_exchange = binary.slice(itr, ke_len)
+          raise 'too short binary' if binary.nil? || binary.length < 4
+
+          group = [binary[0] + binary[1]]
+          ke_len = arr2i([binary[2] + binary[3]])
+          raise 'malformed binary' unless binary.length == ke_len + 4
+
+          key_exchange = binary.slice(4, ke_len)
           [KeyShareEntry.new(group: group, key_exchange: key_exchange)]
         end
 
