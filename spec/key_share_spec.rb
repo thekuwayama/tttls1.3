@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'openssl'
 
 RSpec.describe KeyShare do
   context 'valid key_share (KeyShareClientHello)' do
