@@ -15,6 +15,7 @@ module TLS13
       CLIENT_CERTIFICATE_TYPE                = [0x00, 0x13].freeze
       SERVER_CERTIFICATE_TYPE                = [0x00, 0x14].freeze
       PADDING                                = [0x00, 0x15].freeze
+      RECORD_SIZE_LIMIT                      = [0x00, 0x1c].freeze
       PRE_SHARED_KEY                         = [0x00, 0x29].freeze
       EARLY_DATA                             = [0x00, 0x2a].freeze
       SUPPORTED_VERSIONS                     = [0x00, 0x2b].freeze
@@ -107,6 +108,8 @@ module TLS13
           return Extension::SupportedGroups.deserialize(binary)
         when ExtensionType::SIGNATURE_ALGORITHMS
           return Extension::SignatureAlgorithms.deserialize(binary)
+        when ExtensionType::RECORD_SIZE_LIMIT
+          return Extension::RecordSizeLimit.deserialize(binary)
         when ExtensionType::SUPPORTED_VERSIONS
           return Extension::SupportedVersions.deserialize(binary)
         when ExtensionType::COOKIE

@@ -44,6 +44,9 @@ BIN
 TESTBINARY_PSK_KEY_EXCHANGE_MODES = <<BIN.split.map(&:hex).freeze
   02 00 01
 BIN
+TESTBINARY_RECORD_SIZE_LIMIT = <<BIN.split.map(&:hex).freeze
+  40 00
+BIN
 
 # https://tools.ietf.org/html/rfc8448#page-3
 
