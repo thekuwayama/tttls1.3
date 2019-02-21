@@ -9,7 +9,7 @@ RSpec.describe UknownExtension do
     it 'should generate valid uknown extension' do
       expect(extension.extension_type).to eq [0x8a, 0x8a]
       expect(extension.length).to eq 0
-      expect(extension.extension_data).to eq nil
+      expect(extension.extension_data).to eq []
     end
 
     it 'should serialize' do
@@ -37,8 +37,7 @@ RSpec.describe UknownExtension do
 
     it 'should serialize' do
       expect(extension.serialize).to eq [0x8a, 0x8a] \
-                                        + [rand_binary.length / (1 << 8),
-                                           rand_binary.length % (1 << 8)] \
+                                        + i2uint16(rand_binary.length) \
                                         + rand_binary
     end
   end
@@ -61,7 +60,7 @@ RSpec.describe UknownExtension do
     it 'should generate valid uknown extension' do
       expect(extension.extension_type).to eq [0x8a, 0x8a]
       expect(extension.length).to eq 0
-      expect(extension.extension_data).to eq nil
+      expect(extension.extension_data).to eq []
     end
   end
 

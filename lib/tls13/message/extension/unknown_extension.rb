@@ -15,9 +15,8 @@ module TLS13
           raise 'extension_type is required argument' if extension_type.nil?
 
           @extension_type = extension_type
-          @extension_data = extension_data
-          @length = 0
-          @length = @extension_data.length unless @extension_data.nil?
+          @extension_data = extension_data || []
+          @length = @extension_data.length
         end
 
         # @return [Array of Integer]
@@ -25,7 +24,7 @@ module TLS13
           binary = []
           binary += @extension_type
           binary += i2uint16(@length)
-          binary += @extension_data unless @extension_data.nil?
+          binary += @extension_data
           binary
         end
 
