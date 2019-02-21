@@ -5,43 +5,29 @@ module TLS13
         OCSP = 1
       end
 
-      CERTIFICATE_STATUS_TYPE_ALLVALUE =
-        CertificateStatusType.constants
-                             .map(&CertificateStatusType.method(:const_get))
-                             .to_set
-
       class StatusRequest
         attr_accessor :extension_type
         attr_accessor :length
-        attr_accessor :request
+        attr_accessor :responder_id_list
+        attr_accessor :request_extensions
 
-        # @param request [Hash]
-        #
-        # @raise [RuntimeError]
+        # @param responder_id_list [Array of Array of Integer]
+        # @param request_extensions [Array of Integer]
         #
         # @example
         #   StatusRequest.new(
-        #     request: { CertificateStatusType::OCSP => [
-        #       [], # Array of Array of Integer,
-        #       [], # Array of Integer
-        #     ]}
+        #       responder_id_list: [],
+        #       request_extensions: []
         #   )
-        def initialize(request: { CertificateStatusType::OCSP => [[], []] })
+        def initialize(responder_id_list: [], request_extensions: [])
           @extension_type = ExtensionType::STATUS_REQUEST
-          @request = request || {}
-          @length = 0
-          return if @request.empty?
-
-          raise 'unknown status_type' unless
-            request.keys.to_set.subset?(CERTIFICATE_STATUS_TYPE_ALLVALUE)
-
-          @request.each do |status_type, value|
-            if status_type == CertificateStatusType::OCSP # rubocop:disable all
-              @length += 1
-              @length += 2 + value[0].length * 2 + value[0].map(&:length).sum
-              @length += 2 + value[1].length
-            end
-          end
+          @responder_id_list = responder_id_list || []
+          @request_extensions = request_extensions || []
+          @length = 1
+          @length += 2 \
+                     + @responder_id_list.length * 2 \
+                     + @responder_id_list.map(&:length).sum
+          @length += 2 + @request_extensions.length
         end
 
         # @return [Array of Integer]
@@ -49,60 +35,62 @@ module TLS13
           binary = []
           binary += @extension_type
           binary += i2uint16(@length)
-          return binary if @request.nil?
-
-          @request.each do |name_type, value|
-            binary << name_type
-            if name_type == CertificateStatusType::OCSP # rubocop:disable all
-              binary += i2uint16(value[0].length)
-              binary += value[0].map do |id|
-                i2uint16(id.length) + id
-              end
-              binary += i2uint16(value[1].length)
-              binary += value[1]
-            end
+          binary << CertificateStatusType::OCSP
+          binary += i2uint16(@responder_id_list.length)
+          binary += @responder_id_list.map do |id|
+            i2uint16(id.length) + id
           end
+          binary += i2uint16(@request_extensions.length)
+          binary += @request_extensions
           binary
         end
 
         # @param binary [Array of Integer]
         #
+        # @raise [RuntimeError]
+        #
         # @return [TLS13::Message::Extension::StatusRequest]
         def self.deserialize(binary)
-          return StatusRequest.new(request: nil) if binary.nil? || binary.empty?
+          raise 'too short binary' if binary.nil? || binary.length < 5
 
-          status_type = binary[0]
-          itr = 1
-          request = {}
-          while itr < binary.length
-            if status_type == CertificateStatusType::OCSP
-              l = arr2i([binary[itr], binary[itr + 1]])
-              request_id = deserialize_request_id(binary.slice(itr + 2, l))
-              itr += 2 + l
-              l = arr2i([binary[itr], binary[itr + 1]])
-              extensions = deserialize_extensions(binary.slice(itr + 2, l))
-              itr += 2 + l
-              request[status_type] = [request_id, extensions]
-            else
-              request[status_type] = binary[itr..-1]
-            end
-          end
-          StatusRequest.new(request: request)
+          raise 'unknown status_type' \
+            unless binary[0] == CertificateStatusType::OCSP
+
+          ril_len = arr2i([binary[1], binary[2]])
+          itr = 3
+          responder_id_list =
+            deserialize_request_ids(binary.slice(itr, ril_len))
+          itr += ril_len
+          re_len = arr2i([binary[itr], binary[itr + 1]])
+          itr += 2
+          request_extensions = deserialize_extensions(binary.slice(itr, re_len))
+          itr += re_len
+          raise 'malformed binary' unless itr == binary.length
+
+          StatusRequest.new(responder_id_list: responder_id_list,
+                            request_extensions: request_extensions)
         end
 
         # @param binary [Array of Integer]
         #
+        # @raise [RuntimeError]
+        #
         # @return [Array of Array of Integer]
-        def self.deserialize_request_id(binary)
+        def self.deserialize_request_ids(binary)
+          return [] if binary.nil? || binary.empty?
+
           itr = 0
-          request_id = []
+          request_ids = []
           while itr < binary.length
-            l = arr2i([binary[itr], binary[itr + 1]])
+            id_len = arr2i([binary[itr], binary[itr + 1]])
             itr += 2
-            request_id << binary.slice(itr, l) unless l.zero?
-            itr += l
+            id = binary.slice(itr, id_len) || []
+            request_ids << id
+            itr += id_len
           end
-          request_id
+          raise 'malformed binary' unless itr == binary.length
+
+          request_ids
         end
 
         # @param binary [Array of Integer]
