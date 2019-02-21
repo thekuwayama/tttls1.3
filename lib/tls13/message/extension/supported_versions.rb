@@ -7,7 +7,7 @@ module TLS13
         attr_accessor :versions
 
         # @param versions [Array of ProtocolVersion]
-        def initialize(versions: [ProtocolVersion::TLS_1_3])
+        def initialize(versions = [ProtocolVersion::TLS_1_3])
           @extension_type = ExtensionType::SUPPORTED_VERSIONS
           @versions = versions || []
           @length = 1 + @versions.length * 2
@@ -32,13 +32,15 @@ module TLS13
           raise 'too short binary' if binary.nil? || binary.empty?
 
           versions_len = binary[0]
+          raise 'malformed binary' unless binary.length == versions_len + 1
+
           itr = 1
           versions = []
           while itr < versions_len + 1
             versions << [binary[itr], binary[itr + 1]]
             itr += 2
           end
-          SupportedVersions.new(versions: versions)
+          SupportedVersions.new(versions)
         end
       end
     end

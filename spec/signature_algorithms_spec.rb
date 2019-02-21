@@ -17,9 +17,7 @@ RSpec.describe SignatureAlgorithms do
     end
 
     let(:extension) do
-      SignatureAlgorithms.new(
-        supported_signature_algorithms: supported_signature_algorithms
-      )
+      SignatureAlgorithms.new(supported_signature_algorithms)
     end
 
     it 'should generate valid signature_algorithms' do

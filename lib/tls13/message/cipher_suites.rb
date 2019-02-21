@@ -17,10 +17,9 @@ module TLS13
       attr_accessor :cipher_suites
 
       # @param cipher_suites [Array of CipherSuite]
-      def initialize(cipher_suites: DEFALT_CIPHER_SUITES)
-        @cipher_suites = cipher_suites
-        @length = 0
-        @length = @cipher_suites.length * 2 unless @cipher_suites.nil?
+      def initialize(cipher_suites = DEFALT_CIPHER_SUITES)
+        @cipher_suites = cipher_suites || []
+        @length = @cipher_suites.length * 2
       end
 
       # @return [Array of Integer]
@@ -39,11 +38,11 @@ module TLS13
       def self.deserialize(binary)
         raise 'too short binary' if binary.nil? || binary.length < 2
 
-        length = arr2i([binary[0], binary[1]])
-        raise 'malformed binary' unless binary.length == length + 2
+        cs_len = arr2i([binary[0], binary[1]])
+        raise 'malformed binary' unless binary.length == cs_len + 2
 
-        cipher_suites = binary.slice(2, length).each_slice(2).to_a
-        CipherSuites.new(cipher_suites: cipher_suites)
+        cipher_suites = binary.slice(2, cs_len).each_slice(2).to_a
+        CipherSuites.new(cipher_suites)
       end
     end
   end

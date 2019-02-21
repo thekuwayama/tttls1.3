@@ -7,7 +7,7 @@ RSpec.describe Cookie do
     end
 
     let(:extension) do
-      Cookie.new(cookie: cookie)
+      Cookie.new(cookie)
     end
 
     it 'should generate valid cookie' do

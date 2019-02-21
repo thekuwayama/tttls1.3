@@ -7,7 +7,7 @@ module TLS13
         attr_accessor :cookie
 
         # @param cookie [Array of Integer]
-        def initialize(cookie: [])
+        def initialize(cookie)
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || []
           @length = 2 + @cookie.length
@@ -32,8 +32,10 @@ module TLS13
           raise 'too short binary' if binary.nil? || binary.length < 2
 
           cookie_len = arr2i([binary[0], binary[1]])
+          raise 'malformed binary' unless binary.length == cookie_len + 2
+
           cookie = binary.slice(2, cookie_len)
-          Cookie.new(cookie: cookie)
+          Cookie.new(cookie)
         end
       end
     end

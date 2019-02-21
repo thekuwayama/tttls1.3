@@ -34,7 +34,7 @@ module TLS13
         attr_accessor :supported_signature_algorithms
 
         # @param versions [Array of SignatureScheme]
-        def initialize(supported_signature_algorithms: [])
+        def initialize(supported_signature_algorithms)
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS
           @supported_signature_algorithms = supported_signature_algorithms || []
           @length = 2 + @supported_signature_algorithms.length * 2
@@ -59,15 +59,15 @@ module TLS13
           raise 'too short binary' if binary.nil? || binary.length < 2
 
           ssa_len = arr2i([binary[0], binary[1]])
+          raise 'malformed binary' unless binary.length == ssa_len + 2
+
           itr = 2
           supported_signature_algorithms = []
           while itr < ssa_len + 2
             supported_signature_algorithms << [binary[itr], binary[itr + 1]]
             itr += 2
           end
-          SignatureAlgorithms.new(
-            supported_signature_algorithms: supported_signature_algorithms
-          )
+          SignatureAlgorithms.new(supported_signature_algorithms)
         end
       end
     end

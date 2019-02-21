@@ -40,11 +40,10 @@ module TLS13
       #       ExtensionType::SUPPORTED_VERSIONS => SupportedVersions.new
       #     }
       #   )
-      def initialize(extensions: {})
+      def initialize(extensions)
         @length = 0
-        @extensions = extensions
-        @length = @extensions.map { |x| x.length + 4 }.sum \
-          unless @extensions.nil? || @extensions.empty?
+        @extensions = extensions || {}
+        @length = @extensions.map { |x| x.length + 4 }.sum
       end
 
       # @return [Array of Integer]
@@ -80,7 +79,7 @@ module TLS13
                                   msg_type)
           itr += ex_len
         end
-        Extensions.new(extensions: extensions)
+        Extensions.new(extensions)
       end
 
       # @param extension_type [TLS13::Message::ExtensionType]
