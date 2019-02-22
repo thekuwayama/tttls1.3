@@ -27,6 +27,7 @@ RSpec.describe KeyShare do
     end
 
     it 'should generate valid key_share' do
+      expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
       expect(extension.length).to eq 107
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
@@ -43,6 +44,25 @@ RSpec.describe KeyShare do
                                         + NamedGroup::SECP256R1 \
                                         + i2uint16(65) \
                                         + public_key_secp256r1
+    end
+  end
+
+  context 'valid key_share, empty KeyShare.client_shares vector' do
+    let(:extension) do
+      KeyShare.new(
+        msg_type: HandshakeType::CLIENT_HELLO,
+        key_share_entry: []
+      )
+    end
+
+    it 'should generate valid key_share' do
+      expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
+      expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
+      expect(extension.length).to eq 2
+      expect(extension.key_share_entry).to be_empty
+      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
+                                        + i2uint16(2) \
+                                        + i2uint16(0)
     end
   end
 

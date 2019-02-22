@@ -15,7 +15,6 @@ module TLS13
                        key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
-          @length = 0
           @key_share_entry = key_share_entry || []
           case @msg_type
           when HandshakeType::CLIENT_HELLO
