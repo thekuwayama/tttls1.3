@@ -47,6 +47,13 @@ BIN
 TESTBINARY_RECORD_SIZE_LIMIT = <<BIN.split.map(&:hex).freeze
   40 00
 BIN
+TESTBINARY_PRE_SHARED_KEY = <<BIN.split.map(&:hex).freeze
+  00 26 00 20 b2 83 3b 1e     5c 0e 9f ae b2 ef 16 37
+  11 0f bd 3d 58 18 cc 06     a1 d4 8c 59 45 19 1e b5
+  f7 3f 07 60 1f 5c c4 77     00 21 20 99 9e 2b 8b d7
+  e0 01 12 f0 ab 0e 26 c5     6a 59 85 b4 40 53 9e b8
+  e9 18 b6 7e c0 02 c3 bc     07 dd 09
+BIN
 
 # https://tools.ietf.org/html/rfc8448#page-3
 
