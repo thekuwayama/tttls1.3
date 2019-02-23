@@ -1,13 +1,31 @@
 def i2uint16(int)
   raise 'invalid argument' if int < 0 || int >= (1 << 16)
 
-  [int / (1 << 8), int % (1 << 8)]
+  [
+    int / (1 << 8),
+    int % (1 << 8)
+  ]
 end
 
 def i2uint24(int)
   raise 'invalid argument' if int < 0 || int >= (1 << 24)
 
-  [int / (1 << 16), int / (1 << 8), int % (1 << 8)]
+  [
+    int / (1 << 16),
+    int % (1 << 16) / (1 << 8),
+    int % (1 << 8)
+  ]
+end
+
+def i2uint32(int)
+  raise 'invalid argument' if int < 0 || int >= (1 << 32)
+
+  [
+    int / (1 << 24),
+    int % (1 << 24) / (1 << 16),
+    int % (1 << 16) / (1 << 8),
+    int % (1 << 8)
+  ]
 end
 
 def arr2i(array)
