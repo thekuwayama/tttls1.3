@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'tls13/connection'
 require 'tls13/client'
 require 'tls13/server'

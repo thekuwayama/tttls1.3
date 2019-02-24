@@ -1,17 +1,20 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 module TLS13
   module Message
     module Extension
       module NamedGroup
-        SECP256R1 = "\x00\x17".freeze
-        SECP384R1 = "\x00\x18".freeze
-        SECP521R1 = "\x00\x19".freeze
-        X25519    = "\x00\x1d".freeze
-        X448      = "\x00\x1e".freeze
-        FFDHE2048 = "\x01\x00".freeze
-        FFDHE3072 = "\x01\x01".freeze
-        FFDHE4096 = "\x01\x02".freeze
-        FFDHE6144 = "\x01\x03".freeze
-        FFDHE8192 = "\x01\x04".freeze
+        SECP256R1 = "\x00\x17"
+        SECP384R1 = "\x00\x18"
+        SECP521R1 = "\x00\x19"
+        X25519    = "\x00\x1d"
+        X448      = "\x00\x1e"
+        FFDHE2048 = "\x01\x00"
+        FFDHE3072 = "\x01\x01"
+        FFDHE4096 = "\x01\x02"
+        FFDHE6144 = "\x01\x03"
+        FFDHE8192 = "\x01\x04"
         # ffdhe_private_use "\x01\xfc" ~ "\x01\xff"
         # ecdhe_private_use "\xfe\x00" ~ "\xfe\xff"
       end
@@ -20,6 +23,7 @@ module TLS13
                                  NamedGroup::SECP384R1,
                                  NamedGroup::SECP521R1,
                                  NamedGroup::X25519].freeze
+
       class SupportedGroups
         attr_accessor :extension_type
         attr_accessor :length

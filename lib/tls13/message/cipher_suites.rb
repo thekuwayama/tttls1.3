@@ -1,11 +1,14 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 module TLS13
   module Message
     module CipherSuite
-      TLS_AES_128_GCM_SHA256       = "\x13\x01".freeze
-      TLS_AES_256_GCM_SHA384       = "\x13\x02".freeze
-      TLS_CHACHA20_POLY1305_SHA256 = "\x13\x03".freeze
-      TLS_AES_128_CCM_SHA256       = "\x13\x04".freeze
-      TLS_AES_128_CCM_8_SHA256     = "\x13\x05".freeze
+      TLS_AES_128_GCM_SHA256       = "\x13\x01"
+      TLS_AES_256_GCM_SHA384       = "\x13\x02"
+      TLS_CHACHA20_POLY1305_SHA256 = "\x13\x03"
+      TLS_AES_128_CCM_SHA256       = "\x13\x04"
+      TLS_AES_128_CCM_8_SHA256     = "\x13\x05"
     end
 
     DEFALT_CIPHER_SUITES = [CipherSuite::TLS_AES_256_GCM_SHA384,

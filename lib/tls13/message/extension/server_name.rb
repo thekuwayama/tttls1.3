@@ -1,8 +1,11 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 module TLS13
   module Message
     module Extension
       module NameType
-        HOST_NAME = "\x00".freeze
+        HOST_NAME = "\x00"
       end
 
       class ServerName

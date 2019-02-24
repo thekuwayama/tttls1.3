@@ -1,9 +1,12 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 module TLS13
   module Message
     module Extension
       module PskKeyExchangeMode
-        PSK_KE     = "\x00".freeze
-        PSK_DHE_KE = "\x01".freeze
+        PSK_KE     = "\x00"
+        PSK_DHE_KE = "\x01"
       end
 
       class PskKeyExchangeModes

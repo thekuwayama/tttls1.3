@@ -1,8 +1,11 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 module TLS13
   module Message
     module Extension
       module CertificateStatusType
-        OCSP = "\x01".freeze
+        OCSP = "\x01"
       end
 
       class StatusRequest

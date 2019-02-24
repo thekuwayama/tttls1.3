@@ -1,3 +1,6 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 require 'openssl'
 
 module TLS13
@@ -62,7 +65,7 @@ module TLS13
       # @raise [RuntimeError]
       #
       # @return [TLS13::Message::ClientHello]
-      # rubocop: disable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop: disable Metrics/MethodLength
       def self.deserialize(binary)
         check = binary[0] == HandshakeType::CLIENT_HELLO
         raise 'msg_type is invalid' unless check
@@ -92,7 +95,7 @@ module TLS13
                         cipher_suites: cipher_suites,
                         extensions: extensions)
       end
-      # rubocop: enable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop: enable Metrics/MethodLength
     end
   end
 end

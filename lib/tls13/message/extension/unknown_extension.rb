@@ -1,3 +1,6 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 module TLS13
   module Message
     module Extension
@@ -23,7 +26,6 @@ module TLS13
           binary = ''
           binary += @extension_type
           binary += i2uint16(@length)
-          binary.force_encoding('ASCII-8BIT')
           binary += @extension_data
           binary
         end

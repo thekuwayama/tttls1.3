@@ -1,3 +1,6 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 module TLS13
   module Message
     module ContentType
@@ -9,10 +12,10 @@ module TLS13
     end
 
     module ProtocolVersion
-      TLS_1_0 = "\x03\x01".freeze
-      TLS_1_1 = "\x03\x02".freeze
-      TLS_1_2 = "\x03\x03".freeze
-      TLS_1_3 = "\x03\x04".freeze
+      TLS_1_0 = "\x03\x01"
+      TLS_1_1 = "\x03\x02"
+      TLS_1_2 = "\x03\x03"
+      TLS_1_3 = "\x03\x04"
     end
 
     module HandshakeType
@@ -72,7 +75,7 @@ module TLS13
       # @return [String]
       def serialize
         binary = ''
-        binary << @type
+        binary += @type
         binary += @legacy_record_version
         binary += i2uint16(@length)
         binary += @fragment

@@ -1,5 +1,8 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
 def i2uint16(int)
-  raise 'invalid argument' if int < 0 || int >= (1 << 16)
+  raise 'invalid argument' if int.negative? || int >= (1 << 16)
 
   [
     int / (1 << 8),
@@ -8,7 +11,7 @@ def i2uint16(int)
 end
 
 def i2uint24(int)
-  raise 'invalid argument' if int < 0 || int >= (1 << 24)
+  raise 'invalid argument' if int.negative? || int >= (1 << 24)
 
   [
     int / (1 << 16),
@@ -18,7 +21,7 @@ def i2uint24(int)
 end
 
 def i2uint32(int)
-  raise 'invalid argument' if int < 0 || int >= (1 << 32)
+  raise 'invalid argument' if int.negative? || int >= (1 << 32)
 
   [
     int / (1 << 24),
