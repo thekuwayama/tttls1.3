@@ -6,8 +6,8 @@ module TLS13
         attr_accessor :length
         attr_accessor :extension_data
 
-        # @param extension_type [Array of Integer]
-        # @param extension_data [Array of Integer]
+        # @param extension_type [String]
+        # @param extension_data [String]
         #
         # @raise [RuntimeError]
         def initialize(extension_type: nil, extension_data: nil)
@@ -18,7 +18,7 @@ module TLS13
           @length = @extension_data.length
         end
 
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
@@ -28,8 +28,8 @@ module TLS13
           binary
         end
 
-        # @param binary [Array of Integer]
-        # @param extension_type [Array of Integer]
+        # @param binary [String]
+        # @param extension_type [String]
         #
         # @return [TLS13::Message::Extension::UknownExtension]
         def self.deserialize(binary, extension_type)

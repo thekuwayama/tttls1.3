@@ -20,7 +20,7 @@ module TLS13
           @length = 5 + @server_name.length
         end
 
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
@@ -32,7 +32,7 @@ module TLS13
           binary
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @raise [RuntimeError]
         #

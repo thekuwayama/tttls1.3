@@ -12,9 +12,9 @@ module TLS13
       attr_accessor :legacy_compression_methods
       attr_accessor :extensions
 
-      # @param legacy_version [Array of Integer]
-      # @param random [Array of Integer]
-      # @param legacy_session_id [Array of Integer]
+      # @param legacy_version [String]
+      # @param random [String]
+      # @param legacy_session_id [String]
       # @param cipher_suites [TLS13::Message::CipherSuites]
       # @param extensions [Array of Extension]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
@@ -37,7 +37,7 @@ module TLS13
                                    .sum
       end
 
-      # @return [Array of Integer]
+      # @return [String]
       def serialize
         binary = ''
         binary << @msg_type
@@ -57,7 +57,7 @@ module TLS13
         binary
       end
 
-      # @param binary [Array of Integer]
+      # @param binary [String]
       #
       # @raise [RuntimeError]
       #

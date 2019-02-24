@@ -22,7 +22,7 @@ module TLS13
         @length = @cipher_suites.length * 2
       end
 
-      # @return [Array of Integer]
+      # @return [String]
       def serialize
         binary = ''
         binary += i2uint16(@length)
@@ -30,7 +30,7 @@ module TLS13
         binary
       end
 
-      # @param binary [Array of Integer]
+      # @param binary [String]
       #
       # @raise [RuntimeError]
       #

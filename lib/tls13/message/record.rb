@@ -48,7 +48,7 @@ module TLS13
 
       # @param type [TLS13::Message::ContentType]
       # @param legacy_record_version [TLS13::Message::ProtocolVersion]
-      # @param fragment [Array of Integer]
+      # @param fragment [String]
       # @param content [TLS13::Message::$Object]
       # @param cryptographer [TLS13::Cryptograph::$Object]
       #
@@ -69,7 +69,7 @@ module TLS13
         @length = @fragment.length unless @fragment.nil?
       end
 
-      # @return [Array of Integer]
+      # @return [String]
       def serialize
         binary = ''
         binary << @type
@@ -79,7 +79,7 @@ module TLS13
         binary
       end
 
-      # @param binary [Array of Integer]
+      # @param binary [String]
       # @param cryptographer [TLS13::Cryptograph::$Object]
       #
       # @raise [RuntimeError]
@@ -101,7 +101,7 @@ module TLS13
                    cryptographer: cryptographer)
       end
 
-      # @param binary [Array of Integer]
+      # @param binary [String]
       # @param type [Integer]
       #
       # @return [TLS13::Message::$Object, nil]

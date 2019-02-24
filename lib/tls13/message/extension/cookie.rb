@@ -6,14 +6,14 @@ module TLS13
         attr_accessor :length
         attr_accessor :cookie
 
-        # @param cookie [Array of Integer]
+        # @param cookie [String]
         def initialize(cookie)
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || ''
           @length = 2 + @cookie.length
         end
 
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
@@ -23,7 +23,7 @@ module TLS13
           binary
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @raise [RuntimeError]
         #

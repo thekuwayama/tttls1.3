@@ -1,16 +1,16 @@
 module TLS13
   module Cryptograph
     class Passer
-      # @param plaintext [Array of Integer]
+      # @param plaintext [String]
       #
-      # @return [Array of Integer]
+      # @return [String]
       def encrypt(plaintext)
         plaintext
       end
 
-      # @param ciphertext [Array of Integer]
+      # @param ciphertext [String]
       #
-      # @return [Array of Integer]
+      # @return [String]
       def decrypt(ciphertext)
         ciphertext
       end

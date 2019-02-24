@@ -10,7 +10,7 @@ module TLS13
 
         # @param msg_type [TLS13::Message::ContentType]
         # @param offered_psks [TLS13::Message::Extension::OfferedPsks]
-        # @param selected_identity [Array of Integer]
+        # @param selected_identity [String]
         #
         # @raise [RuntimeError]
         def initialize(msg_type: ContentType::INVALID,
@@ -34,7 +34,7 @@ module TLS13
 
         # @raise [RuntimeError]
         #
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
@@ -50,7 +50,7 @@ module TLS13
           binary
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         # @param msg_type [TLS13::Message::ContentType]
         #
         # @raise [RuntimeError]
@@ -80,7 +80,7 @@ module TLS13
         attr_accessor :binders
 
         # @param identities [Array of PskIdentity]
-        # @param binders [Array of Array of Integer]
+        # @param binders [Array of String]
         def initialize(identities: [], binders: [])
           @identities = identities || []
           raise 'invalid identities' if @identities.empty?
@@ -92,7 +92,7 @@ module TLS13
           @length += 2 + @binders.length + @binders.map(&:length).sum
         end
 
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           serialized_identities = i2uint16(@identities.map(&:length).sum)
           @identities.each do |psk_identity|
@@ -109,7 +109,7 @@ module TLS13
           serialized_identities + serialized_binders
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @return [TLS13::Message::Extensions::OfferedPsks]
         # rubocop: disable Metrics/MethodLength
@@ -132,7 +132,7 @@ module TLS13
 
           binders_tail = itr + bin2i(binary.slice(itr, 2))
           itr += 2
-          binders = [] # Array of Array of Integer
+          binders = [] # Array of String
           while itr < binders_tail
             pbe_len = bin2i(binary[itr])
             itr += 1
@@ -149,7 +149,7 @@ module TLS13
         attr_accessor :identity
         attr_accessor :obfuscated_ticket_age
 
-        # @param identity [Array of Integer]
+        # @param identity [String]
         # @param obfuscated_ticket_age [Integer]
         #
         # @raise [RuntimeError]
@@ -161,7 +161,7 @@ module TLS13
           @length = 2 + @identity.length + 4
         end
 
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           binary += i2uint16(@identity.length)

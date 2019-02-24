@@ -33,7 +33,7 @@ module TLS13
 
         # @raise [RuntimeError]
         #
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
@@ -56,7 +56,7 @@ module TLS13
           binary
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         # @param msg_type [TLS13::Message::HandshakeType]
         #
         # @return [TLS13::Message::Extensions::KeyShare]
@@ -81,7 +81,7 @@ module TLS13
         # struct {
         #     KeyShareEntry client_shares<0..2^16-1>;
         # } KeyShareClientHello;
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @return [Array of KeyShareEntry]
         def self.deserialize_keysharech(binary)
@@ -103,7 +103,7 @@ module TLS13
         # struct {
         #     KeyShareEntry server_share;
         # } KeyShareServerHello;
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @return [Array of KeyShareEntry]
         def self.deserialize_keysharesh(binary)
@@ -121,7 +121,7 @@ module TLS13
         #     NamedGroup selected_group;
         # } KeyShareHelloRetryRequest;
         #
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @return [Array of KeyShareEntry]
         def self.deserialize_keysharehrr(binary)
@@ -135,14 +135,14 @@ module TLS13
         attr_accessor :key_exchange
 
         # @param group [TLS13::Message::Extension::NamedGroup]
-        # @param key_exchange [Array of Integer]
+        # @param key_exchange [String]
         def initialize(group: '', key_exchange: '')
           @group = group || ''
           @key_exchange = key_exchange || ''
           # TODO: check len(key_exchange) for group
         end
 
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           # @msg_type == HandshakeType::HELLO_RETRY_REQUEST

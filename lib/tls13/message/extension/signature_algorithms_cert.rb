@@ -8,7 +8,7 @@ module TLS13
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS_CERT
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @raise [RuntimeError]
         #

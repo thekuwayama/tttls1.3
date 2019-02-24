@@ -11,8 +11,8 @@ module TLS13
         attr_accessor :responder_id_list
         attr_accessor :request_extensions
 
-        # @param responder_id_list [Array of Array of Integer]
-        # @param request_extensions [Array of Integer]
+        # @param responder_id_list [Array of String]
+        # @param request_extensions [String]
         #
         # @example
         #   StatusRequest.new(
@@ -30,7 +30,7 @@ module TLS13
           @length += 2 + @request_extensions.length
         end
 
-        # @return [Array of Integer]
+        # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
@@ -45,7 +45,7 @@ module TLS13
           binary
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @raise [RuntimeError]
         #
@@ -71,11 +71,11 @@ module TLS13
                             request_extensions: request_extensions)
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
         # @raise [RuntimeError]
         #
-        # @return [Array of Array of Integer]
+        # @return [Array of String]
         def self.deserialize_request_ids(binary)
           return [] if binary.nil? || binary.empty?
 
@@ -93,9 +93,9 @@ module TLS13
           request_ids
         end
 
-        # @param binary [Array of Integer]
+        # @param binary [String]
         #
-        # @return [Array of Integer]
+        # @return [String]
         def self.deserialize_extensions(binary)
           return '' if binary.nil? || binary.empty?
 

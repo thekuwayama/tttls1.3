@@ -46,7 +46,7 @@ module TLS13
         @length = @extensions.map { |x| x.length + 4 }.sum
       end
 
-      # @return [Array of Integer]
+      # @return [String]
       def serialize
         binary = ''
         binary += @length
@@ -55,7 +55,7 @@ module TLS13
         end
       end
 
-      # @param binary [Array of Integer]
+      # @param binary [String]
       # @param msg_type [TLS13::Message::HandshakeType]
       #
       # @raise [RuntimeError]
@@ -90,7 +90,7 @@ module TLS13
         @extensions[key]
       end
 
-      # @param binary [Array of Integer]
+      # @param binary [String]
       # @param extension_type [TLS13::Message::ExtensionType]
       # @param msg_type [TLS13::Message::HandshakeType]
       #
