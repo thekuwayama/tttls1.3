@@ -26,7 +26,7 @@ module TLS13
       def serialize
         binary = []
         binary += i2uint16(@length)
-        binary += @cipher_suites
+        binary += @cipher_suites.flatten
         binary
       end
 
