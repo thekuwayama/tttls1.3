@@ -67,7 +67,7 @@ module TLS13
           key_share_entry = []
           case msg_type
           when HandshakeType::CLIENT_HELLO
-            kse_len = bin2i(binary[0] + binary[1])
+            kse_len = bin2i(binary.slice(0, 2))
             key_share_entry = deserialize_keysharech(binary.slice(2, kse_len))
           when HandshakeType::SERVER_HELLO
             key_share_entry = deserialize_keysharesh(binary)
@@ -100,6 +100,8 @@ module TLS13
                                                  key_exchange: key_exchange)
             itr += ke_len
           end
+          raise 'malformed binary' unless itr == binary.length
+
           key_share_entry
         end
 
@@ -128,6 +130,8 @@ module TLS13
         #
         # @return [Array of KeyShareEntry]
         def self.deserialize_keysharehrr(binary)
+          raise 'malformed binary' unless binary.length == 2
+
           group = binary.slice(0, 2)
           [KeyShareEntry.new(group: group)]
         end

@@ -62,6 +62,8 @@ module TLS13
             named_group_list << binary.slice(itr, 2)
             itr += 2
           end
+          raise 'malformed binary' unless itr == binary.length
+
           SupportedGroups.new(named_group_list)
         end
       end

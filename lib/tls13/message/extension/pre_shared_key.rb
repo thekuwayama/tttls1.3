@@ -115,7 +115,7 @@ module TLS13
         # @param binary [String]
         #
         # @return [TLS13::Message::Extensions::OfferedPsks]
-        # rubocop: disable Metrics/MethodLength
+        # rubocop: disable Metrics/AbcSize, Metrics/MethodLength
         def self.deserialize(binary)
           pksids_len = bin2i(binary.slice(0, 2))
           itr = 2
@@ -142,9 +142,11 @@ module TLS13
             binders << binary.slice(itr, pbe_len)
             itr += pbe_len
           end
+          raise 'malformed binary' unless itr == binary.length
+
           OfferedPsks.new(identities: identities, binders: binders)
         end
-        # rubocop: enable Metrics/MethodLength
+        # rubocop: enable Metrics/AbcSize, Metrics/MethodLength
       end
 
       class PskIdentity

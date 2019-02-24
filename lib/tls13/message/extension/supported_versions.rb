@@ -43,6 +43,8 @@ module TLS13
             versions << binary.slice(itr, 2)
             itr += 2
           end
+          raise 'malformed binary' unless itr == binary.length
+
           SupportedVersions.new(versions)
         end
       end
