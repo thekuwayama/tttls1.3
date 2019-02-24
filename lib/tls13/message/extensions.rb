@@ -3,29 +3,29 @@ Dir[File.dirname(__FILE__) + '/extension/*.rb'].each { |f| require f }
 module TLS13
   module Message
     module ExtensionType
-      SERVER_NAME                            = [0x00, 0x00].freeze
-      MAX_FRAGMENT_LENGTH                    = [0x00, 0x01].freeze
-      STATUS_REQUEST                         = [0x00, 0x05].freeze
-      SUPPORTED_GROUPS                       = [0x00, 0x0a].freeze
-      SIGNATURE_ALGORITHMS                   = [0x00, 0x0d].freeze
-      USE_SRTP                               = [0x00, 0x0e].freeze
-      HEARTBEAT                              = [0x00, 0x0f].freeze
-      APPLICATION_LAYER_PROTOCOL_NEGOTIATION = [0x00, 0x10].freeze
-      SIGNED_CERTIFICATE_TIMESTAMP           = [0x00, 0x12].freeze
-      CLIENT_CERTIFICATE_TYPE                = [0x00, 0x13].freeze
-      SERVER_CERTIFICATE_TYPE                = [0x00, 0x14].freeze
-      PADDING                                = [0x00, 0x15].freeze
-      RECORD_SIZE_LIMIT                      = [0x00, 0x1c].freeze
-      PRE_SHARED_KEY                         = [0x00, 0x29].freeze
-      EARLY_DATA                             = [0x00, 0x2a].freeze
-      SUPPORTED_VERSIONS                     = [0x00, 0x2b].freeze
-      COOKIE                                 = [0x00, 0x2c].freeze
-      PSK_KEY_EXCHANGE_MODES                 = [0x00, 0x2d].freeze
-      CERTIFICATE_AUTHORITIES                = [0x00, 0x2f].freeze
-      OID_FILTERS                            = [0x00, 0x30].freeze
-      POST_HANDSHAKE_AUTH                    = [0x00, 0x31].freeze
-      SIGNATURE_ALGORITHMS_CERT              = [0x00, 0x32].freeze
-      KEY_SHARE                              = [0x00, 0x33].freeze
+      SERVER_NAME                            = "\x00\x00".freeze
+      MAX_FRAGMENT_LENGTH                    = "\x00\x01".freeze
+      STATUS_REQUEST                         = "\x00\x05".freeze
+      SUPPORTED_GROUPS                       = "\x00\x0a".freeze
+      SIGNATURE_ALGORITHMS                   = "\x00\x0d".freeze
+      USE_SRTP                               = "\x00\x0e".freeze
+      HEARTBEAT                              = "\x00\x0f".freeze
+      APPLICATION_LAYER_PROTOCOL_NEGOTIATION = "\x00\x10".freeze
+      SIGNED_CERTIFICATE_TIMESTAMP           = "\x00\x12".freeze
+      CLIENT_CERTIFICATE_TYPE                = "\x00\x13".freeze
+      SERVER_CERTIFICATE_TYPE                = "\x00\x14".freeze
+      PADDING                                = "\x00\x15".freeze
+      RECORD_SIZE_LIMIT                      = "\x00\x1c".freeze
+      PRE_SHARED_KEY                         = "\x00\x29".freeze
+      EARLY_DATA                             = "\x00\x2a".freeze
+      SUPPORTED_VERSIONS                     = "\x00\x2b".freeze
+      COOKIE                                 = "\x00\x2c".freeze
+      PSK_KEY_EXCHANGE_MODES                 = "\x00\x2d".freeze
+      CERTIFICATE_AUTHORITIES                = "\x00\x2f".freeze
+      OID_FILTERS                            = "\x00\x30".freeze
+      POST_HANDSHAKE_AUTH                    = "\x00\x31".freeze
+      SIGNATURE_ALGORITHMS_CERT              = "\x00\x32".freeze
+      KEY_SHARE                              = "\x00\x33".freeze
     end
 
     class Extensions
@@ -48,7 +48,7 @@ module TLS13
 
       # @return [Array of Integer]
       def serialize
-        binary = []
+        binary = ''
         binary += @length
         @extensions.each_value do |ex|
           binary += ex.serialize
@@ -64,13 +64,13 @@ module TLS13
       def self.deserialize(binary, msg_type)
         raise 'too short binary' if binary.nil? || binary.length < 2
 
-        length = arr2i([binary[0], binary[1]])
+        length = bin2i(binary.slice(0, 2))
         itr = 2
         extensions = {}
         while itr < length + 2
           extension_type = [binary[itr], binary[itr + 1]]
           itr += 2
-          ex_len = arr2i([binary[itr], binary[itr + 1]])
+          ex_len = bin2i(binary.slice(itr, 2))
           itr += 2
           serialized_extension = binary.slice(itr, ex_len)
           extensions[extension_type] \
@@ -86,7 +86,7 @@ module TLS13
       #
       # @return [TLS13::Message::Extension::$Object, nil]
       def [](extension_type)
-        key = arr2i([extension_type[0], extension_type[1]])
+        key = bin2i(extension_type.slice(0, 2))
         @extensions[key]
       end
 

@@ -28,7 +28,7 @@ RSpec.describe SignatureAlgorithms do
       expect(extension.serialize).to eq ExtensionType::SIGNATURE_ALGORITHMS \
                                         + i2uint16(20) \
                                         + i2uint16(18) \
-                                        + supported_signature_algorithms.flatten
+                                        + supported_signature_algorithms.join
     end
   end
 

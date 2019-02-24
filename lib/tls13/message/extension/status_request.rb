@@ -2,7 +2,7 @@ module TLS13
   module Message
     module Extension
       module CertificateStatusType
-        OCSP = 1
+        OCSP = "\x01".freeze
       end
 
       class StatusRequest
@@ -19,10 +19,10 @@ module TLS13
         #       responder_id_list: [],
         #       request_extensions: []
         #   )
-        def initialize(responder_id_list: [], request_extensions: [])
+        def initialize(responder_id_list: [], request_extensions: '')
           @extension_type = ExtensionType::STATUS_REQUEST
           @responder_id_list = responder_id_list || []
-          @request_extensions = request_extensions || []
+          @request_extensions = request_extensions || ''
           @length = 1
           @length += 2 \
                      + @responder_id_list.length * 2 \
@@ -32,14 +32,14 @@ module TLS13
 
         # @return [Array of Integer]
         def serialize
-          binary = []
+          binary = ''
           binary += @extension_type
           binary += i2uint16(@length)
-          binary << CertificateStatusType::OCSP
+          binary += CertificateStatusType::OCSP
           binary += i2uint16(@responder_id_list.length)
           binary += @responder_id_list.map do |id|
             i2uint16(id.length) + id
-          end
+          end.join
           binary += i2uint16(@request_extensions.length)
           binary += @request_extensions
           binary
@@ -56,12 +56,12 @@ module TLS13
           raise 'unknown status_type' \
             unless binary[0] == CertificateStatusType::OCSP
 
-          ril_len = arr2i([binary[1], binary[2]])
+          ril_len = bin2i(binary.slice(1, 2))
           itr = 3
           responder_id_list =
             deserialize_request_ids(binary.slice(itr, ril_len))
           itr += ril_len
-          re_len = arr2i([binary[itr], binary[itr + 1]])
+          re_len = bin2i(binary.slice(itr, 2))
           itr += 2
           request_extensions = deserialize_extensions(binary.slice(itr, re_len))
           itr += re_len
@@ -82,10 +82,10 @@ module TLS13
           itr = 0
           request_ids = []
           while itr < binary.length
-            id_len = arr2i([binary[itr], binary[itr + 1]])
+            id_len = bin2i(binary.slice(itr, 2))
             itr += 2
-            id = binary.slice(itr, id_len) || []
-            request_ids << id
+            id = binary.slice(itr, id_len) || ''
+            request_ids += id
             itr += id_len
           end
           raise 'malformed binary' unless itr == binary.length
@@ -97,7 +97,7 @@ module TLS13
         #
         # @return [Array of Integer]
         def self.deserialize_extensions(binary)
-          return [] if binary.nil? || binary.empty?
+          return '' if binary.nil? || binary.empty?
 
           binary
         end

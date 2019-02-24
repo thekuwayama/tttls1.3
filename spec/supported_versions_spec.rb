@@ -10,8 +10,7 @@ RSpec.describe SupportedVersions do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
       expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
-      expect(extension.serialize).to eq [0x00, 0x2b, 0x00, 0x03, 0x02, 0x03,
-                                         0x04]
+      expect(extension.serialize).to eq "\x00\x2b\x00\x03\x02\x03\x04"
     end
   end
 
@@ -24,8 +23,7 @@ RSpec.describe SupportedVersions do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
       expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
-      expect(extension.serialize).to eq [0x00, 0x2b, 0x00, 0x03, 0x02, 0x03,
-                                         0x04]
+      expect(extension.serialize).to eq "\x00\x2b\x00\x03\x02\x03\x04"
     end
   end
 

@@ -2,8 +2,8 @@ module TLS13
   module Message
     module Extension
       module PskKeyExchangeMode
-        PSK_KE     = 0
-        PSK_DHE_KE = 1
+        PSK_KE     = "\x00".freeze
+        PSK_DHE_KE = "\x01".freeze
       end
 
       class PskKeyExchangeModes
@@ -20,11 +20,11 @@ module TLS13
 
         # @return [Array of Integer]
         def serialize
-          binary = []
+          binary = ''
           binary += @extension_type
           binary += i2uint16(@length)
-          binary << @ke_modes.length
-          binary += @ke_modes
+          binary += @ke_modes.length.chr
+          binary += @ke_modes.join
           binary
         end
 
@@ -36,10 +36,15 @@ module TLS13
         def self.deserialize(binary)
           raise 'too short binary' if binary.nil? || binary.empty?
 
-          kem_len = binary[0]
+          kem_len = bin2i(binary[0])
           raise 'malformed binary' unless binary.length == kem_len + 1
 
-          ke_modes = binary.slice(1, kem_len)
+          ke_modes = []
+          itr = 1
+          while itr < kem_len + 1
+            ke_modes << binary[itr]
+            itr += 1
+          end
           PskKeyExchangeModes.new(ke_modes: ke_modes)
         end
       end

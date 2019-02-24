@@ -16,7 +16,7 @@ RSpec.describe Record do
     end
 
     it 'should serialize' do
-      expect(record.serialize).to eq [0x16, 0x03, 0x03, 0x00, 0x00]
+      expect(record.serialize).to eq "\x16\x03\x03\x00\x00"
     end
   end
 

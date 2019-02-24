@@ -1,41 +1,41 @@
 module TLS13
   module Message
     module ContentType
-      INVALID          = 0x00
-      CCS              = 0x14
-      ALERT            = 0x15
-      HANDSHAKE        = 0x16
-      APPLICATION_DATA = 0x17
+      INVALID          = "\x00"
+      CCS              = "\x14"
+      ALERT            = "\x15"
+      HANDSHAKE        = "\x16"
+      APPLICATION_DATA = "\x17"
     end
 
     module ProtocolVersion
-      TLS_1_0 = [0x03, 0x01].freeze
-      TLS_1_1 = [0x03, 0x02].freeze
-      TLS_1_2 = [0x03, 0x03].freeze
-      TLS_1_3 = [0x03, 0x04].freeze
+      TLS_1_0 = "\x03\x01".freeze
+      TLS_1_1 = "\x03\x02".freeze
+      TLS_1_2 = "\x03\x03".freeze
+      TLS_1_3 = "\x03\x04".freeze
     end
 
     module HandshakeType
-      HELLO_REQUEST        = 0x00 # RESERVED
-      CLIENT_HELLO         = 0x01
-      SERVER_HELLO         = 0x02
-      HELLO_VERIFY_REQUEST = 0x03 # RESERVED
-      NEW_SESSION_TICKET   = 0x04
-      END_OF_EARLY_DATA    = 0x05
-      HELLO_RETRY_REQUEST  = 0x06 # RESERVED
-      ENCRYPTED_EXTENSIONS = 0x08
-      CERTIFICATE          = 0x0b
-      SERVER_KEY_EXCHANGE  = 0x0c # RESERVED
-      CERTIFICATE_REQUEST  = 0x0d
-      SERVER_HELLO_DONE    = 0x0e # RESERVED
-      CERTIFICATE_VERIFY   = 0x0f
-      CLIENT_KEY_EXCHANGE  = 0x10 # RESERVED
-      FINISHED             = 0x14
-      CERTIFICATE_URL      = 0x15 # RESERVED
-      CERTIFICATE_STATUS   = 0x16 # RESERVED
-      SUPPLEMENTAL_DATA    = 0x17 # RESERVED
-      KEY_UPDATE           = 0x18
-      MESSAGE_HASH         = 0xfe
+      HELLO_REQUEST        = "\x00" # RESERVED
+      CLIENT_HELLO         = "\x01"
+      SERVER_HELLO         = "\x02"
+      HELLO_VERIFY_REQUEST = "\x03" # RESERVED
+      NEW_SESSION_TICKET   = "\x04"
+      END_OF_EARLY_DATA    = "\x05"
+      HELLO_RETRY_REQUEST  = "\x06" # RESERVED
+      ENCRYPTED_EXTENSIONS = "\x08"
+      CERTIFICATE          = "\x0b"
+      SERVER_KEY_EXCHANGE  = "\x0c" # RESERVED
+      CERTIFICATE_REQUEST  = "\x0d"
+      SERVER_HELLO_DONE    = "\x0e" # RESERVED
+      CERTIFICATE_VERIFY   = "\x0f"
+      CLIENT_KEY_EXCHANGE  = "\x10" # RESERVED
+      FINISHED             = "\x14"
+      CERTIFICATE_URL      = "\x15" # RESERVED
+      CERTIFICATE_STATUS   = "\x16" # RESERVED
+      SUPPLEMENTAL_DATA    = "\x17" # RESERVED
+      KEY_UPDATE           = "\x18"
+      MESSAGE_HASH         = "\xfe"
     end
 
     class Record
@@ -55,7 +55,7 @@ module TLS13
       # @raise [RuntimeError]
       def initialize(type: ContentType::INVALID,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
-                     fragment: [],
+                     fragment: '',
                      content: nil,
                      cryptographer: nil)
         @type = type
@@ -71,7 +71,7 @@ module TLS13
 
       # @return [Array of Integer]
       def serialize
-        binary = []
+        binary = ''
         binary << @type
         binary += @legacy_record_version
         binary += i2uint16(@length)
@@ -89,8 +89,8 @@ module TLS13
         raise 'too short binary' if binary.nil? || binary.length < 5
 
         type = binary[0]
-        legacy_record_version = [binary[1], binary[2]]
-        length = arr2i([binary[3], binary[4]])
+        legacy_record_version = binary.slice(1, 2)
+        length = bin2i(binary.slice(3, 2))
         fragment = binary.slice(5, length)
         plaintext = cryptographer.decrypt(fragment)
         content = deserialize_content(plaintext, type)

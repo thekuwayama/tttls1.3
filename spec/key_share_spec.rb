@@ -3,11 +3,11 @@ require 'spec_helper'
 RSpec.describe KeyShare do
   context 'valid key_share (KeyShareClientHello)' do
     let(:public_key_x25519) do
-      OpenSSL::Random.random_bytes(32).unpack('C*')
+      OpenSSL::Random.random_bytes(32)
     end
 
     let(:public_key_secp256r1) do
-      [0x04] + OpenSSL::Random.random_bytes(64).unpack('C*')
+      "\x04" + OpenSSL::Random.random_bytes(64)
     end
 
     let(:extension) do
@@ -73,7 +73,7 @@ RSpec.describe KeyShare do
         key_share_entry: [
           KeyShareEntry.new(
             group: NamedGroup::X25519,
-            key_exchange: OpenSSL::Random.random_bytes(32).unpack('C*')
+            key_exchange: OpenSSL::Random.random_bytes(32)
           )
         ]
       )

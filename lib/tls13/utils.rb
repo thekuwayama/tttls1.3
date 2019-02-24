@@ -4,7 +4,7 @@ def i2uint16(int)
   [
     int / (1 << 8),
     int % (1 << 8)
-  ]
+  ].map(&:chr).join
 end
 
 def i2uint24(int)
@@ -14,7 +14,7 @@ def i2uint24(int)
     int / (1 << 16),
     int % (1 << 16) / (1 << 8),
     int % (1 << 8)
-  ]
+  ].map(&:chr).join
 end
 
 def i2uint32(int)
@@ -25,9 +25,9 @@ def i2uint32(int)
     int % (1 << 24) / (1 << 16),
     int % (1 << 16) / (1 << 8),
     int % (1 << 8)
-  ]
+  ].map(&:chr).join
 end
 
-def arr2i(array)
-  array.reverse.map.with_index { |x, i| x << 8 * i }.sum
+def bin2i(binary)
+  binary.bytes.reverse.map.with_index { |x, i| x << 8 * i }.sum
 end

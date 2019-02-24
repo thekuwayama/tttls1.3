@@ -30,7 +30,7 @@ RSpec.describe SignatureAlgorithmsCert do
         .to eq ExtensionType::SIGNATURE_ALGORITHMS_CERT \
                + i2uint16(20) \
                + i2uint16(18) \
-               + supported_signature_algorithms.flatten
+               + supported_signature_algorithms.join
     end
   end
 

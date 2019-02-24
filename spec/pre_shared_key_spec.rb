@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe PreSharedKey do
   context 'valid pre_shared_key (ClientHello)' do
     let(:identity) do
-      OpenSSL::Random.random_bytes(32).unpack('C*')
+      OpenSSL::Random.random_bytes(32)
     end
 
     let(:obfuscated_ticket_age) do
@@ -12,7 +12,7 @@ RSpec.describe PreSharedKey do
 
     let(:binders) do
       [
-        OpenSSL::Random.random_bytes(32).unpack('C*')
+        OpenSSL::Random.random_bytes(32)
       ]
     end
 
@@ -50,17 +50,17 @@ RSpec.describe PreSharedKey do
                                         + identity \
                                         + i2uint32(obfuscated_ticket_age) \
                                         + i2uint16(33) \
-                                        + [32] \
-                                        + binders.flatten
+                                        + "\x20" \
+                                        + binders.join
     end
   end
 
   context 'valid pre_shared_key (ClientHello)' do
     let(:identity_1) do
-      OpenSSL::Random.random_bytes(32).unpack('C*')
+      OpenSSL::Random.random_bytes(32)
     end
     let(:identity_2) do
-      OpenSSL::Random.random_bytes(32).unpack('C*')
+      OpenSSL::Random.random_bytes(32)
     end
 
     let(:obfuscated_ticket_age_1) do
@@ -72,8 +72,8 @@ RSpec.describe PreSharedKey do
 
     let(:binders) do
       [
-        OpenSSL::Random.random_bytes(32).unpack('C*'),
-        OpenSSL::Random.random_bytes(32).unpack('C*')
+        OpenSSL::Random.random_bytes(32),
+        OpenSSL::Random.random_bytes(32)
       ]
     end
 
@@ -118,9 +118,9 @@ RSpec.describe PreSharedKey do
                                         + identity_2 \
                                         + i2uint32(obfuscated_ticket_age_2) \
                                         + i2uint16(66) \
-                                        + [32] \
+                                        + "\x20" \
                                         + binders[0] \
-                                        + [32] \
+                                        + "\x20" \
                                         + binders[1]
     end
   end
@@ -135,6 +135,9 @@ RSpec.describe PreSharedKey do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::PRE_SHARED_KEY
       expect(extension.length).to eq 75
+      expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
+                                        + "\x00\x4b" \
+                                        + TESTBINARY_PRE_SHARED_KEY
     end
   end
 end

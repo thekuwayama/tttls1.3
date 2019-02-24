@@ -1,44 +1,44 @@
+# encoding: ascii-8bit
+
 require 'spec_helper'
 
 RSpec.describe UknownExtension do
   context 'valid uknown extension, no extension_data' do
     let(:extension) do
-      UknownExtension.new(extension_type: [0x8a, 0x8a])
+      UknownExtension.new(extension_type: "\x8a\x8a")
     end
 
     it 'should generate valid uknown extension' do
-      expect(extension.extension_type).to eq [0x8a, 0x8a]
+      expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq 0
-      expect(extension.extension_data).to eq []
+      expect(extension.extension_data).to be_empty
     end
 
     it 'should serialize' do
-      expect(extension.serialize).to eq [0x8a, 0x8a, 0x00, 0x00]
+      expect(extension.serialize).to eq "\x8a\x8a\x00\x00"
     end
   end
 
   context 'valid uknown extension' do
-    let(:rand_binary) do
-      Array.new(20).map { rand(255) }
+    let(:random_bytes) do
+      OpenSSL::Random.random_bytes(20)
     end
 
     let(:extension) do
-      UknownExtension.new(
-        extension_type: [0x8a, 0x8a],
-        extension_data: rand_binary
-      )
+      UknownExtension.new(extension_type: "\x8a\x8a",
+                          extension_data: random_bytes)
     end
 
     it 'should generate valid uknown extension' do
-      expect(extension.extension_type).to eq [0x8a, 0x8a]
-      expect(extension.length).to eq rand_binary.length
-      expect(extension.extension_data).to eq rand_binary
+      expect(extension.extension_type).to eq "\x8a\x8a"
+      expect(extension.length).to eq random_bytes.length
+      expect(extension.extension_data).to eq random_bytes
     end
 
     it 'should serialize' do
-      expect(extension.serialize).to eq [0x8a, 0x8a] \
-                                        + i2uint16(rand_binary.length) \
-                                        + rand_binary
+      expect(extension.serialize).to eq "\x8a\x8a" \
+                                        + i2uint16(random_bytes.length) \
+                                        + random_bytes
     end
   end
 
@@ -54,41 +54,41 @@ RSpec.describe UknownExtension do
 
   context 'valid uknown extension binary, binary is nil' do
     let(:extension) do
-      UknownExtension.deserialize(nil, [0x8a, 0x8a])
+      UknownExtension.deserialize(nil, "\x8a\x8a")
     end
 
     it 'should generate valid uknown extension' do
-      expect(extension.extension_type).to eq [0x8a, 0x8a]
+      expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq 0
-      expect(extension.extension_data).to eq []
+      expect(extension.extension_data).to be_empty
     end
   end
 
   context 'valid uknown extension binary, binary is empty' do
     let(:extension) do
-      UknownExtension.deserialize([], [0x8a, 0x8a])
+      UknownExtension.deserialize([], "\x8a\x8a")
     end
 
     it 'should generate valid uknown extension' do
-      expect(extension.extension_type).to eq [0x8a, 0x8a]
+      expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq 0
-      expect(extension.extension_data).to eq []
+      expect(extension.extension_data).to be_empty
     end
   end
 
   context 'valid uknown extension binary' do
-    let(:rand_binary) do
-      Array.new(20).map { rand(255) }
+    let(:random_bytes) do
+      OpenSSL::Random.random_bytes(20)
     end
 
     let(:extension) do
-      UknownExtension.deserialize(rand_binary, [0x8a, 0x8a])
+      UknownExtension.deserialize(random_bytes, "\x8a\x8a")
     end
 
     it 'should generate valid uknown extension' do
-      expect(extension.extension_type).to eq [0x8a, 0x8a]
-      expect(extension.length).to eq rand_binary.length
-      expect(extension.extension_data).to eq rand_binary
+      expect(extension.extension_type).to eq "\x8a\x8a"
+      expect(extension.length).to eq random_bytes.length
+      expect(extension.extension_data).to eq random_bytes
     end
   end
 end

@@ -35,12 +35,12 @@ module TLS13
         #
         # @return [Array of Integer]
         def serialize
-          binary = []
+          binary = ''
           binary += @extension_type
           binary += i2uint16(@length)
           case @msg_type
           when HandshakeType::CLIENT_HELLO
-            buf = []
+            buf = ''
             @key_share_entry.each do |entry|
               buf += entry.serialize
             end
@@ -64,7 +64,7 @@ module TLS13
           key_share_entry = []
           case msg_type
           when HandshakeType::CLIENT_HELLO
-            kse_len = arr2i([binary[0], binary[1]])
+            kse_len = bin2i(binary[0] + binary[1])
             key_share_entry = deserialize_keysharech(binary.slice(2, kse_len))
           when HandshakeType::SERVER_HELLO
             key_share_entry = deserialize_keysharesh(binary)
@@ -88,9 +88,9 @@ module TLS13
           key_share_entry = []
           itr = 0
           while itr < binary.length
-            group = [binary[itr], binary[itr + 1]]
+            group = binary.slice(itr, 2)
             itr += 2
-            ke_len = arr2i([binary[itr], binary[itr + 1]])
+            ke_len = bin2i(binary.slice(itr, 2))
             itr += 2
             key_exchange = binary.slice(itr, ke_len)
             key_share_entry << KeyShareEntry.new(group: group,
@@ -109,8 +109,8 @@ module TLS13
         def self.deserialize_keysharesh(binary)
           raise 'too short binary' if binary.nil? || binary.length < 4
 
-          group = [binary[0] + binary[1]]
-          ke_len = arr2i([binary[2] + binary[3]])
+          group = binary.slice(0, 2)
+          ke_len = arr2i(binary.slice(2, 2))
           raise 'malformed binary' unless binary.length == ke_len + 4
 
           key_exchange = binary.slice(4, ke_len)
@@ -125,7 +125,7 @@ module TLS13
         #
         # @return [Array of KeyShareEntry]
         def self.deserialize_keysharehrr(binary)
-          group = [binary[0] + binary[1]]
+          group = binary.slice(0, 2)
           [KeyShareEntry.new(group: group)]
         end
       end
@@ -136,20 +136,19 @@ module TLS13
 
         # @param group [TLS13::Message::Extension::NamedGroup]
         # @param key_exchange [Array of Integer]
-        def initialize(group: [], key_exchange: [])
-          @group = group
-          @key_exchange = key_exchange
+        def initialize(group: '', key_exchange: '')
+          @group = group || ''
+          @key_exchange = key_exchange || ''
           # TODO: check len(key_exchange) for group
         end
 
         # @return [Array of Integer]
         def serialize
-          binary = []
+          binary = ''
           # @msg_type == HandshakeType::HELLO_RETRY_REQUEST
           # extension_data is single NamedGroup
           binary += @group
-          binary += i2uint16(@key_exchange.length) + @key_exchange \
-            unless @key_exchange.nil? || @key_exchange.empty?
+          binary += i2uint16(@key_exchange.length) + @key_exchange
           binary
         end
       end

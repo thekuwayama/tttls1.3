@@ -18,8 +18,8 @@ module TLS13
       # @param cipher_suites [TLS13::Message::CipherSuites]
       # @param extensions [Array of Extension]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
-                     random: OpenSSL::Random.random_bytes(32).unpack('C*'),
-                     legacy_session_id: Array.new(32, 0),
+                     random: OpenSSL::Random.random_bytes(32),
+                     legacy_session_id: Array.new(32, 0).map(&:chr).join,
                      cipher_suites: DEFALT_CIPHER_SUITES,
                      extensions: [])
         @msg_type = HandshakeType::CLIENT_HELLO
@@ -39,7 +39,7 @@ module TLS13
 
       # @return [Array of Integer]
       def serialize
-        binary = []
+        binary = ''
         binary << @msg_type
         binary += i2uint24(@length)
         binary += @legacy_version
@@ -68,21 +68,21 @@ module TLS13
         raise 'msg_type is invalid' unless check
 
         # TODO: check length
-        # length = arr2i([binary[1], binary[2], binary[3]])
-        legacy_version = [binary[4], binary[5]]
+        # length = bin2i(binary.slice(1, 3))
+        legacy_version = binary.slice(4, 2)
         random = binary.slice(6, 32)
-        lsid_len = binary[38]
+        lsid_len = bin2i(binary[38])
         legacy_session_id = binary.slice(39, lsid_len)
         itr = 39 + lsid_len
-        cs_len = arr2i([binary[itr], binary[itr + 1]])
+        cs_len = bin2i(binary.slice(itr, 2))
         serialized_cipher_suites = binary.slice(itr, cs_len + 2)
         cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
         itr += cs_len + 2
         raise 'legacy_compression_methods is not 0' unless \
-          binary[itr] == 1 && binary[itr + 1].zero?
+          binary.slice(itr, 2) == "\x01\x00"
 
         itr += 2
-        exs_len = arr2i([binary[itr], binary[itr + 1]])
+        exs_len = bin2i(binary.slice(itr, 2))
         serialized_extensions = binary.slice(itr, exs_len + 2)
         extensions = Extensions.deserialize(serialized_extensions,
                                             HandshakeType::CLIENT_HELLO)

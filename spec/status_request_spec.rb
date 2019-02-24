@@ -9,31 +9,29 @@ RSpec.describe StatusRequest do
     it 'should generate valid status_request' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
       expect(extension.length).to eq 5
-      expect(extension.responder_id_list).to eq []
-      expect(extension.request_extensions).to eq []
+      expect(extension.responder_id_list).to be_empty
+      expect(extension.request_extensions).to be_empty
     end
 
     it 'should serialize' do
-      expect(extension.serialize).to eq [0x00, 0x05, 0x00, 0x05, 0x01, 0x00,
-                                         0x00, 0x00, 0x00]
+      expect(extension.serialize).to eq "\x00\x05\x00\x05\x01\x00\x00\x00\x00"
     end
   end
 
   context 'valid status_request' do
     let(:extension) do
-      StatusRequest.new(responder_id_list: [], request_extensions: [])
+      StatusRequest.new(responder_id_list: [], request_extensions: '')
     end
 
     it 'should generate valid status_request' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
       expect(extension.length).to eq 5
-      expect(extension.responder_id_list).to eq []
-      expect(extension.request_extensions).to eq []
+      expect(extension.responder_id_list).to be_empty
+      expect(extension.request_extensions).to be_empty
     end
 
     it 'should serialize' do
-      expect(extension.serialize).to eq [0x00, 0x05, 0x00, 0x05, 0x01, 0x00,
-                                         0x00, 0x00, 0x00]
+      expect(extension.serialize).to eq "\x00\x05\x00\x05\x01\x00\x00\x00\x00"
     end
   end
 
@@ -45,13 +43,12 @@ RSpec.describe StatusRequest do
     it 'should generate valid status_request' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
       expect(extension.length).to eq 5
-      expect(extension.responder_id_list).to eq []
-      expect(extension.request_extensions).to eq []
+      expect(extension.responder_id_list).to be_empty
+      expect(extension.request_extensions).to be_empty
     end
 
     it 'should serialize' do
-      expect(extension.serialize).to eq [0x00, 0x05, 0x00, 0x05, 0x01, 0x00,
-                                         0x00, 0x00, 0x00]
+      expect(extension.serialize).to eq "\x00\x05\x00\x05\x01\x00\x00\x00\x00"
     end
   end
 
@@ -63,8 +60,8 @@ RSpec.describe StatusRequest do
     it 'should generate valid status_request' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
       expect(extension.length).to eq 5
-      expect(extension.responder_id_list).to eq []
-      expect(extension.request_extensions).to eq []
+      expect(extension.responder_id_list).to be_empty
+      expect(extension.request_extensions).to be_empty
     end
   end
 end

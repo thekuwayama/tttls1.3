@@ -12,7 +12,7 @@ RSpec.describe CipherSuites do
     end
 
     it 'should serialize' do
-      expect(cs.serialize).to eq ([0x00, 0x06] + DEFALT_CIPHER_SUITES).flatten
+      expect(cs.serialize).to eq "\x00\x06" + DEFALT_CIPHER_SUITES.join
     end
   end
 

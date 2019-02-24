@@ -24,7 +24,7 @@ module TLS13
             @length = @offered_psks.length
             # TODO: argument check
           when HandshakeType::SERVER_HELLO
-            @selected_identity = selected_identity || []
+            @selected_identity = selected_identity || ''
             @length = 2
             # TODO: argument check
           else
@@ -36,7 +36,7 @@ module TLS13
         #
         # @return [Array of Integer]
         def serialize
-          binary = []
+          binary = ''
           binary += @extension_type
           binary += i2uint16(@length)
           case @msg_type
@@ -65,7 +65,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO
             raise 'malformed binary' unless binary.length == 2
 
-            selected_identity = [binary[0], binary[1]]
+            selected_identity = binary.slice(0, 2)
             PreSharedKey.new(msg_type: HandshakeType::SERVER_HELLO,
                              selected_identity: selected_identity)
           else
@@ -112,17 +112,17 @@ module TLS13
         # @param binary [Array of Integer]
         #
         # @return [TLS13::Message::Extensions::OfferedPsks]
-        # rubocop: disable Metrics/AbcSize, Metrics/MethodLength
+        # rubocop: disable Metrics/MethodLength
         def self.deserialize(binary)
-          pksids_len = arr2i([binary[0], binary[1]])
+          pksids_len = bin2i(binary.slice(0, 2))
           itr = 2
           identities = [] # Array of PskIdentity
           while itr < pksids_len + 2
-            id_len = arr2i([binary[itr], binary[itr + 1]])
+            id_len = bin2i(binary.slice(itr, 2))
             itr += 2
             identity = binary.slice(itr, id_len)
             itr += id_len
-            obfuscated_ticket_age = arr2i(binary.slice(itr, 4))
+            obfuscated_ticket_age = bin2i(binary.slice(itr, 4))
             itr += 4
             identities << PskIdentity.new(
               identity: identity,
@@ -130,18 +130,18 @@ module TLS13
             )
           end
 
-          binders_tail = itr + arr2i([binary[itr], binary[itr + 1]])
+          binders_tail = itr + bin2i(binary.slice(itr, 2))
           itr += 2
           binders = [] # Array of Array of Integer
           while itr < binders_tail
-            pbe_len = binary[itr]
+            pbe_len = bin2i(binary[itr])
             itr += 1
             binders << binary.slice(itr, pbe_len)
             itr += pbe_len
           end
           OfferedPsks.new(identities: identities, binders: binders)
         end
-        # rubocop: enable Metrics/AbcSize, Metrics/MethodLength
+        # rubocop: enable Metrics/MethodLength
       end
 
       class PskIdentity
@@ -153,8 +153,8 @@ module TLS13
         # @param obfuscated_ticket_age [Integer]
         #
         # @raise [RuntimeError]
-        def initialize(identity: [], obfuscated_ticket_age: 0)
-          @identity = identity || []
+        def initialize(identity: '', obfuscated_ticket_age: 0)
+          @identity = identity || ''
           raise 'invalid identity' if @identity.empty?
 
           @obfuscated_ticket_age = obfuscated_ticket_age
@@ -163,7 +163,7 @@ module TLS13
 
         # @return [Array of Integer]
         def serialize
-          binary = []
+          binary = ''
           binary += i2uint16(@identity.length)
           binary += @identity
           binary += i2uint32(@obfuscated_ticket_age)

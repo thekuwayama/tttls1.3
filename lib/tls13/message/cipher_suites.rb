@@ -1,11 +1,11 @@
 module TLS13
   module Message
     module CipherSuite
-      TLS_AES_128_GCM_SHA256       = [0x13, 0x01].freeze
-      TLS_AES_256_GCM_SHA384       = [0x13, 0x02].freeze
-      TLS_CHACHA20_POLY1305_SHA256 = [0x13, 0x03].freeze
-      TLS_AES_128_CCM_SHA256       = [0x13, 0x04].freeze
-      TLS_AES_128_CCM_8_SHA256     = [0x13, 0x05].freeze
+      TLS_AES_128_GCM_SHA256       = "\x13\x01".freeze
+      TLS_AES_256_GCM_SHA384       = "\x13\x02".freeze
+      TLS_CHACHA20_POLY1305_SHA256 = "\x13\x03".freeze
+      TLS_AES_128_CCM_SHA256       = "\x13\x04".freeze
+      TLS_AES_128_CCM_8_SHA256     = "\x13\x05".freeze
     end
 
     DEFALT_CIPHER_SUITES = [CipherSuite::TLS_AES_256_GCM_SHA384,
@@ -24,9 +24,9 @@ module TLS13
 
       # @return [Array of Integer]
       def serialize
-        binary = []
+        binary = ''
         binary += i2uint16(@length)
-        binary += @cipher_suites.flatten
+        binary += @cipher_suites.join
         binary
       end
 
@@ -38,10 +38,15 @@ module TLS13
       def self.deserialize(binary)
         raise 'too short binary' if binary.nil? || binary.length < 2
 
-        cs_len = arr2i([binary[0], binary[1]])
+        cs_len = bin2i(binary.slice(0, 2))
         raise 'malformed binary' unless binary.length == cs_len + 2
 
-        cipher_suites = binary.slice(2, cs_len).each_slice(2).to_a
+        cipher_suites = []
+        itr = 2
+        while itr < cs_len + 2
+          cipher_suites << binary.slice(itr, 2)
+          itr += 2
+        end
         CipherSuites.new(cipher_suites)
       end
     end

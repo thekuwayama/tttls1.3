@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe Cookie do
   context 'valid cookie' do
     let(:cookie) do
-      OpenSSL::Random.random_bytes(2**16 - 3).unpack('C*')
+      OpenSSL::Random.random_bytes(2**16 - 3)
     end
 
     let(:extension) do

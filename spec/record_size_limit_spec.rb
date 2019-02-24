@@ -10,7 +10,7 @@ RSpec.describe RecordSizeLimit do
       expect(extension.extension_type).to eq ExtensionType::RECORD_SIZE_LIMIT
       expect(extension.length).to eq 2
       expect(extension.record_size_limit).to eq 2**14
-      expect(extension.serialize).to eq [0x00, 0x1c, 0x00, 0x02, 0x40, 0x00]
+      expect(extension.serialize).to eq "\x00\x1c\x00\x02\x40\x00"
     end
   end
 

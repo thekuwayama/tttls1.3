@@ -9,13 +9,13 @@ module TLS13
         # @param cookie [Array of Integer]
         def initialize(cookie)
           @extension_type = ExtensionType::COOKIE
-          @cookie = cookie || []
+          @cookie = cookie || ''
           @length = 2 + @cookie.length
         end
 
         # @return [Array of Integer]
         def serialize
-          binary = []
+          binary = ''
           binary += @extension_type
           binary += i2uint16(@length)
           binary += i2uint16(@cookie.length)
@@ -31,7 +31,7 @@ module TLS13
         def self.deserialize(binary)
           raise 'too short binary' if binary.nil? || binary.length < 2
 
-          cookie_len = arr2i([binary[0], binary[1]])
+          cookie_len = bin2i(binary.slice(0, 2))
           raise 'malformed binary' unless binary.length == cookie_len + 2
 
           cookie = binary.slice(2, cookie_len)
