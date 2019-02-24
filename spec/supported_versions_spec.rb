@@ -9,10 +9,13 @@ RSpec.describe SupportedVersions do
       SupportedVersions.new([ProtocolVersion::TLS_1_3])
     end
 
-    it 'should generate valid supported_versions' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
       expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq "\x00\x2b\x00\x03\x02\x03\x04"
     end
   end
@@ -22,10 +25,13 @@ RSpec.describe SupportedVersions do
       SupportedVersions.new
     end
 
-    it 'should generate valid supported_versions' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
       expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq "\x00\x2b\x00\x03\x02\x03\x04"
     end
   end
@@ -35,7 +41,7 @@ RSpec.describe SupportedVersions do
       SupportedVersions.deserialize(TESTBINARY_SUPPORTED_VERSIONS)
     end
 
-    it 'should generate valid supported_versions' do
+    it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
       expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]

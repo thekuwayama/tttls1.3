@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 RSpec.describe KeyShare do
-  context 'valid key_share (KeyShareClientHello)' do
+  context 'valid key_share, KeyShareClientHello,' do
     let(:public_key_x25519) do
       OpenSSL::Random.random_bytes(32)
     end
@@ -29,7 +29,7 @@ RSpec.describe KeyShare do
       )
     end
 
-    it 'should generate valid key_share' do
+    it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
       expect(extension.length).to eq 107
@@ -38,6 +38,9 @@ RSpec.describe KeyShare do
       expect(extension.key_share_entry[1].group).to eq NamedGroup::SECP256R1
       expect(extension.key_share_entry[1].key_exchange)
         .to eq public_key_secp256r1
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
                                         + i2uint16(107) \
                                         + i2uint16(105) \
@@ -58,18 +61,21 @@ RSpec.describe KeyShare do
       )
     end
 
-    it 'should generate valid key_share' do
+    it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
       expect(extension.length).to eq 2
       expect(extension.key_share_entry).to be_empty
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
                                         + i2uint16(2) \
                                         + i2uint16(0)
     end
   end
 
-  context 'valid key_share (KeyShareServerHello)' do
+  context 'valid key_share, KeyShareServerHello,' do
     let(:extension) do
       KeyShare.new(
         msg_type: HandshakeType::SERVER_HELLO,
@@ -84,7 +90,7 @@ RSpec.describe KeyShare do
     # TODO
   end
 
-  context 'valid key_share (KeyShareHelloRetryRequest)' do
+  context 'valid key_share, KeyShareHelloRetryRequest,' do
     let(:extension) do
       KeyShare.new(
         msg_type: HandshakeType::HELLO_RETRY_REQUEST,
@@ -104,7 +110,7 @@ RSpec.describe KeyShare do
       KeyShare.deserialize(TESTBINARY_KEY_SHARE, HandshakeType::CLIENT_HELLO)
     end
 
-    it 'should generate valid key_share' do
+    it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
       expect(extension.length).to eq 38
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519

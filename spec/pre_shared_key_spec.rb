@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 RSpec.describe PreSharedKey do
-  context 'valid pre_shared_key (ClientHello)' do
+  context 'valid pre_shared_key of ClientHello' do
     let(:identity) do
       OpenSSL::Random.random_bytes(32)
     end
@@ -40,12 +40,15 @@ RSpec.describe PreSharedKey do
                        offered_psks: offered_psks)
     end
 
-    it 'should generate valid pre_shared_key' do
+    it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::PRE_SHARED_KEY
       expect(extension.length).to eq 75
       expect(extension.offered_psks).to eq offered_psks
       expect(extension.selected_identity).to be_nil
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
                                         + i2uint16(75) \
                                         + i2uint16(38) \
@@ -58,7 +61,7 @@ RSpec.describe PreSharedKey do
     end
   end
 
-  context 'valid pre_shared_key (ClientHello)' do
+  context 'valid pre_shared_key, ClientHello,' do
     let(:identity_1) do
       OpenSSL::Random.random_bytes(32)
     end
@@ -105,12 +108,15 @@ RSpec.describe PreSharedKey do
                        offered_psks: offered_psks)
     end
 
-    it 'should generate valid pre_shared_key' do
+    it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::PRE_SHARED_KEY
       expect(extension.length).to eq 146
       expect(extension.offered_psks).to eq offered_psks
       expect(extension.selected_identity).to be_nil
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
                                         + i2uint16(146) \
                                         + i2uint16(76) \
@@ -134,10 +140,13 @@ RSpec.describe PreSharedKey do
                                HandshakeType::CLIENT_HELLO)
     end
 
-    it 'should generate valid pre_shared_key' do
+    it 'should generate valid object' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::PRE_SHARED_KEY
       expect(extension.length).to eq 75
+    end
+
+    it 'should generate valid object and should be serialized' do
       expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
                                         + "\x00\x4b" \
                                         + TESTBINARY_PRE_SHARED_KEY

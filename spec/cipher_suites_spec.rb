@@ -4,17 +4,17 @@
 require 'spec_helper'
 
 RSpec.describe CipherSuites do
-  context 'valid cipher suites' do
+  context 'default cipher suites' do
     let(:cs) do
       CipherSuites.new
     end
 
-    it 'should generate default cipher suites' do
+    it 'should be generated' do
       expect(cs.length).to eq 6
       expect(cs.cipher_suites).to eq DEFALT_CIPHER_SUITES
     end
 
-    it 'should serialize' do
+    it 'should be serialized' do
       expect(cs.serialize).to eq "\x00\x06" + DEFALT_CIPHER_SUITES.join
     end
   end
@@ -24,7 +24,7 @@ RSpec.describe CipherSuites do
       CipherSuites.deserialize(TESTBINARY_CIPHER_SUITES)
     end
 
-    it 'should generate valid cipher suites' do
+    it 'should generate valid object' do
       expect(cs.length).to eq 6
       expect(cs.cipher_suites).to eq DEFALT_CIPHER_SUITES
     end
@@ -35,7 +35,7 @@ RSpec.describe CipherSuites do
       CipherSuites.deserialize(TESTBINARY_CIPHER_SUITES[0...-1])
     end
 
-    it 'should not generate cipher suites' do
+    it 'should not generate object' do
       expect { cs }.to raise_error(RuntimeError)
     end
   end
@@ -45,7 +45,7 @@ RSpec.describe CipherSuites do
       CipherSuites.deserialize(nil)
     end
 
-    it 'should not generate cipher suites' do
+    it 'should not generate object' do
       expect { cs }.to raise_error(RuntimeError)
     end
   end

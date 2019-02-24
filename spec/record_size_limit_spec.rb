@@ -9,10 +9,13 @@ RSpec.describe RecordSizeLimit do
       RecordSizeLimit.new(2**14)
     end
 
-    it 'should generate valid record_size_limit' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::RECORD_SIZE_LIMIT
       expect(extension.length).to eq 2
       expect(extension.record_size_limit).to eq 2**14
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq "\x00\x1c\x00\x02\x40\x00"
     end
   end
@@ -22,7 +25,7 @@ RSpec.describe RecordSizeLimit do
       RecordSizeLimit.new(64)
     end
 
-    it 'should not generate record_size_limit' do
+    it 'should not generated' do
       expect { extension }.to raise_error(RuntimeError)
     end
   end
@@ -32,7 +35,7 @@ RSpec.describe RecordSizeLimit do
       RecordSizeLimit.deserialize(TESTBINARY_RECORD_SIZE_LIMIT)
     end
 
-    it 'should generate valid record_size_limit' do
+    it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::RECORD_SIZE_LIMIT
       expect(extension.length).to eq 2
       expect(extension.record_size_limit).to eq 2**14

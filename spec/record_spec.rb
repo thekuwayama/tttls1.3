@@ -12,13 +12,13 @@ RSpec.describe Record do
       )
     end
 
-    it 'should generate valid record' do
+    it 'should be generated' do
       expect(record.type).to eq ContentType::HANDSHAKE
       expect(record.legacy_record_version).to eq ProtocolVersion::TLS_1_2
       expect(record.length).to eq 0
     end
 
-    it 'should serialize' do
+    it 'should be serialized' do
       expect(record.serialize).to eq "\x16\x03\x03\x00\x00"
     end
   end
@@ -28,7 +28,7 @@ RSpec.describe Record do
       Record.deserialize(TESTBINARY_RECORD_HEADER, Passer.new)
     end
 
-    it 'should generate valid record' do
+    it 'should generate valid header' do
       expect(record.type).to eq ContentType::HANDSHAKE
       expect(record.legacy_record_version).to eq ProtocolVersion::TLS_1_2
       expect(record.length).to eq 0
@@ -41,7 +41,7 @@ RSpec.describe Record do
                          Passer.new)
     end
 
-    it 'should not generate record' do
+    it 'should not generate header' do
       expect { record }.to raise_error(RuntimeError)
     end
   end
@@ -51,7 +51,7 @@ RSpec.describe Record do
       Record.deserialize(nil, Passer.new)
     end
 
-    it 'should not generate record' do
+    it 'should not generate header' do
       expect { record }.to raise_error(RuntimeError)
     end
   end

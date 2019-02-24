@@ -13,7 +13,7 @@ RSpec.describe ClientHello do
       ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
     end
 
-    it 'should generate valid client hello' do
+    it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
     end
   end

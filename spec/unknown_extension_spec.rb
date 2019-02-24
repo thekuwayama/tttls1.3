@@ -9,13 +9,13 @@ RSpec.describe UknownExtension do
       UknownExtension.new(extension_type: "\x8a\x8a")
     end
 
-    it 'should generate valid uknown extension' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq 0
       expect(extension.extension_data).to be_empty
     end
 
-    it 'should serialize' do
+    it 'should be serialized' do
       expect(extension.serialize).to eq "\x8a\x8a\x00\x00"
     end
   end
@@ -30,13 +30,13 @@ RSpec.describe UknownExtension do
                           extension_data: random_bytes)
     end
 
-    it 'should generate valid uknown extension' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq random_bytes.length
       expect(extension.extension_data).to eq random_bytes
     end
 
-    it 'should serialize' do
+    it 'should be serialized' do
       expect(extension.serialize).to eq "\x8a\x8a" \
                                         + i2uint16(random_bytes.length) \
                                         + random_bytes
@@ -48,29 +48,29 @@ RSpec.describe UknownExtension do
       UknownExtension.new
     end
 
-    it 'should not generate uknown extension' do
+    it 'should not be generated' do
       expect { extension }.to raise_error(RuntimeError)
     end
   end
 
-  context 'valid uknown extension binary, binary is nil' do
+  context 'valid uknown extension binary, binary is nil,' do
     let(:extension) do
       UknownExtension.deserialize(nil, "\x8a\x8a")
     end
 
-    it 'should generate valid uknown extension' do
+    it 'should generate valid object' do
       expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq 0
       expect(extension.extension_data).to be_empty
     end
   end
 
-  context 'valid uknown extension binary, binary is empty' do
+  context 'valid uknown extension binary, binary is empty,' do
     let(:extension) do
       UknownExtension.deserialize([], "\x8a\x8a")
     end
 
-    it 'should generate valid uknown extension' do
+    it 'should generate valid object' do
       expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq 0
       expect(extension.extension_data).to be_empty
@@ -86,7 +86,7 @@ RSpec.describe UknownExtension do
       UknownExtension.deserialize(random_bytes, "\x8a\x8a")
     end
 
-    it 'should generate valid uknown extension' do
+    it 'should generate valid object' do
       expect(extension.extension_type).to eq "\x8a\x8a"
       expect(extension.length).to eq random_bytes.length
       expect(extension.extension_data).to eq random_bytes

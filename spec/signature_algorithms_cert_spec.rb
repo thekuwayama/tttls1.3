@@ -23,12 +23,15 @@ RSpec.describe SignatureAlgorithmsCert do
       SignatureAlgorithmsCert.new(supported_signature_algorithms)
     end
 
-    it 'should generate valid signature_algorithms' do
+    it 'should be generated' do
       expect(extension.extension_type)
         .to eq ExtensionType::SIGNATURE_ALGORITHMS_CERT
       expect(extension.length).to eq 20
       expect(extension.supported_signature_algorithms)
         .to eq supported_signature_algorithms
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize)
         .to eq ExtensionType::SIGNATURE_ALGORITHMS_CERT \
                + i2uint16(20) \
@@ -56,7 +59,7 @@ RSpec.describe SignatureAlgorithmsCert do
       ]
     end
 
-    it 'should generate valid signature_algorithms' do
+    it 'should generate valid object' do
       expect(extension.extension_type)
         .to eq ExtensionType::SIGNATURE_ALGORITHMS_CERT
       expect(extension.length).to eq 20

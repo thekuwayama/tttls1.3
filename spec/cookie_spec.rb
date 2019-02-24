@@ -13,10 +13,13 @@ RSpec.describe Cookie do
       Cookie.new(cookie)
     end
 
-    it 'should generate valid cookie' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::COOKIE
       expect(extension.length).to eq 2 + (2**16 - 3)
       expect(extension.cookie).to eq cookie
+    end
+
+    it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::COOKIE \
                                         + i2uint16(2 + (2**16 - 3)) \
                                         + i2uint16(2**16 - 3) \
@@ -29,7 +32,7 @@ RSpec.describe Cookie do
       Cookie.deserialize(TESTBINARY_COOKIE)
     end
 
-    it 'should generate valid cookie' do
+    it 'should generate object' do
       expect(extension.extension_type).to eq ExtensionType::COOKIE
       expect(extension.length).to eq TESTBINARY_COOKIE.length
       expect(extension.cookie).to eq TESTBINARY_COOKIE[2..-1]

@@ -16,7 +16,7 @@ RSpec.describe SupportedGroups do
       SupportedGroups.new(named_group_list)
     end
 
-    it 'should generate valid supported_groups' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
       expect(extension.length).to eq 10
       expect(extension.named_group_list).to eq named_group_list
@@ -28,7 +28,7 @@ RSpec.describe SupportedGroups do
       SupportedGroups.new
     end
 
-    it 'should generate valid supported_groups' do
+    it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
       expect(extension.length).to eq 10
       expect(extension.named_group_list).to eq DEFALT_NAMED_GROUP_LIST
@@ -40,7 +40,7 @@ RSpec.describe SupportedGroups do
       SupportedGroups.deserialize(TESTBINARY_SUPPORTED_GROUPS)
     end
 
-    it 'should generate valid supported_groups' do
+    it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
       expect(extension.length).to eq 10
       expect(extension.named_group_list).to eq [NamedGroup::SECP256R1,
