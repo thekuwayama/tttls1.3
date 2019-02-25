@@ -6,7 +6,7 @@ require 'openssl'
 module TLS13
   module Message
     class ClientHello
-      attr_accessor :msg_type
+      attr_reader   :msg_type
       attr_accessor :length
       attr_accessor :legacy_version
       attr_accessor :random
@@ -17,33 +17,32 @@ module TLS13
 
       # @param legacy_version [String]
       # @param random [String]
-      # @param legacy_session_id [String]
-      # @param cipher_suites [TLS13::Message::CipherSuites]
-      # @param extensions [Array of Extension]
+      # @param legacy_session_id_echo [String]
+      # @param cipher_suite [Array of CipherSuites]
+      # @param extensions [Hash of Extension]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
                      legacy_session_id: Array.new(32, 0).map(&:chr).join,
                      cipher_suites: DEFALT_CIPHER_SUITES,
-                     extensions: [])
+                     extensions: {})
         @msg_type = HandshakeType::CLIENT_HELLO
         @legacy_version = legacy_version
         @random = random
         @legacy_session_id = legacy_session_id
         @cipher_suites = cipher_suites
         @legacy_compression_methods = 0
-        @extensions = extensions
-        @length = @legacy_version.length \
-                  + @random.length \
-                  + 2 + @legacy_session_id.length \
-                  + 2 + @cipher_suites.serialize.length \
-                  + 2 + @extensions.extensions.map { |x| x.length + 4 }
-                                   .sum
+        @extensions = extensions || {}
+        @length = 34 \
+                  + 1 + @legacy_session_id.length \
+                  + 2 + @cipher_suites.length  \
+                  + 2 \
+                  + 2 + @extensions.length
       end
 
       # @return [String]
       def serialize
         binary = ''
-        binary << @msg_type
+        binary += @msg_type
         binary += i2uint24(@length)
         binary += @legacy_version
         binary += @random
@@ -52,11 +51,10 @@ module TLS13
         binary += @cipher_suites.serialize
         binary << 1 # compression methods length
         binary << @legacy_compression_methods
-        # TODO
-        # serialized_extensions = @extensions.map(&:serialize).flatten
-        # exs_len = serialized_extensions.length
-        # binary += i2uint16(exs_len)
-        # binary += serialized_extensions
+        serialized_extensions = @extensions.extensions.values.map(&:serialize).join
+        exs_len = serialized_extensions.length
+        binary += i2uint16(exs_len)
+        binary += serialized_extensions
         binary
       end
 
@@ -67,11 +65,10 @@ module TLS13
       # @return [TLS13::Message::ClientHello]
       # rubocop: disable Metrics/MethodLength
       def self.deserialize(binary)
-        check = binary[0] == HandshakeType::CLIENT_HELLO
-        raise 'msg_type is invalid' unless check
+        raise 'msg_type is invalid' \
+          unless binary[0] == HandshakeType::CLIENT_HELLO
 
-        # TODO: check length
-        # length = bin2i(binary.slice(1, 3))
+        length = bin2i(binary.slice(1, 3))
         legacy_version = binary.slice(4, 2)
         random = binary.slice(6, 32)
         lsid_len = bin2i(binary[38])
@@ -89,6 +86,9 @@ module TLS13
         serialized_extensions = binary.slice(itr, exs_len + 2)
         extensions = Extensions.deserialize(serialized_extensions,
                                             HandshakeType::CLIENT_HELLO)
+        itr += exs_len + 2
+        raise 'malformed binary' unless itr == length + 4
+
         ClientHello.new(legacy_version: legacy_version,
                         random: random,
                         legacy_session_id: legacy_session_id,

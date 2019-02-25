@@ -44,9 +44,8 @@ module TLS13
       #     }
       #   )
       def initialize(extensions)
-        @length = 0
         @extensions = extensions || {}
-        @length = @extensions.map { |x| x.length + 4 }.sum
+        @length = @extensions.values.map { |x| x.length + 4 }.sum
       end
 
       # @return [String]
@@ -71,7 +70,7 @@ module TLS13
         itr = 2
         extensions = {}
         while itr < length + 2
-          extension_type = [binary[itr], binary[itr + 1]]
+          extension_type = binary.slice(itr, 2)
           itr += 2
           ex_len = bin2i(binary.slice(itr, 2))
           itr += 2
@@ -100,8 +99,6 @@ module TLS13
       # @return [TLS13::Message::Extension::$Object, nil]
       # rubocop: disable Metrics/CyclomaticComplexity, Metrics/MethodLength
       def self.deserialize_extension(binary, extension_type, msg_type)
-        return nil if binary.nil? || binary.empty?
-
         # TODO
         case extension_type
         when ExtensionType::SERVER_NAME
