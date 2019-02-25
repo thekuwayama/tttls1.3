@@ -19,7 +19,10 @@ module TLS13
         #   ServerName.new('example.com')
         def initialize(server_name)
           @extension_type = ExtensionType::SERVER_NAME
-          @server_name = server_name
+          @server_name = server_name || []
+          raise 'invalid length HostName' \
+            if @server_name.empty? || @server_name.length > 2**16 - 5
+
           @length = 5 + @server_name.length
         end
 
