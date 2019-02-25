@@ -146,7 +146,7 @@ RSpec.describe PreSharedKey do
       expect(extension.length).to eq 75
     end
 
-    it 'should generate valid object and should be serialized' do
+    it 'should generate valid serializable object' do
       expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
                                         + "\x00\x4b" \
                                         + TESTBINARY_PRE_SHARED_KEY
