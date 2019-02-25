@@ -41,6 +41,7 @@ module TLS13
           binary = ''
           binary += @extension_type
           binary += i2uint16(@length)
+          binary += i2uint16(@length - 2)
           binary += @named_group_list.join
           binary
         end
