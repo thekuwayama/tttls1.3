@@ -25,7 +25,7 @@ module TLS13
                                  NamedGroup::X25519].freeze
 
       class SupportedGroups
-        attr_accessor :extension_type
+        attr_reader   :extension_type
         attr_accessor :length
         attr_accessor :named_group_list
 

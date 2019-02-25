@@ -5,7 +5,7 @@ module TLS13
   module Message
     module Extension
       class PreSharedKey
-        attr_accessor :extension_type
+        attr_reader   :extension_type
         attr_accessor :length
         attr_accessor :msg_type
         attr_accessor :offered_psks

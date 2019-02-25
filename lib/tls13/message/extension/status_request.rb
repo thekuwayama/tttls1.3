@@ -9,7 +9,7 @@ module TLS13
       end
 
       class StatusRequest
-        attr_accessor :extension_type
+        attr_reader   :extension_type
         attr_accessor :length
         attr_accessor :responder_id_list
         attr_accessor :request_extensions

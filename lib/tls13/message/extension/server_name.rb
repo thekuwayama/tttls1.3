@@ -9,7 +9,7 @@ module TLS13
       end
 
       class ServerName
-        attr_accessor :extension_type
+        attr_reader   :extension_type
         attr_accessor :length
         attr_accessor :server_name
 

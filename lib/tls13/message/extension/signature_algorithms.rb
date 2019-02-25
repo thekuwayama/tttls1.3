@@ -32,7 +32,7 @@ module TLS13
       end
 
       class SignatureAlgorithms
-        attr_accessor :extension_type
+        attr_accessor :extension_type # for signature_algorithms_cert
         attr_accessor :length
         attr_accessor :supported_signature_algorithms
 

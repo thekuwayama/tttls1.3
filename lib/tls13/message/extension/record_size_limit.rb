@@ -5,15 +5,15 @@ module TLS13
   module Message
     module Extension
       class RecordSizeLimit
-        attr_accessor :extension_type
+        attr_reader   :extension_type
         attr_accessor :length
         attr_accessor :record_size_limit
 
-        # @raise [RuntimeError]
-        #
         # @param record_size_limit [Integer]
+        #
+        # @raise [RuntimeError]
         def initialize(record_size_limit)
-          raise 'invalid record_size_limit' \
+          raise 'invalid RecordSizeLimit' \
             if record_size_limit <= 64
 
           @extension_type = ExtensionType::RECORD_SIZE_LIMIT
