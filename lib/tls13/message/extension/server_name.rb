@@ -13,7 +13,9 @@ module TLS13
         attr_accessor :length
         attr_accessor :server_name
 
-        # @param server_name [Hash]
+        # @param server_name [String]
+        #
+        # @raise [RuntimeError]
         #
         # @example
         #   ServerName.new('example.com')
