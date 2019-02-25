@@ -51,10 +51,11 @@ module TLS13
       # @return [String]
       def serialize
         binary = ''
-        binary += @length
+        binary += i2uint16(@length)
         @extensions.each_value do |ex|
           binary += ex.serialize
         end
+        binary
       end
 
       # @param binary [String]
@@ -102,25 +103,25 @@ module TLS13
         # TODO
         case extension_type
         when ExtensionType::SERVER_NAME
-          return Extension::ServerName.deserialize(binary)
+          Extension::ServerName.deserialize(binary)
         when ExtensionType::SUPPORTED_GROUPS
-          return Extension::SupportedGroups.deserialize(binary)
+          Extension::SupportedGroups.deserialize(binary)
         when ExtensionType::SIGNATURE_ALGORITHMS
-          return Extension::SignatureAlgorithms.deserialize(binary)
+          Extension::SignatureAlgorithms.deserialize(binary)
         when ExtensionType::RECORD_SIZE_LIMIT
-          return Extension::RecordSizeLimit.deserialize(binary)
+          Extension::RecordSizeLimit.deserialize(binary)
         when ExtensionType::SUPPORTED_VERSIONS
-          return Extension::SupportedVersions.deserialize(binary)
+          Extension::SupportedVersions.deserialize(binary)
         when ExtensionType::COOKIE
-          return Extension::Cookie.deserialize(binary)
+          Extension::Cookie.deserialize(binary)
         when ExtensionType::PSK_KEY_EXCHANGE_MODES
-          return Extension::PskKeyExchangeModes.deserialize(binary)
+          Extension::PskKeyExchangeModes.deserialize(binary)
         when ExtensionType::SIGNATURE_ALGORITHMS_CERT
-          return Extension::SignatureAlgorithmsCert.deserialize(binary)
+          Extension::SignatureAlgorithmsCert.deserialize(binary)
         when ExtensionType::KEY_SHARE
-          return Extension::KeyShare.deserialize(binary, msg_type)
+          Extension::KeyShare.deserialize(binary, msg_type)
         else
-          return Extension::UknownExtension.deserialize(binary, extension_type)
+          Extension::UknownExtension.deserialize(binary, extension_type)
         end
       end
       # rubocop: enable Metrics/CyclomaticComplexity, Metrics/MethodLength

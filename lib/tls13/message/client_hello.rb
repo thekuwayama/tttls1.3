@@ -32,11 +32,8 @@ module TLS13
         @cipher_suites = cipher_suites
         @legacy_compression_methods = 0
         @extensions = extensions || {}
-        @length = 34 \
-                  + 1 + @legacy_session_id.length \
-                  + 2 + @cipher_suites.length  \
-                  + 2 \
-                  + 2 + @extensions.length
+        @length = 41 + @legacy_session_id.length + @cipher_suites.length \
+                  + @extensions.length
       end
 
       # @return [String]
@@ -51,10 +48,7 @@ module TLS13
         binary += @cipher_suites.serialize
         binary << 1 # compression methods length
         binary << @legacy_compression_methods
-        serialized_extensions = @extensions.extensions.values.map(&:serialize).join
-        exs_len = serialized_extensions.length
-        binary += i2uint16(exs_len)
-        binary += serialized_extensions
+        binary += @extensions.serialize
         binary
       end
 
@@ -63,7 +57,7 @@ module TLS13
       # @raise [RuntimeError]
       #
       # @return [TLS13::Message::ClientHello]
-      # rubocop: disable Metrics/MethodLength
+      # rubocop: disable Metrics/AbcSize, Metrics/MethodLength
       def self.deserialize(binary)
         raise 'msg_type is invalid' \
           unless binary[0] == HandshakeType::CLIENT_HELLO
@@ -95,7 +89,7 @@ module TLS13
                         cipher_suites: cipher_suites,
                         extensions: extensions)
       end
-      # rubocop: enable Metrics/MethodLength
+      # rubocop: enable Metrics/AbcSize, Metrics/MethodLength
     end
   end
 end
