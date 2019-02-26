@@ -25,12 +25,12 @@ RSpec.describe ServerHello do
 
     it 'should be generate' do
       expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
-      expect(message.length).to eq 75
+      expect(message.length).to eq 72
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.random).to eq random
       expect(message.legacy_session_id_echo).to eq legacy_session_id_echo
       expect(message.cipher_suites).to eq [CipherSuite::TLS_AES_256_GCM_SHA384]
-      expect(message.legacy_compression_methods).to eq 0
+      expect(message.legacy_compression_method).to eq 0
       expect(message.extensions).to be_empty
     end
 
@@ -41,9 +41,25 @@ RSpec.describe ServerHello do
                                       + random \
                                       + i2uint8(legacy_session_id_echo.length) \
                                       + legacy_session_id_echo \
-                                      + cipher_suites.serialize \
-                                      + "\x01\x00" \
+                                      + cipher_suites.join \
+                                      + "\x00" \
                                       + Extensions.new.serialize
+    end
+  end
+
+  context 'valid server_hello' do
+    let(:message) do
+      ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+    end
+
+    it 'should generate valid object' do
+      expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
+      expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
+      expect(message.length).to eq 86
+    end
+
+    it 'should generate valid serializable object' do
+      expect(message.serialize).to eq TESTBINARY_SERVER_HELLO
     end
   end
 end

@@ -11,7 +11,7 @@ module TLS13
       attr_accessor :random
       attr_accessor :legacy_session_id_echo
       attr_accessor :cipher_suites
-      attr_reader   :legacy_compression_methods
+      attr_reader   :legacy_compression_method
       attr_accessor :extensions
 
       # @param legacy_version [String]
@@ -29,13 +29,13 @@ module TLS13
         @random = random
         @legacy_session_id_echo = legacy_session_id_echo
         @cipher_suites = cipher_suites || CipherSuites.new([])
-        @legacy_compression_methods = 0
+        @legacy_compression_method = 0
         @extensions = extensions || Extensions.new
       end
 
       # @return [Integer]
       def length
-        41 + @legacy_session_id_echo.length + @cipher_suites.length \
+        38 + @legacy_session_id_echo.length + @cipher_suites.length \
         + @extensions.length
       end
 
@@ -48,9 +48,8 @@ module TLS13
         binary += @random
         binary += i2uint8(@legacy_session_id_echo.length)
         binary += @legacy_session_id_echo
-        binary += @cipher_suites.serialize
-        binary += i2uint8(1) # compression methods length
-        binary += i2uint8(@legacy_compression_methods)
+        binary += @cipher_suites.join
+        binary += i2uint8(@legacy_compression_method)
         binary += @extensions.serialize
         binary
       end
@@ -59,11 +58,11 @@ module TLS13
       #
       # @raise [RuntimeError]
       #
-      # @return [TLS13::Message::ClientHello]
+      # @return [TLS13::Message::ServerHello]
       # rubocop: disable Metrics/AbcSize, Metrics/MethodLength
       def self.deserialize(binary)
         raise 'msg_type is invalid' \
-          unless binary[0] == HandshakeType::CLIENT_HELLO
+          unless binary[0] == HandshakeType::SERVER_HELLO
 
         length = bin2i(binary.slice(1, 3))
         legacy_version = binary.slice(4, 2)
@@ -71,24 +70,22 @@ module TLS13
         lsid_len = bin2i(binary[38])
         legacy_session_id_echo = binary.slice(39, lsid_len)
         itr = 39 + lsid_len
-        cs_len = bin2i(binary.slice(itr, 2))
-        itr += 2
-        serialized_cipher_suites = binary.slice(itr, cs_len)
+        serialized_cipher_suites = binary.slice(itr, 2)
         cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
-        itr += cs_len
-        raise 'legacy_compression_methods is not 0' unless \
-          binary.slice(itr, 2) == "\x01\x00"
-
         itr += 2
+        raise 'legacy_compression_method is not 0' unless \
+          binary[itr] == "\x00"
+
+        itr += 1
         exs_len = bin2i(binary.slice(itr, 2))
         itr += 2
         serialized_extensions = binary.slice(itr, exs_len)
         extensions = Extensions.deserialize(serialized_extensions,
-                                            HandshakeType::CLIENT_HELLO)
+                                            HandshakeType::SERVER_HELLO)
         itr += exs_len
         raise 'malformed binary' unless itr == length + 4
 
-        ClientHello.new(legacy_version: legacy_version,
+        ServerHello.new(legacy_version: legacy_version,
                         random: random,
                         legacy_session_id_echo: legacy_session_id_echo,
                         cipher_suites: cipher_suites,
