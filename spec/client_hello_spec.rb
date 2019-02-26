@@ -4,8 +4,17 @@
 require 'spec_helper'
 
 RSpec.describe ClientHello do
-  context 'serialize' do
-    # TODO
+  context 'default client_hello' do
+    let(:message) do
+      ClientHello.new
+    end
+
+    it 'should be generate' do
+      expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
+      expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
+      expect(message.cipher_suites).to eq DEFALT_CIPHER_SUITES
+      expect(message.extensions).to be_empty
+    end
   end
 
   context 'valid client_hello' do
@@ -15,6 +24,7 @@ RSpec.describe ClientHello do
 
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
+      expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.length).to eq 192
     end
 

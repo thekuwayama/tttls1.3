@@ -38,7 +38,7 @@ module TLS13
       #   Extensions.new({
       #     ExtensionType::SUPPORTED_VERSIONS => SupportedVersions.new
       #   })
-      def initialize(extensions)
+      def initialize(extensions = {})
         extensions.each do |k, v|
           super[k] = v
         end

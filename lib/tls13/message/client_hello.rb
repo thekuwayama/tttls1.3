@@ -16,7 +16,7 @@ module TLS13
 
       # @param legacy_version [String]
       # @param random [String]
-      # @param legacy_session_id_echo [String]
+      # @param legacy_session_id [String]
       # @param cipher_suite [Array of CipherSuites]
       # @param extensions [TLS13::Message::Extensions]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
