@@ -60,25 +60,38 @@ module TLS13
           versions = []
           case msg_type
           when HandshakeType::CLIENT_HELLO
-            raise 'too short binary' if binary.nil? || binary.empty?
-
-            versions_len = bin2i(binary[0])
-            itr = 1
-            while itr < versions_len + 1
-              versions << binary.slice(itr, 2)
-              itr += 2
-            end
-            raise 'malformed binary' unless itr == binary.length \
-                                            && itr == versions_len + 1
+            versions = deserialize_versions(binary)
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             raise 'malformed binary' unless binary.length == 2
 
             versions << binary.slice(0, 2)
           else
-            return UknownExtension.new(extension_type: ExtensionType::SUPPORTED_VERSIONS,
+            extension_type = ExtensionType::SUPPORTED_VERSION
+            return UknownExtension.new(extension_type: extension_type,
                                        extension_data: binary)
           end
           SupportedVersions.new(msg_type: msg_type, versions: versions)
+        end
+
+        # @param binary [String]
+        #
+        # @raise [RuntimeError]
+        #
+        # @return [Array of String]
+        def self.deserialize_versions(binary)
+          raise 'too short binary' if binary.nil? || binary.empty?
+
+          versions_len = bin2i(binary[0])
+          itr = 1
+          versions = []
+          while itr < versions_len + 1
+            versions << binary.slice(itr, 2)
+            itr += 2
+          end
+          raise 'malformed binary' unless itr == binary.length \
+                                          && itr == versions_len + 1
+
+          versions
         end
       end
     end
