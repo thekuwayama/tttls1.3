@@ -17,18 +17,18 @@ module TLS13
       # @param legacy_version [String]
       # @param random [String]
       # @param legacy_session_id [String]
-      # @param cipher_suite [Array of CipherSuites]
+      # @param cipher_suite [TLS13::Message::CipherSuites]
       # @param extensions [TLS13::Message::Extensions]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
                      legacy_session_id: Array.new(32, 0).map(&:chr).join,
-                     cipher_suites: DEFALT_CIPHER_SUITES,
+                     cipher_suites: CipherSuites.new,
                      extensions: Extensions.new)
         @msg_type = HandshakeType::CLIENT_HELLO
         @legacy_version = legacy_version
         @random = random
         @legacy_session_id = legacy_session_id
-        @cipher_suites = cipher_suites
+        @cipher_suites = cipher_suites || CipherSuites.new
         @legacy_compression_methods = 0
         @extensions = extensions || Extensions.new
       end
