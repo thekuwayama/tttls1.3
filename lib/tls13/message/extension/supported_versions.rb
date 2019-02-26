@@ -6,21 +6,24 @@ module TLS13
     module Extension
       class SupportedVersions
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :versions
 
         # @param versions [Array of ProtocolVersion]
         def initialize(versions = [ProtocolVersion::TLS_1_3])
           @extension_type = ExtensionType::SUPPORTED_VERSIONS
           @versions = versions || ''
-          @length = 1 + @versions.length * 2
+        end
+
+        # @return [Integer]
+        def length
+          1 + @versions.length * 2
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           binary << @versions.length * 2
           binary += @versions.join
           binary

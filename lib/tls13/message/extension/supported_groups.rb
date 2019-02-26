@@ -26,22 +26,25 @@ module TLS13
 
       class SupportedGroups
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :named_group_list
 
         # @param named_group_list [Array of NamedGroup]
         def initialize(named_group_list = DEFALT_NAMED_GROUP_LIST)
           @extension_type = ExtensionType::SUPPORTED_GROUPS
           @named_group_list = named_group_list || []
-          @length = 2 + @named_group_list.length * 2
+        end
+
+        # @return [Integer]
+        def length
+          2 + @named_group_list.length * 2
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
-          binary += i2uint16(@length - 2)
+          binary += i2uint16(length)
+          binary += i2uint16(length - 2)
           binary += @named_group_list.join
           binary
         end

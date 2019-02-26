@@ -33,21 +33,24 @@ module TLS13
 
       class SignatureAlgorithms
         attr_accessor :extension_type # for signature_algorithms_cert
-        attr_accessor :length
         attr_accessor :supported_signature_algorithms
 
         # @param supported_signature_algorithms [Array of SignatureScheme]
         def initialize(supported_signature_algorithms)
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS
           @supported_signature_algorithms = supported_signature_algorithms || []
-          @length = 2 + @supported_signature_algorithms.length * 2
+        end
+
+        # @return [Integer]
+        def length
+          2 + @supported_signature_algorithms.length * 2
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           binary += i2uint16(supported_signature_algorithms.length * 2)
           binary += @supported_signature_algorithms.join
           binary

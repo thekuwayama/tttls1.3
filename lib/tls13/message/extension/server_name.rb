@@ -10,7 +10,6 @@ module TLS13
 
       class ServerName
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :server_name
 
         # @param server_name [String]
@@ -24,18 +23,21 @@ module TLS13
           @server_name = server_name || []
           raise 'invalid length HostName' \
             if @server_name.empty? || @server_name.length > 2**16 - 5
+        end
 
-          @length = 5 + @server_name.length
+        # @return [Integer]
+        def length
+          5 + @server_name.length
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
-          binary += i2uint16(@length - 2)
+          binary += i2uint16(length)
+          binary += i2uint16(length - 2)
           binary += NameType::HOST_NAME
-          binary += i2uint16(@length - 5)
+          binary += i2uint16(length - 5)
           binary += @server_name
           binary
         end

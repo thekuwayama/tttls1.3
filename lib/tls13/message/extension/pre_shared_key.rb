@@ -6,7 +6,6 @@ module TLS13
     module Extension
       class PreSharedKey
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :msg_type
         attr_accessor :offered_psks
         attr_accessor :selected_identity
@@ -24,12 +23,24 @@ module TLS13
           case @msg_type
           when HandshakeType::CLIENT_HELLO
             @offered_psks = offered_psks
-            @length = @offered_psks.length
             # TODO: argument check
           when HandshakeType::SERVER_HELLO
             @selected_identity = selected_identity || ''
-            @length = 2
             # TODO: argument check
+          else
+            raise 'invalid msg_type'
+          end
+        end
+
+        # @raise [RuntimeError]
+        #
+        # @return [Integer]
+        def length
+          case @msg_type
+          when HandshakeType::CLIENT_HELLO
+            @offered_psks.length
+          when HandshakeType::SERVER_HELLO
+            2
           else
             raise 'invalid msg_type'
           end
@@ -41,7 +52,7 @@ module TLS13
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           case @msg_type
           when HandshakeType::CLIENT_HELLO
             binary += @offered_psks.serialize
@@ -78,7 +89,6 @@ module TLS13
       end
 
       class OfferedPsks
-        attr_accessor :length
         attr_accessor :identities
         attr_accessor :binders
 
@@ -90,9 +100,12 @@ module TLS13
 
           @binders = binders || []
           raise 'invalid binders' if @binders.empty?
+        end
 
-          @length = 2 + @identities.map(&:length).sum
-          @length += 2 + @binders.length + @binders.map(&:length).sum
+        # @return [Integer]
+        def length
+          2 + @identities.map(&:length).sum \
+          + 2 + @binders.length + @binders.map(&:length).sum
         end
 
         # @return [String]
@@ -150,7 +163,6 @@ module TLS13
       end
 
       class PskIdentity
-        attr_accessor :length
         attr_accessor :identity
         attr_accessor :obfuscated_ticket_age
 
@@ -163,7 +175,11 @@ module TLS13
           raise 'invalid identity' if @identity.empty?
 
           @obfuscated_ticket_age = obfuscated_ticket_age
-          @length = 2 + @identity.length + 4
+        end
+
+        # @return [Integer]
+        def length
+          2 + @identity.length + 4
         end
 
         # @return [String]

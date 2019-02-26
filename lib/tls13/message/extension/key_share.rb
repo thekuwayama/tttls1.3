@@ -6,29 +6,31 @@ module TLS13
     module Extension
       class KeyShare
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :msg_type
         attr_accessor :key_share_entry
 
         # @param msg_type [TLS13::Message::ContentType]
         # @param key_share_entry [Array of KeyShareEntry]
-        #
-        # @raise [RuntimeError]
         def initialize(msg_type: ContentType::INVALID,
                        key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
           @key_share_entry = key_share_entry || []
+        end
+
+        # @raise [RuntimeError]
+        #
+        # @return [Integer]
+        def length
           case @msg_type
           when HandshakeType::CLIENT_HELLO
-            @length = 2
-            @length += @key_share_entry.map do |x|
+            2 + @key_share_entry.map do |x|
               4 + x.key_exchange.length
             end.sum
           when HandshakeType::SERVER_HELLO
-            @length = 4 + @key_share_entry.first.key_exchange.length
+            4 + @key_share_entry.first.key_exchange.length
           when HandshakeType::HELLO_RETRY_REQUEST
-            @length = 2
+            2
           else
             raise 'invalid msg_type'
           end
@@ -40,7 +42,7 @@ module TLS13
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           case @msg_type
           when HandshakeType::CLIENT_HELLO
             buf = ''

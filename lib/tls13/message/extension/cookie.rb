@@ -6,21 +6,24 @@ module TLS13
     module Extension
       class Cookie
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :cookie
 
         # @param cookie [String]
         def initialize(cookie)
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || ''
-          @length = 2 + @cookie.length
+        end
+
+        # @return [Integer]
+        def length
+          2 + @cookie.length
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           binary += i2uint16(@cookie.length)
           binary += @cookie
           binary

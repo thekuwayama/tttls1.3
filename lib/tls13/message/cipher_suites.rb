@@ -16,19 +16,22 @@ module TLS13
                             CipherSuite::TLS_AES_128_GCM_SHA256].freeze
 
     class CipherSuites
-      attr_accessor :length
       attr_accessor :cipher_suites
 
       # @param cipher_suites [Array of CipherSuite]
       def initialize(cipher_suites = DEFALT_CIPHER_SUITES)
         @cipher_suites = cipher_suites || []
-        @length = @cipher_suites.length * 2
+      end
+
+      # @return [Integer]
+      def length
+        @cipher_suites.length * 2
       end
 
       # @return [String]
       def serialize
         binary = ''
-        binary += i2uint16(@length)
+        binary += i2uint16(length)
         binary += @cipher_suites.join
         binary
       end

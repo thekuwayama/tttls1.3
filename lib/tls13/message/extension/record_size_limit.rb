@@ -6,7 +6,6 @@ module TLS13
     module Extension
       class RecordSizeLimit
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :record_size_limit
 
         # @param record_size_limit [Integer]
@@ -18,14 +17,18 @@ module TLS13
 
           @extension_type = ExtensionType::RECORD_SIZE_LIMIT
           @record_size_limit = record_size_limit
-          @length = 2
+        end
+
+        # @return [Integer]
+        def length
+          2
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           binary += i2uint16(@record_size_limit)
           binary
         end

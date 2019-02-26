@@ -6,7 +6,6 @@ module TLS13
     module Extension
       class UknownExtension
         attr_accessor :extension_type
-        attr_accessor :length
         attr_accessor :extension_data
 
         # @param extension_type [String]
@@ -18,14 +17,18 @@ module TLS13
 
           @extension_type = extension_type
           @extension_data = extension_data || ''
-          @length = @extension_data.length
+        end
+
+        # @return [Integer]
+        def length
+          @extension_data.length
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           binary += @extension_data
           binary
         end

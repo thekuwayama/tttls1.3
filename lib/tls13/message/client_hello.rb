@@ -7,7 +7,6 @@ module TLS13
   module Message
     class ClientHello
       attr_reader   :msg_type
-      attr_accessor :length
       attr_accessor :legacy_version
       attr_accessor :random
       attr_accessor :legacy_session_id
@@ -32,15 +31,19 @@ module TLS13
         @cipher_suites = cipher_suites
         @legacy_compression_methods = 0
         @extensions = extensions || Extensions.new
-        @length = 41 + @legacy_session_id.length + @cipher_suites.length \
-                  + @extensions.length
+      end
+
+      # @return [Integer]
+      def length
+        41 + @legacy_session_id.length + @cipher_suites.length \
+        + @extensions.length
       end
 
       # @return [String]
       def serialize
         binary = ''
         binary += @msg_type
-        binary += i2uint24(@length)
+        binary += i2uint24(length)
         binary += @legacy_version
         binary += @random
         binary << @legacy_session_id.length

@@ -44,7 +44,6 @@ module TLS13
     class Record
       attr_accessor :type
       attr_accessor :legacy_record_version
-      attr_accessor :length
       attr_accessor :fragment
       attr_accessor :content
       attr_accessor :cryptographer
@@ -65,11 +64,14 @@ module TLS13
         @legacy_record_version = legacy_record_version
         @content = content
         @cryptographer = cryptographer
-        @fragment = fragment
+        @fragment = fragment || ''
         @fragment = @content.serialize if fragment.nil? &&
                                           !@content.nil?
-        @length = 0
-        @length = @fragment.length unless @fragment.nil?
+      end
+
+      # @return [Integer]
+      def length
+        @fragment.length
       end
 
       # @return [String]
@@ -77,7 +79,7 @@ module TLS13
         binary = ''
         binary += @type
         binary += @legacy_record_version
-        binary += i2uint16(@length)
+        binary += i2uint16(length)
         binary += @fragment
         binary
       end

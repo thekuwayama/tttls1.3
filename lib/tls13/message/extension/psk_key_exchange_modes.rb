@@ -11,21 +11,24 @@ module TLS13
 
       class PskKeyExchangeModes
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :ke_modes
 
         # @param ke_modes [Array of PskKeyExchangeMode]
         def initialize(ke_modes: [])
           @extension_type = ExtensionType::PSK_KEY_EXCHANGE_MODES
           @ke_modes = ke_modes || []
-          @length = 1 + @ke_modes.length
+        end
+
+        # @return [Integer]
+        def length
+          1 + @ke_modes.length
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           binary += @ke_modes.length.chr
           binary += @ke_modes.join
           binary

@@ -10,7 +10,6 @@ module TLS13
 
       class StatusRequest
         attr_reader   :extension_type
-        attr_accessor :length
         attr_accessor :responder_id_list
         attr_accessor :request_extensions
 
@@ -26,18 +25,20 @@ module TLS13
           @extension_type = ExtensionType::STATUS_REQUEST
           @responder_id_list = responder_id_list || []
           @request_extensions = request_extensions || ''
-          @length = 1
-          @length += 2 \
-                     + @responder_id_list.length * 2 \
-                     + @responder_id_list.map(&:length).sum
-          @length += 2 + @request_extensions.length
+        end
+
+        # @return [Integer]
+        def length
+          3 + @responder_id_list.length * 2 \
+          + @responder_id_list.map(&:length).sum \
+          + 2 + @request_extensions.length
         end
 
         # @return [String]
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(@length)
+          binary += i2uint16(length)
           binary += CertificateStatusType::OCSP
           binary += i2uint16(@responder_id_list.length)
           binary += @responder_id_list.map do |id|
