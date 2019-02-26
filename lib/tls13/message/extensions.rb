@@ -105,7 +105,7 @@ module TLS13
         when ExtensionType::RECORD_SIZE_LIMIT
           Extension::RecordSizeLimit.deserialize(binary)
         when ExtensionType::SUPPORTED_VERSIONS
-          Extension::SupportedVersions.deserialize(binary)
+          Extension::SupportedVersions.deserialize(binary, msg_type)
         when ExtensionType::COOKIE
           Extension::Cookie.deserialize(binary)
         when ExtensionType::PSK_KEY_EXCHANGE_MODES
