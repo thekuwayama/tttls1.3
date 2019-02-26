@@ -31,28 +31,29 @@ module TLS13
       KEY_SHARE                              = "\x00\x33"
     end
 
-    class Extensions
-      attr_accessor :length
-      attr_accessor :extensions
-
+    class Extensions < Hash
       # @param extensions [Hash]
       #
       # @example
-      #   Extensions.new(
-      #     extensions: {
-      #       ExtensionType::SUPPORTED_VERSIONS => SupportedVersions.new
-      #     }
-      #   )
+      #   Extensions.new({
+      #     ExtensionType::SUPPORTED_VERSIONS => SupportedVersions.new
+      #   })
       def initialize(extensions)
-        @extensions = extensions || {}
-        @length = @extensions.values.map { |x| x.length + 4 }.sum
+        extensions.each do |k, v|
+          super[k] = v
+        end
+      end
+
+      # @return [Integer]
+      def length
+        values.map { |x| x.length + 4 }.sum
       end
 
       # @return [String]
       def serialize
         binary = ''
-        binary += i2uint16(@length)
-        @extensions.each_value do |ex|
+        binary += i2uint16(length)
+        each_value do |ex|
           binary += ex.serialize
         end
         binary
@@ -67,10 +68,10 @@ module TLS13
       def self.deserialize(binary, msg_type)
         raise 'too short binary' if binary.nil? || binary.length < 2
 
-        length = bin2i(binary.slice(0, 2))
+        exs_len = bin2i(binary.slice(0, 2))
         itr = 2
         extensions = {}
-        while itr < length + 2
+        while itr < exs_len + 2
           extension_type = binary.slice(itr, 2)
           itr += 2
           ex_len = bin2i(binary.slice(itr, 2))
@@ -82,15 +83,9 @@ module TLS13
                                   msg_type)
           itr += ex_len
         end
-        Extensions.new(extensions)
-      end
+        raise 'malformed binary' unless itr == exs_len + 2
 
-      # @param extension_type [TLS13::Message::ExtensionType]
-      #
-      # @return [TLS13::Message::Extension::$Object, nil]
-      def [](extension_type)
-        key = bin2i(extension_type.slice(0, 2))
-        @extensions[key]
+        Extensions.new(extensions)
       end
 
       # @param binary [String]

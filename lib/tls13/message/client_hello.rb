@@ -19,19 +19,19 @@ module TLS13
       # @param random [String]
       # @param legacy_session_id_echo [String]
       # @param cipher_suite [Array of CipherSuites]
-      # @param extensions [Hash of Extension]
+      # @param extensions [TLS13::Message::Extensions]
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
                      legacy_session_id: Array.new(32, 0).map(&:chr).join,
                      cipher_suites: DEFALT_CIPHER_SUITES,
-                     extensions: {})
+                     extensions: Extensions.new)
         @msg_type = HandshakeType::CLIENT_HELLO
         @legacy_version = legacy_version
         @random = random
         @legacy_session_id = legacy_session_id
         @cipher_suites = cipher_suites
         @legacy_compression_methods = 0
-        @extensions = extensions || {}
+        @extensions = extensions || Extensions.new
         @length = 41 + @legacy_session_id.length + @cipher_suites.length \
                   + @extensions.length
       end
