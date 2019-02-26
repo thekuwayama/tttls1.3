@@ -11,10 +11,17 @@ module TLS13
 
         # @param msg_type [TLS13::Message::ContentType]
         # @param key_share_entry [Array of KeyShareEntry]
+        #
+        # @raise [RuntimeError]
         def initialize(msg_type: ContentType::INVALID,
                        key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
+          raise 'invalid msg_type' \
+            if @msg_type != HandshakeType::CLIENT_HELLO \
+               && @msg_type != HandshakeType::SERVER_HELLO \
+               && @msg_type != HandshakeType::HELLO_RETRY_REQUEST
+
           @key_share_entry = key_share_entry || []
         end
 
@@ -76,7 +83,7 @@ module TLS13
           when HandshakeType::HELLO_RETRY_REQUEST
             key_share_entry = deserialize_keysharehrr(binary)
           else
-            return UknownExtension.new(extension_type: @extension_type,
+            return UknownExtension.new(extension_type: ExtensionType::KEY_SHARE,
                                        extension_data: binary)
           end
           KeyShare.new(msg_type: msg_type,
@@ -117,7 +124,7 @@ module TLS13
           raise 'too short binary' if binary.nil? || binary.length < 4
 
           group = binary.slice(0, 2)
-          ke_len = arr2i(binary.slice(2, 2))
+          ke_len = bin2i(binary.slice(2, 2))
           raise 'malformed binary' unless binary.length == ke_len + 4
 
           key_exchange = binary.slice(4, ke_len)
