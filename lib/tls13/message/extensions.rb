@@ -66,12 +66,11 @@ module TLS13
       #
       # @return [TLS13::Message::Extensions]
       def self.deserialize(binary, msg_type)
-        raise 'too short binary' if binary.nil? || binary.length < 2
+        raise 'too short binary' if binary.nil?
 
-        exs_len = bin2i(binary.slice(0, 2))
-        itr = 2
         extensions = {}
-        while itr < exs_len + 2
+        itr = 0
+        while itr < binary.length
           extension_type = binary.slice(itr, 2)
           itr += 2
           ex_len = bin2i(binary.slice(itr, 2))
@@ -83,7 +82,7 @@ module TLS13
                                   msg_type)
           itr += ex_len
         end
-        raise 'malformed binary' unless itr == exs_len + 2
+        raise 'malformed binary' unless itr == binary.length
 
         Extensions.new(extensions)
       end

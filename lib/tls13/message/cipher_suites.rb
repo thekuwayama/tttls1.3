@@ -42,17 +42,16 @@ module TLS13
       #
       # @return [TLS13::Message::CipherSuites]
       def self.deserialize(binary)
-        raise 'too short binary' if binary.nil? || binary.length < 2
-
-        cs_len = bin2i(binary.slice(0, 2))
-        raise 'malformed binary' unless binary.length == cs_len + 2
+        raise 'too short binary' if binary.nil?
 
         cipher_suites = []
-        itr = 2
-        while itr < cs_len + 2
+        itr = 0
+        while itr < binary.length
           cipher_suites << binary.slice(itr, 2)
           itr += 2
         end
+        raise 'malformed binary' unless itr == binary.length
+
         CipherSuites.new(cipher_suites)
       end
     end

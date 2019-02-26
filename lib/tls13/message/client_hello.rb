@@ -72,18 +72,20 @@ module TLS13
         legacy_session_id = binary.slice(39, lsid_len)
         itr = 39 + lsid_len
         cs_len = bin2i(binary.slice(itr, 2))
-        serialized_cipher_suites = binary.slice(itr, cs_len + 2)
+        itr += 2
+        serialized_cipher_suites = binary.slice(itr, cs_len)
         cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
-        itr += cs_len + 2
+        itr += cs_len
         raise 'legacy_compression_methods is not 0' unless \
           binary.slice(itr, 2) == "\x01\x00"
 
         itr += 2
         exs_len = bin2i(binary.slice(itr, 2))
-        serialized_extensions = binary.slice(itr, exs_len + 2)
+        itr += 2
+        serialized_extensions = binary.slice(itr, exs_len)
         extensions = Extensions.deserialize(serialized_extensions,
                                             HandshakeType::CLIENT_HELLO)
-        itr += exs_len + 2
+        itr += exs_len
         raise 'malformed binary' unless itr == length + 4
 
         ClientHello.new(legacy_version: legacy_version,

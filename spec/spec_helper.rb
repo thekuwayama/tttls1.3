@@ -15,7 +15,7 @@ TESTBINARY_RECORD_HEADER = <<BIN.split.map(&:hex).map(&:chr).join
   16 03 03 00 00
 BIN
 TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
-  00 06 13 02 13 03 13 01
+  13 02 13 03 13 01
 BIN
 TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).map(&:chr).join
   00 0d 00 00 0a 67 69 74     68 75 62 2e 63 6f 6d
