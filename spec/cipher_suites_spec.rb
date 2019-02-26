@@ -11,7 +11,7 @@ RSpec.describe CipherSuites do
 
     it 'should be generated' do
       expect(cs.length).to eq 6
-      expect(cs.cipher_suites).to eq DEFALT_CIPHER_SUITES
+      expect(cs).to eq DEFALT_CIPHER_SUITES
     end
 
     it 'should be serialized' do
@@ -26,7 +26,7 @@ RSpec.describe CipherSuites do
 
     it 'should generate valid object' do
       expect(cs.length).to eq 6
-      expect(cs.cipher_suites).to eq DEFALT_CIPHER_SUITES
+      expect(cs).to eq DEFALT_CIPHER_SUITES
     end
   end
 

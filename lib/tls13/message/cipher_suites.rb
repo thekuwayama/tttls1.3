@@ -15,24 +15,31 @@ module TLS13
                             CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
                             CipherSuite::TLS_AES_128_GCM_SHA256].freeze
 
-    class CipherSuites
-      attr_accessor :cipher_suites
+    class CipherSuites < Array
+      alias super_length length
 
       # @param cipher_suites [Array of CipherSuite]
+      #
+      # @example
+      #   CipherSuites.new([
+      #     CipherSuite::TLS_AES_256_GCM_SHA384,
+      #     CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
+      #     CipherSuite::TLS_AES_128_GCM_SHA256
+      #   ])
       def initialize(cipher_suites = DEFALT_CIPHER_SUITES)
-        @cipher_suites = cipher_suites || []
+        super(cipher_suites)
       end
 
       # @return [Integer]
       def length
-        @cipher_suites.length * 2
+        super_length * 2
       end
 
       # @return [String]
       def serialize
         binary = ''
         binary += i2uint16(length)
-        binary += @cipher_suites.join
+        binary += join
         binary
       end
 
