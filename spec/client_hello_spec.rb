@@ -33,7 +33,7 @@ RSpec.describe ClientHello do
                                       + i2uint24(79) \
                                       + ProtocolVersion::TLS_1_2 \
                                       + random \
-                                      + legacy_session_id.length.chr \
+                                      + i2uint8(legacy_session_id.length) \
                                       + legacy_session_id \
                                       + CipherSuites.new.serialize \
                                       + "\x01\x00" \

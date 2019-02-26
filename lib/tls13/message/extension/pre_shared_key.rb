@@ -118,7 +118,7 @@ module TLS13
           serialized_binders \
           = i2uint16(@binders.length + @binders.map(&:length).sum)
           @binders.each do |psk_binder_entry|
-            serialized_binders << psk_binder_entry.length
+            serialized_binders += i2uint8(psk_binder_entry.length)
             serialized_binders += psk_binder_entry
           end
 

@@ -11,7 +11,7 @@ module TLS13
       attr_accessor :random
       attr_accessor :legacy_session_id
       attr_accessor :cipher_suites
-      attr_accessor :legacy_compression_methods
+      attr_reader   :legacy_compression_methods
       attr_accessor :extensions
 
       # @param legacy_version [String]
@@ -46,11 +46,11 @@ module TLS13
         binary += i2uint24(length)
         binary += @legacy_version
         binary += @random
-        binary << @legacy_session_id.length
+        binary += i2uint8(@legacy_session_id.length)
         binary += @legacy_session_id
         binary += @cipher_suites.serialize
-        binary << 1 # compression methods length
-        binary << @legacy_compression_methods
+        binary += i2uint8(1) # compression methods length
+        binary += i2uint8(@legacy_compression_methods)
         binary += @extensions.serialize
         binary
       end

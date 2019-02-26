@@ -24,7 +24,7 @@ module TLS13
           binary = ''
           binary += @extension_type
           binary += i2uint16(length)
-          binary << @versions.length * 2
+          binary += i2uint8(@versions.length * 2)
           binary += @versions.join
           binary
         end
