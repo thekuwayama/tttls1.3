@@ -38,6 +38,26 @@ RSpec.describe SignatureAlgorithms do
     end
   end
 
+  context 'invalid signature_algorithms, empty,' do
+    let(:extension) do
+      SignatureAlgorithms.new([])
+    end
+
+    it 'should not be generated' do
+      expect { extension }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'invalid signature_algorithms, too long,' do
+    let(:extension) do
+      SignatureAlgorithms.new((0..2**15 - 2).to_a.map { |x| i2uint16(x) })
+    end
+
+    it 'should not be generated' do
+      expect { extension }.to raise_error(RuntimeError)
+    end
+  end
+
   context 'valid signature_algorithms binary' do
     let(:extension) do
       SignatureAlgorithms.deserialize(TESTBINARY_SIGNATURE_ALGORITHMS)
@@ -62,6 +82,16 @@ RSpec.describe SignatureAlgorithms do
       expect(extension.length).to eq 20
       expect(extension.supported_signature_algorithms)
         .to eq supported_signature_algorithms
+    end
+  end
+
+  context 'invalid signature_algorithms binary, malformed binary,' do
+    let(:extension) do
+      SignatureAlgorithms.deserialize(TESTBINARY_SIGNATURE_ALGORITHMS[0...-1])
+    end
+
+    it 'should not generate object' do
+      expect { extension }.to raise_error(RuntimeError)
     end
   end
 end

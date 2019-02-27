@@ -39,6 +39,9 @@ module TLS13
         def initialize(supported_signature_algorithms)
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS
           @supported_signature_algorithms = supported_signature_algorithms || []
+          raise 'invalid supported_signature_algorithms' \
+            if @supported_signature_algorithms.empty? ||
+               @supported_signature_algorithms.length * 2 > 2**16 - 3
         end
 
         # @return [Integer]
