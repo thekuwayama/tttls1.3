@@ -20,7 +20,11 @@ RSpec.describe PskKeyExchangeModes do
       expect(extension.length).to eq 3
       expect(extension.ke_modes).to eq [PskKeyExchangeMode::PSK_KE,
                                         PskKeyExchangeMode::PSK_DHE_KE]
-      expect(extension.serialize).to eq "\x00\x2d\x00\x03\x02\x00\x01"
+      expect(extension.serialize).to eq ExtensionType::PSK_KEY_EXCHANGE_MODES \
+                                        + i2uint16(3) \
+                                        + i2uint8(2) \
+                                        + [PskKeyExchangeMode::PSK_KE,
+                                           PskKeyExchangeMode::PSK_DHE_KE].join
     end
   end
 

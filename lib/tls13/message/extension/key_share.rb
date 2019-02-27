@@ -39,7 +39,7 @@ module TLS13
           when HandshakeType::HELLO_RETRY_REQUEST
             2
           else
-            raise 'invalid msg_type'
+            raise 'unexpected msg_type'
           end
         end
 
@@ -58,12 +58,10 @@ module TLS13
             end
             binary += i2uint16(buf.length)
             binary += buf
-          when HandshakeType::SERVER_HELLO
-            binary += @key_share_entry.first.serialize
-          when HandshakeType::HELLO_RETRY_REQUEST
+          when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             binary += @key_share_entry.first.serialize
           else
-            raise 'invalid msg_type'
+            raise 'unexpected msg_type'
           end
           binary
         end
@@ -71,17 +69,17 @@ module TLS13
         # @param binary [String]
         # @param msg_type [TLS13::Message::HandshakeType]
         #
-        # @return [TLS13::Message::Extensions::KeyShare]
+        # @return [TLS13::Message::Extensions::KeyShare, UknownExtension]
         def self.deserialize(binary, msg_type)
           key_share_entry = []
           case msg_type
           when HandshakeType::CLIENT_HELLO
             kse_len = bin2i(binary.slice(0, 2))
-            key_share_entry = deserialize_keysharech(binary.slice(2, kse_len))
+            key_share_entry = deserialize_keyshare_ch(binary.slice(2, kse_len))
           when HandshakeType::SERVER_HELLO
-            key_share_entry = deserialize_keysharesh(binary)
+            key_share_entry = deserialize_keyshare_sh(binary)
           when HandshakeType::HELLO_RETRY_REQUEST
-            key_share_entry = deserialize_keysharehrr(binary)
+            key_share_entry = deserialize_keyshare_hrr(binary)
           else
             return UknownExtension.new(extension_type: ExtensionType::KEY_SHARE,
                                        extension_data: binary)
@@ -93,10 +91,13 @@ module TLS13
         # struct {
         #     KeyShareEntry client_shares<0..2^16-1>;
         # } KeyShareClientHello;
+        #
         # @param binary [String]
         #
+        # @raise [RuntimeError]
+        #
         # @return [Array of KeyShareEntry]
-        def self.deserialize_keysharech(binary)
+        def self.deserialize_keyshare_ch(binary)
           key_share_entry = []
           itr = 0
           while itr < binary.length
@@ -117,10 +118,13 @@ module TLS13
         # struct {
         #     KeyShareEntry server_share;
         # } KeyShareServerHello;
+        #
         # @param binary [String]
         #
+        # @raise [RuntimeError]
+        #
         # @return [Array of KeyShareEntry]
-        def self.deserialize_keysharesh(binary)
+        def self.deserialize_keyshare_sh(binary)
           raise 'too short binary' if binary.nil? || binary.length < 4
 
           group = binary.slice(0, 2)
@@ -137,8 +141,10 @@ module TLS13
         #
         # @param binary [String]
         #
+        # @raise [RuntimeError]
+        #
         # @return [Array of KeyShareEntry]
-        def self.deserialize_keysharehrr(binary)
+        def self.deserialize_keyshare_hrr(binary)
           raise 'malformed binary' unless binary.length == 2
 
           group = binary.slice(0, 2)

@@ -21,7 +21,7 @@ module TLS13
           case @msg_type
           when HandshakeType::CLIENT_HELLO
             raise 'invalid versions.length' \
-              if @versions.length.zero? || @versions.length > 127
+              if @versions.empty? || @versions.length > 127
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             raise 'invalid versions.length' unless @versions.length == 1
           else

@@ -15,7 +15,7 @@ module TLS13
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || ''
           raise 'invalid cookie' \
-            if @cookie.length.zero? || @cookie.length > 2**16 - 3
+            if @cookie.empty? || @cookie.length > 2**16 - 3
         end
 
         # @return [Integer]

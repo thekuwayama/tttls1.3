@@ -15,7 +15,8 @@ RSpec.describe CipherSuites do
     end
 
     it 'should be serialized' do
-      expect(cs.serialize).to eq "\x00\x06" + DEFALT_CIPHER_SUITES.join
+      expect(cs.serialize).to eq i2uint16(DEFALT_CIPHER_SUITES.length * 2) \
+                                 + DEFALT_CIPHER_SUITES.join
     end
   end
 

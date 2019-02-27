@@ -21,7 +21,7 @@ RSpec.describe Cookie do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::COOKIE \
-                                        + i2uint16(2 + (2**16 - 3)) \
+                                        + i2uint16(2**16 - 1) \
                                         + i2uint16(2**16 - 3) \
                                         + cookie
     end
