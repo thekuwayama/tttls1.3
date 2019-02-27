@@ -13,30 +13,27 @@ module TLS13
         # @param versions [Array of ProtocolVersion]
         #
         # @raise [RuntimeError]
-        def initialize(msg_type: ContentType::INVALID,
-                       versions: [ProtocolVersion::TLS_1_3])
+        # rubocop: disable Metrics/CyclomaticComplexity
+        def initialize(msg_type: nil, versions: [ProtocolVersion::TLS_1_3])
           @extension_type = ExtensionType::SUPPORTED_VERSIONS
           @msg_type = msg_type
-          raise 'invalid msg_type' \
-            if @msg_type != HandshakeType::CLIENT_HELLO \
-               && @msg_type != HandshakeType::SERVER_HELLO \
-               && @msg_type != HandshakeType::HELLO_RETRY_REQUEST
-
           @versions = versions || []
-        end
-
-        # @raise [RuntimeError]
-        #
-        # @return [Integer]
-        def length
           case @msg_type
           when HandshakeType::CLIENT_HELLO
-            1 + @versions.length * 2
+            raise 'invalid versions.length' \
+              if @versions.length.zero? || @versions.length > 127
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
-            2
+            raise 'invalid versions.length' unless @versions.length == 1
           else
             raise 'invalid msg_type'
           end
+        end
+        # rubocop: enable Metrics/CyclomaticComplexity
+
+        # @return [Integer]
+        def length
+          @versions.length * 2 \
+          + (@msg_type == HandshakeType::CLIENT_HELLO ? 1 : 0)
         end
 
         # @return [String]

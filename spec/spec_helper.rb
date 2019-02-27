@@ -26,8 +26,11 @@ BIN
 TESTBINARY_SUPPORTED_GROUPS = <<BIN.split.map(&:hex).map(&:chr).join
   00 08 00 17 00 18 00 19    00 1d
 BIN
-TESTBINARY_SUPPORTED_VERSIONS = <<BIN.split.map(&:hex).map(&:chr).join
-  02 03 04
+TESTBINARY_SUPPORTED_VERSIONS_CH = <<BIN.split.map(&:hex).map(&:chr).join
+  04 03 04 03 03
+BIN
+TESTBINARY_SUPPORTED_VERSIONS_SH = <<BIN.split.map(&:hex).map(&:chr).join
+  03 04
 BIN
 TESTBINARY_KEY_SHARE = <<BIN.split.map(&:hex).map(&:chr).join
   00 24 00 1d 00 20 99 38     1d e5 60 e4 bd 43 d2 3d
