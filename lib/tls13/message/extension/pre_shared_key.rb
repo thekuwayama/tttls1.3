@@ -15,7 +15,7 @@ module TLS13
         # @param selected_identity [String]
         #
         # @raise [RuntimeError]
-        def initialize(msg_type: ContentType::INVALID,
+        def initialize(msg_type: nil,
                        offered_psks: nil,
                        selected_identity: nil)
           @extension_type = ExtensionType::PRE_SHARED_KEY

@@ -13,7 +13,7 @@ module TLS13
         # @param key_share_entry [Array of KeyShareEntry]
         #
         # @raise [RuntimeError]
-        def initialize(msg_type: ContentType::INVALID,
+        def initialize(msg_type: nil,
                        key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
