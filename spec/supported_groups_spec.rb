@@ -9,7 +9,8 @@ RSpec.describe SupportedGroups do
       [NamedGroup::SECP256R1,
        NamedGroup::SECP384R1,
        NamedGroup::SECP521R1,
-       NamedGroup::X25519]
+       NamedGroup::X25519,
+       NamedGroup::X448]
     end
 
     let(:extension) do
@@ -18,8 +19,15 @@ RSpec.describe SupportedGroups do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
-      expect(extension.length).to eq 10
+      expect(extension.length).to eq 12
       expect(extension.named_group_list).to eq named_group_list
+    end
+
+    it 'should be serialized' do
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
+                                        + i2uint16(extension.length) \
+                                        + i2uint16(extension.length - 2) \
+                                        + named_group_list.join
     end
   end
 
@@ -32,6 +40,33 @@ RSpec.describe SupportedGroups do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
       expect(extension.length).to eq 10
       expect(extension.named_group_list).to eq DEFALT_NAMED_GROUP_LIST
+    end
+
+    it 'should be serialized' do
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
+                                        + i2uint16(extension.length) \
+                                        + i2uint16(extension.length - 2) \
+                                        + DEFALT_NAMED_GROUP_LIST.join
+    end
+  end
+
+  context 'invalid supported_groups, empty,' do
+    let(:extension) do
+      SupportedGroups.new([])
+    end
+
+    it 'should not be generated' do
+      expect { extension }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'invalid supported_groups, too long,' do
+    let(:extension) do
+      SupportedGroups.new((0..2**15 - 1).to_a.map { |x| i2uint16(x) })
+    end
+
+    it 'should not be generated' do
+      expect { extension }.to raise_error(RuntimeError)
     end
   end
 
@@ -47,6 +82,16 @@ RSpec.describe SupportedGroups do
                                                 NamedGroup::SECP384R1,
                                                 NamedGroup::SECP521R1,
                                                 NamedGroup::X25519]
+    end
+  end
+
+  context 'invalid supported_groups binary, malformed binary,' do
+    let(:extension) do
+      SupportedGroups.deserialize(TESTBINARY_SUPPORTED_GROUPS[0...-1])
+    end
+
+    it 'should not generate object' do
+      expect { extension }.to raise_error(RuntimeError)
     end
   end
 end

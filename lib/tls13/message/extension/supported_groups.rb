@@ -29,9 +29,13 @@ module TLS13
         attr_accessor :named_group_list
 
         # @param named_group_list [Array of NamedGroup]
+        #
+        # @raise [RuntimeError]
         def initialize(named_group_list = DEFALT_NAMED_GROUP_LIST)
           @extension_type = ExtensionType::SUPPORTED_GROUPS
           @named_group_list = named_group_list || []
+          raise 'invalid named_group_list' \
+            if @named_group_list.empty? || @named_group_list.length >= 2**15 - 1
         end
 
         # @return [Integer]
