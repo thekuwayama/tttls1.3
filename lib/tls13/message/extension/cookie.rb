@@ -9,9 +9,13 @@ module TLS13
         attr_accessor :cookie
 
         # @param cookie [String]
+        #
+        # @raise [RuntimeError]
         def initialize(cookie)
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || ''
+          raise 'invalid cookie' \
+            if @cookie.length.zero? || @cookie.length > 2**16 - 3
         end
 
         # @return [Integer]

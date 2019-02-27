@@ -27,6 +27,36 @@ RSpec.describe Cookie do
     end
   end
 
+  context 'invalid cookie, empty,' do
+    let(:extension) do
+      Cookie.new('')
+    end
+
+    it 'should not be generated' do
+      expect { extension }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'invalid cookie, nil,' do
+    let(:extension) do
+      Cookie.new(nil)
+    end
+
+    it 'should not be generated' do
+      expect { extension }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'invalid cookie, too long,' do
+    let(:extension) do
+      Cookie.new('a' * (2**16 - 2))
+    end
+
+    it 'should not be generated' do
+      expect { extension }.to raise_error(RuntimeError)
+    end
+  end
+
   context 'valid cookie binary' do
     let(:extension) do
       Cookie.deserialize(TESTBINARY_COOKIE)
@@ -36,6 +66,26 @@ RSpec.describe Cookie do
       expect(extension.extension_type).to eq ExtensionType::COOKIE
       expect(extension.length).to eq TESTBINARY_COOKIE.length
       expect(extension.cookie).to eq TESTBINARY_COOKIE[2..-1]
+    end
+  end
+
+  context 'invalid cookie binary, empty,' do
+    let(:extension) do
+      Cookie.deserialize("\x00\x00")
+    end
+
+    it 'should not generat object' do
+      expect { extension }.to raise_error(RuntimeError)
+    end
+  end
+
+  context 'invalid cookie binary, malformed binary,' do
+    let(:extension) do
+      Cookie.deserialize(TESTBINARY_COOKIE[0...-1])
+    end
+
+    it 'should not generat object' do
+      expect { extension }.to raise_error(RuntimeError)
     end
   end
 end
