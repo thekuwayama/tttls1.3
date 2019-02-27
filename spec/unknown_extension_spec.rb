@@ -43,7 +43,7 @@ RSpec.describe UknownExtension do
     end
   end
 
-  context 'invalid uknown extension' do
+  context 'invalid uknown extension, no extension_type,' do
     let(:extension) do
       UknownExtension.new
     end
