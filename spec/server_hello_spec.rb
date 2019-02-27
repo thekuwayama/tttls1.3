@@ -13,14 +13,14 @@ RSpec.describe ServerHello do
       Array.new(32, 0).map(&:chr).join
     end
 
-    let(:cipher_suites) do
+    let(:cipher_suite) do
       CipherSuites.new([CipherSuite::TLS_AES_256_GCM_SHA384])
     end
 
     let(:message) do
       ServerHello.new(random: random,
                       legacy_session_id_echo: legacy_session_id_echo,
-                      cipher_suites: cipher_suites)
+                      cipher_suite: cipher_suite)
     end
 
     it 'should be generate' do
@@ -29,7 +29,7 @@ RSpec.describe ServerHello do
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.random).to eq random
       expect(message.legacy_session_id_echo).to eq legacy_session_id_echo
-      expect(message.cipher_suites).to eq [CipherSuite::TLS_AES_256_GCM_SHA384]
+      expect(message.cipher_suite).to eq [CipherSuite::TLS_AES_256_GCM_SHA384]
       expect(message.legacy_compression_method).to eq 0
       expect(message.extensions).to be_empty
     end
@@ -41,7 +41,7 @@ RSpec.describe ServerHello do
                                       + random \
                                       + i2uint8(legacy_session_id_echo.length) \
                                       + legacy_session_id_echo \
-                                      + cipher_suites.join \
+                                      + cipher_suite.join \
                                       + "\x00" \
                                       + Extensions.new.serialize
     end

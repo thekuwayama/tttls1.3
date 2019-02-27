@@ -10,7 +10,7 @@ module TLS13
       attr_accessor :legacy_version
       attr_accessor :random
       attr_accessor :legacy_session_id_echo
-      attr_accessor :cipher_suites
+      attr_accessor :cipher_suite
       attr_reader   :legacy_compression_method
       attr_accessor :extensions
 
@@ -22,20 +22,20 @@ module TLS13
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
                      legacy_session_id_echo: nil,
-                     cipher_suites: nil,
+                     cipher_suite: CipherSuites.new([]),
                      extensions: Extensions.new)
         @msg_type = HandshakeType::SERVER_HELLO
         @legacy_version = legacy_version
         @random = random
         @legacy_session_id_echo = legacy_session_id_echo
-        @cipher_suites = cipher_suites || CipherSuites.new([])
+        @cipher_suite = cipher_suite || CipherSuites.new([])
         @legacy_compression_method = 0
         @extensions = extensions || Extensions.new
       end
 
       # @return [Integer]
       def length
-        38 + @legacy_session_id_echo.length + @cipher_suites.length \
+        38 + @legacy_session_id_echo.length + @cipher_suite.length \
         + @extensions.length
       end
 
@@ -48,7 +48,7 @@ module TLS13
         binary += @random
         binary += i2uint8(@legacy_session_id_echo.length)
         binary += @legacy_session_id_echo
-        binary += @cipher_suites.join
+        binary += @cipher_suite.join
         binary += i2uint8(@legacy_compression_method)
         binary += @extensions.serialize
         binary
@@ -70,8 +70,8 @@ module TLS13
         lsid_len = bin2i(binary[38])
         legacy_session_id_echo = binary.slice(39, lsid_len)
         itr = 39 + lsid_len
-        serialized_cipher_suites = binary.slice(itr, 2)
-        cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
+        serialized_cipher_suite = binary.slice(itr, 2)
+        cipher_suite = CipherSuites.deserialize(serialized_cipher_suite)
         itr += 2
         raise 'legacy_compression_method is not 0' unless \
           binary[itr] == "\x00"
@@ -88,7 +88,7 @@ module TLS13
         ServerHello.new(legacy_version: legacy_version,
                         random: random,
                         legacy_session_id_echo: legacy_session_id_echo,
-                        cipher_suites: cipher_suites,
+                        cipher_suite: cipher_suite,
                         extensions: extensions)
       end
       # rubocop: enable Metrics/AbcSize, Metrics/MethodLength
