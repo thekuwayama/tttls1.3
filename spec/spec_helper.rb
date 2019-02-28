@@ -87,3 +87,9 @@ TESTBINARY_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   f7 c6 72 e1 56 d6 cc 25     3b 83 3d f1 dd 69 b1 b0
   4e 75 1f 0f 00 2b 00 02     03 04
 BIN
+
+TESTBINARY_ENCRYPTED_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
+  08 00 00 24 00 22 00 0a     00 14 00 12 00 1d 00 17
+  00 18 00 19 01 00 01 01     01 02 01 03 01 04 00 1c
+  00 02 40 01 00 00 00 00
+BIN
