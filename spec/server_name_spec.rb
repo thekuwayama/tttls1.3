@@ -29,12 +29,12 @@ RSpec.describe ServerName do
     let(:extension) do
       ServerName.new('')
     end
-    
+
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
       expect(extension.length).to eq 0
     end
-    
+
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SERVER_NAME \
                                         + i2uint16(0)

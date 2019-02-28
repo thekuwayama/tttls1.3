@@ -63,6 +63,17 @@ module TLS13
 
           return ServerName.new('') if binary.empty?
 
+          deserialize_host_name(binary)
+        end
+
+        # @param binary [String]
+        #
+        # @raise [RuntimeError]
+        #
+        # @return [TLS13::Message::Extension::ServerName]
+        def self.deserialize_host_name(binary)
+          raise 'too short binary' if binary.nil? || binary.length < 2
+
           snlist_len = bin2i(binary.slice(0, 2))
           raise 'malformed binary' unless snlist_len + 2 == binary.length
 
