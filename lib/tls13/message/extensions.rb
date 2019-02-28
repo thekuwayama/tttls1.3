@@ -32,15 +32,14 @@ module TLS13
     end
 
     class Extensions < Hash
-      # @param extensions [Hash]
+      # @param extensions [Array of TLS13::Message::Extension::$Object]
       #
       # @example
-      #   Extensions.new({
-      #     ExtensionType::SUPPORTED_VERSIONS => SupportedVersions.new
-      #   })
-      def initialize(extensions = {})
-        extensions.each do |k, v|
-          super[k] = v
+      #   Extensions.new([SupportedVersions.new, ServerName.new('example.com')]
+      def initialize(extensions = [])
+        extensions.each do |ex|
+          extension_type = ex.extension_type
+          super[extension_type] = ex
         end
       end
 
@@ -68,7 +67,7 @@ module TLS13
       def self.deserialize(binary, msg_type)
         raise 'too short binary' if binary.nil?
 
-        extensions = {}
+        extensions = []
         itr = 0
         while itr < binary.length
           extension_type = binary.slice(itr, 2)
@@ -76,10 +75,9 @@ module TLS13
           ex_len = bin2i(binary.slice(itr, 2))
           itr += 2
           serialized_extension = binary.slice(itr, ex_len)
-          extensions[extension_type] \
-          = deserialize_extension(serialized_extension,
-                                  extension_type,
-                                  msg_type)
+          extensions << deserialize_extension(serialized_extension,
+                                              extension_type,
+                                              msg_type)
           itr += ex_len
         end
         raise 'malformed binary' unless itr == binary.length

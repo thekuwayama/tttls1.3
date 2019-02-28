@@ -14,8 +14,7 @@ RSpec.describe EncryptedExtensions do
     end
 
     let(:extensions) do
-      Extensions.new(ExtensionType::SERVER_NAME => server_name,
-                     ExtensionType::SUPPORTED_GROUPS => supported_groups)
+      Extensions.new([server_name, supported_groups])
     end
 
     let(:message) do
