@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 RSpec.describe ServerName do
-  context 'valid server_name, example.com' do
+  context 'valid server_name, example.com,' do
     let(:extension) do
       ServerName.new('example.com')
     end
@@ -25,13 +25,19 @@ RSpec.describe ServerName do
     end
   end
 
-  context 'invalid server_name, empty HostName,' do
+  context 'valid server_name, empty HostName,' do
     let(:extension) do
       ServerName.new('')
     end
-
-    it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+    
+    it 'should be generated' do
+      expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
+      expect(extension.length).to eq 0
+    end
+    
+    it 'should be serialized' do
+      expect(extension.serialize).to eq ExtensionType::SERVER_NAME \
+                                        + i2uint16(0)
     end
   end
 

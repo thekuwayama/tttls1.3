@@ -8,6 +8,13 @@ module TLS13
         HOST_NAME = "\x00"
       end
 
+      # NOTE:
+      # The extension_data field SHALL be empty when @server_name is empty.
+      # Then, serialized extension_data is
+      #
+      # 00 00 00 00
+      #
+      # https://tools.ietf.org/html/rfc6066#section-3
       class ServerName
         attr_reader   :extension_type
         attr_accessor :server_name
@@ -20,18 +27,22 @@ module TLS13
         #   ServerName.new('example.com')
         def initialize(server_name)
           @extension_type = ExtensionType::SERVER_NAME
-          @server_name = server_name || []
-          raise 'invalid length HostName' \
-            if @server_name.empty? || @server_name.length > 2**16 - 5
+          @server_name = server_name || ''
+          raise 'too long HostName' \
+            if @server_name.length > 2**16 - 5
         end
 
         # @return [Integer]
         def length
+          return 0 if @server_name.empty?
+
           5 + @server_name.length
         end
 
         # @return [String]
         def serialize
+          return "\x00\x00\x00\x00" if length.zero?
+
           binary = ''
           binary += @extension_type
           binary += i2uint16(length)
@@ -48,7 +59,9 @@ module TLS13
         #
         # @return [TLS13::Message::Extension::ServerName]
         def self.deserialize(binary)
-          raise 'invalid binary' if binary.nil? || binary.length < 2
+          raise 'too short binary' if binary.nil? || binary.length == 1
+
+          return ServerName.new('') if binary.empty?
 
           snlist_len = bin2i(binary.slice(0, 2))
           raise 'malformed binary' unless snlist_len + 2 == binary.length
