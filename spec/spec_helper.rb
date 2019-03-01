@@ -93,3 +93,6 @@ TESTBINARY_ENCRYPTED_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
   00 18 00 19 01 00 01 01     01 02 01 03 01 04 00 1c
   00 02 40 01 00 00 00 00
 BIN
+TESTBINARY_CHANGE_CIPHER_SPEC = <<BIN.split.map(&:hex).map(&:chr).join
+  01
+BIN
