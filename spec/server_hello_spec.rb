@@ -47,7 +47,7 @@ RSpec.describe ServerHello do
     end
   end
 
-  context 'valid server_hello' do
+  context 'valid server_hello binary' do
     let(:message) do
       ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
     end

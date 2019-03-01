@@ -25,7 +25,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             raise 'invalid versions.length' unless @versions.length == 1
           else
-            raise 'invalid msg_type'
+            raise 'invalid HandshakeType'
           end
         end
         # rubocop: enable Metrics/CyclomaticComplexity

@@ -42,7 +42,7 @@ RSpec.describe ClientHello do
     end
   end
 
-  context 'valid client_hello' do
+  context 'valid client_hello binary' do
     let(:message) do
       ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
     end

@@ -28,7 +28,7 @@ module TLS13
             @selected_identity = selected_identity || ''
             # TODO: argument check
           else
-            raise 'invalid msg_type'
+            raise 'invalid HandshakeType'
           end
         end
 
@@ -42,7 +42,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO
             2
           else
-            raise 'invalid msg_type'
+            raise 'unexpected HandshakeType'
           end
         end
 
@@ -59,7 +59,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO
             binary += @selected_identity
           else
-            raise 'invalid msg_type'
+            raise 'invalid HandshakeType'
           end
           binary
         end
@@ -83,7 +83,7 @@ module TLS13
             PreSharedKey.new(msg_type: HandshakeType::SERVER_HELLO,
                              selected_identity: selected_identity)
           else
-            raise 'invalid msg_type'
+            raise 'unexpected HandshakeType'
           end
         end
       end

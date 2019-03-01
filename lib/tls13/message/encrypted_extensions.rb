@@ -33,7 +33,7 @@ module TLS13
       #
       # @return [TLS13::Message::EncryptedExtensions]
       def self.deserialize(binary)
-        raise 'invalid msg_type' \
+        raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::ENCRYPTED_EXTENSIONS
 
         ee_len = bin2i(binary.slice(1, 3))

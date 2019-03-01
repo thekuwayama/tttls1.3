@@ -60,7 +60,7 @@ module TLS13
       # @return [TLS13::Message::ServerHello]
       # rubocop: disable Metrics/MethodLength
       def self.deserialize(binary)
-        raise 'msg_type is invalid' \
+        raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::SERVER_HELLO
 
         length = bin2i(binary.slice(1, 3))

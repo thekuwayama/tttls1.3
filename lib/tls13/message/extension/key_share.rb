@@ -17,7 +17,7 @@ module TLS13
                        key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
-          raise 'invalid msg_type' \
+          raise 'invalid HandshakeType' \
             if @msg_type != HandshakeType::CLIENT_HELLO \
                && @msg_type != HandshakeType::SERVER_HELLO \
                && @msg_type != HandshakeType::HELLO_RETRY_REQUEST
@@ -39,7 +39,7 @@ module TLS13
           when HandshakeType::HELLO_RETRY_REQUEST
             2
           else
-            raise 'unexpected msg_type'
+            raise 'unexpected HandshakeType'
           end
         end
 
@@ -61,7 +61,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             binary += @key_share_entry.first.serialize
           else
-            raise 'unexpected msg_type'
+            raise 'unexpected HandshakeType'
           end
           binary
         end
