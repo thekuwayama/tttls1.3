@@ -4,54 +4,65 @@
 require 'spec_helper'
 
 RSpec.describe Record do
-  context 'valid record header' do
+  context 'valid record' do
     let(:record) do
       Record.new(
-        type: ContentType::HANDSHAKE,
-        legacy_record_version: ProtocolVersion::TLS_1_2
+        type: ContentType::CCS,
+        legacy_record_version: ProtocolVersion::TLS_1_2,
+        messages: [ChangeCipherSpec.new]
       )
     end
 
     it 'should be generated' do
-      expect(record.type).to eq ContentType::HANDSHAKE
+      expect(record.type).to eq ContentType::CCS
       expect(record.legacy_record_version).to eq ProtocolVersion::TLS_1_2
-      expect(record.length).to eq 0
+      expect(record.length).to eq 1
     end
 
     it 'should be serialized' do
-      expect(record.serialize).to eq "\x16\x03\x03\x00\x00"
+      expect(record.serialize).to eq ContentType::CCS \
+                                     + ProtocolVersion::TLS_1_2 \
+                                     + i2uint16(1) \
+                                     + ChangeCipherSpec.new.serialize
     end
   end
 
-  context 'valid record header binary' do
+  context 'valid record binary' do
     let(:record) do
-      Record.deserialize(TESTBINARY_RECORD_HEADER, Passer.new)
+      Record.deserialize(TESTBINARY_RECORD_CCS, Passer.new)
     end
 
-    it 'should generate valid header' do
-      expect(record.type).to eq ContentType::HANDSHAKE
+    it 'should generate valid record header and ChangeCipherSpec' do
+      expect(record.type).to eq ContentType::CCS
       expect(record.legacy_record_version).to eq ProtocolVersion::TLS_1_2
-      expect(record.length).to eq 0
+      expect(record.length).to eq 1
+    end
+
+    it 'should generate valid serializable object' do
+      expect(record.serialize).to eq  ContentType::CCS \
+                                     + ProtocolVersion::TLS_1_2 \
+                                     + i2uint16(1) \
+                                     + ChangeCipherSpec.new.serialize
     end
   end
 
-  context 'invalid record header binary, too short' do
+  context 'invalid record binary, too short,' do
     let(:record) do
-      Record.deserialize(TESTBINARY_RECORD_HEADER[0...-1],
+      Record.deserialize(TESTBINARY_RECORD_CCS[0...-1],
                          Passer.new)
     end
 
-    it 'should not generate header' do
+    it 'should not generate object' do
       expect { record }.to raise_error(RuntimeError)
     end
   end
 
-  context 'invalid record header binary, binary is nil' do
+  context 'invalid record binary, nil,' do
     let(:record) do
       Record.deserialize(nil, Passer.new)
     end
 
-    it 'should not generate header' do
+    it 'should not generate object' do
       expect { record }.to raise_error(RuntimeError)
     end
   end

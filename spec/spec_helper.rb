@@ -11,8 +11,8 @@ include TLS13::Message::Extension
 include TLS13::Cryptograph
 # rubocop: enable Style/MixinUsage
 
-TESTBINARY_RECORD_HEADER = <<BIN.split.map(&:hex).map(&:chr).join
-  16 03 03 00 00
+TESTBINARY_RECORD_CCS = <<BIN.split.map(&:hex).map(&:chr).join
+  14 03 03 00 01 01
 BIN
 TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
   13 02 13 03 13 01
