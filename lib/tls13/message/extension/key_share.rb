@@ -13,17 +13,27 @@ module TLS13
         # @param key_share_entry [Array of KeyShareEntry]
         #
         # @raise [RuntimeError]
+        # rubocop: disable Metrics/CyclomaticComplexity
+        # rubocop: disable Metrics/PerceivedComplexity
         def initialize(msg_type: nil,
                        key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
-          raise 'invalid HandshakeType' \
-            if @msg_type != HandshakeType::CLIENT_HELLO \
-               && @msg_type != HandshakeType::SERVER_HELLO \
-               && @msg_type != HandshakeType::HELLO_RETRY_REQUEST
-
           @key_share_entry = key_share_entry || []
+          if @msg_type == HandshakeType::SERVER_HELLO
+            raise 'invalid KeyShareServerHello' \
+              unless @key_share_entry.length == 1 &&
+                     @key_share_entry.first.key_share_server_hello?
+          elsif @msg_type == HandshakeType::HELLO_RETRY_REQUEST
+            raise 'invalid KeyShareHelloRetryRequest' \
+              unless @key_share_entry.length == 1 &&
+                     @key_share_entry.first.key_share_hello_retry_request?
+          elsif @msg_type != HandshakeType::CLIENT_HELLO
+            raise 'invalid HandshakeType'
+          end
         end
+        # rubocop: enable Metrics/CyclomaticComplexity
+        # rubocop: enable Metrics/PerceivedComplexity
 
         # @raise [RuntimeError]
         #
@@ -74,8 +84,7 @@ module TLS13
           key_share_entry = []
           case msg_type
           when HandshakeType::CLIENT_HELLO
-            kse_len = bin2i(binary.slice(0, 2))
-            key_share_entry = deserialize_keyshare_ch(binary.slice(2, kse_len))
+            key_share_entry = deserialize_keyshare_ch(binary)
           when HandshakeType::SERVER_HELLO
             key_share_entry = deserialize_keyshare_sh(binary)
           when HandshakeType::HELLO_RETRY_REQUEST
@@ -98,9 +107,12 @@ module TLS13
         #
         # @return [Array of KeyShareEntry]
         def self.deserialize_keyshare_ch(binary)
+          raise 'too short binary' if binary.nil? || binary.length < 2
+
+          cs_len = bin2i(binary.slice(0, 2))
           key_share_entry = []
-          itr = 0
-          while itr < binary.length
+          itr = 2
+          while itr < cs_len + 2
             group = binary.slice(itr, 2)
             itr += 2
             ke_len = bin2i(binary.slice(itr, 2))
@@ -160,17 +172,29 @@ module TLS13
         # @param key_exchange [String]
         def initialize(group: '', key_exchange: '')
           @group = group || ''
+          raise 'invalid NamedGroup' unless @group.length == 2
+
           @key_exchange = key_exchange || ''
-          # TODO: check len(key_exchange) for group
+        end
+
+        # @return [Boolean]
+        def key_share_server_hello?
+          @group.length == 2 && @key_exchange.length.positive?
+        end
+
+        # @return [Boolean]
+        def key_share_hello_retry_request?
+          @group.length == 2 && @key_exchange.empty?
         end
 
         # @return [String]
         def serialize
           binary = ''
-          # @msg_type == HandshakeType::HELLO_RETRY_REQUEST
-          # extension_data is single NamedGroup
           binary += @group
-          binary += i2uint16(@key_exchange.length) + @key_exchange
+          # HandshakeType::HELLO_RETRY_REQUEST
+          # extension_data is single NamedGroup
+          binary += i2uint16(@key_exchange.length) + @key_exchange \
+            unless @key_exchange.empty?
           binary
         end
       end

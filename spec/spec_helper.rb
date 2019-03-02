@@ -32,10 +32,18 @@ BIN
 TESTBINARY_SUPPORTED_VERSIONS_SH = <<BIN.split.map(&:hex).map(&:chr).join
   03 04
 BIN
-TESTBINARY_KEY_SHARE = <<BIN.split.map(&:hex).map(&:chr).join
+TESTBINARY_KEY_SHARE_CH = <<BIN.split.map(&:hex).map(&:chr).join
   00 24 00 1d 00 20 99 38     1d e5 60 e4 bd 43 d2 3d
   8e 43 5a 7d ba fe b3 c0     6e 51 c1 3c ae 4d 54 13
   69 1e 52 9a af 2c
+BIN
+TESTBINARY_KEY_SHARE_SH = <<BIN.split.map(&:hex).map(&:chr).join
+  00 1d 00 20 99 38 1d e5     60 e4 bd 43 d2 3d 8e 43
+  5a 7d ba fe b3 c0 6e 51     c1 3c ae 4d 54 13 69 1e
+  52 9a af 2c
+BIN
+TESTBINARY_KEY_SHARE_HRR = <<BIN.split.map(&:hex).map(&:chr).join
+  00 1d
 BIN
 TESTBINARY_SIGNATURE_ALGORITHMS = <<BIN.split.map(&:hex).map(&:chr).join
   00 12 04 03 08 04 04 01     05 03 08 05 05 01 08 06
