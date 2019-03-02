@@ -14,53 +14,68 @@ include TLS13::Cryptograph
 TESTBINARY_RECORD_CCS = <<BIN.split.map(&:hex).map(&:chr).join
   14 03 03 00 01 01
 BIN
+
 TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
   13 02 13 03 13 01
 BIN
+
 TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).map(&:chr).join
   00 0d 00 00 0a 67 69 74     68 75 62 2e 63 6f 6d
 BIN
+
 TESTBINARY_STATUS_REQUEST = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 00 00 00
 BIN
+
 TESTBINARY_SUPPORTED_GROUPS = <<BIN.split.map(&:hex).map(&:chr).join
   00 08 00 17 00 18 00 19    00 1d
 BIN
+
 TESTBINARY_SUPPORTED_VERSIONS_CH = <<BIN.split.map(&:hex).map(&:chr).join
   04 03 04 03 03
 BIN
+
 TESTBINARY_SUPPORTED_VERSIONS_SH = <<BIN.split.map(&:hex).map(&:chr).join
   03 04
 BIN
+
 TESTBINARY_KEY_SHARE_CH = <<BIN.split.map(&:hex).map(&:chr).join
   00 24 00 1d 00 20 99 38     1d e5 60 e4 bd 43 d2 3d
   8e 43 5a 7d ba fe b3 c0     6e 51 c1 3c ae 4d 54 13
   69 1e 52 9a af 2c
 BIN
+
 TESTBINARY_KEY_SHARE_SH = <<BIN.split.map(&:hex).map(&:chr).join
   00 1d 00 20 99 38 1d e5     60 e4 bd 43 d2 3d 8e 43
   5a 7d ba fe b3 c0 6e 51     c1 3c ae 4d 54 13 69 1e
   52 9a af 2c
 BIN
+
 TESTBINARY_KEY_SHARE_HRR = <<BIN.split.map(&:hex).map(&:chr).join
   00 1d
 BIN
+
 TESTBINARY_SIGNATURE_ALGORITHMS = <<BIN.split.map(&:hex).map(&:chr).join
   00 12 04 03 08 04 04 01     05 03 08 05 05 01 08 06
   06 01 02 01
 BIN
+
 TESTBINARY_SIGNATURE_ALGORITHMS_CERT = TESTBINARY_SIGNATURE_ALGORITHMS
+
 TESTBINARY_COOKIE = <<BIN.split.map(&:hex).map(&:chr).join
   00 20 6a d9 1d 2c d6 cc     f1 3b 3d 48 cc 5d cb bd
   84 77 6b c3 f4 f0 9f 8d     53 dc 11 7a dd c0 9c 40
   8d 4a
 BIN
+
 TESTBINARY_PSK_KEY_EXCHANGE_MODES = <<BIN.split.map(&:hex).map(&:chr).join
   02 00 01
 BIN
+
 TESTBINARY_RECORD_SIZE_LIMIT = <<BIN.split.map(&:hex).map(&:chr).join
   40 00
 BIN
+
 TESTBINARY_PRE_SHARED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   00 26 00 20 b2 83 3b 1e     5c 0e 9f ae b2 ef 16 37
   11 0f bd 3d 58 18 cc 06     a1 d4 8c 59 45 19 1e b5
@@ -101,6 +116,7 @@ TESTBINARY_ENCRYPTED_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
   00 18 00 19 01 00 01 01     01 02 01 03 01 04 00 1c
   00 02 40 01 00 00 00 00
 BIN
+
 TESTBINARY_CHANGE_CIPHER_SPEC = <<BIN.split.map(&:hex).map(&:chr).join
   01
 BIN
