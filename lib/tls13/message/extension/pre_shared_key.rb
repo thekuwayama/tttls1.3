@@ -146,7 +146,7 @@ module TLS13
             )
           end
 
-          binders_tail = itr + bin2i(binary.slice(itr, 2))
+          binders_tail = itr + bin2i(binary.slice(itr, 2)) + 2
           itr += 2
           binders = [] # Array of String
           while itr < binders_tail

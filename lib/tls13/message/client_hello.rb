@@ -65,7 +65,7 @@ module TLS13
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::CLIENT_HELLO
 
-        length = bin2i(binary.slice(1, 3))
+        msg_len = bin2i(binary.slice(1, 3))
         legacy_version = binary.slice(4, 2)
         random = binary.slice(6, 32)
         lsid_len = bin2i(binary[38])
@@ -86,7 +86,7 @@ module TLS13
         extensions = Extensions.deserialize(serialized_extensions,
                                             HandshakeType::CLIENT_HELLO)
         itr += exs_len
-        raise 'malformed binary' unless itr == length + 4
+        raise 'malformed binary' unless itr == msg_len + 4
 
         ClientHello.new(legacy_version: legacy_version,
                         random: random,

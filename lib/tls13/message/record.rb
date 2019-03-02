@@ -61,8 +61,8 @@ module TLS13
 
         type = binary[0]
         legacy_record_version = binary.slice(1, 2)
-        length = bin2i(binary.slice(3, 2))
-        fragment = binary.slice(5, length)
+        fragment_len = bin2i(binary.slice(3, 2))
+        fragment = binary.slice(5, fragment_len)
         plaintext = cryptographer.decrypt(fragment)
         messages = deserialize_fragment(plaintext, type)
         Record.new(type: type,
