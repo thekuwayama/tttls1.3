@@ -15,4 +15,5 @@ Metrics/MethodLength:
 
 Metrics/BlockLength:
   Exclude:
+    - 'Rakefile'
     - 'spec/*.rb'
