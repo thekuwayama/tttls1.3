@@ -47,6 +47,8 @@ module TLS13
         @signature_scheme = signature_scheme
         @signature = signature || ''
         raise 'invalid signature' if @signature.length > 2**16 - 1
+
+        # TODO: check @signature.length using type of SignatureScheme
       end
 
       # @return [Integer]
