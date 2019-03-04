@@ -6,7 +6,7 @@ require 'spec_helper'
 RSpec.describe Certificate do
   context 'valid certificate' do
     let(:certificate) do
-      OpenSSL::X509::Certificate.new(TESTCERTIFICATE)
+      OpenSSL::X509::Certificate.new(File.read(__dir__ + '/../tmp/server.crt'))
     end
 
     let(:message) do
@@ -17,7 +17,7 @@ RSpec.describe Certificate do
 
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
-      expect(message.length).to eq 1196
+      expect(message.length).to eq 994
       expect(message.certificate_request_context).to be_empty
 
       certificate_entry = message.certificate_list.first
@@ -29,8 +29,8 @@ RSpec.describe Certificate do
       expect(message.serialize).to eq HandshakeType::CERTIFICATE \
                                       + i2uint24(message.length) \
                                       + i2uint8(0) \
-                                      + i2uint24(1192) \
-                                      + i2uint24(1187) \
+                                      + i2uint24(990) \
+                                      + i2uint24(985) \
                                       + certificate.to_der \
                                       + i2uint16(0)
     end

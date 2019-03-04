@@ -6,7 +6,6 @@ require 'openssl'
 require 'fileutils'
 
 RuboCop::RakeTask.new
-RSpec::Core::RakeTask.new('spec')
 
 TMP_DIR    = __dir__ + '/tmp'
 CA_KEY     = TMP_DIR + '/ca.key'
@@ -127,5 +126,7 @@ task :del_certs do
     FileUtils.rm(path, force: true)
   end
 end
+
+RSpec::Core::RakeTask.new(spec: :gen_certs)
 
 task default: [:rubocop, :spec]
