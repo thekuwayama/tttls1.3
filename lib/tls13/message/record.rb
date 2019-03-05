@@ -6,9 +6,9 @@ module TLS13
     class Record
       attr_accessor :type
       attr_accessor :legacy_record_version
-      attr_accessor :fragment
       attr_accessor :messages
       attr_accessor :cryptographer
+      attr_accessor :fragment
 
       # @param type [TLS13::Message::ContentType]
       # @param legacy_record_version [TLS13::Message::ProtocolVersion]
@@ -16,7 +16,7 @@ module TLS13
       # @param cryptographer [TLS13::Cryptograph::$Object]
       #
       # @raise [RuntimeError]
-      def initialize(type: ContentType::INVALID,
+      def initialize(type: nil,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
                      messages: [],
                      cryptographer: nil)
@@ -24,6 +24,15 @@ module TLS13
         @legacy_record_version = legacy_record_version
         @messages = messages || []
         @cryptographer = cryptographer
+
+        @type = ContentType::APPLICATION_DATA \
+          unless @cryptographer.is_a?(Cryptograph::Passer)
+        raise 'invalid ContentType' if @type.nil?
+
+        @legacy_record_version = ProtocolVersion::TLS_1_2 \
+          unless @cryptographer.is_a?(Cryptograph::Passer)
+
+        @fragment = @cryptographer.encrypt(@messages.map(&:serialize).join)
       end
 
       # @raise [RuntimeError]
@@ -35,6 +44,8 @@ module TLS13
           @messages.map { |x| x.length + 4 }.sum
         when ContentType::CCS
           1
+        when ContentType::APPLICATION_DATA
+          @fragment.length
         else # TODO
           raise 'unexpected ContentType'
         end
@@ -46,7 +57,7 @@ module TLS13
         binary += @type
         binary += @legacy_record_version
         binary += i2uint16(length)
-        binary += @messages.map(&:serialize).join
+        binary += @fragment
         binary
       end
 

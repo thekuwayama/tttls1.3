@@ -27,6 +27,8 @@ module TLS13
         binary
       end
 
+      alias fragment serialize
+
       # @param binary [String]
       #
       # @raise [RuntimeError]

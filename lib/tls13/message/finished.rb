@@ -29,6 +29,8 @@ module TLS13
         binary
       end
 
+      alias fragment serialize
+
       # @param binary [String]
       # @param hash_len [Integer]
       #
