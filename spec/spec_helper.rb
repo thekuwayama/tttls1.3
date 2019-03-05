@@ -163,3 +163,9 @@ TESTBINARY_CERTIFICATE_VERIFY = <<BIN.split.map(&:hex).map(&:chr).join
   d3 be 15 2a 3d a5 04 3e     06 3d da 65 cd f5 ae a2
   0d 53 df ac d4 2f 74 f3
 BIN
+
+TESTBINARY_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
+  14 00 00 20 9b 9b 14 1d     90 63 37 fb d2 cb dc e7
+  1d f4 de da 4a b4 2c 30     95 72 cb 7f ff ee 54 54
+  b7 8f 07 18
+BIN
