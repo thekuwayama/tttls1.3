@@ -33,19 +33,18 @@ module TLS13
     end
 
     class CertificateVerify
-      attr_reader   :msg_type
-      attr_accessor :signature_scheme
-      attr_accessor :signature
+      attr_reader :msg_type
+      attr_reader :signature_scheme
+      attr_reader :signature
 
       # @param signature_scheme [TLS13::Message::SignatureScheme]
       # @param signature [String]
       #
       # @raise [RuntimeError]
-      def initialize(signature_scheme: nil,
-                     signature: '')
+      def initialize(signature_scheme:, signature:)
         @msg_type = HandshakeType::CERTIFICATE_VERIFY
         @signature_scheme = signature_scheme
-        @signature = signature || ''
+        @signature = signature
         raise 'invalid signature' if @signature.length > 2**16 - 1
 
         # TODO: check @signature.length using type of SignatureScheme
@@ -81,7 +80,7 @@ module TLS13
         msg_len = bin2i(binary.slice(1, 3))
         signature_scheme = binary.slice(4, 2)
         signature_len = bin2i(binary.slice(6, 2))
-        signature = binary.slice(4, signature_len)
+        signature = binary.slice(8, signature_len)
         raise 'malformed binary' \
           unless binary.length == signature_len + 8 &&
                  signature_len + 4 == msg_len

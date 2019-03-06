@@ -28,7 +28,18 @@ RSpec.describe Finished do
 
   context 'valid finished binary' do
     let(:message) do
-      Finished.deserialize(TESTBINARY_FINISHED, 32)
+      Finished.deserialize(TESTBINARY_SERVER_FINISHED, 32)
+    end
+
+    it 'should generate valid object' do
+      expect(message.msg_type).to eq HandshakeType::FINISHED
+      expect(message.hash_length).to eq 32
+    end
+  end
+
+  context 'valid finished binary' do
+    let(:message) do
+      Finished.deserialize(TESTBINARY_CLIENT_FINISHED, 32)
     end
 
     it 'should generate valid object' do

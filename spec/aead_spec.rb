@@ -6,10 +6,10 @@ require 'spec_helper'
 RSpec.describe Aead do
   context 'aead using CipherSuite::TLS_AES_128_GCM_SHA256' do
     let(:cipher) do
-      Aead.new(type: ContentType::HANDSHAKE,
-               nonce: TESTBINARY_SERVER_PARAMETERS_IV,
+      Aead.new(cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
                key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
-               cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
+               nonce: TESTBINARY_SERVER_PARAMETERS_IV,
+               type: ContentType::HANDSHAKE)
     end
 
     let(:content) do
@@ -17,18 +17,47 @@ RSpec.describe Aead do
     end
 
     let(:encrypted_record) do
-      TESTBINARY_ENCRYPTED_SERVER_PARAMETERS
+      TESTBINARY_SERVER_PARAMETERS_RECORD[5..]
     end
 
     let(:record_header) do
-      "\x17\x03\x03\x02\xa2"
+      TESTBINARY_SERVER_PARAMETERS_RECORD[0...5]
     end
 
-    it 'should encrypt content' do
+    it 'should encrypt content of server parameters' do
       expect(cipher.encrypt(content)).to eq encrypted_record
     end
 
-    it 'should decrypt encrypted_record' do
+    it 'should decrypt encrypted_record server parameters' do
+      expect(cipher.decrypt(encrypted_record, record_header)).to eq content
+    end
+  end
+
+  context 'aead using CipherSuite::TLS_AES_128_GCM_SHA256' do
+    let(:cipher) do
+      Aead.new(cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+               key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
+               nonce: TESTBINARY_CLIENT_FINISHED_IV,
+               type: ContentType::HANDSHAKE)
+    end
+
+    let(:content) do
+      TESTBINARY_CLIENT_FINISHED
+    end
+
+    let(:encrypted_record) do
+      TESTBINARY_CLIENT_FINISHED_RECORD[5..]
+    end
+
+    let(:record_header) do
+      TESTBINARY_CLIENT_FINISHED_RECORD[0...5]
+    end
+
+    it 'should encrypt content of client finished' do
+      expect(cipher.encrypt(content)).to eq encrypted_record
+    end
+
+    it 'should decrypt encrypted_record client finished' do
       expect(cipher.decrypt(encrypted_record, record_header)).to eq content
     end
   end

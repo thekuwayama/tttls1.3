@@ -4,16 +4,12 @@
 module TLS13
   module Cryptograph
     class Aead
+      # @cipher_suite [TLS13::Message::CipherSuite]
+      # @param key [String]
+      # @param nonce [String]
       # @param type [TLS13::Message::ContentType] TLSInnerPlaintext.type
       # @param length_of_padding [Integer]
-      # @param nonce [String]
-      # @param key [String]
-      # @cipher_suite [TLS13::Message::CipherSuite]
-      def initialize(type: ContentType::INVALID,
-                     length_of_padding: 0,
-                     nonce: nil,
-                     key: nil,
-                     cipher_suite: nil)
+      def initialize(cipher_suite:, key:, nonce:, type:, length_of_padding: 0)
         @type = type
         @length_of_padding = length_of_padding
         case cipher_suite
@@ -29,14 +25,13 @@ module TLS13
           # CipherSuite::TLS_CHACHA20_POLY1305_SHA256
           raise 'unsupported CipherSuite'
         end
-        @cipher.key = key
-        @cipher.iv = nonce
+        @key = key
+        @nonce = nonce
       end
 
       # @return [String]
       def additional_data(plaintext_len)
-       # length of auth_tag = 16
-        ciphertext_len = plaintext_len + 16
+        ciphertext_len = plaintext_len + 16 # length of auth_tag is 16
         ContentType::APPLICATION_DATA \
         + ProtocolVersion::TLS_1_2 \
         + i2uint16(ciphertext_len)
@@ -48,6 +43,7 @@ module TLS13
       #
       # @return [String]
       def encrypt(content)
+        reset_cipher
         cipher = @cipher.encrypt
         plaintext = content + @type + "\x00" * @length_of_padding
         cipher.auth_data = additional_data(plaintext.length)
@@ -66,13 +62,32 @@ module TLS13
       #
       # @return [String]
       def decrypt(encrypted_record, auth_data)
+        reset_cipher
         decipher = @cipher.decrypt
-        er_len = encrypted_record.length
-        auth_tag = encrypted_record.slice(er_len - 16, 16)
+        auth_tag = encrypted_record[-16..-1]
         decipher.auth_tag = auth_tag
         decipher.auth_data = auth_data # record header of TLSCiphertext
 
-        decipher.update(encrypted_record)[0...-17]
+        clear = decipher.update(encrypted_record[0...-16]) # auth_tag
+        decipher.final
+        zeros_len = scan_zeros(clear)
+        postfix_len = 1 + zeros_len # type || zeros
+        clear[0...-postfix_len]
+      end
+
+      def reset_cipher
+        @cipher.reset
+        @cipher.key = @key
+        @cipher.iv = @nonce
+      end
+
+      # @param [String]
+      #
+      # @return [Integer]
+      def scan_zeros(clear)
+        i = 1
+        i += 1 while clear[-i] == "\x00"
+        i - 1
       end
     end
   end

@@ -65,7 +65,7 @@ RSpec.describe Cookie do
     it 'should generate object' do
       expect(extension.extension_type).to eq ExtensionType::COOKIE
       expect(extension.length).to eq TESTBINARY_COOKIE.length
-      expect(extension.cookie).to eq TESTBINARY_COOKIE[2..-1]
+      expect(extension.cookie).to eq TESTBINARY_COOKIE[2..]
     end
   end
 
