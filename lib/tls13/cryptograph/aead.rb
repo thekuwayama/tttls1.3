@@ -16,14 +16,26 @@ module TLS13
                      cipher_suite: nil)
         @type = type
         @length_of_padding = length_of_padding
-        @nonce = nonce
-        @key = key
-        @cipher_suite = cipher_suite
+        case cipher_suite
+        when CipherSuite::TLS_AES_128_GCM_SHA256
+          @cipher = OpenSSL::Cipher::AES128.new(:GCM)
+        when CipherSuite::TLS_AES_256_GCM_SHA384
+          @cipher = OpenSSL::Cipher::AES256.new(:GCM)
+        when CipherSuite::TLS_AES_128_CCM_SHA256
+          @cipher = OpenSSL::Cipher::AES128.new(:CCM)
+        when CipherSuite::TLS_AES_128_CCM_8_SHA256
+          @cipher = OpenSSL::Cipher::AES128.new(:CCM)
+        else
+          # CipherSuite::TLS_CHACHA20_POLY1305_SHA256
+          raise 'unsupported CipherSuite'
+        end
+        @cipher.key = key
+        @cipher.iv = nonce
       end
 
       # @return [String]
       def additional_data(plaintext_len)
-        # length of auth_tag = 16
+       # length of auth_tag = 16
         ciphertext_len = plaintext_len + 16
         ContentType::APPLICATION_DATA \
         + ProtocolVersion::TLS_1_2 \
@@ -36,23 +48,8 @@ module TLS13
       #
       # @return [String]
       def encrypt(content)
+        cipher = @cipher.encrypt
         plaintext = content + @type + "\x00" * @length_of_padding
-        case @cipher_suite
-        when CipherSuite::TLS_AES_128_GCM_SHA256
-          cipher = OpenSSL::Cipher::AES128.new(:GCM)
-        when CipherSuite::TLS_AES_256_GCM_SHA384
-          cipher = OpenSSL::Cipher::AES256.new(:GCM)
-        when CipherSuite::TLS_AES_128_CCM_SHA256
-          cipher = OpenSSL::Cipher::AES128.new(:CCM)
-        when CipherSuite::TLS_AES_128_CCM_8_SHA256
-          cipher = OpenSSL::Cipher::AES128.new(:CCM)
-        else
-          # CipherSuite::TLS_CHACHA20_POLY1305_SHA256
-          raise 'unsupported CipherSuite'
-        end
-        cipher.encrypt
-        cipher.key = @key
-        cipher.iv = @nonce
         cipher.auth_data = additional_data(plaintext.length)
 
         encrypted_data = cipher.update(plaintext) + cipher.final
@@ -63,11 +60,19 @@ module TLS13
       #              additional_data, AEADEncrypted)
       #
       # @param encrypted_record [String]
+      # @param auth_data [String]
+      #
+      # @raise [OpenSSL::Cipher::CipherError]
       #
       # @return [String]
-      def decrypt(encrypted_record)
-        # TODO
-        encrypted_record
+      def decrypt(encrypted_record, auth_data)
+        decipher = @cipher.decrypt
+        er_len = encrypted_record.length
+        auth_tag = encrypted_record.slice(er_len - 16, 16)
+        decipher.auth_tag = auth_tag
+        decipher.auth_data = auth_data # record header of TLSCiphertext
+
+        decipher.update(encrypted_record)[0...-17]
       end
     end
   end

@@ -20,12 +20,16 @@ RSpec.describe Aead do
       TESTBINARY_ENCRYPTED_SERVER_PARAMETERS
     end
 
+    let(:record_header) do
+      "\x17\x03\x03\x02\xa2"
+    end
+
     it 'should encrypt content' do
       expect(cipher.encrypt(content)).to eq encrypted_record
     end
 
     it 'should decrypt encrypted_record' do
-      # expect(cipher.dencrypt(encrypted_record)).to eq content
+      expect(cipher.decrypt(encrypted_record, record_header)).to eq content
     end
   end
 end
