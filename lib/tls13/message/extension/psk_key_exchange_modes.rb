@@ -10,11 +10,11 @@ module TLS13
       end
 
       class PskKeyExchangeModes
-        attr_reader   :extension_type
-        attr_accessor :ke_modes
+        attr_reader :extension_type
+        attr_reader :ke_modes
 
         # @param ke_modes [Array of PskKeyExchangeMode]
-        def initialize(ke_modes: [])
+        def initialize(ke_modes = [])
           @extension_type = ExtensionType::PSK_KEY_EXCHANGE_MODES
           @ke_modes = ke_modes || []
         end
@@ -51,7 +51,7 @@ module TLS13
             ke_modes << binary[itr]
             itr += 1
           end
-          PskKeyExchangeModes.new(ke_modes: ke_modes)
+          PskKeyExchangeModes.new(ke_modes)
         end
       end
     end

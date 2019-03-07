@@ -5,8 +5,8 @@ module TLS13
   module Message
     module Extension
       class Cookie
-        attr_reader   :extension_type
-        attr_accessor :cookie
+        attr_reader :extension_type
+        attr_reader :cookie
 
         # @param cookie [String]
         #

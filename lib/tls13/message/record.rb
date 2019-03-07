@@ -4,11 +4,11 @@
 module TLS13
   module Message
     class Record
-      attr_accessor :type
-      attr_accessor :legacy_record_version
-      attr_accessor :messages
-      attr_accessor :cryptographer
-      attr_accessor :fragment
+      attr_reader :type
+      attr_reader :legacy_record_version
+      attr_reader :messages
+      attr_reader :cryptographer
+      attr_reader :fragment
 
       # @param type [TLS13::Message::ContentType]
       # @param legacy_record_version [TLS13::Message::ProtocolVersion]
@@ -16,10 +16,10 @@ module TLS13
       # @param cryptographer [TLS13::Cryptograph::$Object]
       #
       # @raise [RuntimeError]
-      def initialize(type: nil,
+      def initialize(type:,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
                      messages: [],
-                     cryptographer: nil)
+                     cryptographer:)
         @type = type
         @legacy_record_version = legacy_record_version
         @messages = messages || []

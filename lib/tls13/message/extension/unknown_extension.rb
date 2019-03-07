@@ -12,9 +12,7 @@ module TLS13
         # @param extension_data [String]
         #
         # @raise [RuntimeError]
-        def initialize(extension_type: nil, extension_data: nil)
-          raise 'extension_type is required argument' if extension_type.nil?
-
+        def initialize(extension_type:, extension_data: '')
           @extension_type = extension_type
           @extension_data = extension_data || ''
         end

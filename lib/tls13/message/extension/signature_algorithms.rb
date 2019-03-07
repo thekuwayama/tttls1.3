@@ -6,7 +6,7 @@ module TLS13
     module Extension
       class SignatureAlgorithms
         attr_accessor :extension_type # for signature_algorithms_cert
-        attr_accessor :supported_signature_algorithms
+        attr_reader   :supported_signature_algorithms
 
         # @param supported_signature_algorithms [Array of SignatureScheme]
         def initialize(supported_signature_algorithms)

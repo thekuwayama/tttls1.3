@@ -4,11 +4,11 @@
 module TLS13
   module Message
     class EncryptedExtensions
-      attr_reader   :msg_type
-      attr_accessor :extensions
+      attr_reader :msg_type
+      attr_reader :extensions
 
       # @param extensions [TLS13::Message::Extensions]
-      def initialize(extensions)
+      def initialize(extensions = Extensions.new)
         @msg_type = HandshakeType::ENCRYPTED_EXTENSIONS
         @extensions = extensions || Extensions.new
       end

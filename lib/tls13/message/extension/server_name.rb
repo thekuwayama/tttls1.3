@@ -16,8 +16,8 @@ module TLS13
       #
       # https://tools.ietf.org/html/rfc6066#section-3
       class ServerName
-        attr_reader   :extension_type
-        attr_accessor :server_name
+        attr_reader :extension_type
+        attr_reader :server_name
 
         # @param server_name [String]
         #

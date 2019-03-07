@@ -5,9 +5,9 @@ module TLS13
   module Message
     module Extension
       class KeyShare
-        attr_reader   :extension_type
-        attr_accessor :msg_type
-        attr_accessor :key_share_entry
+        attr_reader :extension_type
+        attr_reader :msg_type
+        attr_reader :key_share_entry
 
         # @param msg_type [TLS13::Message::ContentType]
         # @param key_share_entry [Array of KeyShareEntry]
@@ -15,8 +15,7 @@ module TLS13
         # @raise [RuntimeError]
         # rubocop: disable Metrics/CyclomaticComplexity
         # rubocop: disable Metrics/PerceivedComplexity
-        def initialize(msg_type: nil,
-                       key_share_entry: [])
+        def initialize(msg_type:, key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
           @key_share_entry = key_share_entry || []
@@ -165,8 +164,8 @@ module TLS13
       end
 
       class KeyShareEntry
-        attr_accessor :group
-        attr_accessor :key_exchange
+        attr_reader :group
+        attr_reader :key_exchange
 
         # @param group [TLS13::Message::Extension::NamedGroup]
         # @param key_exchange [String]

@@ -13,8 +13,6 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
-        #
         # @return [TLS13::Message::Extensions::SignatureAlgorithmsCert]
         def self.deserialize(binary)
           extension = SignatureAlgorithms.deserialize(binary)

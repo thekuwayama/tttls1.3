@@ -6,9 +6,9 @@ require 'openssl'
 module TLS13
   module Message
     class Certificate
-      attr_reader   :msg_type
-      attr_accessor :certificate_request_context
-      attr_accessor :certificate_list
+      attr_reader :msg_type
+      attr_reader :certificate_request_context
+      attr_reader :certificate_list
 
       # @param certificate_request_context [String]
       # @param certificate_list [Array of CertificateEntry]
@@ -66,8 +66,6 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [Runtime]
-      #
       # @return [Array of CertificateEntry]
       def self.deserialize_certificate_list(binary)
         itr = 0
@@ -85,28 +83,22 @@ module TLS13
                                               HandshakeType::CERTIFICATE)
           itr += exs_len
           certificate_list \
-          << CertificateEntry.new(cert_data: cert_data,
-                                  extensions: extensions)
+          << CertificateEntry.new(cert_data, extensions)
         end
         certificate_list
       end
     end
 
     class CertificateEntry
-      attr_accessor :cert_data
-      attr_accessor :extensions
+      attr_reader :cert_data
+      attr_reader :extensions
 
       # @param cert_data [OpenSSL::X509::Certificate]
       # @param extensions [TLS13::Message::Extensions]
       #
-      # @raise [RuntimeError]
-      #
       # @return [CertificateEntry]
-      def initialize(cert_data: nil,
-                     extensions: Extensions.new)
+      def initialize(cert_data, extensions = Extensions.new)
         @cert_data = cert_data
-        raise 'cert_data is required argument' if @cert_data.nil?
-
         @extensions = extensions || Extensions.new
       end
 

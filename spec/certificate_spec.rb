@@ -11,7 +11,7 @@ RSpec.describe Certificate do
 
     let(:message) do
       Certificate.new(
-        certificate_list: [CertificateEntry.new(cert_data: certificate)]
+        certificate_list: [CertificateEntry.new(certificate)]
       )
     end
 

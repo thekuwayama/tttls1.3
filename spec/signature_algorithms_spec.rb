@@ -6,17 +6,15 @@ require 'spec_helper'
 RSpec.describe SignatureAlgorithms do
   context 'valid signature_algorithms' do
     let(:supported_signature_algorithms) do
-      [
-        SignatureScheme::ECDSA_SECP256R1_SHA256,
-        SignatureScheme::RSA_PSS_RSAE_SHA256,
-        SignatureScheme::RSA_PKCS1_SHA256,
-        SignatureScheme::ECDSA_SECP384R1_SHA384,
-        SignatureScheme::RSA_PSS_RSAE_SHA384,
-        SignatureScheme::RSA_PKCS1_SHA384,
-        SignatureScheme::RSA_PSS_RSAE_SHA512,
-        SignatureScheme::RSA_PKCS1_SHA512,
-        SignatureScheme::RSA_PKCS1_SHA1
-      ]
+      [SignatureScheme::ECDSA_SECP256R1_SHA256,
+       SignatureScheme::RSA_PSS_RSAE_SHA256,
+       SignatureScheme::RSA_PKCS1_SHA256,
+       SignatureScheme::ECDSA_SECP384R1_SHA384,
+       SignatureScheme::RSA_PSS_RSAE_SHA384,
+       SignatureScheme::RSA_PKCS1_SHA384,
+       SignatureScheme::RSA_PSS_RSAE_SHA512,
+       SignatureScheme::RSA_PKCS1_SHA512,
+       SignatureScheme::RSA_PKCS1_SHA1]
     end
 
     let(:extension) do

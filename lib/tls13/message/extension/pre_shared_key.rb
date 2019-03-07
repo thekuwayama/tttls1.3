@@ -5,19 +5,17 @@ module TLS13
   module Message
     module Extension
       class PreSharedKey
-        attr_reader   :extension_type
-        attr_accessor :msg_type
-        attr_accessor :offered_psks
-        attr_accessor :selected_identity
+        attr_reader :extension_type
+        attr_reader :msg_type
+        attr_reader :offered_psks
+        attr_reader :selected_identity
 
         # @param msg_type [TLS13::Message::ContentType]
         # @param offered_psks [TLS13::Message::Extension::OfferedPsks]
         # @param selected_identity [String]
         #
         # @raise [RuntimeError]
-        def initialize(msg_type: nil,
-                       offered_psks: nil,
-                       selected_identity: nil)
+        def initialize(msg_type:, offered_psks: nil, selected_identity: '')
           @extension_type = ExtensionType::PRE_SHARED_KEY
           @msg_type = msg_type
           case @msg_type
@@ -89,8 +87,8 @@ module TLS13
       end
 
       class OfferedPsks
-        attr_accessor :identities
-        attr_accessor :binders
+        attr_reader :identities
+        attr_reader :binders
 
         # @param identities [Array of PskIdentity]
         # @param binders [Array of String]
@@ -163,8 +161,8 @@ module TLS13
       end
 
       class PskIdentity
-        attr_accessor :identity
-        attr_accessor :obfuscated_ticket_age
+        attr_reader :identity
+        attr_reader :obfuscated_ticket_age
 
         # @param identity [String]
         # @param obfuscated_ticket_age [Integer]

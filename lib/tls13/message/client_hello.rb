@@ -6,13 +6,13 @@ require 'openssl'
 module TLS13
   module Message
     class ClientHello
-      attr_reader   :msg_type
-      attr_accessor :legacy_version
-      attr_accessor :random
-      attr_accessor :legacy_session_id
-      attr_accessor :cipher_suites
-      attr_reader   :legacy_compression_methods
-      attr_accessor :extensions
+      attr_reader :msg_type
+      attr_reader :legacy_version
+      attr_reader :random
+      attr_reader :legacy_session_id
+      attr_reader :cipher_suites
+      attr_reader :legacy_compression_methods
+      attr_reader :extensions
 
       # @param legacy_version [String]
       # @param random [String]

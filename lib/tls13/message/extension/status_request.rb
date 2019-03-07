@@ -9,9 +9,9 @@ module TLS13
       end
 
       class StatusRequest
-        attr_reader   :extension_type
-        attr_accessor :responder_id_list
-        attr_accessor :request_extensions
+        attr_reader :extension_type
+        attr_reader :responder_id_list
+        attr_reader :request_extensions
 
         # @param responder_id_list [Array of String]
         # @param request_extensions [String]

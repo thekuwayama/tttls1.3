@@ -49,7 +49,7 @@ RSpec.describe UknownExtension do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect { extension }.to raise_error(ArgumentError)
     end
   end
 

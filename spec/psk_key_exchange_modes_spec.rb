@@ -6,12 +6,8 @@ require 'spec_helper'
 RSpec.describe PskKeyExchangeModes do
   context 'valid psk_key_exchange_modes' do
     let(:extension) do
-      PskKeyExchangeModes.new(
-        ke_modes: [
-          PskKeyExchangeMode::PSK_KE,
-          PskKeyExchangeMode::PSK_DHE_KE
-        ]
-      )
+      PskKeyExchangeModes.new([PskKeyExchangeMode::PSK_KE,
+                               PskKeyExchangeMode::PSK_DHE_KE])
     end
 
     it 'should generate valid psk_key_exchange_modes' do

@@ -14,7 +14,7 @@ module TLS13
         #
         # @raise [RuntimeError]
         # rubocop: disable Metrics/CyclomaticComplexity
-        def initialize(msg_type: nil, versions: [ProtocolVersion::TLS_1_3])
+        def initialize(msg_type:, versions: [ProtocolVersion::TLS_1_3])
           @extension_type = ExtensionType::SUPPORTED_VERSIONS
           @msg_type = msg_type
           @versions = versions || []
