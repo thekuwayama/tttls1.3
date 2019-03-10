@@ -289,3 +289,8 @@ BIN
 TESTBINARY_CLIENT_FINISHED_IV = <<BIN.split.map(&:hex).map(&:chr).join
   5b d3 c7 1b 83 6e 0b 76     bb 73 26 5f
 BIN
+
+TESTBINARY_CLIENT_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  b8 0a d0 10 15 fb 2f 0b     d6 5f f7 d4 da 5d 6b f8
+  3f 84 82 1d 1f 87 fd c7     d3 c7 5b 5a 7b 42 d9 c4
+BIN
