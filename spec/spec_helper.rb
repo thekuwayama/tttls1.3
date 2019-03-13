@@ -294,3 +294,38 @@ TESTBINARY_CLIENT_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   b8 0a d0 10 15 fb 2f 0b     d6 5f f7 d4 da 5d 6b f8
   3f 84 82 1d 1f 87 fd c7     d3 c7 5b 5a 7b 42 d9 c4
 BIN
+
+TESTBINARY_SHARED_SECRET = <<BIN.split.map(&:hex).map(&:chr).join
+  8b d4 05 4f b5 5b 9d 63     fd fb ac f9 f0 4b 9f 0d
+  35 e6 d6 3f 53 75 63 ef     d4 62 72 90 0f 89 49 2d
+BIN
+
+TESTBINARY_C_HS_TRAFFIC = <<BIN.split.map(&:hex).map(&:chr).join
+  b3 ed db 12 6e 06 7f 35     a7 80 b3 ab f4 5e 2d 8f
+  3b 1a 95 07 38 f5 2e 96     00 74 6a 0e 27 a5 5a 21
+BIN
+
+TESTBINARY_S_HS_TRAFFIC = <<BIN.split.map(&:hex).map(&:chr).join
+  b6 7b 7d 69 0c c1 6c 4e     75 e5 42 13 cb 2d 37 b4
+  e9 c9 12 bc de d9 10 5d     42 be fd 59 d3 91 ad 38
+BIN
+
+TESTBINARY_C_AP_TRAFFIC = <<BIN.split.map(&:hex).map(&:chr).join
+  9e 40 64 6c e7 9a 7f 9d     c0 5a f8 88 9b ce 65 52
+  87 5a fa 0b 06 df 00 87     f7 92 eb b7 c1 75 04 a5
+BIN
+
+TESTBINARY_S_AP_TRAFFIC = <<BIN.split.map(&:hex).map(&:chr).join
+  a1 1a f9 f0 55 31 f8 56     ad 47 11 6b 45 a9 50 32
+  82 04 b4 f4 4b fb 6b 3a     4b 4f 1f 3f cb 63 16 43
+BIN
+
+TESTBINARY_EXP_MASTER = <<BIN.split.map(&:hex).map(&:chr).join
+  fe 22 f8 81 17 6e da 18     eb 8f 44 52 9e 67 92 c5
+  0c 9a 3f 89 45 2f 68 d8     ae 31 1b 43 09 d3 cf 50
+BIN
+
+TESTBINARY_RES_MASTER = <<BIN.split.map(&:hex).map(&:chr).join
+  7d f2 35 f2 03 1d 2a 05     12 87 d0 2b 02 41 b0 bf
+  da f8 6c c8 56 23 1f 2d     5a ba 46 c4 34 ec 19 6c
+BIN

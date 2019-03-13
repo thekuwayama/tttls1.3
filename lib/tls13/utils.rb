@@ -52,3 +52,14 @@ end
 def bin2i(binary)
   binary.bytes.reverse.map.with_index { |x, i| x << 8 * i }.sum
 end
+
+def hash_len(digest)
+  case digest
+  when 'SHA256'
+    32
+  when 'SHA384'
+    48
+  else
+    'unsupported digest'
+  end
+end
