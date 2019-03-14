@@ -30,8 +30,7 @@ module TLS13
         binary = ''
         binary += @msg_type
         binary += i2uint24(length)
-        binary += i2uint8(@certificate_request_context.length)
-        binary += @certificate_request_context
+        binary += uint8_length_prefix(@certificate_request_context)
         binary += i2uint24(@certificate_list.map(&:length).sum)
         binary += @certificate_list.map(&:serialize).join
         binary
@@ -110,8 +109,7 @@ module TLS13
       # @return [String]
       def serialize
         binary = ''
-        binary += i2uint24(@cert_data.to_der.length)
-        binary += @cert_data.to_der
+        binary += uint24_length_prefix(@cert_data.to_der)
         binary += @extensions.serialize
         binary
       end

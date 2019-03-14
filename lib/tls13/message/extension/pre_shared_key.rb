@@ -183,8 +183,7 @@ module TLS13
         # @return [String]
         def serialize
           binary = ''
-          binary += i2uint16(@identity.length)
-          binary += @identity
+          binary += uint16_length_prefix(@identity)
           binary += i2uint32(@obfuscated_ticket_age)
           binary
         end

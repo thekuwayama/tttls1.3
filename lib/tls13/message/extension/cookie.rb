@@ -28,8 +28,7 @@ module TLS13
           binary = ''
           binary += @extension_type
           binary += i2uint16(length)
-          binary += i2uint16(@cookie.length)
-          binary += @cookie
+          binary += uint16_length_prefix(@cookie)
           binary
         end
 

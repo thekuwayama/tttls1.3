@@ -37,10 +37,7 @@ module TLS13
 
       # @return [String]
       def serialize
-        binary = ''
-        binary += i2uint16(length)
-        binary += join
-        binary
+        uint16_length_prefix(join)
       end
 
       # @param binary [String]

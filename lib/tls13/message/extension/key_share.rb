@@ -65,8 +65,7 @@ module TLS13
             @key_share_entry.each do |entry|
               buf += entry.serialize
             end
-            binary += i2uint16(buf.length)
-            binary += buf
+            binary += uint16_length_prefix(buf)
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             binary += @key_share_entry.first.serialize
           else
@@ -192,7 +191,7 @@ module TLS13
           binary += @group
           # HandshakeType::HELLO_RETRY_REQUEST
           # extension_data is single NamedGroup
-          binary += i2uint16(@key_exchange.length) + @key_exchange \
+          binary += uint16_length_prefix(@key_exchange) \
             unless @key_exchange.empty?
           binary
         end

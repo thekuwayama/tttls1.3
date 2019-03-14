@@ -29,7 +29,7 @@ module TLS13
         @random = random
         @legacy_session_id = legacy_session_id
         @cipher_suites = cipher_suites || CipherSuites.new
-        @legacy_compression_methods = 0
+        @legacy_compression_methods = "\x00"
         @extensions = extensions || Extensions.new
       end
 
@@ -46,11 +46,9 @@ module TLS13
         binary += i2uint24(length)
         binary += @legacy_version
         binary += @random
-        binary += i2uint8(@legacy_session_id.length)
-        binary += @legacy_session_id
+        binary += uint8_length_prefix(@legacy_session_id)
         binary += @cipher_suites.serialize
-        binary += i2uint8(1) # compression methods length
-        binary += i2uint8(@legacy_compression_methods)
+        binary += uint8_length_prefix(@legacy_compression_methods)
         binary += @extensions.serialize
         binary
       end

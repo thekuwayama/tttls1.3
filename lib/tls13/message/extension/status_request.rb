@@ -44,8 +44,7 @@ module TLS13
           binary += @responder_id_list.map do |id|
             i2uint16(id.length) + id
           end.join
-          binary += i2uint16(@request_extensions.length)
-          binary += @request_extensions
+          binary += uint16_length_prefix(@request_extensions)
           binary
         end
 

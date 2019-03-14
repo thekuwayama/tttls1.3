@@ -118,11 +118,8 @@ module TLS13
     # @return [String]
     def hkdf_expand_label(ikm, salt, label, context)
       binary = i2uint16(@hash_len)
-      label = 'tls13 ' + label
-      binary += i2uint8(label.length)
-      binary += label
-      binary += i2uint8(context.length)
-      binary += context
+      binary += uint8_length_prefix('tls13 ' + label)
+      binary += uint8_length_prefix(context)
       hash = OpenSSL::Digest.new(@digest)
       OpenSSL::KDF.hkdf(ikm, salt: salt, info: binary, length: @hash_len,
                              hash: hash)

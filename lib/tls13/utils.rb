@@ -53,6 +53,26 @@ def bin2i(binary)
   binary.bytes.reverse.map.with_index { |x, i| x << 8 * i }.sum
 end
 
+def uint8_length_prefix(opaque)
+  i2uint8(opaque.length) + opaque
+end
+
+def uint16_length_prefix(opaque)
+  i2uint16(opaque.length) + opaque
+end
+
+def uint24_length_prefix(opaque)
+  i2uint24(opaque.length) + opaque
+end
+
+def uint32_length_prefix(opaque)
+  i2uint32(opaque.length) + opaque
+end
+
+def uint64_length_prefix(opaque)
+  i2uint64(opaque.length) + opaque
+end
+
 def hash_len(digest)
   case digest
   when 'SHA256'

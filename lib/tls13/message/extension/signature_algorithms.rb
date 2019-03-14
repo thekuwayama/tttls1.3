@@ -27,7 +27,7 @@ module TLS13
           binary = ''
           binary += @extension_type
           binary += i2uint16(length)
-          binary += i2uint16(supported_signature_algorithms.length * 2)
+          binary += i2uint16(@supported_signature_algorithms.length * 2)
           binary += @supported_signature_algorithms.join
           binary
         end

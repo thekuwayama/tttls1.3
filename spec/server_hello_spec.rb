@@ -30,7 +30,7 @@ RSpec.describe ServerHello do
       expect(message.random).to eq random
       expect(message.legacy_session_id_echo).to eq legacy_session_id_echo
       expect(message.cipher_suite).to eq CipherSuite::TLS_AES_256_GCM_SHA384
-      expect(message.legacy_compression_method).to eq 0
+      expect(message.legacy_compression_method).to eq "\x00"
       expect(message.extensions).to be_empty
     end
 

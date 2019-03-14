@@ -26,8 +26,7 @@ module TLS13
         def serialize
           binary = ''
           binary += @extension_type
-          binary += i2uint16(length)
-          binary += @extension_data
+          binary += uint16_length_prefix(@extension_data)
           binary
         end
 

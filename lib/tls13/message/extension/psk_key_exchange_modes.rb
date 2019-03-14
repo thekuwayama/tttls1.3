@@ -29,7 +29,7 @@ module TLS13
           binary = ''
           binary += @extension_type
           binary += i2uint16(length)
-          binary += @ke_modes.length.chr
+          binary += i2uint8(@ke_modes.length)
           binary += @ke_modes.join
           binary
         end
