@@ -6,7 +6,7 @@ module TLS13
     def initialize(socket)
       @socket = socket
       # TODO
-      # @state
+      # @cryptgrapher
       @buffer = ''
       @binary_buffer = ''
       @message_queue = [] # Array of TLS13::Message::$Object
@@ -17,7 +17,7 @@ module TLS13
     def send_messages(type, messages)
       record = Message::Record(type: type, messages: messages,
                                cryptographer: Cryptgraph::Passer.new)
-      # cryptographer: @state.cryptgrapher)
+      # cryptographer: @cryptgrapher)
       send_record(record)
     end
 
@@ -49,17 +49,17 @@ module TLS13
         return Record.deserialize(buffer.slice(0, record_len),
                                   Cryptgraph::Passer.new)
         # return Record.deserialize(buffer.slice(0, record_len),
-        #                           @state.cryptgrapher)
+        #                           @cryptgrapher)
       end
     end
 
     def verify_certificate_verify(signature_scheme:, certificate_pem:,
-                                  signature:, transcript:)
+                                  signature:, messages:)
       context = 'TLS 1.3, server CertificateVerify'
       case signature_scheme
       when SignatureScheme::RSA_PSS_RSAE_SHA256
         content = "\x20" * 64 + context + "\x00" \
-                  + OpenSSL::Digest::SHA256.digest(transcript) # TODO: HRR
+                  + OpenSSL::Digest::SHA256.digest(messages) # TODO: HRR
         public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA256', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA256')
@@ -68,10 +68,10 @@ module TLS13
       end
     end
 
-    def sign_finished(signature_scheme:, finished_key:, transcript:)
+    def sign_finished(signature_scheme:, finished_key:, messages:)
       case signature_scheme
       when SignatureScheme::RSA_PSS_RSAE_SHA256
-        hash = OpenSSL::Digest::SHA256.digest(transcript) # TODO: HRR
+        hash = OpenSSL::Digest::SHA256.digest(messages) # TODO: HRR
         OpenSSL::HMAC.digest('SHA256', finished_key, hash)
       else # TODO
         raise 'unexpected SignatureScheme'

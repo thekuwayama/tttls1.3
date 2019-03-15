@@ -4,9 +4,9 @@
 require 'spec_helper'
 
 RSpec.describe Connection do
-  context '.verify_certificate_verify function' do
+  context 'connection' do
     let(:connection) do
-      Connection.new
+      Connection.new(nil)
     end
 
     let(:certificate) do
@@ -17,7 +17,7 @@ RSpec.describe Connection do
       CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
     end
 
-    let(:transcript) do
+    let(:messages) do
       TESTBINARY_CLIENT_HELLO \
       + TESTBINARY_SERVER_HELLO \
       + TESTBINARY_ENCRYPTED_EXTENSIONS \
@@ -32,14 +32,14 @@ RSpec.describe Connection do
                signature_scheme: signature_scheme,
                certificate_pem: certificate_pem,
                signature: signature,
-               transcript: transcript
+               messages: messages
              )).to be true
     end
   end
 
-  context '.sign_finished function' do
+  context 'connection' do
     let(:connection) do
-      Connection.new
+      Connection.new(nil)
     end
 
     let(:client_finished) do
@@ -50,7 +50,7 @@ RSpec.describe Connection do
       TESTBINARY_CLIENT_FINISHED_KEY
     end
 
-    let(:transcript) do
+    let(:messages) do
       TESTBINARY_CLIENT_HELLO \
       + TESTBINARY_SERVER_HELLO \
       + TESTBINARY_ENCRYPTED_EXTENSIONS \
@@ -63,7 +63,7 @@ RSpec.describe Connection do
       expect(connection.sign_finished(
                signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
                finished_key: finished_key,
-               transcript: transcript
+               messages: messages
              )).to eq client_finished.verify_data
     end
   end

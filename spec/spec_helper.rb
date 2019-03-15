@@ -11,14 +11,12 @@ include TLS13::Message::Extension
 include TLS13::Cryptograph
 # rubocop: enable Style/MixinUsage
 
-TESTBINARY_RECORD_CCS = <<BIN.split.map(&:hex).map(&:chr).join
-  14 03 03 00 01 01
-BIN
-
+# TLS13::Message::CipherSuites
 TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
   13 02 13 03 13 01
 BIN
 
+# TLS13::Message::Extension::$Class
 TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).map(&:chr).join
   00 0d 00 00 0a 67 69 74     68 75 62 2e 63 6f 6d
 BIN
@@ -84,8 +82,11 @@ TESTBINARY_PRE_SHARED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   e9 18 b6 7e c0 02 c3 bc     07 dd 09
 BIN
 
-# https://tools.ietf.org/html/rfc8448#page-3
+# https://tools.ietf.org/html/rfc8448#section-2
+# 2.  Private Keys
 
+# https://tools.ietf.org/html/rfc8448#section-3
+# 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 00 c0 03 03 cb 34     ec b1 e7 81 63 ba 1c 38
   c6 da cb 19 6a 6d ff a2     1a 8d 99 12 ec 18 a2 ef
@@ -115,10 +116,6 @@ TESTBINARY_ENCRYPTED_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
   08 00 00 24 00 22 00 0a     00 14 00 12 00 1d 00 17
   00 18 00 19 01 00 01 01     01 02 01 03 01 04 00 1c
   00 02 40 01 00 00 00 00
-BIN
-
-TESTBINARY_CHANGE_CIPHER_SPEC = <<BIN.split.map(&:hex).map(&:chr).join
-  01
 BIN
 
 TESTBINARY_CERTIFICATE = <<BIN.split.map(&:hex).map(&:chr).join
@@ -328,4 +325,14 @@ BIN
 TESTBINARY_RES_MASTER = <<BIN.split.map(&:hex).map(&:chr).join
   7d f2 35 f2 03 1d 2a 05     12 87 d0 2b 02 41 b0 bf
   da f8 6c c8 56 23 1f 2d     5a ba 46 c4 34 ec 19 6c
+BIN
+
+# https://tools.ietf.org/html/rfc8448#section-7
+# 7.  Compatibility Mode
+TESTBINARY_RECORD_CCS = <<BIN.split.map(&:hex).map(&:chr).join
+  14 03 03 00 01 01
+BIN
+
+TESTBINARY_CHANGE_CIPHER_SPEC = <<BIN.split.map(&:hex).map(&:chr).join
+  01
 BIN
