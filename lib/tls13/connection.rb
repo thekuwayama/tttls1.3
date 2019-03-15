@@ -3,21 +3,54 @@
 
 module TLS13
   class Connection
-    attr_reader :state
-    attr_reader :security_parameters
-    attr_reader :socket
-    attr_reader :handshake_hash
-
-    def initialize(**settings)
+    def initialize(socket)
+      @socket = socket
       # TODO
+      # @state
+      @buffer = ''
+      @binary_buffer = ''
+      @message_queue = [] # Array of TLS13::Message::$Object
     end
 
-    def read
-      # TODO
+    # @params type [Message::ContentType]
+    # @params messages [Array of TLS13::Message::$Object]
+    def send_messages(type, messages)
+      record = Message::Record(type: type, messages: messages,
+                               cryptographer: Cryptgraph::Passer.new)
+      # cryptographer: @state.cryptgrapher)
+      send_record(record)
     end
 
-    def write(data)
-      # TODO
+    # @params record [TLS13::Message::Record]
+    def send_record(record)
+      @socket.write(record.serialize)
+    end
+
+    # @return [TLS13::Message::$Object]
+    def recv_message
+      return @message_queue.shift unless @message_queue.empty?
+
+      messages = recv_record.messages
+      @message_queue += messages[1..]
+      messages.first
+    end
+
+    # @return [TLS13::Message::Record]
+    def recv_record
+      buffer = @binary_buffer.shift(@binary_buffer.length)
+      loop do
+        buffer += @socket.read
+        next if buffer.length < 5
+
+        record_len = bin2i(buffer.slice(3, 2))
+        next if buffer.length < record_len
+
+        @binary_buffer += buffer[record_len..]
+        return Record.deserialize(buffer.slice(0, record_len),
+                                  Cryptgraph::Passer.new)
+        # return Record.deserialize(buffer.slice(0, record_len),
+        #                           @state.cryptgrapher)
+      end
     end
 
     def verify_certificate_verify(signature_scheme:, certificate_pem:,
