@@ -5,19 +5,23 @@ module TLS13
   class Connection
     def initialize(socket)
       @socket = socket
-      # TODO
-      # @cryptgrapher
-      @buffer = ''
+      @key_schedule = nil
+      @cryptgrapher = Cryptograph::Passer.new
+      @transcript_messages = {}
       @binary_buffer = ''
       @message_queue = [] # Array of TLS13::Message::$Object
+      @cipher_suite = nil # TLS13::Message::CipherSuite
+      @read_key = ''
+      @write_key = ''
+      @read_iv = ''
+      @write_iv = ''
     end
 
     # @params type [Message::ContentType]
     # @params messages [Array of TLS13::Message::$Object]
     def send_messages(type, messages)
-      record = Message::Record(type: type, messages: messages,
-                               cryptographer: Cryptgraph::Passer.new)
-      # cryptographer: @cryptgrapher)
+      record = Message::Record.new(type: type, messages: messages,
+                                   cryptographer: @cryptgrapher)
       send_record(record)
     end
 
@@ -37,7 +41,8 @@ module TLS13
 
     # @return [TLS13::Message::Record]
     def recv_record
-      buffer = @binary_buffer.shift(@binary_buffer.length)
+      buffer = @binary_buffer
+      @binary_buffer = ''
       loop do
         buffer += @socket.read
         next if buffer.length < 5
@@ -47,9 +52,7 @@ module TLS13
 
         @binary_buffer += buffer[record_len..]
         return Record.deserialize(buffer.slice(0, record_len),
-                                  Cryptgraph::Passer.new)
-        # return Record.deserialize(buffer.slice(0, record_len),
-        #                           @cryptgrapher)
+                                  @cryptgrapher)
       end
     end
 

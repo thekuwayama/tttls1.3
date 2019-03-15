@@ -109,7 +109,7 @@ module TLS13
       def self.deserialize_handshake(binary)
         handshakes = [] # TODO: concatenated handshakes
         message = nil
-        msg_type = binary[itr]
+        msg_type = binary[0]
         case msg_type
         when HandshakeType::CLIENT_HELLO
           message = ClientHello.deserialize(binary)

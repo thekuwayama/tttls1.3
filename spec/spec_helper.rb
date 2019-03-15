@@ -11,6 +11,22 @@ include TLS13::Message::Extension
 include TLS13::Cryptograph
 # rubocop: enable Style/MixinUsage
 
+class SimpleStream
+  def initialize(binary = '')
+    @buffer = binary
+  end
+
+  def write(binary)
+    @buffer += binary
+  end
+
+  def read
+    res = @buffer
+    @buffer = ''
+    res
+  end
+end
+
 # TLS13::Message::CipherSuites
 TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
   13 02 13 03 13 01
