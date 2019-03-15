@@ -48,10 +48,10 @@ module TLS13
         next if buffer.length < 5
 
         record_len = bin2i(buffer.slice(3, 2))
-        next if buffer.length < record_len
+        next if buffer.length < record_len + 5
 
-        @binary_buffer += buffer[record_len..]
-        return Record.deserialize(buffer.slice(0, record_len),
+        @binary_buffer += buffer[record_len + 5..]
+        return Record.deserialize(buffer.slice(0, record_len + 5),
                                   @cryptgrapher)
       end
     end

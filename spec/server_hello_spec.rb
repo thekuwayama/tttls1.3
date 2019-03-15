@@ -55,7 +55,7 @@ RSpec.describe ServerHello do
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
-      expect(message.length).to eq 86
+      expect(message.legacy_compression_method).to eq "\x00"
     end
 
     it 'should generate valid serializable object' do

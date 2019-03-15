@@ -15,6 +15,7 @@ module TLS13
 
   class Client < Connection
     # rubocop: disable Metrics/MethodLength
+    # rubocop: disable Metrics/BlockLength
     # rubocop: disable Metrics/CyclomaticComplexity
     def connect
       state = ClientState::START
@@ -24,7 +25,17 @@ module TLS13
           send_client_hello
           state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
-          next # TODO
+          recv_server_hello
+          # get key, nonce using key_schedule
+          # @key_schedule
+          @cipher_suite = sh.cipher_suite
+          @cryptographer = Cryptograph::Aead.new(
+            cipher_suite: @cipher_suite,
+            key: nil, # TODO
+            nonce: nil, # TODO
+            type: ContentType::HANDSHAKE
+          )
+          state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           next # TODO
         when ClientState::WAIT_CERT_CR
@@ -41,12 +52,22 @@ module TLS13
       end
     end
     # rubocop: enable Metrics/MethodLength
+    # rubocop: enable Metrics/BlockLength
     # rubocop: enable Metrics/CyclomaticComplexity
 
     def send_client_hello
       ch = Message::ClientHello.new # TODO: set ClientHello
       send_messages(Message::ContentType::HANDSHAKE, [ch])
       @transcript_messages[HandshakeType::CLIENT_HELLO] = ch
+    end
+
+    def recv_server_hello
+      sh = recv_message
+      raise 'unexpected message' \
+        unless sh.msg_type == Message::HandshakeType::SERVER_HELLO
+
+      # TODO: check ServerHello
+      @transcript_messages[HandshakeType::SERVER_HELLO] = sh
     end
   end
 end
