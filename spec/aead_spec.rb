@@ -8,7 +8,7 @@ RSpec.describe Aead do
     let(:cipher) do
       Aead.new(cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
                key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
-               nonce: TESTBINARY_SERVER_PARAMETERS_IV,
+               nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
                type: ContentType::HANDSHAKE)
     end
 
@@ -37,7 +37,7 @@ RSpec.describe Aead do
     let(:cipher) do
       Aead.new(cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
                key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
-               nonce: TESTBINARY_CLIENT_FINISHED_IV,
+               nonce: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
                type: ContentType::HANDSHAKE)
     end
 

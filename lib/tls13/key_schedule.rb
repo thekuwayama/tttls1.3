@@ -59,6 +59,22 @@ module TLS13
       derive_secret(handshake_secret, 's hs traffic', messages)
     end
 
+    # @params messages [String] serialized ClientHello and ServerHello
+    #
+    # @return [String]
+    def server_handshake_write_key(messages)
+      secret = server_handshake_traffic_secret(messages)
+      hkdf_expand_label(secret, 'key', '', @key_len)
+    end
+
+    # @params messages [String] serialized ClientHello and ServerHello
+    #
+    # @return [String]
+    def server_handshake_write_iv(messages)
+      secret = server_handshake_traffic_secret(messages)
+      hkdf_expand_label(secret, 'iv', '', @iv_len)
+    end
+
     # @return [String]
     def master_salt
       derive_secret(handshake_secret, 'derived', '')

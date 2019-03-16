@@ -42,5 +42,12 @@ RSpec.describe KeySchedule do
       expect(key_schedule.resumption_master_secret(ch_cf))
         .to eq TESTBINARY_RES_MASTER
     end
+
+    it 'should generate write_key write_iv' do
+      expect(key_schedule.server_handshake_write_key(ch_sh))
+        .to eq TESTBINARY_SERVER_PARAMETERS_WRITE_KEY
+      expect(key_schedule.server_handshake_write_iv(ch_sh))
+        .to eq TESTBINARY_SERVER_PARAMETERS_WRITE_IV
+    end
   end
 end

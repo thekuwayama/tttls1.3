@@ -285,7 +285,7 @@ TESTBINARY_SERVER_PARAMETERS_WRITE_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   3f ce 51 60 09 c2 17 27     d0 f2 e4 e8 6e e4 03 bc
 BIN
 
-TESTBINARY_SERVER_PARAMETERS_IV = <<BIN.split.map(&:hex).map(&:chr).join
+TESTBINARY_SERVER_PARAMETERS_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
   5d 31 3e b2 67 12 76 ee     13 00 0b 30
 BIN
 
@@ -300,7 +300,7 @@ TESTBINARY_CLIENT_FINISHED_WRITE_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   db fa a6 93 d1 76 2c 5b     66 6a f5 d9 50 25 8d 01
 BIN
 
-TESTBINARY_CLIENT_FINISHED_IV = <<BIN.split.map(&:hex).map(&:chr).join
+TESTBINARY_CLIENT_FINISHED_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
   5b d3 c7 1b 83 6e 0b 76     bb 73 26 5f
 BIN
 
