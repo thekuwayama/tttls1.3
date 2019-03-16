@@ -6,7 +6,8 @@ require 'spec_helper'
 RSpec.describe KeySchedule do
   context 'key_schedule' do
     let(:key_schedule) do
-      KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET, digest: 'SHA256')
+      KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
+                      cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
     end
 
     let(:ch_sh) do

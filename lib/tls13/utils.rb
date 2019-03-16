@@ -72,14 +72,3 @@ end
 def uint64_length_prefix(opaque)
   i2uint64(opaque.length) + opaque
 end
-
-def hash_len(digest)
-  case digest
-  when 'SHA256'
-    32
-  when 'SHA384'
-    48
-  else
-    'unsupported digest'
-  end
-end

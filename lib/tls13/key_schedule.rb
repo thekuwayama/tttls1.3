@@ -5,13 +5,16 @@ require 'openssl'
 
 module TLS13
   class KeySchedule
-    def initialize(psk: nil, shared_secret:, digest:)
-      @digest = digest
-      @hash_len = hash_len(@digest)
+    include Message::CipherSuite
+
+    def initialize(psk: nil, shared_secret:, cipher_suite:)
+      @hash_len = hash_len(cipher_suite)
+      @digest = digest(cipher_suite)
+      @key_len = key_len(cipher_suite)
+      @iv_len = iv_len(cipher_suite)
       @psk = psk || "\x00" * @hash_len
-      @shared_secret = shared_secret # TODO: check shared_secret.length
-      # @write_key_len
-      # @iv_len
+      @shared_secret = shared_secret
+      # TODO: check shared_secret.length
     end
 
     # @return [String]
@@ -106,7 +109,6 @@ module TLS13
 
     # @params ikm [String]
     # @params salt [String]
-    # @params digest [String]
     #
     # @return [String]
     def hkdf_extract(ikm, salt)
@@ -116,13 +118,14 @@ module TLS13
     # @params secret [String]
     # @params label [String]
     # @params context [String]
+    # @params length [Integer]
     #
     # @return [String]
-    def hkdf_expand_label(secret, label, context)
-      binary = i2uint16(@hash_len)
+    def hkdf_expand_label(secret, label, context, length)
+      binary = i2uint16(length)
       binary += uint8_length_prefix('tls13 ' + label)
       binary += uint8_length_prefix(context)
-      hkdf_expand(secret, binary, @hash_len)
+      hkdf_expand(secret, binary, length)
     end
 
     # @params secret [String]
@@ -152,7 +155,7 @@ module TLS13
     # @return [String]
     def derive_secret(secret, label, messages)
       context = transcript_hash(messages)
-      hkdf_expand_label(secret, label, context)
+      hkdf_expand_label(secret, label, context, @hash_len)
     end
   end
 end
