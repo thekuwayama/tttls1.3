@@ -6,8 +6,8 @@ module TLS13
     def initialize(socket)
       @socket = socket
       @key_schedule = nil
-      @read_cryptgrapher = Cryptograph::Passer.new
-      @write_cryptgrapher = Cryptograph::Passer.new
+      @read_cryptographer = Cryptograph::Passer.new
+      @write_cryptographer = Cryptograph::Passer.new
       @transcript_messages = {}
       @binary_buffer = ''
       @message_queue = [] # Array of TLS13::Message::$Object
@@ -18,7 +18,7 @@ module TLS13
     # @params messages [Array of TLS13::Message::$Object]
     def send_messages(type, messages)
       record = Message::Record.new(type: type, messages: messages,
-                                   cryptographer: @write_cryptgrapher)
+                                   cryptographer: @write_cryptographer)
       send_record(record)
     end
 
@@ -49,7 +49,7 @@ module TLS13
 
         @binary_buffer += buffer[record_len + 5..]
         return Record.deserialize(buffer.slice(0, record_len + 5),
-                                  @read_cryptgrapher)
+                                  @read_cryptographer)
       end
     end
 

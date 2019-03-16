@@ -26,13 +26,16 @@ module TLS13
           state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           recv_server_hello
-          # get key, nonce using key_schedule
-          # @key_schedule
+          shared_secret = nil # TODO
           @cipher_suite = sh.cipher_suite
-          @cryptographer = Cryptograph::Aead.new(
+          @key_schedule = KeySchedule(shared_secret: shared_secret,
+                                      cipher_suite: @cipher_suite)
+          messages = [@transcript_messages[:CLIENT_HELLO],
+                      @transcript_messages[:SERVER_HELLO]].map(&:serialize).join
+          @read_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
-            key: nil, # TODO
-            nonce: nil, # TODO
+            key: @key_schedule.server_handshake_write_key(messages),
+            nonce: @key_schedule.server_handshake_write_iv(messages),
             type: ContentType::HANDSHAKE
           )
           state = ClientState::WAIT_EE
@@ -56,9 +59,9 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
 
     def send_client_hello
-      ch = Message::ClientHello.new # TODO: set ClientHello
+      ch = Message::ClientHello.new # TODO: set Extensions
       send_messages(Message::ContentType::HANDSHAKE, [ch])
-      @transcript_messages[HandshakeType::CLIENT_HELLO] = ch
+      @transcript_messages[:CLIENT_HELLO] = ch
     end
 
     def recv_server_hello
@@ -67,7 +70,7 @@ module TLS13
         unless sh.msg_type == Message::HandshakeType::SERVER_HELLO
 
       # TODO: check ServerHello
-      @transcript_messages[HandshakeType::SERVER_HELLO] = sh
+      @transcript_messages[:SERVER_HELLO] = sh
     end
   end
 end
