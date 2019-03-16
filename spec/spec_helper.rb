@@ -6,6 +6,7 @@ RSpec.configure(&:disable_monkey_patching!)
 # rubocop: disable Style/MixinUsage
 require 'tls13'
 include TLS13
+include TLS13::CipherSuite
 include TLS13::Message
 include TLS13::Message::Extension
 include TLS13::Cryptograph
@@ -27,7 +28,7 @@ class SimpleStream
   end
 end
 
-# TLS13::Message::CipherSuites
+# TLS13::CipherSuites
 TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
   13 02 13 03 13 01
 BIN

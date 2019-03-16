@@ -5,13 +5,11 @@ require 'openssl'
 
 module TLS13
   class KeySchedule
-    include Message::CipherSuite
-
     def initialize(psk: nil, shared_secret:, cipher_suite:)
-      @hash_len = hash_len(cipher_suite)
-      @digest = digest(cipher_suite)
-      @key_len = key_len(cipher_suite)
-      @iv_len = iv_len(cipher_suite)
+      @digest = CipherSuite.digest(cipher_suite)
+      @hash_len = CipherSuite.hash_len(cipher_suite)
+      @key_len = CipherSuite.key_len(cipher_suite)
+      @iv_len = CipherSuite.iv_len(cipher_suite)
       @psk = psk || "\x00" * @hash_len
       @shared_secret = shared_secret
       # TODO: check shared_secret.length

@@ -10,7 +10,7 @@ module TLS13
       @transcript_messages = {}
       @binary_buffer = ''
       @message_queue = [] # Array of TLS13::Message::$Object
-      @cipher_suite = nil # TLS13::Message::CipherSuite
+      @cipher_suite = nil # TLS13::CipherSuite
       @read_key = ''
       @write_key = ''
       @read_iv = ''

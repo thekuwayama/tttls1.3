@@ -4,7 +4,7 @@
 module TLS13
   module Cryptograph
     class Aead
-      # @cipher_suite [TLS13::Message::CipherSuite]
+      # @cipher_suite [TLS13::CipherSuite]
       # @param key [String]
       # @param nonce [String]
       # @param type [TLS13::Message::ContentType] TLSInnerPlaintext.type
