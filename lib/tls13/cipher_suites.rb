@@ -18,7 +18,7 @@ module TLS13
       when TLS_AES_256_GCM_SHA384
         'SHA384'
       else
-        raise 'unsupported cipher_suite'
+        raise 'unsupported CipherSuite'
       end
     end
 
@@ -31,7 +31,7 @@ module TLS13
       when TLS_AES_256_GCM_SHA384
         48
       else
-        raise 'unsupported cipher_suite'
+        raise 'unsupported CipherSuite'
       end
     end
 
@@ -43,7 +43,7 @@ module TLS13
       when TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256
         32
       else
-        raise 'unsupported cipher_suite'
+        raise 'unsupported CipherSuite'
       end
     end
 
@@ -54,9 +54,11 @@ module TLS13
            TLS_AES_128_CCM_8_SHA256
         12
       else
-        raise 'unsupported cipher_suite'
+        raise 'unsupported CipherSuite'
       end
     end
+
+    module_function :digest, :hash_len, :key_len, :iv_len
   end
 
   DEFALT_CIPHER_SUITES = [CipherSuite::TLS_AES_256_GCM_SHA384,
