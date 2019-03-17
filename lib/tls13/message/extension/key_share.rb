@@ -158,7 +158,7 @@ module TLS13
           raise 'malformed binary' unless binary.length == 2
 
           group = binary.slice(0, 2)
-          [KeyShareEntry.new(group: group)]
+          [KeyShareEntry.new(group: group, hrr: true)]
         end
       end
 
@@ -168,13 +168,15 @@ module TLS13
 
         # @param group [TLS13::Message::Extension::NamedGroup]
         # @param key_exchange [String]
-        def initialize(group:, key_exchange:)
+        # @param
+        def initialize(group:, key_exchange: nil, hrr: false)
           @group = group || ''
           raise 'invalid NamedGroup' unless @group.length == 2
 
           @key_exchange = key_exchange || ''
           raise 'invalid key_exchange.length' \
-            unless @key_exchange.length == NamedGroup.key_exchange_len(group)
+            if !hrr &&
+               @key_exchange.length != NamedGroup.key_exchange_len(group)
         end
 
         # @return [Boolean]

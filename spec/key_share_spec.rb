@@ -116,7 +116,8 @@ RSpec.describe KeyShare do
         key_share_entry: [
           KeyShareEntry.new(
             group: NamedGroup::X25519,
-            key_exchange: nil
+            key_exchange: nil,
+            hrr: true
           )
         ]
       )

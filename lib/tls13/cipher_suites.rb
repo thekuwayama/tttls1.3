@@ -9,56 +9,56 @@ module TLS13
     TLS_AES_128_CCM_SHA256       = "\x13\x04"
     TLS_AES_128_CCM_8_SHA256     = "\x13\x05"
 
-    def digest(cipher_suite)
-      case cipher_suite
-      when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
-           TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_SHA256,
-           TLS_AES_128_CCM_8_SHA256
-        'SHA256'
-      when TLS_AES_256_GCM_SHA384
-        'SHA384'
-      else
-        raise 'unsupported CipherSuite'
+    class << self
+      def digest(cipher_suite)
+        case cipher_suite
+        when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
+             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_SHA256,
+             TLS_AES_128_CCM_8_SHA256
+          'SHA256'
+        when TLS_AES_256_GCM_SHA384
+          'SHA384'
+        else
+          raise 'unsupported CipherSuite'
+        end
+      end
+
+      def hash_len(cipher_suite)
+        case cipher_suite
+        when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
+             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_SHA256,
+             TLS_AES_128_CCM_8_SHA256
+          32
+        when TLS_AES_256_GCM_SHA384
+          48
+        else
+          raise 'unsupported CipherSuite'
+        end
+      end
+
+      def key_len(cipher_suite)
+        case cipher_suite
+        when TLS_AES_128_GCM_SHA256, TLS_AES_128_CCM_SHA256,
+             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_8_SHA256
+          16
+        when TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256
+          32
+        else
+          raise 'unsupported CipherSuite'
+        end
+      end
+
+      def iv_len(cipher_suite)
+        case cipher_suite
+        when TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384,
+             TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256,
+             TLS_AES_128_CCM_8_SHA256
+          12
+        else
+          raise 'unsupported CipherSuite'
+        end
       end
     end
-
-    def hash_len(cipher_suite)
-      case cipher_suite
-      when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
-           TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_SHA256,
-           TLS_AES_128_CCM_8_SHA256
-        32
-      when TLS_AES_256_GCM_SHA384
-        48
-      else
-        raise 'unsupported CipherSuite'
-      end
-    end
-
-    def key_len(cipher_suite)
-      case cipher_suite
-      when TLS_AES_128_GCM_SHA256, TLS_AES_128_CCM_SHA256,
-           TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_8_SHA256
-        16
-      when TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256
-        32
-      else
-        raise 'unsupported CipherSuite'
-      end
-    end
-
-    def iv_len(cipher_suite)
-      case cipher_suite
-      when TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384,
-           TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256,
-           TLS_AES_128_CCM_8_SHA256
-        12
-      else
-        raise 'unsupported CipherSuite'
-      end
-    end
-
-    module_function :digest, :hash_len, :key_len, :iv_len
   end
 
   DEFALT_CIPHER_SUITES = [CipherSuite::TLS_AES_256_GCM_SHA384,

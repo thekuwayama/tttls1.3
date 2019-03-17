@@ -18,41 +18,43 @@ module TLS13
         # ffdhe_private_use "\x01\xfc" ~ "\x01\xff"
         # ecdhe_private_use "\xfe\x00" ~ "\xfe\xff"
 
-        # For secp256r1, secp384r1, and secp521r1
-        #       struct {
-        #           uint8 legacy_form = 4;
-        #           opaque X[coordinate_length];
-        #           opaque Y[coordinate_length];
-        #       } UncompressedPointRepresentation;
-        # @params group [TLS13::Message::Extension::NamedGroup]
-        #
-        # @return [Integer]
-        def key_exchange_len(group)
-          case group
-          when SECP256R1
-            65
-          when SECP384R1
-            97
-          when SECP521R1
-            133
-          when X25519
-            32
-          when X448
-            56
-          when FFDHE2048
-            256
-          when FFDHE4096
-            512
-          when FFDHE6144
-            768
-          when FFDHE8192
-            1024
-          else
-            raise 'unsupported NamedGroup'
+        class << self
+          # For secp256r1, secp384r1, and secp521r1
+          #       struct {
+          #           uint8 legacy_form = 4;
+          #           opaque X[coordinate_length];
+          #           opaque Y[coordinate_length];
+          #       } UncompressedPointRepresentation;
+          # @params group [TLS13::Message::Extension::NamedGroup]
+          #
+          # @return [Integer]
+          # rubocop: disable Metrics/CyclomaticComplexity, Metrics/MethodLength
+          def key_exchange_len(group)
+            case group
+            when SECP256R1
+              65
+            when SECP384R1
+              97
+            when SECP521R1
+              133
+            when X25519
+              32
+            when X448
+              56
+            when FFDHE2048
+              256
+            when FFDHE4096
+              512
+            when FFDHE6144
+              768
+            when FFDHE8192
+              1024
+            else
+              raise 'unsupported NamedGroup'
+            end
           end
+          # rubocop: enable Metrics/CyclomaticComplexity, Metrics/MethodLength
         end
-
-        module_function :key_exchange_len
       end
 
       DEFALT_NAMED_GROUP_LIST = [NamedGroup::SECP256R1,
