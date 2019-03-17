@@ -45,21 +45,21 @@ module TLS13
       hkdf_extract(@shared_secret, handshake_salt)
     end
 
-    # @params messages [String] serialized ClientHello and ServerHello
+    # @param messages [String] serialized ClientHello and ServerHello
     #
     # @return [String]
     def client_handshake_traffic_secret(messages)
       derive_secret(handshake_secret, 'c hs traffic', messages)
     end
 
-    # @params messages [String] serialized ClientHello and ServerHello
+    # @param messages [String] serialized ClientHello and ServerHello
     #
     # @return [String]
     def server_handshake_traffic_secret(messages)
       derive_secret(handshake_secret, 's hs traffic', messages)
     end
 
-    # @params messages [String] serialized ClientHello and ServerHello
+    # @param messages [String] serialized ClientHello and ServerHello
     #
     # @return [String]
     def server_handshake_write_key(messages)
@@ -67,7 +67,7 @@ module TLS13
       hkdf_expand_label(secret, 'key', '', @key_len)
     end
 
-    # @params messages [String] serialized ClientHello and ServerHello
+    # @param messages [String] serialized ClientHello and ServerHello
     #
     # @return [String]
     def server_handshake_write_iv(messages)
@@ -86,53 +86,53 @@ module TLS13
       hkdf_extract(ikm, master_salt)
     end
 
-    # @params messages [String] serialized ClientHello...server Finished
+    # @param messages [String] serialized ClientHello...server Finished
     #
     # @return [String]
     def client_application_traffic_secret(messages)
       derive_secret(master_secret, 'c ap traffic', messages)
     end
 
-    # @params messages [String] serialized ClientHello...server Finished
+    # @param messages [String] serialized ClientHello...server Finished
     #
     # @return [String]
     def server_application_traffic_secret(messages)
       derive_secret(master_secret, 's ap traffic', messages)
     end
 
-    # @params messages [String] serialized ClientHello...server Finished
+    # @param messages [String] serialized ClientHello...server Finished
     #
     # @return [String]
     def exporter_master_secret(messages)
       derive_secret(master_secret, 'exp master', messages)
     end
 
-    # @params messages [String] serialized ClientHello...client Finished
+    # @param messages [String] serialized ClientHello...client Finished
     #
     # @return [String]
     def resumption_master_secret(messages)
       derive_secret(master_secret, 'res master', messages)
     end
 
-    # @params messages [String]
+    # @param messages [String]
     #
     # @return [String]
     def transcript_hash(messages)
       OpenSSL::Digest.digest(@digest, messages)
     end
 
-    # @params ikm [String]
-    # @params salt [String]
+    # @param ikm [String]
+    # @param salt [String]
     #
     # @return [String]
     def hkdf_extract(ikm, salt)
       OpenSSL::HMAC.digest(@digest, salt, ikm)
     end
 
-    # @params secret [String]
-    # @params label [String]
-    # @params context [String]
-    # @params length [Integer]
+    # @param secret [String]
+    # @param label [String]
+    # @param context [String]
+    # @param length [Integer]
     #
     # @return [String]
     def hkdf_expand_label(secret, label, context, length)
@@ -142,13 +142,13 @@ module TLS13
       hkdf_expand(secret, binary, length)
     end
 
-    # @params secret [String]
-    # @params info [String]
-    # @params length [Integer]
+    # @param secret [String]
+    # @param info [String]
+    # @param length [Integer]
     #
     # @raise [RuntimeError]
     #
-    # @params [String]
+    # @param [String]
     def hkdf_expand(secret, info, length)
       raise 'too long length' if length > 255 * @hash_len
 
@@ -162,9 +162,9 @@ module TLS13
       okm[0...length]
     end
 
-    # @params secret [String]
-    # @params label [String]
-    # @params messages [String]
+    # @param secret [String]
+    # @param label [String]
+    # @param messages [String]
     #
     # @return [String]
     def derive_secret(secret, label, messages)

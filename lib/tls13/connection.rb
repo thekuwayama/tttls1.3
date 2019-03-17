@@ -14,15 +14,15 @@ module TLS13
       @cipher_suite = nil # TLS13::CipherSuite
     end
 
-    # @params type [Message::ContentType]
-    # @params messages [Array of TLS13::Message::$Object]
+    # @param type [Message::ContentType]
+    # @param messages [Array of TLS13::Message::$Object]
     def send_messages(type, messages)
       record = Message::Record.new(type: type, messages: messages,
                                    cryptographer: @write_cryptographer)
       send_record(record)
     end
 
-    # @params record [TLS13::Message::Record]
+    # @param record [TLS13::Message::Record]
     def send_record(record)
       @socket.write(record.serialize)
     end

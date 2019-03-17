@@ -25,7 +25,7 @@ module TLS13
           #           opaque X[coordinate_length];
           #           opaque Y[coordinate_length];
           #       } UncompressedPointRepresentation;
-          # @params group [TLS13::Message::Extension::NamedGroup]
+          # @param group [TLS13::Message::Extension::NamedGroup]
           #
           # @return [Integer]
           # rubocop: disable Metrics/CyclomaticComplexity, Metrics/MethodLength
