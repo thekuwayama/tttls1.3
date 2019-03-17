@@ -168,11 +168,13 @@ module TLS13
 
         # @param group [TLS13::Message::Extension::NamedGroup]
         # @param key_exchange [String]
-        def initialize(group: '', key_exchange: '')
+        def initialize(group:, key_exchange:)
           @group = group || ''
           raise 'invalid NamedGroup' unless @group.length == 2
 
           @key_exchange = key_exchange || ''
+          raise 'invalid key_exchange.length' \
+            unless @key_exchange.length == NamedGroup.key_exchange_len(group)
         end
 
         # @return [Boolean]
