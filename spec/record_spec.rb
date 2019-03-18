@@ -69,6 +69,10 @@ RSpec.describe Record do
   end
 
   context 'server parameters record binary' do
+    let(:hash_len) do
+      CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
+    end
+
     let(:record) do
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
@@ -76,7 +80,6 @@ RSpec.describe Record do
         nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         type: ContentType::HANDSHAKE
       )
-      hash_len = CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
       Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD,
                          cipher, hash_len)
     end
@@ -87,7 +90,25 @@ RSpec.describe Record do
     end
 
     it 'should generate valid server parameters' do
-      # TODO
+      server_parameters \
+      = deserialize_server_parameters(record.messages.first.fragment, hash_len)
+
+      expect(server_parameters[0].msg_type)
+        .to eq HandshakeType::ENCRYPTED_EXTENSIONS
+      expect(server_parameters[0].serialize)
+        .to eq TESTBINARY_ENCRYPTED_EXTENSIONS
+      expect(server_parameters[1].msg_type)
+        .to eq HandshakeType::CERTIFICATE
+      expect(server_parameters[1].serialize)
+        .to eq TESTBINARY_CERTIFICATE
+      expect(server_parameters[2].msg_type)
+        .to eq HandshakeType::CERTIFICATE_VERIFY
+      expect(server_parameters[2].serialize)
+        .to eq TESTBINARY_CERTIFICATE_VERIFY
+      expect(server_parameters[3].msg_type)
+        .to eq HandshakeType::FINISHED
+      expect(server_parameters[3].serialize)
+        .to eq TESTBINARY_SERVER_FINISHED
     end
   end
 end

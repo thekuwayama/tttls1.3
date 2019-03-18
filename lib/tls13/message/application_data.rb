@@ -4,6 +4,8 @@
 module TLS13
   module Message
     class ApplicationData
+      attr_reader :fragment
+
       # @param [String]
       def initialize(fragment)
         @fragment = fragment
