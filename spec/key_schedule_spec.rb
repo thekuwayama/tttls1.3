@@ -56,5 +56,19 @@ RSpec.describe KeySchedule do
       expect(key_schedule.client_handshake_write_iv(ch_sh))
         .to eq TESTBINARY_CLIENT_FINISHED_WRITE_IV
     end
+
+    it 'should generete server application write_key, iv' do
+      expect(key_schedule.server_application_write_key(ch_sf))
+        .to eq TESTBINARY_SERVER_APPLICATION_WRITE_KEY
+      expect(key_schedule.server_application_write_iv(ch_sf))
+        .to eq TESTBINARY_SERVER_APPLICATION_WRITE_IV
+    end
+
+    it 'should generete client application write_key, iv' do
+      expect(key_schedule.client_application_write_key(ch_sf))
+        .to eq TESTBINARY_CLIENT_APPLICATION_WRITE_KEY
+      expect(key_schedule.client_application_write_iv(ch_sf))
+        .to eq TESTBINARY_CLIENT_APPLICATION_WRITE_IV
+    end
   end
 end

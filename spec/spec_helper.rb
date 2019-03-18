@@ -304,6 +304,22 @@ TESTBINARY_CLIENT_FINISHED_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
   5b d3 c7 1b 83 6e 0b 76     bb 73 26 5f
 BIN
 
+TESTBINARY_SERVER_APPLICATION_WRITE_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  9f 02 28 3b 6c 9c 07 ef     c2 6b b9 f2 ac 92 e3 56
+BIN
+
+TESTBINARY_SERVER_APPLICATION_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
+  cf 78 2b 88 dd 83 54 9a     ad f1 e9 84
+BIN
+
+TESTBINARY_CLIENT_APPLICATION_WRITE_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  17 42 2d da 59 6e d5 d9     ac d8 90 e3 c6 3f 50 51
+BIN
+
+TESTBINARY_CLIENT_APPLICATION_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
+  5b 78 92 3d ee 08 57 90     33 e5 23 d9
+BIN
+
 TESTBINARY_CLIENT_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   b8 0a d0 10 15 fb 2f 0b     d6 5f f7 d4 da 5d 6b f8
   3f 84 82 1d 1f 87 fd c7     d3 c7 5b 5a 7b 42 d9 c4

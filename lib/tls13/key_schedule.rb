@@ -4,6 +4,7 @@
 require 'openssl'
 
 module TLS13
+  # rubocop: disable Metrics/ClassLength
   class KeySchedule
     def initialize(psk: nil, shared_secret:, cipher_suite:)
       @digest = CipherSuite.digest(cipher_suite)
@@ -112,8 +113,40 @@ module TLS13
     # @param messages [String] serialized ClientHello...server Finished
     #
     # @return [String]
+    def client_application_write_key(messages)
+      secret = client_application_traffic_secret(messages)
+      hkdf_expand_label(secret, 'key', '', @key_len)
+    end
+
+    # @param messages [String] serialized ClientHello...server Finished
+    #
+    # @return [String]
+    def client_application_write_iv(messages)
+      secret = client_application_traffic_secret(messages)
+      hkdf_expand_label(secret, 'iv', '', @iv_len)
+    end
+
+    # @param messages [String] serialized ClientHello...server Finished
+    #
+    # @return [String]
     def server_application_traffic_secret(messages)
       derive_secret(master_secret, 's ap traffic', messages)
+    end
+
+    # @param messages [String] serialized ClientHello...server Finished
+    #
+    # @return [String]
+    def server_application_write_key(messages)
+      secret = server_application_traffic_secret(messages)
+      hkdf_expand_label(secret, 'key', '', @key_len)
+    end
+
+    # @param messages [String] serialized ClientHello...server Finished
+    #
+    # @return [String]
+    def server_application_write_iv(messages)
+      secret = server_application_traffic_secret(messages)
+      hkdf_expand_label(secret, 'iv', '', @iv_len)
     end
 
     # @param messages [String] serialized ClientHello...server Finished
@@ -188,4 +221,5 @@ module TLS13
       hkdf_expand_label(secret, label, context, @hash_len)
     end
   end
+  # rubocop: enable Metrics/ClassLength
 end
