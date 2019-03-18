@@ -47,7 +47,8 @@ module TLS13
           )
           state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
-          next # TODO
+          recv_encrypted_extensions
+          # TODO: get Server Parameters
         when ClientState::WAIT_CERT_CR
           next # TODO
         when ClientState::WAIT_CERT
@@ -93,6 +94,15 @@ module TLS13
 
       # TODO: check ServerHello
       @transcript_messages[:SERVER_HELLO] = sh
+    end
+
+    def recv_encrypted_extensions
+      ee = recv_message
+      raise 'unexpected message' \
+        unless ee.msg_type == Message::HandshakeType::ENCRYPTED_EXTENSIONS
+
+      # TODO: check EncryptedExtensions
+      @transcript_messages[:ENCRYPTED_EXTENSIONS] = ee
     end
   end
 end
