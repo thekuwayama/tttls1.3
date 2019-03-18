@@ -13,10 +13,9 @@ module TLS13
     CONNECTED     = 8
   end
 
+  # rubocop: disable Metrics/ClassLength
   class Client < Connection
-    # rubocop: disable Metrics/MethodLength
-    # rubocop: disable Metrics/BlockLength
-    # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable all
     def connect
       state = ClientState::START
       loop do
@@ -25,7 +24,7 @@ module TLS13
           send_client_hello
           state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
-          sh = recv_server_hello
+          sh = recv_server_hello # TODO: Recv HelloRetryRequest
           # only P-256
           priv_key = @priv_keys[Message::Extension::NamedGroup::SECP256R1]
           pub_key = OpenSSL::PKey::EC::Point.new(
@@ -49,22 +48,47 @@ module TLS13
         when ClientState::WAIT_EE
           recv_encrypted_extensions
           # TODO: get server parameters
+          # TODO: Using PSK
+          state = ClientState::WAIT_CR
         when ClientState::WAIT_CERT_CR
-          next # TODO
+          message = recv_message
+          if message.msg_type == Message::HandshakeType::CERTIFICATE
+            @transcript_messages[:CERTIFICATE] = message
+            state = ClientState::WAIT_CV
+          elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
+            @transcript_messages[:CERTIFICATE_REQUEST] = message
+            state = ClientState::WAIT_CERT
+          else
+            raise 'unexpected message'
+          end
         when ClientState::WAIT_CERT
-          next # TODO
+          recv_recv_certificate
+          state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
-          next # TODO
+          cv = recv_certificate_verify
+          ct = @transcript_messages[:CERTIFICATE]
+          signature_scheme = cv.signature_scheme
+          certificate_pem = ct.certificate_list.first.cert_data.to_pem
+          signature = cv.signature
+          messages = @transcript_messages.map(&:serialize).join
+          raise 'decrypt_error' unless verify_certificate_verify(
+                                         signature_scheme: signature_scheme,
+                                         certificate_pem: certificate_pem,
+                                         signature: signature,
+                                         messages: messages
+                                       )
+          state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
-          next # TODO
+          recv_finished
+          # TODO: Send EndOfEarlyData
+          # TODO: Send Certificate [+ CertificateVerify]
+          send_finished
         when ClientState::CONNECTED
           break
         end
       end
     end
-    # rubocop: enable Metrics/MethodLength
-    # rubocop: enable Metrics/BlockLength
-    # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable all
 
     def send_client_hello
       # only P-256
@@ -92,7 +116,6 @@ module TLS13
       raise 'unexpected message' \
         unless sh.msg_type == Message::HandshakeType::SERVER_HELLO
 
-      # TODO: check ServerHello
       @transcript_messages[:SERVER_HELLO] = sh
     end
 
@@ -105,7 +128,6 @@ module TLS13
       messages = deserialize_server_parameters(sp.messages.first.fragment,
                                                hash_len)
       @message_queue += messages[1..]
-      # TODO: check EncryptedExtensions
       @transcript_messages[:ENCRYPTED_EXTENSIONS] = messages.first
     end
 
@@ -114,7 +136,6 @@ module TLS13
       raise 'unexpected message' \
         unless ct.msg_type == Message::HandshakeType::CERTIFICATE
 
-      # TODO: check Certificate
       @transcript_messages[:CERTIFICATE] = ct
     end
 
@@ -123,7 +144,6 @@ module TLS13
       raise 'unexpected message' \
         unless cv.msg_type == Message::HandshakeType::CERTIFICATE_VERIFY
 
-      # TODO: check CertificateVerify
       @transcript_messages[:CERTIFICATE_VERIFY] = cv
     end
 
@@ -132,8 +152,12 @@ module TLS13
       raise 'unexpected message' \
         unless sf.msg_type == Message::HandshakeType::FINISHED
 
-      # TODO: check server Finished
       @transcript_messages[:FINISHED] = sf
     end
+
+    def send_finished
+      # TODO
+    end
   end
+  # rubocop: enable Metrics/ClassLength
 end
