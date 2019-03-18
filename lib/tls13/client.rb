@@ -108,5 +108,14 @@ module TLS13
       # TODO: check EncryptedExtensions
       @transcript_messages[:ENCRYPTED_EXTENSIONS] = messages.first
     end
+
+    def recv_certificate
+      ct = recv_message
+      raise 'unexpected message' \
+        unless ct.msg_type == Message::HandshakeType::CERTIFICATE
+
+      # TODO: check Certificate
+      @transcript_messages[:CERTIFICATE] = ct
+    end
   end
 end
