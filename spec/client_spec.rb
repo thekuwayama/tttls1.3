@@ -44,7 +44,7 @@ RSpec.describe Client do
   end
 
   context 'client' do
-    let(:message) do
+    let(:connection) do
       mock_socket = SimpleStream.new
       mock_socket.write(TESTBINARY_SERVER_PARAMETERS_RECORD)
       connection = Client.new(mock_socket)
@@ -57,34 +57,25 @@ RSpec.describe Client do
         type: ContentType::HANDSHAKE
       )
       connection.instance_variable_set(:@read_cryptographer, cipher)
-      connection.recv_encrypted_extensions
+      connection
     end
 
     it 'should receive EncryptedExtensions' do
+      message = connection.recv_encrypted_extensions
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
-    end
-  end
-
-  context 'client' do
-    let(:message) do
-      mock_socket = SimpleStream.new
-      mock_socket.write(TESTBINARY_SERVER_PARAMETERS_RECORD)
-      connection = Client.new(mock_socket)
-      connection.instance_variable_set(:@cipher_suite,
-                                       CipherSuite::TLS_AES_128_GCM_SHA256)
-      cipher = Cryptograph::Aead.new(
-        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-        key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
-        nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        type: ContentType::HANDSHAKE
-      )
-      connection.instance_variable_set(:@read_cryptographer, cipher)
-      connection.recv_encrypted_extensions # to skip encrypted_extensions
-      connection.recv_certificate
     end
 
     it 'should receive Certificate' do
+      connection.recv_encrypted_extensions # to skip
+      message = connection.recv_certificate
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
+    end
+
+    it 'should receive CertificateVerify' do
+      connection.recv_encrypted_extensions # to skip
+      connection.recv_certificate # to skip
+      message = connection.recv_certificate_verify
+      expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
     end
   end
 end

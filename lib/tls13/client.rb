@@ -117,5 +117,14 @@ module TLS13
       # TODO: check Certificate
       @transcript_messages[:CERTIFICATE] = ct
     end
+
+    def recv_certificate_verify
+      cv = recv_message
+      raise 'unexpected message' \
+        unless cv.msg_type == Message::HandshakeType::CERTIFICATE_VERIFY
+
+      # TODO: check CertificateVerify
+      @transcript_messages[:CERTIFICATE_VERIFY] = cv
+    end
   end
 end
