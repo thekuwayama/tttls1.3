@@ -26,7 +26,6 @@ RSpec.describe Client do
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.cipher_suites).to eq DEFALT_CIPHER_SUITES
       expect(message.legacy_compression_methods).to eq "\x00"
-      expect(message.extensions).to be_empty
     end
   end
 

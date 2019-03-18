@@ -6,6 +6,7 @@ module TLS13
     def initialize(socket)
       @socket = socket
       @key_schedule = nil
+      @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cryptographer = Cryptograph::Passer.new
       @write_cryptographer = Cryptograph::Passer.new
       @transcript_messages = {}

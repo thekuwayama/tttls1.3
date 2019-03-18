@@ -25,8 +25,15 @@ module TLS13
           send_client_hello
           state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
-          recv_server_hello
-          shared_secret = nil # TODO
+          sh = recv_server_hello
+          # only P-256
+          priv_key = @priv_keys[Message::Extension::NamedGroup::SECP256R1]
+          pub_key = OpenSSL::PKey::EC::Point.new(
+            OpenSSL::PKey::EC::Group.new('prime256v1'),
+            OpenSSL::BN.new(sh.extensions[Message::ExtensionType::KEY_SHARE]
+                              .first.key_exchange)
+          )
+          shared_secret = priv_key.dh_compute_key(pub_key)
           @cipher_suite = sh.cipher_suite
           @key_schedule = KeySchedule(shared_secret: shared_secret,
                                       cipher_suite: @cipher_suite)
@@ -59,7 +66,22 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
 
     def send_client_hello
-      ch = Message::ClientHello.new # TODO: set Extensions
+      # only P-256
+      ec = OpenSSL::PKey::EC.new('prime256v1')
+      ec.generate_key!
+      @priv_keys[Message::Extension::NamedGroup::SECP256R1] = ec
+      key_share = Message::Extension::KeyShare.new(
+        msg_type: Message::HandshakeType::CLIENT_HELLO,
+        key_share_entry: [
+          KeyShareEntry.new(
+            group: Message::Extension::NamedGroup::SECP256R1,
+            key_exchange: ec.public_key.to_octet_string(:uncompressed)
+          )
+        ]
+      )
+      # TODO: set Extensions using config
+      exs = Message::Extensions.new([key_share])
+      ch = Message::ClientHello.new(extensions: exs)
       send_messages(Message::ContentType::HANDSHAKE, [ch])
       @transcript_messages[:CLIENT_HELLO] = ch
     end
