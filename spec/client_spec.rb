@@ -73,9 +73,17 @@ RSpec.describe Client do
 
     it 'should receive CertificateVerify' do
       connection.recv_encrypted_extensions # to skip
-      connection.recv_certificate # to skip
+      connection.recv_certificate          # to skip
       message = connection.recv_certificate_verify
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
+    end
+
+    it 'should receive CertificateVerify' do
+      connection.recv_encrypted_extensions # to skip
+      connection.recv_certificate          # to skip
+      connection.recv_certificate_verify   # to skip
+      message = connection.recv_finished
+      expect(message.msg_type).to eq HandshakeType::FINISHED
     end
   end
 end

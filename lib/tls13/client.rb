@@ -126,5 +126,14 @@ module TLS13
       # TODO: check CertificateVerify
       @transcript_messages[:CERTIFICATE_VERIFY] = cv
     end
+
+    def recv_finished
+      sf = recv_message
+      raise 'unexpected message' \
+        unless sf.msg_type == Message::HandshakeType::FINISHED
+
+      # TODO: check server Finished
+      @transcript_messages[:FINISHED] = sf
+    end
   end
 end
