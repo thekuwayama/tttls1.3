@@ -48,7 +48,7 @@ module TLS13
           state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           recv_encrypted_extensions
-          # TODO: get Server Parameters
+          # TODO: get server parameters
         when ClientState::WAIT_CERT_CR
           next # TODO
         when ClientState::WAIT_CERT
@@ -97,12 +97,16 @@ module TLS13
     end
 
     def recv_encrypted_extensions
-      ee = recv_message
-      raise 'unexpected message' \
-        unless ee.msg_type == Message::HandshakeType::ENCRYPTED_EXTENSIONS
+      sp = recv_record
+      raise 'unexpected ContentType' \
+        unless sp.type == Message::ContentType::APPLICATION_DATA
 
+      hash_len = CipherSuite.hash_len(@cipher_suite)
+      messages = deserialize_server_parameters(sp.messages.first.fragment,
+                                               hash_len)
+      @message_queue += messages[1..]
       # TODO: check EncryptedExtensions
-      @transcript_messages[:ENCRYPTED_EXTENSIONS] = ee
+      @transcript_messages[:ENCRYPTED_EXTENSIONS] = messages.first
     end
   end
 end

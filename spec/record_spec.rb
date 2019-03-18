@@ -80,8 +80,7 @@ RSpec.describe Record do
         nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         type: ContentType::HANDSHAKE
       )
-      Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD,
-                         cipher, hash_len)
+      Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD, cipher)
     end
 
     it 'should generate valid record header' do

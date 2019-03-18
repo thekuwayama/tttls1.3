@@ -114,8 +114,7 @@ module TLS13
     # @return [Array of TLS13::Message::$Object]
     # rubocop: disable Metrics/CyclomaticComplexity
     def deserialize_handshake(binary, hash_len)
-      msg_type = binary[0]
-      case msg_type
+      case binary[0]
       when HandshakeType::CLIENT_HELLO
         ClientHello.deserialize(binary)
       when HandshakeType::SERVER_HELLO
