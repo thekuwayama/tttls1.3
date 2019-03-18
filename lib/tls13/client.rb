@@ -65,18 +65,8 @@ module TLS13
           recv_recv_certificate
           state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
-          cv = recv_certificate_verify
-          ct = @transcript_messages[:CERTIFICATE]
-          signature_scheme = cv.signature_scheme
-          certificate_pem = ct.certificate_list.first.cert_data.to_pem
-          signature = cv.signature
-          messages = @transcript_messages.map(&:serialize).join
-          raise 'decrypt_error' unless verify_certificate_verify(
-                                         signature_scheme: signature_scheme,
-                                         certificate_pem: certificate_pem,
-                                         signature: signature,
-                                         messages: messages
-                                       )
+          recv_certificate_verify
+          raise 'decrypt_error' unless verify_certificate_verify
           state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           recv_finished
