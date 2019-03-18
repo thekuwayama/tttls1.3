@@ -12,9 +12,10 @@ module TLS13
       end
 
       # @param encrypted_record [String]
+      # @param auth_data [String]
       #
       # @return [String]
-      def decrypt(encrypted_record)
+      def decrypt(encrypted_record, _auth_data)
         encrypted_record
       end
     end

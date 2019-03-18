@@ -63,19 +63,20 @@ module TLS13
 
       # @param binary [String]
       # @param cryptographer [TLS13::Cryptograph::$Object]
+      # @param hash_len [Integer]
       #
       # @raise [RuntimeError]
       #
       # @return [TLS13::Message::Record]
-      def self.deserialize(binary, cryptographer)
+      def self.deserialize(binary, cryptographer, *hash_len)
         raise 'too short binary' if binary.nil? || binary.length < 5
 
         type = binary[0]
         legacy_record_version = binary.slice(1, 2)
         fragment_len = bin2i(binary.slice(3, 2))
         fragment = binary.slice(5, fragment_len)
-        plaintext = cryptographer.decrypt(fragment)
-        messages = deserialize_fragment(plaintext, type)
+        plaintext = cryptographer.decrypt(fragment, binary.slice(0, 5))
+        messages = deserialize_fragment(plaintext, type, hash_len)
         Record.new(type: type,
                    legacy_record_version: legacy_record_version,
                    messages: messages,
@@ -84,29 +85,34 @@ module TLS13
 
       # @param binary [String]
       # @param type [TLS13::Message::ContentType]
+      # @param hash_len [Integer]
       #
       # @raise [RuntimeError]
       #
       # @return [Array of TLS13::Message::$Object]
-      def self.deserialize_fragment(binary, type)
+      def self.deserialize_fragment(binary, type, hash_len)
         raise 'zero-length fragments' if binary.nil? || binary.empty?
 
         case type
         when ContentType::HANDSHAKE
-          deserialize_handshake(binary)
+          deserialize_handshake(binary, hash_len)
         when ContentType::CCS
           [ChangeCipherSpec.deserialize(binary)]
-        else # TODO
+        when ContentType::APPLICATION_DATA
+          [ApplicationData.deserialize(binary)]
+        else
           raise 'unknown ContentType'
         end
       end
 
       # @param binary [String]
+      # @param hash_len [Integer]
       #
       # @raise [RuntimeError]
       #
       # @return [Array of TLS13::Message::$Object]
-      def self.deserialize_handshake(binary)
+      # rubocop: disable Metrics/CyclomaticComplexity, Metrics/MethodLength
+      def self.deserialize_handshake(binary, hash_len)
         handshakes = [] # TODO: concatenated handshakes
         message = nil
         msg_type = binary[0]
@@ -117,12 +123,19 @@ module TLS13
           message = ServerHello.deserialize(binary)
         when HandshakeType::ENCRYPTED_EXTENSIONS
           message = EncryptedExtensions.deserialize(binary)
-        else # TODO
+        when HandshakeType::CERTIFICATE
+          message = Certificate.deserialize(binary)
+        when HandshakeType::CERTIFICATE_VERIFY
+          message = CertificateVerify.deserialize(binary)
+        when HandshakeType::FINISHED
+          message = Finished.deserialize(binary, hash_len)
+        else
           raise 'unexpected HandshakeType'
         end
         handshakes << message
         handshakes
       end
+      # rubocop: enable Metrics/CyclomaticComplexity, Metrics/MethodLength
     end
   end
 end

@@ -67,4 +67,27 @@ RSpec.describe Record do
       expect { record }.to raise_error(RuntimeError)
     end
   end
+
+  context 'server parameters record binary' do
+    let(:record) do
+      cipher = Cryptograph::Aead.new(
+        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
+        nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
+        type: ContentType::HANDSHAKE
+      )
+      hash_len = CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
+      Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD,
+                         cipher, hash_len)
+    end
+
+    it 'should generate valid record header' do
+      expect(record.type).to eq ContentType::APPLICATION_DATA
+      expect(record.legacy_record_version).to eq ProtocolVersion::TLS_1_2
+    end
+
+    it 'should generate valid server parameters' do
+      # TODO
+    end
+  end
 end
