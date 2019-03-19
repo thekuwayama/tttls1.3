@@ -13,6 +13,7 @@ module TLS13
       @binary_buffer = ''
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
+      @signature_scheme = nil # TLS13::Message::SignatureScheme
     end
 
     # @param type [Message::ContentType]

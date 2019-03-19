@@ -94,7 +94,6 @@ RSpec.describe Client do
 
     let(:client) do
       client = Client.new(nil)
-
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
@@ -110,11 +109,11 @@ RSpec.describe Client do
         SERVER_FINISHED: sf
       }
       client.instance_variable_set(:@transcript_messages, tm)
-
       ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
                            cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
       client.instance_variable_set(:@key_schedule, ks)
-
+      client.instance_variable_set(:@signature_scheme,
+                                   SignatureScheme::RSA_PSS_RSAE_SHA256)
       client
     end
 
@@ -127,13 +126,11 @@ RSpec.describe Client do
     end
 
     it 'should verify server Finished' do
-      expect(client.verify_finished(SignatureScheme::RSA_PSS_RSAE_SHA256))
-        .to be true
+      expect(client.verify_finished).to be true
     end
 
     it 'should sign client Finished' do
-      expect(client.sign_finished(SignatureScheme::RSA_PSS_RSAE_SHA256))
-        .to eq client_finished.verify_data
+      expect(client.sign_finished).to eq client_finished.verify_data
     end
   end
 end

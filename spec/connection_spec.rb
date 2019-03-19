@@ -15,7 +15,6 @@ RSpec.describe Connection do
 
     let(:connection) do
       connection = Connection.new(nil)
-
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
@@ -27,7 +26,6 @@ RSpec.describe Connection do
         SERVER_CERTIFICATE_VERIFY: cv
       }
       connection.instance_variable_set(:@transcript_messages, tm)
-
       connection
     end
 
@@ -45,7 +43,6 @@ RSpec.describe Connection do
   context 'connection' do
     let(:connection) do
       connection = Connection.new(nil)
-
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
@@ -59,7 +56,6 @@ RSpec.describe Connection do
         SERVER_CERTIFICATE_VERIFY: cv
       }
       connection.instance_variable_set(:@transcript_messages, tm)
-
       connection
     end
 
@@ -85,7 +81,6 @@ RSpec.describe Connection do
 
     let(:connection) do
       connection = Connection.new(nil)
-
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
@@ -101,7 +96,6 @@ RSpec.describe Connection do
         SERVER_FINISHED: sf
       }
       connection.instance_variable_set(:@transcript_messages, tm)
-
       connection
     end
 

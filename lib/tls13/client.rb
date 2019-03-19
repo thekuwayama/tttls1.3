@@ -70,6 +70,7 @@ module TLS13
           state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           recv_finished
+          raise 'decrypt_error' unless verify_finished
           # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
           send_finished
@@ -164,25 +165,21 @@ module TLS13
                                    message_syms: CH_CT)
     end
 
-    # @param signature_scheme [TLS13::Message::SignatureScheme]
-    #
     # @return [String]
-    def sign_finished(signature_scheme)
+    def sign_finished
       ch_sh = concat_messages(CH_SH)
       finished_key = @key_schedule.client_finished_key(ch_sh)
-      do_sign_finished(signature_scheme: signature_scheme,
+      do_sign_finished(signature_scheme: @signature_scheme,
                        finished_key: finished_key,
                        message_syms: CH_SF)
     end
 
-    # @param signature_scheme [TLS13::Message::SignatureScheme]
-    #
     # @return [Boolean]
-    def verify_finished(signature_scheme)
+    def verify_finished
       ch_sh = concat_messages(CH_SH)
       finished_key = @key_schedule.server_finished_key(ch_sh)
       signature = @transcript_messages[:SERVER_FINISHED].verify_data
-      do_verify_finished(signature_scheme: signature_scheme,
+      do_verify_finished(signature_scheme: @signature_scheme,
                          finished_key: finished_key,
                          message_syms: CH_CV,
                          signature: signature)
