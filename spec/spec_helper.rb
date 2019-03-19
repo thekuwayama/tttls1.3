@@ -281,6 +281,11 @@ TESTBINARY_SERVER_PARAMETERS_RECORD = <<BIN.split.map(&:hex).map(&:chr).join
   75 0e dc 53 37 0d 2b
 BIN
 
+TESTBINARY_SERVER_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  00 8d 3b 66 f8 16 ea 55     9f 96 b5 37 e8 85 c3 1f
+  c0 68 bf 49 2c 65 2f 01     f2 88 a1 d8 cd c1 9f c8
+BIN
+
 TESTBINARY_SERVER_PARAMETERS_WRITE_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   3f ce 51 60 09 c2 17 27     d0 f2 e4 e8 6e e4 03 bc
 BIN

@@ -79,6 +79,14 @@ module TLS13
     # @param messages [String] serialized ClientHello and ServerHello
     #
     # @return [String]
+    def server_finished_key(messages)
+      secret = server_handshake_traffic_secret(messages)
+      hkdf_expand_label(secret, 'finished', '', @hash_len)
+    end
+
+    # @param messages [String] serialized ClientHello and ServerHello
+    #
+    # @return [String]
     def server_handshake_write_key(messages)
       secret = server_handshake_traffic_secret(messages)
       hkdf_expand_label(secret, 'key', '', @key_len)

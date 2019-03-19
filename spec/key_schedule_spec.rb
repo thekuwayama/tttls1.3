@@ -43,6 +43,11 @@ RSpec.describe KeySchedule do
         .to eq TESTBINARY_RES_MASTER
     end
 
+    it 'should generate server finished_key' do
+      expect(key_schedule.server_finished_key(ch_sh))
+        .to eq TESTBINARY_SERVER_FINISHED_KEY
+    end
+
     it 'should generate server parameters write_key, iv' do
       expect(key_schedule.server_handshake_write_key(ch_sh))
         .to eq TESTBINARY_SERVER_PARAMETERS_WRITE_KEY
