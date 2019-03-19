@@ -184,12 +184,6 @@ TESTBINARY_SERVER_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
   b7 8f 07 18
 BIN
 
-TESTBINARY_CLIENT_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
-  14 00 00 20 a8 ec 43 6d     67 76 34 ae 52 5a c1 fc
-  eb e1 1a 03 9e c1 76 94     fa c6 e9 85 27 b6 42 f2
-  ed d5 ce 61
-BIN
-
 TESTBINARY_SERVER_PARAMETERS = <<BIN.split.map(&:hex).map(&:chr).join
   08 00 00 24 00 22 00 0a     00 14 00 12 00 1d 00 17
   00 18 00 19 01 00 01 01     01 02 01 03 01 04 00 1c
@@ -281,6 +275,26 @@ TESTBINARY_SERVER_PARAMETERS_RECORD = <<BIN.split.map(&:hex).map(&:chr).join
   75 0e dc 53 37 0d 2b
 BIN
 
+TESTBINARY_CLIENT_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
+  14 00 00 20 a8 ec 43 6d     67 76 34 ae 52 5a c1 fc
+  eb e1 1a 03 9e c1 76 94     fa c6 e9 85 27 b6 42 f2
+  ed d5 ce 61
+BIN
+
+TESTBINARY_CLIENT_FINISHED_RECORD = <<BIN.split.map(&:hex).map(&:chr).join
+  17 03 03 00 35 75 ec 4d     c2 38 cc e6 0b 29 80 44
+  a7 1e 21 9c 56 cc 77 b0     51 7f e9 b9 3c 7a 4b fc
+  44 d8 7f 38 f8 03 38 ac     98 fc 46 de b3 84 bd 1c
+  ae ac ab 68 67 d7 26 c4     05 46
+BIN
+
+TESTBINARY_CLIENT_APPLICATION_DATA = <<BIN.split.map(&:hex).map(&:chr).join
+  00 01 02 03 04 05 06 07     08 09 0a 0b 0c 0d 0e 0f
+  10 11 12 13 14 15 16 17     18 19 1a 1b 1c 1d 1e 1f
+  20 21 22 23 24 25 26 27     28 29 2a 2b 2c 2d 2e 2f
+  30 31
+BIN
+
 TESTBINARY_SERVER_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   00 8d 3b 66 f8 16 ea 55     9f 96 b5 37 e8 85 c3 1f
   c0 68 bf 49 2c 65 2f 01     f2 88 a1 d8 cd c1 9f c8
@@ -292,13 +306,6 @@ BIN
 
 TESTBINARY_SERVER_PARAMETERS_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
   5d 31 3e b2 67 12 76 ee     13 00 0b 30
-BIN
-
-TESTBINARY_CLIENT_FINISHED_RECORD = <<BIN.split.map(&:hex).map(&:chr).join
-  17 03 03 00 35 75 ec 4d     c2 38 cc e6 0b 29 80 44
-  a7 1e 21 9c 56 cc 77 b0     51 7f e9 b9 3c 7a 4b fc
-  44 d8 7f 38 f8 03 38 ac     98 fc 46 de b3 84 bd 1c
-  ae ac ab 68 67 d7 26 c4     05 46
 BIN
 
 TESTBINARY_CLIENT_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
