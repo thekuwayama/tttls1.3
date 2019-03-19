@@ -44,6 +44,12 @@ module TLS13
             nonce: @key_schedule.server_handshake_write_iv(messages),
             type: ContentType::HANDSHAKE
           )
+          @write_cryptographer = Cryptograph::Aead.new(
+            cipher_suite: @cipher_suite,
+            key: @key_schedule.client_handshake_write_key(messages),
+            nonce: @key_schedule.client_handshake_write_iv(messages),
+            type: ContentType::HANDSHAKE
+          )
           state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           recv_encrypted_extensions
@@ -74,6 +80,7 @@ module TLS13
           # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
           send_finished
+          state = ClientState::CONNECTED
         when ClientState::CONNECTED
           break
         end
@@ -147,7 +154,9 @@ module TLS13
     end
 
     def send_finished
-      # TODO
+      cf = Message::Finished.new(sign_finished)
+      send_messages(Message::ContentType::HANDSHAKE, [cf])
+      @transcript_messages[:CLIENT_FINISHED] = cf
     end
 
     # @return [Boolean]

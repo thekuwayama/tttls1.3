@@ -5,17 +5,17 @@ require 'spec_helper'
 
 RSpec.describe Client do
   context 'client' do
-    let(:record_ch) do
+    let(:record) do
       mock_socket = SimpleStream.new
-      connection = Client.new(mock_socket)
-      connection.send_client_hello
+      client = Client.new(mock_socket)
+      client.send_client_hello
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
 
     it 'should send default ClientHello' do
-      expect(record_ch.type).to eq ContentType::HANDSHAKE
+      expect(record.type).to eq ContentType::HANDSHAKE
 
-      message = record_ch.messages.first
+      message = record.messages.first
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.cipher_suites).to eq DEFALT_CIPHER_SUITES
@@ -31,8 +31,8 @@ RSpec.describe Client do
                         + ProtocolVersion::TLS_1_2 \
                         + i2uint16(msg_len) \
                         + TESTBINARY_SERVER_HELLO)
-      connection = Client.new(mock_socket)
-      connection.recv_server_hello
+      client = Client.new(mock_socket)
+      client.recv_server_hello
     end
 
     it 'should receive ServerHello' do
@@ -84,6 +84,61 @@ RSpec.describe Client do
       client.recv_certificate_verify   # to skip
       message = client.recv_finished
       expect(message.msg_type).to eq HandshakeType::FINISHED
+    end
+  end
+
+  context 'client' do
+    let(:hash_len) do
+      CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
+    end
+
+    let(:record) do
+      mock_socket = SimpleStream.new
+      client = Client.new(mock_socket)
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
+      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
+      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+      sf = Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
+      tm = {
+        CLIENT_HELLO: ch,
+        SERVER_HELLO: sh,
+        ENCRYPTED_EXTENSIONS: ee,
+        SERVER_CERTIFICATE: ct,
+        SERVER_CERTIFICATE_VERIFY: cv,
+        SERVER_FINISHED: sf
+      }
+      client.instance_variable_set(:@transcript_messages, tm)
+      ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
+                           cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
+      client.instance_variable_set(:@key_schedule, ks)
+      client.instance_variable_set(:@signature_scheme,
+                                   SignatureScheme::RSA_PSS_RSAE_SHA256)
+      cipher = Cryptograph::Aead.new(
+        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
+        nonce: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
+        type: ContentType::HANDSHAKE
+      )
+      client.instance_variable_set(:@write_cryptographer, cipher)
+      client.send_finished
+      cipher = Cryptograph::Aead.new(
+        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
+        nonce: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
+        type: ContentType::HANDSHAKE
+      )
+      Record.deserialize(mock_socket.read, cipher)
+    end
+
+    it 'should send Finished' do
+      expect(record.type).to eq ContentType::APPLICATION_DATA
+
+      message = Message.deserialize_handshake(record.messages.first.fragment,
+                                              hash_len)
+      expect(message.msg_type).to eq HandshakeType::FINISHED
+      expect(message.serialize).to eq TESTBINARY_CLIENT_FINISHED
     end
   end
 
