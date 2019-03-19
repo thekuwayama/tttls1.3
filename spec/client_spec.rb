@@ -122,6 +122,10 @@ RSpec.describe Client do
       Finished.deserialize(TESTBINARY_CLIENT_FINISHED, hash_len)
     end
 
+    it 'should verify server CertificateVerify' do
+      expect(client.verify_certificate_verify).to be true
+    end
+
     it 'should verify server Finished' do
       expect(client.verify_finished(SignatureScheme::RSA_PSS_RSAE_SHA256))
         .to be true
