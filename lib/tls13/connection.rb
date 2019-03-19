@@ -50,8 +50,8 @@ module TLS13
         next if buffer.length < record_len + 5
 
         @binary_buffer += buffer[record_len + 5..]
-        return Record.deserialize(buffer.slice(0, record_len + 5),
-                                  @read_cryptographer)
+        return Message::Record.deserialize(buffer.slice(0, record_len + 5),
+                                           @read_cryptographer)
       end
     end
 
@@ -101,7 +101,7 @@ module TLS13
                                      signature:, context:, message_syms:)
       messages = concat_messages(message_syms)
       case signature_scheme
-      when SignatureScheme::RSA_PSS_RSAE_SHA256
+      when Message::SignatureScheme::RSA_PSS_RSAE_SHA256
         content = "\x20" * 64 + context + "\x00" \
                   + OpenSSL::Digest::SHA256.digest(messages)
         public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
@@ -122,7 +122,7 @@ module TLS13
     def do_sign_finished(signature_scheme:, finished_key:, message_syms:)
       messages = concat_messages(message_syms)
       case signature_scheme
-      when SignatureScheme::RSA_PSS_RSAE_SHA256
+      when Message::SignatureScheme::RSA_PSS_RSAE_SHA256
         hash = OpenSSL::Digest::SHA256.digest(messages)
         OpenSSL::HMAC.digest('SHA256', finished_key, hash)
       else # TODO: other SignatureScheme

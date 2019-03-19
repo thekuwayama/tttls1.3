@@ -88,8 +88,23 @@ module TLS13
     end
     # rubocop: enable all
 
-    def send_client_hello
-      # only P-256
+    # @return [TLS13::Message::Extensions]
+    # rubocop: disable Metrics/MethodLength
+    def gen_extensions
+      # supported_versions: TLS_1_3
+      supported_versions = Message::Extension::SupportedVersions.new(
+        msg_type: Message::HandshakeType::CLIENT_HELLO,
+        versions: [Message::ProtocolVersion::TLS_1_3]
+      )
+      # signature_algorithms
+      signature_algorithms = Message::Extension::SignatureAlgorithms.new(
+        [Message::SignatureScheme::RSA_PSS_RSAE_SHA256]
+      )
+      # supported_groups: only P-256
+      supported_groups = Message::Extension::SupportedGroups.new(
+        [Message::Extension::NamedGroup::SECP256R1]
+      )
+      # key_share: only P-256
       ec = OpenSSL::PKey::EC.new('prime256v1')
       ec.generate_key!
       @priv_keys[Message::Extension::NamedGroup::SECP256R1] = ec
@@ -102,8 +117,16 @@ module TLS13
           )
         ]
       )
-      # TODO: set Extensions using config
-      exs = Message::Extensions.new([key_share])
+
+      Message::Extensions.new([supported_versions,
+                               signature_algorithms,
+                               supported_groups,
+                               key_share])
+    end
+    # rubocop: enable Metrics/MethodLength
+
+    def send_client_hello
+      exs = gen_extensions
       ch = Message::ClientHello.new(extensions: exs)
       send_messages(Message::ContentType::HANDSHAKE, [ch])
       @transcript_messages[:CLIENT_HELLO] = ch
