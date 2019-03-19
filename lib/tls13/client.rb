@@ -149,15 +149,30 @@ module TLS13
       # TODO
     end
 
+    # @return [Boolean]
+    def verify_certificate_verify
+      ct = @transcript_messages[:SERVER_CERTIFICATE]
+      certificate_pem = ct.certificate_list.first.cert_data.to_pem
+      cv = @transcript_messages[:SERVER_CERTIFICATE_VERIFY]
+      signature_scheme = cv.signature_scheme
+      signature = cv.signature
+      context = 'TLS 1.3, server CertificateVerify'
+      do_verify_certificate_verify(certificate_pem: certificate_pem,
+                                   signature_scheme: signature_scheme,
+                                   signature: signature,
+                                   context: context,
+                                   message_syms: CH_CT)
+    end
+
     # @param signature_scheme [TLS13::Message::SignatureScheme]
     #
     # @return [String]
     def sign_finished(signature_scheme)
       ch_sh = concat_messages(CH_SH)
       finished_key = @key_schedule.client_finished_key(ch_sh)
-      _sign_finished(signature_scheme: signature_scheme,
-                     finished_key: finished_key,
-                     message_syms: CH_SF)
+      do_sign_finished(signature_scheme: signature_scheme,
+                       finished_key: finished_key,
+                       message_syms: CH_SF)
     end
 
     # @param signature_scheme [TLS13::Message::SignatureScheme]
@@ -167,10 +182,10 @@ module TLS13
       ch_sh = concat_messages(CH_SH)
       finished_key = @key_schedule.server_finished_key(ch_sh)
       signature = @transcript_messages[:SERVER_FINISHED].verify_data
-      _verify_finished(signature_scheme: signature_scheme,
-                       finished_key: finished_key,
-                       message_syms: CH_CV,
-                       signature: signature)
+      do_verify_finished(signature_scheme: signature_scheme,
+                         finished_key: finished_key,
+                         message_syms: CH_CV,
+                         signature: signature)
     end
   end
   # rubocop: enable Metrics/ClassLength

@@ -87,15 +87,18 @@ module TLS13
       end.join
     end
 
+    # @param certificate_pem [String]
+    # @param signature_scheme [TLS13::Message::SignatureScheme]
+    # @param signature [String]
+    # @param context [String]
+    # @param message_syms [Array of Symbol]
+    #
+    # @raise [RuntimeError]
+    #
     # @return [Boolean]
-    def verify_certificate_verify
-      ct = @transcript_messages[:SERVER_CERTIFICATE]
-      certificate_pem = ct.certificate_list.first.cert_data.to_pem
-      cv = @transcript_messages[:SERVER_CERTIFICATE_VERIFY]
-      signature_scheme = cv.signature_scheme
-      signature = cv.signature
-      messages = concat_messages(CH_CT)
-      context = 'TLS 1.3, server CertificateVerify'
+    def do_verify_certificate_verify(certificate_pem:, signature_scheme:,
+                                     signature:, context:, message_syms:)
+      messages = concat_messages(message_syms)
       case signature_scheme
       when SignatureScheme::RSA_PSS_RSAE_SHA256
         content = "\x20" * 64 + context + "\x00" \
@@ -112,8 +115,10 @@ module TLS13
     # @param finished_key [String]
     # @param message_syms [Array of Symbol]
     #
+    # @raise [RuntimeError]
+    #
     # @return [String]
-    def _sign_finished(signature_scheme:, finished_key:, message_syms:)
+    def do_sign_finished(signature_scheme:, finished_key:, message_syms:)
       messages = concat_messages(message_syms)
       case signature_scheme
       when SignatureScheme::RSA_PSS_RSAE_SHA256
@@ -130,11 +135,11 @@ module TLS13
     # @param signature [String]
     #
     # @return [Boolean]
-    def _verify_finished(signature_scheme:, finished_key:, message_syms:,
-                         signature:)
-      _sign_finished(signature_scheme: signature_scheme,
-                     finished_key: finished_key,
-                     message_syms: message_syms) == signature
+    def do_verify_finished(signature_scheme:, finished_key:, message_syms:,
+                           signature:)
+      do_sign_finished(signature_scheme: signature_scheme,
+                       finished_key: finished_key,
+                       message_syms: message_syms) == signature
     end
   end
 end

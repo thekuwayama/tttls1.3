@@ -5,14 +5,20 @@ require 'spec_helper'
 
 RSpec.describe Connection do
   context 'connection' do
+    let(:ct) do
+      Certificate.deserialize(TESTBINARY_CERTIFICATE)
+    end
+
+    let(:cv) do
+      CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+    end
+
     let(:connection) do
       connection = Connection.new(nil)
 
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
-      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
-      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
       tm = {
         CLIENT_HELLO: ch,
         SERVER_HELLO: sh,
@@ -26,7 +32,13 @@ RSpec.describe Connection do
     end
 
     it 'should verify server CertificateVerify.signature' do
-      expect(connection.verify_certificate_verify).to be true
+      expect(connection.do_verify_certificate_verify(
+               certificate_pem: ct.certificate_list.first.cert_data.to_pem,
+               signature_scheme: cv.signature_scheme,
+               signature: cv.signature,
+               context: 'TLS 1.3, server CertificateVerify',
+               message_syms: Connection::CH_CT
+             )).to be true
     end
   end
 
@@ -57,7 +69,7 @@ RSpec.describe Connection do
     end
 
     it 'should verify server Finished.verify_data' do
-      expect(connection._verify_finished(
+      expect(connection.do_verify_finished(
                signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
                finished_key: TESTBINARY_SERVER_FINISHED_KEY,
                message_syms: Connection::CH_CV,
@@ -98,7 +110,7 @@ RSpec.describe Connection do
     end
 
     it 'should sign client Finished.verify_data' do
-      expect(connection._sign_finished(
+      expect(connection.do_sign_finished(
                signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
                finished_key: TESTBINARY_CLIENT_FINISHED_KEY,
                message_syms: Connection::CH_SF
