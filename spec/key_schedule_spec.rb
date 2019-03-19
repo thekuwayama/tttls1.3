@@ -55,6 +55,11 @@ RSpec.describe KeySchedule do
         .to eq TESTBINARY_SERVER_PARAMETERS_WRITE_IV
     end
 
+    it 'should generate client finished_key' do
+      expect(key_schedule.client_finished_key(ch_sh))
+        .to eq TESTBINARY_CLIENT_FINISHED_KEY
+    end
+
     it 'should generate client finished write_key, iv' do
       expect(key_schedule.client_handshake_write_key(ch_sh))
         .to eq TESTBINARY_CLIENT_FINISHED_WRITE_KEY

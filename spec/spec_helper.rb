@@ -301,6 +301,11 @@ TESTBINARY_CLIENT_FINISHED_RECORD = <<BIN.split.map(&:hex).map(&:chr).join
   ae ac ab 68 67 d7 26 c4     05 46
 BIN
 
+TESTBINARY_CLIENT_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  b8 0a d0 10 15 fb 2f 0b     d6 5f f7 d4 da 5d 6b f8
+  3f 84 82 1d 1f 87 fd c7     d3 c7 5b 5a 7b 42 d9 c4
+BIN
+
 TESTBINARY_CLIENT_FINISHED_WRITE_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   db fa a6 93 d1 76 2c 5b     66 6a f5 d9 50 25 8d 01
 BIN
@@ -323,11 +328,6 @@ BIN
 
 TESTBINARY_CLIENT_APPLICATION_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
   5b 78 92 3d ee 08 57 90     33 e5 23 d9
-BIN
-
-TESTBINARY_CLIENT_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
-  b8 0a d0 10 15 fb 2f 0b     d6 5f f7 d4 da 5d 6b f8
-  3f 84 82 1d 1f 87 fd c7     d3 c7 5b 5a 7b 42 d9 c4
 BIN
 
 TESTBINARY_SHARED_SECRET = <<BIN.split.map(&:hex).map(&:chr).join
