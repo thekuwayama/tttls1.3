@@ -27,8 +27,45 @@ RSpec.describe Connection do
       connection
     end
 
-    it 'should verify CertificateVerify.signature' do
+    it 'should verify server CertificateVerify.signature' do
       expect(connection.verify_certificate_verify).to be true
+    end
+  end
+
+  context 'connection' do
+    let(:transcript_messages) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
+      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
+      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+      {
+        CLIENT_HELLO: ch,
+        SERVER_HELLO: sh,
+        ENCRYPTED_EXTENSIONS: ee,
+        CERTIFICATE: ct,
+        CERTIFICATE_VERIFY: cv
+      }
+    end
+
+    let(:connection) do
+      connection = Connection.new(nil)
+      connection.instance_variable_set(:@transcript_messages,
+                                       transcript_messages)
+      connection
+    end
+
+    let(:server_finished) do
+      hash_len = CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
+      Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
+    end
+
+    it 'should verify server Finished.verify_data' do
+      expect(connection.verify_finished(
+               signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
+               finished_key: TESTBINARY_SERVER_FINISHED_KEY,
+               signature: server_finished.verify_data
+             )).to be true
     end
   end
 
@@ -65,7 +102,7 @@ RSpec.describe Connection do
       Finished.deserialize(TESTBINARY_CLIENT_FINISHED, hash_len)
     end
 
-    it 'should sign Client Finished.verify_data' do
+    it 'should sign client Finished.verify_data' do
       expect(connection.sign_finished(
                signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
                finished_key: TESTBINARY_CLIENT_FINISHED_KEY

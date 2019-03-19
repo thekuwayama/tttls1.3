@@ -92,5 +92,20 @@ module TLS13
         raise 'unexpected SignatureScheme'
       end
     end
+
+    CH_CV = [:CLIENT_HELLO, :SERVER_HELLO, :ENCRYPTED_EXTENSIONS,
+             :CERTIFICATE, :CERTIFICATE_VERIFY].freeze
+
+    # @return [Boolean]
+    def verify_finished(signature_scheme:, finished_key:, signature:)
+      messages = CH_CV.map { |t| @transcript_messages[t].serialize }.join
+      case signature_scheme
+      when SignatureScheme::RSA_PSS_RSAE_SHA256
+        hash = OpenSSL::Digest::SHA256.digest(messages) # TODO: HRR
+        OpenSSL::HMAC.digest('SHA256', finished_key, hash) == signature
+      else # TODO: other SignatureScheme
+        raise 'unexpected SignatureScheme'
+      end
+    end
   end
 end
