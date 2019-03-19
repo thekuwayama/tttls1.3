@@ -124,16 +124,17 @@ module TLS13
       end
     end
 
+    # @param signature_scheme [TLS13::Message::SignatureScheme]
+    # @param finished_key [String]
+    # @param message_syms [Array of Symbol]
+    # @param signature [String]
+    #
     # @return [Boolean]
-    def verify_finished(signature_scheme:, finished_key:, signature:)
-      messages = concat_messages(CH_CV)
-      case signature_scheme
-      when SignatureScheme::RSA_PSS_RSAE_SHA256
-        hash = OpenSSL::Digest::SHA256.digest(messages)
-        OpenSSL::HMAC.digest('SHA256', finished_key, hash) == signature
-      else # TODO: other SignatureScheme
-        raise 'unexpected SignatureScheme'
-      end
+    def _verify_finished(signature_scheme:, finished_key:, message_syms:,
+                         signature:)
+      _sign_finished(signature_scheme: signature_scheme,
+                     finished_key: finished_key,
+                     message_syms: message_syms) == signature
     end
   end
 end

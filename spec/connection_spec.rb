@@ -57,9 +57,10 @@ RSpec.describe Connection do
     end
 
     it 'should verify server Finished.verify_data' do
-      expect(connection.verify_finished(
+      expect(connection._verify_finished(
                signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
                finished_key: TESTBINARY_SERVER_FINISHED_KEY,
+               message_syms: Connection::CH_CV,
                signature: server_finished.verify_data
              )).to be true
     end
