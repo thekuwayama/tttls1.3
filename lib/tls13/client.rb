@@ -142,7 +142,7 @@ module TLS13
       raise 'unexpected message' \
         unless sf.msg_type == Message::HandshakeType::FINISHED
 
-      @transcript_messages[:FINISHED] = sf
+      @transcript_messages[:SERVER_FINISHED] = sf
     end
 
     def send_finished
@@ -150,12 +150,27 @@ module TLS13
     end
 
     # @param signature_scheme [TLS13::Message::SignatureScheme]
+    #
+    # @return [String]
     def sign_finished(signature_scheme)
       ch_sh = concat_messages(CH_SH)
       finished_key = @key_schedule.client_finished_key(ch_sh)
       _sign_finished(signature_scheme: signature_scheme,
                      finished_key: finished_key,
                      message_syms: CH_SF)
+    end
+
+    # @param signature_scheme [TLS13::Message::SignatureScheme]
+    #
+    # @return [Boolean]
+    def verify_finished(signature_scheme)
+      ch_sh = concat_messages(CH_SH)
+      finished_key = @key_schedule.server_finished_key(ch_sh)
+      signature = @transcript_messages[:SERVER_FINISHED].verify_data
+      _verify_finished(signature_scheme: signature_scheme,
+                       finished_key: finished_key,
+                       message_syms: CH_CV,
+                       signature: signature)
     end
   end
   # rubocop: enable Metrics/ClassLength
