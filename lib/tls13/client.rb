@@ -53,7 +53,7 @@ module TLS13
         when ClientState::WAIT_CERT_CR
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
-            @transcript_messages[:CERTIFICATE] = message
+            @transcript_messages[:SERVER_CERTIFICATE] = message
             state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
             @transcript_messages[:CERTIFICATE_REQUEST] = message
@@ -126,7 +126,7 @@ module TLS13
       raise 'unexpected message' \
         unless ct.msg_type == Message::HandshakeType::CERTIFICATE
 
-      @transcript_messages[:CERTIFICATE] = ct
+      @transcript_messages[:SERVER_CERTIFICATE] = ct
     end
 
     def recv_certificate_verify
@@ -134,7 +134,7 @@ module TLS13
       raise 'unexpected message' \
         unless cv.msg_type == Message::HandshakeType::CERTIFICATE_VERIFY
 
-      @transcript_messages[:CERTIFICATE_VERIFY] = cv
+      @transcript_messages[:SERVER_CERTIFICATE_VERIFY] = cv
     end
 
     def recv_finished
@@ -147,6 +147,15 @@ module TLS13
 
     def send_finished
       # TODO
+    end
+
+    # @param signature_scheme [TLS13::Message::SignatureScheme]
+    def sign_finished(signature_scheme)
+      ch_sh = concat_messages(CH_SH)
+      finished_key = @key_schedule.client_finished_key(ch_sh)
+      _sign_finished(signature_scheme: signature_scheme,
+                     finished_key: finished_key,
+                     message_syms: CH_SF)
     end
   end
   # rubocop: enable Metrics/ClassLength

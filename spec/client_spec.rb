@@ -44,46 +44,87 @@ RSpec.describe Client do
   end
 
   context 'client' do
-    let(:connection) do
+    let(:client) do
       mock_socket = SimpleStream.new
       mock_socket.write(TESTBINARY_SERVER_PARAMETERS_RECORD)
-      connection = Client.new(mock_socket)
-      connection.instance_variable_set(:@cipher_suite,
-                                       CipherSuite::TLS_AES_128_GCM_SHA256)
+      client = Client.new(mock_socket)
+      client.instance_variable_set(:@cipher_suite,
+                                   CipherSuite::TLS_AES_128_GCM_SHA256)
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         type: ContentType::HANDSHAKE
       )
-      connection.instance_variable_set(:@read_cryptographer, cipher)
-      connection
+      client.instance_variable_set(:@read_cryptographer, cipher)
+      client
     end
 
     it 'should receive EncryptedExtensions' do
-      message = connection.recv_encrypted_extensions
+      message = client.recv_encrypted_extensions
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
     end
 
     it 'should receive Certificate' do
-      connection.recv_encrypted_extensions # to skip
-      message = connection.recv_certificate
+      client.recv_encrypted_extensions # to skip
+      message = client.recv_certificate
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
     end
 
     it 'should receive CertificateVerify' do
-      connection.recv_encrypted_extensions # to skip
-      connection.recv_certificate          # to skip
-      message = connection.recv_certificate_verify
+      client.recv_encrypted_extensions # to skip
+      client.recv_certificate          # to skip
+      message = client.recv_certificate_verify
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
     end
 
     it 'should receive CertificateVerify' do
-      connection.recv_encrypted_extensions # to skip
-      connection.recv_certificate          # to skip
-      connection.recv_certificate_verify   # to skip
-      message = connection.recv_finished
+      client.recv_encrypted_extensions # to skip
+      client.recv_certificate          # to skip
+      client.recv_certificate_verify   # to skip
+      message = client.recv_finished
       expect(message.msg_type).to eq HandshakeType::FINISHED
+    end
+  end
+
+  context 'client' do
+    let(:hash_len) do
+      CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
+    end
+
+    let(:client) do
+      client = Client.new(nil)
+
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
+      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
+      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+      sf = Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
+      tm = {
+        CLIENT_HELLO: ch,
+        SERVER_HELLO: sh,
+        ENCRYPTED_EXTENSIONS: ee,
+        SERVER_CERTIFICATE: ct,
+        SERVER_CERTIFICATE_VERIFY: cv,
+        SERVER_FINISHED: sf
+      }
+      client.instance_variable_set(:@transcript_messages, tm)
+
+      ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
+                           cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
+      client.instance_variable_set(:@key_schedule, ks)
+
+      client
+    end
+
+    let(:client_finished) do
+      Finished.deserialize(TESTBINARY_CLIENT_FINISHED, hash_len)
+    end
+
+    it 'should sign client Finished.verify_data' do
+      expect(client.sign_finished(SignatureScheme::RSA_PSS_RSAE_SHA256))
+        .to eq client_finished.verify_data
     end
   end
 end

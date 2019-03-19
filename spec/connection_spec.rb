@@ -5,25 +5,23 @@ require 'spec_helper'
 
 RSpec.describe Connection do
   context 'connection' do
-    let(:transcript_messages) do
+    let(:connection) do
+      connection = Connection.new(nil)
+
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
       ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
       cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
-      {
+      tm = {
         CLIENT_HELLO: ch,
         SERVER_HELLO: sh,
         ENCRYPTED_EXTENSIONS: ee,
-        CERTIFICATE: ct,
-        CERTIFICATE_VERIFY: cv
+        SERVER_CERTIFICATE: ct,
+        SERVER_CERTIFICATE_VERIFY: cv
       }
-    end
+      connection.instance_variable_set(:@transcript_messages, tm)
 
-    let(:connection) do
-      connection = Connection.new(nil)
-      connection.instance_variable_set(:@transcript_messages,
-                                       transcript_messages)
       connection
     end
 
@@ -33,25 +31,23 @@ RSpec.describe Connection do
   end
 
   context 'connection' do
-    let(:transcript_messages) do
+    let(:connection) do
+      connection = Connection.new(nil)
+
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
       ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
       cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
-      {
+      tm = {
         CLIENT_HELLO: ch,
         SERVER_HELLO: sh,
         ENCRYPTED_EXTENSIONS: ee,
-        CERTIFICATE: ct,
-        CERTIFICATE_VERIFY: cv
+        SERVER_CERTIFICATE: ct,
+        SERVER_CERTIFICATE_VERIFY: cv
       }
-    end
+      connection.instance_variable_set(:@transcript_messages, tm)
 
-    let(:connection) do
-      connection = Connection.new(nil)
-      connection.instance_variable_set(:@transcript_messages,
-                                       transcript_messages)
       connection
     end
 
@@ -74,27 +70,25 @@ RSpec.describe Connection do
       CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
     end
 
-    let(:transcript_messages) do
+    let(:connection) do
+      connection = Connection.new(nil)
+
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
       ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
       cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
       sf = Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
-      {
+      tm = {
         CLIENT_HELLO: ch,
         SERVER_HELLO: sh,
         ENCRYPTED_EXTENSIONS: ee,
-        CERTIFICATE: ct,
-        CERTIFICATE_VERIFY: cv,
+        SERVER_CERTIFICATE: ct,
+        SERVER_CERTIFICATE_VERIFY: cv,
         SERVER_FINISHED: sf
       }
-    end
+      connection.instance_variable_set(:@transcript_messages, tm)
 
-    let(:connection) do
-      connection = Connection.new(nil)
-      connection.instance_variable_set(:@transcript_messages,
-                                       transcript_messages)
       connection
     end
 
@@ -103,9 +97,10 @@ RSpec.describe Connection do
     end
 
     it 'should sign client Finished.verify_data' do
-      expect(connection.sign_finished(
+      expect(connection._sign_finished(
                signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
-               finished_key: TESTBINARY_CLIENT_FINISHED_KEY
+               finished_key: TESTBINARY_CLIENT_FINISHED_KEY,
+               message_syms: Connection::CH_SF
              )).to eq client_finished.verify_data
     end
   end
