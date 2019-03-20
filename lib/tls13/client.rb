@@ -36,8 +36,7 @@ module TLS13
           @cipher_suite = sh.cipher_suite
           @key_schedule = KeySchedule(shared_secret: shared_secret,
                                       cipher_suite: @cipher_suite)
-          messages = [@transcript_messages[:CLIENT_HELLO],
-                      @transcript_messages[:SERVER_HELLO]].map(&:serialize).join
+          messages = concat_messages(CH_SH)
           @read_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
             key: @key_schedule.server_handshake_write_key(messages),

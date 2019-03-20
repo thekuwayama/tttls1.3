@@ -76,7 +76,7 @@ module TLS13
              :SERVER_CERTIFICATE_VERIFY,
              :SERVER_FINISHED].freeze
 
-    # @param concat_messages [Array of Symbol]
+    # @param message_syms [Array of Symbol]
     #
     # @return [String]
     def concat_messages(message_syms)
