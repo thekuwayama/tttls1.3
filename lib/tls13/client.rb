@@ -36,7 +36,7 @@ module TLS13
           @cipher_suite = sh.cipher_suite
           @key_schedule = KeySchedule(shared_secret: shared_secret,
                                       cipher_suite: @cipher_suite)
-          messages = concat_messages(CH_SH)
+          messages = concat_messages(CH..SH)
           @read_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
             key: @key_schedule.server_handshake_write_key(messages),
@@ -58,10 +58,10 @@ module TLS13
         when ClientState::WAIT_CERT_CR
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
-            @transcript_messages[:SERVER_CERTIFICATE] = message
+            @transcript[CT] = message
             state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
-            @transcript_messages[:CERTIFICATE_REQUEST] = message
+            @transcript[CR] = message
             state = ClientState::WAIT_CERT
           else
             raise 'unexpected message'
@@ -128,7 +128,7 @@ module TLS13
       exs = gen_extensions
       ch = Message::ClientHello.new(extensions: exs)
       send_messages(Message::ContentType::HANDSHAKE, [ch])
-      @transcript_messages[:CLIENT_HELLO] = ch
+      @transcript[CH] = ch
     end
 
     def recv_server_hello
@@ -136,7 +136,7 @@ module TLS13
       raise 'unexpected message' \
         unless sh.msg_type == Message::HandshakeType::SERVER_HELLO
 
-      @transcript_messages[:SERVER_HELLO] = sh
+      @transcript[SH] = sh
     end
 
     def recv_encrypted_extensions
@@ -148,7 +148,7 @@ module TLS13
       messages = deserialize_server_parameters(sp.messages.first.fragment,
                                                hash_len)
       @message_queue += messages[1..]
-      @transcript_messages[:ENCRYPTED_EXTENSIONS] = messages.first
+      @transcript[EE] = messages.first
     end
 
     def recv_certificate
@@ -156,7 +156,7 @@ module TLS13
       raise 'unexpected message' \
         unless ct.msg_type == Message::HandshakeType::CERTIFICATE
 
-      @transcript_messages[:SERVER_CERTIFICATE] = ct
+      @transcript[CT] = ct
     end
 
     def recv_certificate_verify
@@ -164,7 +164,7 @@ module TLS13
       raise 'unexpected message' \
         unless cv.msg_type == Message::HandshakeType::CERTIFICATE_VERIFY
 
-      @transcript_messages[:SERVER_CERTIFICATE_VERIFY] = cv
+      @transcript[CV] = cv
     end
 
     def recv_finished
@@ -172,20 +172,20 @@ module TLS13
       raise 'unexpected message' \
         unless sf.msg_type == Message::HandshakeType::FINISHED
 
-      @transcript_messages[:SERVER_FINISHED] = sf
+      @transcript[SF] = sf
     end
 
     def send_finished
       cf = Message::Finished.new(sign_finished)
       send_messages(Message::ContentType::HANDSHAKE, [cf])
-      @transcript_messages[:CLIENT_FINISHED] = cf
+      @transcript[CF] = cf
     end
 
     # @return [Boolean]
     def verify_certificate_verify
-      ct = @transcript_messages[:SERVER_CERTIFICATE]
+      ct = @transcript[CT]
       certificate_pem = ct.certificate_list.first.cert_data.to_pem
-      cv = @transcript_messages[:SERVER_CERTIFICATE_VERIFY]
+      cv = @transcript[CV]
       signature_scheme = cv.signature_scheme
       signature = cv.signature
       context = 'TLS 1.3, server CertificateVerify'
@@ -193,26 +193,26 @@ module TLS13
                                    signature_scheme: signature_scheme,
                                    signature: signature,
                                    context: context,
-                                   message_syms: CH_CT)
+                                   message_range: CH..CT)
     end
 
     # @return [String]
     def sign_finished
-      ch_sh = concat_messages(CH_SH)
+      ch_sh = concat_messages(CH..SH)
       finished_key = @key_schedule.client_finished_key(ch_sh)
       do_sign_finished(signature_scheme: @signature_scheme,
                        finished_key: finished_key,
-                       message_syms: CH_SF)
+                       message_range: CH..EOED)
     end
 
     # @return [Boolean]
     def verify_finished
-      ch_sh = concat_messages(CH_SH)
+      ch_sh = concat_messages(CH..SH)
       finished_key = @key_schedule.server_finished_key(ch_sh)
-      signature = @transcript_messages[:SERVER_FINISHED].verify_data
+      signature = @transcript[SF].verify_data
       do_verify_finished(signature_scheme: @signature_scheme,
                          finished_key: finished_key,
-                         message_syms: CH_CV,
+                         message_range: CH..CV,
                          signature: signature)
     end
   end

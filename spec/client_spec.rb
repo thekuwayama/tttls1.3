@@ -95,21 +95,15 @@ RSpec.describe Client do
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket)
-      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
-      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
-      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
-      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
-      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
-      sf = Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
-      tm = {
-        CLIENT_HELLO: ch,
-        SERVER_HELLO: sh,
-        ENCRYPTED_EXTENSIONS: ee,
-        SERVER_CERTIFICATE: ct,
-        SERVER_CERTIFICATE_VERIFY: cv,
-        SERVER_FINISHED: sf
+      transcript = {
+        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
+        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
+        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
+        CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
+        CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
+        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
       }
-      client.instance_variable_set(:@transcript_messages, tm)
+      client.instance_variable_set(:@transcript, transcript)
       ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
                            cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
       client.instance_variable_set(:@key_schedule, ks)
@@ -149,21 +143,15 @@ RSpec.describe Client do
 
     let(:client) do
       client = Client.new(nil)
-      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
-      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
-      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
-      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
-      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
-      sf = Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
-      tm = {
-        CLIENT_HELLO: ch,
-        SERVER_HELLO: sh,
-        ENCRYPTED_EXTENSIONS: ee,
-        SERVER_CERTIFICATE: ct,
-        SERVER_CERTIFICATE_VERIFY: cv,
-        SERVER_FINISHED: sf
+      transcript = {
+        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
+        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
+        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
+        CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
+        CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
+        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
       }
-      client.instance_variable_set(:@transcript_messages, tm)
+      client.instance_variable_set(:@transcript, transcript)
       ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
                            cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
       client.instance_variable_set(:@key_schedule, ks)
