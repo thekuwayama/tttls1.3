@@ -15,6 +15,13 @@ module TLS13
 
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
+    attr_accessor :hostname
+
+    def initialize(socket)
+      super(socket)
+      @hostname = ''
+    end
+
     # rubocop: disable all
     def connect
       state = ClientState::START
@@ -110,17 +117,22 @@ module TLS13
       key_share = Message::Extension::KeyShare.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         key_share_entry: [
-          KeyShareEntry.new(
+          Message::Extension::KeyShareEntry.new(
             group: Message::Extension::NamedGroup::SECP256R1,
             key_exchange: ec.public_key.to_octet_string(:uncompressed)
           )
         ]
       )
+      # server_name
+      server_name = Message::Extension::ServerName.new(
+        @hostname
+      )
 
       Message::Extensions.new([supported_versions,
                                signature_algorithms,
                                supported_groups,
-                               key_share])
+                               key_share,
+                               server_name])
     end
     # rubocop: enable Metrics/MethodLength
 
