@@ -53,7 +53,7 @@ module TLS13
           recv_encrypted_extensions
           # TODO: get server parameters
           # TODO: Using PSK
-          state = ClientState::WAIT_CR
+          state = ClientState::WAIT_CERT_CR
         when ClientState::WAIT_CERT_CR
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
@@ -75,6 +75,7 @@ module TLS13
         when ClientState::WAIT_FINISHED
           recv_finished
           raise 'decrypt_error' unless verify_finished
+          send_ccs # compatibility mode
           # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
           send_finished

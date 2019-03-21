@@ -43,6 +43,16 @@ module TLS13
       @socket.write(record.serialize)
     end
 
+    def send_ccs
+      ccs_record = Message::Record.new(
+        type: ContentType::CCS,
+        legacy_record_version: ProtocolVersion::TLS_1_2,
+        messages: [ChangeCipherSpec.new],
+        cryptographer: Passer.new
+      )
+      send_record(ccs_record)
+    end
+
     # @return [TLS13::Message::$Object]
     def recv_message
       return @message_queue.shift unless @message_queue.empty?
@@ -64,6 +74,8 @@ module TLS13
         next if buffer.length < record_len + 5
 
         @binary_buffer += buffer[record_len + 5..]
+        next if buffer.slice(0, record_len + 5) == "\x14\x03\x03\x00\x01\x01"
+
         return Message::Record.deserialize(buffer.slice(0, record_len + 5),
                                            @read_cryptographer)
       end
