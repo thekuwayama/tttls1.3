@@ -89,8 +89,10 @@ RSpec.describe Record do
     end
 
     it 'should generate valid server parameters' do
-      server_parameters \
-      = deserialize_server_parameters(record.messages.first.fragment, hash_len)
+      server_parameters = Message.deserialize_server_parameters(
+        record.messages.first.fragment,
+        hash_len
+      )
 
       expect(server_parameters[0].msg_type)
         .to eq HandshakeType::ENCRYPTED_EXTENSIONS

@@ -21,9 +21,9 @@ class SimpleStream
     @buffer += binary
   end
 
-  def read
-    res = @buffer
-    @buffer = ''
+  def read(len = @buffer.length)
+    res = @buffer.slice(0, len)
+    @buffer = @buffer[len..]
     res
   end
 end

@@ -24,7 +24,6 @@ module TLS13
       @read_cryptographer = Cryptograph::Passer.new
       @write_cryptographer = Cryptograph::Passer.new
       @transcript = {}
-      @binary_buffer = ''
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
       @signature_scheme = nil # TLS13::Message::SignatureScheme
@@ -64,21 +63,13 @@ module TLS13
 
     # @return [TLS13::Message::Record]
     def recv_record
-      buffer = @binary_buffer
-      @binary_buffer = ''
-      loop do
-        buffer += @socket.read
-        next if buffer.length < 5
+      buffer = @socket.read(5)
+      record_len = bin2i(buffer.slice(3, 2))
+      buffer += @socket.read(record_len)
+      return Message::Record.deserialize(buffer, @read_cryptographer) \
+        unless buffer == "\x14\x03\x03\x00\x01\x01"
 
-        record_len = bin2i(buffer.slice(3, 2))
-        next if buffer.length < record_len + 5
-
-        @binary_buffer += buffer[record_len + 5..]
-        next if buffer.slice(0, record_len + 5) == "\x14\x03\x03\x00\x01\x01"
-
-        return Message::Record.deserialize(buffer.slice(0, record_len + 5),
-                                           @read_cryptographer)
-      end
+      recv_record
     end
 
     # @param range [Range]

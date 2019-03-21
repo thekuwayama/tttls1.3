@@ -31,10 +31,10 @@ module TLS13
           send_client_hello
           state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
-          recv_server_hello # TODO: Recv HelloRetryRequest
+          sh = recv_server_hello # TODO: Recv HelloRetryRequest
           @cipher_suite = sh.cipher_suite
-          @key_schedule = KeySchedule(shared_secret: gen_shared_secret,
-                                      cipher_suite: @cipher_suite)
+          @key_schedule = KeySchedule.new(shared_secret: gen_shared_secret,
+                                          cipher_suite: @cipher_suite)
           messages = concat_messages(CH..SH)
           @read_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
@@ -140,14 +140,13 @@ module TLS13
 
     # @return [String]
     def gen_shared_secret
-      sh = @transcript[SH]
-      server_key_exchange \
-      = sh.extensions[Message::ExtensionType::KEY_SHARE].first.key_exchange
+      key_share = @transcript[SH].extensions[Message::ExtensionType::KEY_SHARE]
+      key_exchange = key_share.key_share_entry.first.key_exchange
       # only P-256
       priv_key = @priv_keys[Message::Extension::NamedGroup::SECP256R1]
       pub_key = OpenSSL::PKey::EC::Point.new(
         OpenSSL::PKey::EC::Group.new('prime256v1'),
-        OpenSSL::BN.new(server_key_exchange)
+        OpenSSL::BN.new(key_exchange, 2)
       )
       priv_key.dh_compute_key(pub_key)
     end
@@ -180,8 +179,10 @@ module TLS13
         unless sp.type == Message::ContentType::APPLICATION_DATA
 
       hash_len = CipherSuite.hash_len(@cipher_suite)
-      messages = deserialize_server_parameters(sp.messages.first.fragment,
-                                               hash_len)
+      messages = Message.deserialize_server_parameters(
+        sp.messages.first.fragment,
+        hash_len
+      )
       @message_queue += messages[1..]
       @transcript[EE] = messages.first
     end

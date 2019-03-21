@@ -32,8 +32,8 @@ module TLS13
       # @return [String]
       def additional_data(plaintext_len)
         ciphertext_len = plaintext_len + 16 # length of auth_tag is 16
-        ContentType::APPLICATION_DATA \
-        + ProtocolVersion::TLS_1_2 \
+        Message::ContentType::APPLICATION_DATA \
+        + Message::ProtocolVersion::TLS_1_2 \
         + i2uint16(ciphertext_len)
       end
 
