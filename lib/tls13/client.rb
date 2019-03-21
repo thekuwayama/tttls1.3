@@ -40,13 +40,13 @@ module TLS13
             cipher_suite: @cipher_suite,
             key: @key_schedule.server_handshake_write_key(messages),
             nonce: @key_schedule.server_handshake_write_iv(messages),
-            type: ContentType::HANDSHAKE
+            type: Message::ContentType::HANDSHAKE
           )
           @write_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
             key: @key_schedule.client_handshake_write_key(messages),
             nonce: @key_schedule.client_handshake_write_iv(messages),
-            type: ContentType::HANDSHAKE
+            type: Message::ContentType::HANDSHAKE
           )
           state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
@@ -80,6 +80,19 @@ module TLS13
           send_finished
           state = ClientState::CONNECTED
         when ClientState::CONNECTED
+          messages = concat_messages(CH..SF)
+          @read_cryptographer = Cryptograph::Aead.new(
+            cipher_suite: @cipher_suite,
+            key: @key_schedule.server_application_write_key(messages),
+            nonce: @key_schedule.server_application_write_iv(messages),
+            type: Message::ContentType::APPLICATION_DATA
+          )
+          @write_cryptographer = Cryptograph::Aead.new(
+            cipher_suite: @cipher_suite,
+            key: @key_schedule.client_application_write_key(messages),
+            nonce: @key_schedule.client_application_write_iv(messages),
+            type: Message::ContentType::APPLICATION_DATA
+          )
           break
         end
       end
