@@ -2,7 +2,8 @@
 
 require_relative 'helper'
 
-socket = TCPSocket.new('localhost', 443)
+hostname, port = (ARGV[0] || 'localhost:443').split(':')
+socket = TCPSocket.new(hostname, port)
 client = TLS13::Client.new(socket)
-client.hostname = 'test-server'
+client.hostname = hostname
 client.connect

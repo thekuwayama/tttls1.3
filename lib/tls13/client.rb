@@ -97,24 +97,25 @@ module TLS13
     # @return [TLS13::Message::Extensions]
     # rubocop: disable Metrics/MethodLength
     def gen_extensions
+      exs = []
       # supported_versions: TLS_1_3
-      supported_versions = Message::Extension::SupportedVersions.new(
+      exs << Message::Extension::SupportedVersions.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         versions: [Message::ProtocolVersion::TLS_1_3]
       )
       # signature_algorithms
-      signature_algorithms = Message::Extension::SignatureAlgorithms.new(
+      exs << Message::Extension::SignatureAlgorithms.new(
         [Message::SignatureScheme::RSA_PSS_RSAE_SHA256]
       )
       # supported_groups: only P-256
-      supported_groups = Message::Extension::SupportedGroups.new(
+      exs << Message::Extension::SupportedGroups.new(
         [Message::Extension::NamedGroup::SECP256R1]
       )
       # key_share: only P-256
       ec = OpenSSL::PKey::EC.new('prime256v1')
       ec.generate_key!
       @priv_keys[Message::Extension::NamedGroup::SECP256R1] = ec
-      key_share = Message::Extension::KeyShare.new(
+      exs << Message::Extension::KeyShare.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         key_share_entry: [
           Message::Extension::KeyShareEntry.new(
@@ -124,15 +125,10 @@ module TLS13
         ]
       )
       # server_name
-      server_name = Message::Extension::ServerName.new(
-        @hostname
-      )
+      exs << Message::Extension::ServerName.new(@hostname) \
+        unless @hostname.nil? || @hostname.empty?
 
-      Message::Extensions.new([supported_versions,
-                               signature_algorithms,
-                               supported_groups,
-                               key_share,
-                               server_name])
+      Message::Extensions.new(exs)
     end
     # rubocop: enable Metrics/MethodLength
 
