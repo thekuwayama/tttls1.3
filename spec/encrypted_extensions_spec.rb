@@ -6,7 +6,7 @@ require 'spec_helper'
 RSpec.describe EncryptedExtensions do
   context 'valid encrypted_extensions' do
     let(:server_name) do
-      ServerName.new('example.com')
+      ServerName.new('')
     end
 
     let(:supported_groups) do
