@@ -31,15 +31,8 @@ module TLS13
           send_client_hello
           state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
-          sh = recv_server_hello # TODO: Recv HelloRetryRequest
-          # only P-256
-          priv_key = @priv_keys[Message::Extension::NamedGroup::SECP256R1]
-          pub_key = OpenSSL::PKey::EC::Point.new(
-            OpenSSL::PKey::EC::Group.new('prime256v1'),
-            OpenSSL::BN.new(sh.extensions[Message::ExtensionType::KEY_SHARE]
-                              .first.key_exchange)
-          )
-          shared_secret = priv_key.dh_compute_key(pub_key)
+          recv_server_hello # TODO: Recv HelloRetryRequest
+          shared_secret = gen_shared_secret
           @cipher_suite = sh.cipher_suite
           @key_schedule = KeySchedule(shared_secret: shared_secret,
                                       cipher_suite: @cipher_suite)
@@ -131,6 +124,20 @@ module TLS13
       Message::Extensions.new(exs)
     end
     # rubocop: enable Metrics/MethodLength
+
+    # @return [String]
+    def gen_shared_secret
+      sh = @transcript[SH]
+      server_key_exchange \
+      = sh.extensions[Message::ExtensionType::KEY_SHARE].first.key_exchange
+      # only P-256
+      priv_key = @priv_keys[Message::Extension::NamedGroup::SECP256R1]
+      pub_key = OpenSSL::PKey::EC::Point.new(
+        OpenSSL::PKey::EC::Group.new('prime256v1'),
+        OpenSSL::BN.new(server_key_exchange)
+      )
+      priv_key.dh_compute_key(pub_key)
+    end
 
     def send_client_hello
       exs = gen_extensions
