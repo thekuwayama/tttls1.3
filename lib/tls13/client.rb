@@ -32,9 +32,8 @@ module TLS13
           state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           recv_server_hello # TODO: Recv HelloRetryRequest
-          shared_secret = gen_shared_secret
           @cipher_suite = sh.cipher_suite
-          @key_schedule = KeySchedule(shared_secret: shared_secret,
+          @key_schedule = KeySchedule(shared_secret: gen_shared_secret,
                                       cipher_suite: @cipher_suite)
           messages = concat_messages(CH..SH)
           @read_cryptographer = Cryptograph::Aead.new(
@@ -139,6 +138,7 @@ module TLS13
       priv_key.dh_compute_key(pub_key)
     end
 
+    # @return [TLS13::Message::ClientHello]
     def send_client_hello
       exs = gen_extensions
       ch = Message::ClientHello.new(extensions: exs)
@@ -146,6 +146,9 @@ module TLS13
       @transcript[CH] = ch
     end
 
+    # @raise [RuntimeError]
+    #
+    # @return [TLS13::Message::ServerHello]
     def recv_server_hello
       sh = recv_message
       raise 'unexpected message' \
@@ -154,6 +157,9 @@ module TLS13
       @transcript[SH] = sh
     end
 
+    # @raise [RuntimeError]
+    #
+    # @return [TLS13::Message::EncryptedExtensions]
     def recv_encrypted_extensions
       sp = recv_record
       raise 'unexpected ContentType' \
@@ -166,6 +172,9 @@ module TLS13
       @transcript[EE] = messages.first
     end
 
+    # @raise [RuntimeError]
+    #
+    # @return [TLS13::Message::Certificate]
     def recv_certificate
       ct = recv_message
       raise 'unexpected message' \
@@ -174,6 +183,9 @@ module TLS13
       @transcript[CT] = ct
     end
 
+    # @raise [RuntimeError]
+    #
+    # @return [TLS13::Message::CertificateVerify]
     def recv_certificate_verify
       cv = recv_message
       raise 'unexpected message' \
@@ -182,6 +194,9 @@ module TLS13
       @transcript[CV] = cv
     end
 
+    # @raise [RuntimeError]
+    #
+    # @return [TLS13::Message::Finished]
     def recv_finished
       sf = recv_message
       raise 'unexpected message' \
@@ -190,6 +205,7 @@ module TLS13
       @transcript[SF] = sf
     end
 
+    # @return [TLS13::Message::Finished]
     def send_finished
       cf = Message::Finished.new(sign_finished)
       send_messages(Message::ContentType::HANDSHAKE, [cf])
