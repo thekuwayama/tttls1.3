@@ -53,23 +53,41 @@ module TLS13
     end
 
     # @return [TLS13::Message::$Object]
+    # rubocop: disable Metrics/MethodLength
     def recv_message
       return @message_queue.shift unless @message_queue.empty?
 
-      messages = recv_record.messages
-      @message_queue += messages[1..]
-      messages.first
+      loop do
+        messages = []
+        record = recv_record
+        case record.type
+        when Message::ContentType::HANDSHAKE
+          messages = record.messages
+        when Message::ContentType::APPLICATION_DATA
+          hash_len = CipherSuite.hash_len(@cipher_suite)
+          messages = Message.deserialize_server_parameters(
+            record.messages.first.fragment,
+            hash_len
+          )
+        when Message::ContentType::CCS
+          next # skip
+        when Message::ContentType::ALERT
+          next # TODO
+        else
+          raise 'unexpected ContentType'
+        end
+        @message_queue += messages[1..]
+        return messages.first
+      end
     end
+    # rubocop: enable Metrics/MethodLength
 
     # @return [TLS13::Message::Record]
     def recv_record
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
-      return Message::Record.deserialize(buffer, @read_cryptographer) \
-        unless buffer == "\x14\x03\x03\x00\x01\x01"
-
-      recv_record
+      Message::Record.deserialize(buffer, @read_cryptographer)
     end
 
     # @param range [Range]

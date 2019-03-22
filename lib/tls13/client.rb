@@ -174,17 +174,11 @@ module TLS13
     #
     # @return [TLS13::Message::EncryptedExtensions]
     def recv_encrypted_extensions
-      sp = recv_record
-      raise 'unexpected ContentType' \
-        unless sp.type == Message::ContentType::APPLICATION_DATA
+      ee = recv_message
+      raise 'unexpected message' \
+        unless ee.msg_type == Message::HandshakeType::ENCRYPTED_EXTENSIONS
 
-      hash_len = CipherSuite.hash_len(@cipher_suite)
-      messages = Message.deserialize_server_parameters(
-        sp.messages.first.fragment,
-        hash_len
-      )
-      @message_queue += messages[1..]
-      @transcript[EE] = messages.first
+      @transcript[EE] = ee
     end
 
     # @raise [RuntimeError]
