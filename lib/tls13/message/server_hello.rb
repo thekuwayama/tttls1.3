@@ -57,7 +57,6 @@ module TLS13
       # @raise [RuntimeError]
       #
       # @return [TLS13::Message::ServerHello]
-      # rubocop: disable Metrics/MethodLength
       def self.deserialize(binary)
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::SERVER_HELLO
@@ -88,7 +87,6 @@ module TLS13
                         cipher_suite: cipher_suite,
                         extensions: extensions)
       end
-      # rubocop: enable Metrics/MethodLength
     end
   end
 end

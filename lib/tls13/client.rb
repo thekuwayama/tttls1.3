@@ -101,7 +101,6 @@ module TLS13
     # rubocop: enable all
 
     # @return [TLS13::Message::Extensions]
-    # rubocop: disable Metrics/MethodLength
     def gen_extensions
       exs = []
       # supported_versions: TLS_1_3
@@ -136,7 +135,6 @@ module TLS13
 
       Message::Extensions.new(exs)
     end
-    # rubocop: enable Metrics/MethodLength
 
     # @return [String]
     def gen_shared_secret

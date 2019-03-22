@@ -28,7 +28,7 @@ module TLS13
           # @param group [TLS13::Message::Extension::NamedGroup]
           #
           # @return [Integer]
-          # rubocop: disable Metrics/CyclomaticComplexity, Metrics/MethodLength
+          # rubocop: disable Metrics/CyclomaticComplexity
           def key_exchange_len(group)
             case group
             when SECP256R1
@@ -53,7 +53,7 @@ module TLS13
               raise 'unsupported NamedGroup'
             end
           end
-          # rubocop: enable Metrics/CyclomaticComplexity, Metrics/MethodLength
+          # rubocop: enable Metrics/CyclomaticComplexity
         end
       end
 

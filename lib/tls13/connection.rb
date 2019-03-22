@@ -53,7 +53,6 @@ module TLS13
     end
 
     # @return [TLS13::Message::$Object]
-    # rubocop: disable Metrics/MethodLength
     def recv_message
       return @message_queue.shift unless @message_queue.empty?
 
@@ -80,7 +79,6 @@ module TLS13
         return messages.first
       end
     end
-    # rubocop: enable Metrics/MethodLength
 
     # @return [TLS13::Message::Record]
     def recv_record

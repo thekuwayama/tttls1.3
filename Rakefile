@@ -129,4 +129,4 @@ end
 
 RSpec::Core::RakeTask.new(spec: :gen_certs)
 
-task default: [:rubocop, :spec]
+task default: %i[rubocop spec]

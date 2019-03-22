@@ -90,7 +90,7 @@ module TLS13
       # @param msg_type [TLS13::Message::HandshakeType]
       #
       # @return [TLS13::Message::Extension::$Object, nil]
-      # rubocop: disable Metrics/CyclomaticComplexity, Metrics/MethodLength
+      # rubocop: disable Metrics/CyclomaticComplexity
       def self.deserialize_extension(binary, extension_type, msg_type)
         # TODO
         case extension_type
@@ -116,7 +116,7 @@ module TLS13
           Extension::UknownExtension.deserialize(binary, extension_type)
         end
       end
-      # rubocop: enable Metrics/CyclomaticComplexity, Metrics/MethodLength
+      # rubocop: enable Metrics/CyclomaticComplexity
     end
   end
 end
