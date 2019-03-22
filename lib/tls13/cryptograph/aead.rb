@@ -7,10 +7,11 @@ module TLS13
       # @cipher_suite [TLS13::CipherSuite]
       # @param key [String]
       # @param nonce [String]
-      # @param type [TLS13::Message::ContentType] TLSInnerPlaintext.type
+      # @param inner_type [TLS13::Message::ContentType] TLSInnerPlaintext.type
       # @param length_of_padding [Integer]
-      def initialize(cipher_suite:, key:, nonce:, type:, length_of_padding: 0)
-        @type = type
+      def initialize(cipher_suite:, key:, nonce:, inner_type:,
+                     length_of_padding: 0)
+        @inner_type = inner_type
         @length_of_padding = length_of_padding
         case cipher_suite
         when CipherSuite::TLS_AES_128_GCM_SHA256
@@ -45,7 +46,7 @@ module TLS13
       def encrypt(content)
         reset_cipher
         cipher = @cipher.encrypt
-        plaintext = content + @type + "\x00" * @length_of_padding
+        plaintext = content + @inner_type + "\x00" * @length_of_padding
         cipher.auth_data = additional_data(plaintext.length)
 
         encrypted_data = cipher.update(plaintext) + cipher.final

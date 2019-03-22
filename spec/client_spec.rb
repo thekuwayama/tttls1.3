@@ -54,7 +54,7 @@ RSpec.describe Client do
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        type: ContentType::HANDSHAKE
+        inner_type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@read_cryptographer, cipher)
       client
@@ -78,7 +78,7 @@ RSpec.describe Client do
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
     end
 
-    it 'should receive CertificateVerify' do
+    it 'should receive Finished' do
       client.recv_encrypted_extensions # to skip
       client.recv_certificate          # to skip
       client.recv_certificate_verify   # to skip
@@ -113,16 +113,10 @@ RSpec.describe Client do
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         nonce: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        type: ContentType::HANDSHAKE
+        inner_type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@write_cryptographer, cipher)
       client.send_finished
-      cipher = Cryptograph::Aead.new(
-        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-        key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
-        nonce: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        type: ContentType::HANDSHAKE
-      )
       Record.deserialize(mock_socket.read, cipher)
     end
 

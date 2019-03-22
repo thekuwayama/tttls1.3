@@ -72,14 +72,6 @@ module TLS13
         @legacy_record_version = legacy_record_version
         @messages = messages || []
         @cryptographer = cryptographer
-
-        @type = ContentType::APPLICATION_DATA \
-          unless @cryptographer.is_a?(Cryptograph::Passer)
-        raise 'invalid ContentType' if @type.nil?
-
-        @legacy_record_version = ProtocolVersion::TLS_1_2 \
-          unless @cryptographer.is_a?(Cryptograph::Passer)
-
         @fragment = @cryptographer.encrypt(@messages.map(&:serialize).join)
       end
 
@@ -123,7 +115,9 @@ module TLS13
         legacy_record_version = binary.slice(1, 2)
         fragment_len = bin2i(binary.slice(3, 2))
         fragment = binary.slice(5, fragment_len)
-        plaintext = cryptographer.decrypt(fragment, binary.slice(0, 5))
+        plaintext = fragment
+        plaintext = cryptographer.decrypt(fragment, binary.slice(0, 5)) \
+          if type == ContentType::APPLICATION_DATA
         messages = deserialize_fragment(plaintext, type, hash_len)
         Record.new(type: type,
                    legacy_record_version: legacy_record_version,

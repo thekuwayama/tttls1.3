@@ -40,13 +40,13 @@ module TLS13
             cipher_suite: @cipher_suite,
             key: @key_schedule.server_handshake_write_key(messages),
             nonce: @key_schedule.server_handshake_write_iv(messages),
-            type: Message::ContentType::HANDSHAKE
+            inner_type: Message::ContentType::HANDSHAKE
           )
           @write_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
             key: @key_schedule.client_handshake_write_key(messages),
             nonce: @key_schedule.client_handshake_write_iv(messages),
-            type: Message::ContentType::HANDSHAKE
+            inner_type: Message::ContentType::HANDSHAKE
           )
           state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
@@ -86,13 +86,13 @@ module TLS13
             cipher_suite: @cipher_suite,
             key: @key_schedule.server_application_write_key(messages),
             nonce: @key_schedule.server_application_write_iv(messages),
-            type: Message::ContentType::APPLICATION_DATA
+            inner_type: Message::ContentType::APPLICATION_DATA
           )
           @write_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
             key: @key_schedule.client_application_write_key(messages),
             nonce: @key_schedule.client_application_write_iv(messages),
-            type: Message::ContentType::APPLICATION_DATA
+            inner_type: Message::ContentType::APPLICATION_DATA
           )
           break
         end
@@ -217,7 +217,7 @@ module TLS13
     # @return [TLS13::Message::Finished]
     def send_finished
       cf = Message::Finished.new(sign_finished)
-      send_messages(Message::ContentType::HANDSHAKE, [cf])
+      send_messages(Message::ContentType::APPLICATION_DATA, [cf])
       @transcript[CF] = cf
     end
 
