@@ -26,7 +26,6 @@ module TLS13
       @transcript = {}
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
-      @signature_scheme = nil # TLS13::Message::SignatureScheme
     end
 
     # @param type [Message::ContentType]
@@ -44,10 +43,10 @@ module TLS13
 
     def send_ccs
       ccs_record = Message::Record.new(
-        type: ContentType::CCS,
-        legacy_record_version: ProtocolVersion::TLS_1_2,
-        messages: [ChangeCipherSpec.new],
-        cryptographer: Passer.new
+        type: Message::ContentType::CCS,
+        legacy_record_version: Message::ProtocolVersion::TLS_1_2,
+        messages: [Message::ChangeCipherSpec.new],
+        cryptographer: Cryptograph::Passer.new
       )
       send_record(ccs_record)
     end
@@ -122,33 +121,25 @@ module TLS13
       end
     end
 
-    # @param signature_scheme [TLS13::Message::SignatureScheme]
+    # @param digest [String] name of digest algorithm
     # @param finished_key [String]
     # @param message_range [Range]
     #
-    # @raise [RuntimeError]
-    #
     # @return [String]
-    def do_sign_finished(signature_scheme:, finished_key:, message_range:)
+    def do_sign_finished(digest:, finished_key:, message_range:)
       messages = concat_messages(message_range)
-      case signature_scheme
-      when Message::SignatureScheme::RSA_PSS_RSAE_SHA256
-        hash = OpenSSL::Digest::SHA256.digest(messages)
-        OpenSSL::HMAC.digest('SHA256', finished_key, hash)
-      else # TODO: other SignatureScheme
-        raise 'unexpected SignatureScheme'
-      end
+      hash = OpenSSL::Digest.digest(digest, messages)
+      OpenSSL::HMAC.digest(digest, finished_key, hash)
     end
 
-    # @param signature_scheme [TLS13::Message::SignatureScheme]
+    # @param digest [String] name of digest algorithm
     # @param finished_key [String]
     # @param message_range [Range]
     # @param signature [String]
     #
     # @return [Boolean]
-    def do_verify_finished(signature_scheme:, finished_key:, message_range:,
-                           signature:)
-      do_sign_finished(signature_scheme: signature_scheme,
+    def do_verify_finished(digest:, finished_key:, message_range:, signature:)
+      do_sign_finished(digest: digest,
                        finished_key: finished_key,
                        message_range: message_range) == signature
     end

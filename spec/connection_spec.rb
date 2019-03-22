@@ -58,7 +58,7 @@ RSpec.describe Connection do
 
     it 'should verify server Finished.verify_data' do
       expect(connection.do_verify_finished(
-               signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
+               digest: 'SHA256',
                finished_key: TESTBINARY_SERVER_FINISHED_KEY,
                message_range: CH..CV,
                signature: server_finished.verify_data
@@ -91,7 +91,7 @@ RSpec.describe Connection do
 
     it 'should sign client Finished.verify_data' do
       expect(connection.do_sign_finished(
-               signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
+               digest: 'SHA256',
                finished_key: TESTBINARY_CLIENT_FINISHED_KEY,
                message_range: CH..EOED
              )).to eq client_finished.verify_data

@@ -107,8 +107,8 @@ RSpec.describe Client do
       ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
                            cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
       client.instance_variable_set(:@key_schedule, ks)
-      client.instance_variable_set(:@signature_scheme,
-                                   SignatureScheme::RSA_PSS_RSAE_SHA256)
+      client.instance_variable_set(:@cipher_suite,
+                                   CipherSuite::TLS_AES_128_GCM_SHA256)
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
@@ -149,8 +149,8 @@ RSpec.describe Client do
       ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
                            cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256)
       client.instance_variable_set(:@key_schedule, ks)
-      client.instance_variable_set(:@signature_scheme,
-                                   SignatureScheme::RSA_PSS_RSAE_SHA256)
+      client.instance_variable_set(:@cipher_suite,
+                                   CipherSuite::TLS_AES_128_GCM_SHA256)
       client
     end
 

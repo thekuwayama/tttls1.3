@@ -241,19 +241,21 @@ module TLS13
 
     # @return [String]
     def sign_finished
+      digest = CipherSuite.digest(@cipher_suite)
       ch_sh = concat_messages(CH..SH)
       finished_key = @key_schedule.client_finished_key(ch_sh)
-      do_sign_finished(signature_scheme: @signature_scheme,
+      do_sign_finished(digest: digest,
                        finished_key: finished_key,
                        message_range: CH..EOED)
     end
 
     # @return [Boolean]
     def verify_finished
+      digest = CipherSuite.digest(@cipher_suite)
       ch_sh = concat_messages(CH..SH)
       finished_key = @key_schedule.server_finished_key(ch_sh)
       signature = @transcript[SF].verify_data
-      do_verify_finished(signature_scheme: @signature_scheme,
+      do_verify_finished(digest: digest,
                          finished_key: finished_key,
                          message_range: CH..CV,
                          signature: signature)
