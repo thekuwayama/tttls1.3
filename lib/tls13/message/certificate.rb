@@ -51,11 +51,13 @@ module TLS13
         crc_len = bin2i(binary.slice(4, 1))
         certificate_request_context = binary.slice(5, crc_len)
         itr = 5 + crc_len
-        cl_tail = itr + bin2i(binary.slice(itr, 3)) + 3
+        cl_len = bin2i(binary.slice(itr, 3))
         itr += 3
-        certificate_list \
-        = deserialize_certificate_list(binary.slice(itr, cl_tail))
-        raise 'malformed binary' unless msg_len + 4 == binary.length
+        cl_bin = binary.slice(itr, cl_len)
+        itr += cl_len
+        certificate_list = deserialize_certificate_list(cl_bin)
+        raise 'malformed binary' unless msg_len + 4 == binary.length &&
+                                        itr == binary.length
 
         Certificate.new(
           certificate_request_context: certificate_request_context,
