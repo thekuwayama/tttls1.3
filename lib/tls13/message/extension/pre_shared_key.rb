@@ -108,19 +108,18 @@ module TLS13
 
         # @return [String]
         def serialize
-          serialized_identities = i2uint16(@identities.map(&:length).sum)
+          identities_bin = i2uint16(@identities.map(&:length).sum)
           @identities.each do |psk_identity|
-            serialized_identities += psk_identity.serialize
+            identities_bin += psk_identity.serialize
           end
 
-          serialized_binders \
-          = i2uint16(@binders.length + @binders.map(&:length).sum)
+          binders_bin = i2uint16(@binders.length + @binders.map(&:length).sum)
           @binders.each do |psk_binder_entry|
-            serialized_binders += i2uint8(psk_binder_entry.length)
-            serialized_binders += psk_binder_entry
+            binders_bin += i2uint8(psk_binder_entry.length)
+            binders_bin += psk_binder_entry
           end
 
-          serialized_identities + serialized_binders
+          identities_bin + binders_bin
         end
 
         # @param binary [String]

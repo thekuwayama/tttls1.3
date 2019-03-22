@@ -74,8 +74,8 @@ module TLS13
           itr += 2
           ex_len = bin2i(binary.slice(itr, 2))
           itr += 2
-          serialized_extension = binary.slice(itr, ex_len)
-          extensions << deserialize_extension(serialized_extension,
+          ex_bin = binary.slice(itr, ex_len)
+          extensions << deserialize_extension(ex_bin,
                                               extension_type,
                                               msg_type)
           itr += ex_len

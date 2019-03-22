@@ -71,8 +71,8 @@ module TLS13
         itr = 39 + lsid_len
         cs_len = bin2i(binary.slice(itr, 2))
         itr += 2
-        serialized_cipher_suites = binary.slice(itr, cs_len)
-        cipher_suites = CipherSuites.deserialize(serialized_cipher_suites)
+        cs_bin = binary.slice(itr, cs_len)
+        cipher_suites = CipherSuites.deserialize(cs_bin)
         itr += cs_len
         raise 'legacy_compression_methods is not 0' unless \
           binary.slice(itr, 2) == "\x01\x00"
@@ -80,8 +80,8 @@ module TLS13
         itr += 2
         exs_len = bin2i(binary.slice(itr, 2))
         itr += 2
-        serialized_extensions = binary.slice(itr, exs_len)
-        extensions = Extensions.deserialize(serialized_extensions,
+        exs_bin = binary.slice(itr, exs_len)
+        extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::CLIENT_HELLO)
         itr += exs_len
         raise 'malformed binary' unless itr == msg_len + 4

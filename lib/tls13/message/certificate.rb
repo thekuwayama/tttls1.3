@@ -72,13 +72,13 @@ module TLS13
         while itr < binary.length
           cd_len = bin2i(binary.slice(itr, 3))
           itr += 3
-          serialized_cert_data = binary.slice(itr, cd_len)
-          cert_data = OpenSSL::X509::Certificate.new(serialized_cert_data)
+          cd_bin = binary.slice(itr, cd_len)
+          cert_data = OpenSSL::X509::Certificate.new(cd_bin)
           itr += cd_len
           exs_len = bin2i(binary.slice(itr, 2))
           itr += 2
-          serialized_extension = binary.slice(itr, exs_len)
-          extensions = Extensions.deserialize(serialized_extension,
+          exs_bin = binary.slice(itr, exs_len)
+          extensions = Extensions.deserialize(exs_bin,
                                               HandshakeType::CERTIFICATE)
           itr += exs_len
           certificate_list \

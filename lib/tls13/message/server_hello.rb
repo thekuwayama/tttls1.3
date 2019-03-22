@@ -76,8 +76,8 @@ module TLS13
         itr += 1
         exs_len = bin2i(binary.slice(itr, 2))
         itr += 2
-        serialized_extensions = binary.slice(itr, exs_len)
-        extensions = Extensions.deserialize(serialized_extensions,
+        exs_bin = binary.slice(itr, exs_len)
+        extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::SERVER_HELLO)
         itr += exs_len
         raise 'malformed binary' unless itr == msg_len + 4
