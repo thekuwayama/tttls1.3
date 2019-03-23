@@ -143,5 +143,23 @@ module TLS13
                        finished_key: finished_key,
                        message_range: message_range) == signature
     end
+
+    # @param key_exchange [String]
+    # @param priv_key [OpenSSL::PKey::$Object]
+    # @param group [TLS13::Message::ExtensionType::NamedGroup]
+    #
+    # @return [String]
+    def gen_shared_secret(key_exchange, priv_key, group)
+      case group
+      when Message::Extension::NamedGroup::SECP256R1
+        pub_key = OpenSSL::PKey::EC::Point.new(
+          OpenSSL::PKey::EC::Group.new('prime256v1'),
+          OpenSSL::BN.new(key_exchange, 2)
+        )
+        priv_key.dh_compute_key(pub_key)
+      else # TODO: other NamedGroup
+        raise 'unexpected NamedGroup'
+      end
+    end
   end
 end

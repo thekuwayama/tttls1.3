@@ -86,9 +86,9 @@ module TLS13
       #
       # @return [Integer]
       def scan_zeros(clear)
-        i = 1
+        i = 0
         i += 1 while clear[-i] == "\x00"
-        i - 1
+        i
       end
     end
   end

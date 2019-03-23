@@ -33,7 +33,12 @@ module TLS13
         when ClientState::WAIT_SH
           sh = recv_server_hello # TODO: Recv HelloRetryRequest
           @cipher_suite = sh.cipher_suite
-          @key_schedule = KeySchedule.new(shared_secret: gen_shared_secret,
+          kse = sh.extensions[Message::ExtensionType::KEY_SHARE].key_share_entry.first
+          key_exchange = kse.key_exchange
+          group = kse.group
+          priv_key = @priv_keys[group]
+          shared_key = gen_shared_secret(key_exchange, priv_key, group)
+          @key_schedule = KeySchedule.new(shared_secret: shared_key,
                                           cipher_suite: @cipher_suite)
           messages = concat_messages(CH..SH)
           @read_cryptographer = Cryptograph::Aead.new(
@@ -134,19 +139,6 @@ module TLS13
         unless @hostname.nil? || @hostname.empty?
 
       Message::Extensions.new(exs)
-    end
-
-    # @return [String]
-    def gen_shared_secret
-      key_share = @transcript[SH].extensions[Message::ExtensionType::KEY_SHARE]
-      key_exchange = key_share.key_share_entry.first.key_exchange
-      # only P-256
-      priv_key = @priv_keys[Message::Extension::NamedGroup::SECP256R1]
-      pub_key = OpenSSL::PKey::EC::Point.new(
-        OpenSSL::PKey::EC::Group.new('prime256v1'),
-        OpenSSL::BN.new(key_exchange, 2)
-      )
-      priv_key.dh_compute_key(pub_key)
     end
 
     # @return [TLS13::Message::ClientHello]
