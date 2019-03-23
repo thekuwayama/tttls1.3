@@ -72,11 +72,3 @@ end
 def uint64_length_prefix(opaque)
   i2uint64(opaque.length) + opaque
 end
-
-def xor(lstr, rstr, len)
-  l = lstr.unpack('C*')
-  l.unshift(0) while l.length < len
-  r = rstr.unpack('C*')
-  r.unshift(0) while r.length < len
-  l.zip(r).map { |x, y| (x ^ y).chr }.join
-end

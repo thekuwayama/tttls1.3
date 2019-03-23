@@ -57,7 +57,6 @@ module TLS13
         cipher = @cipher.encrypt
         plaintext = content + @inner_type + "\x00" * @length_of_padding
         cipher.auth_data = additional_data(plaintext.length)
-
         encrypted_data = cipher.update(plaintext) + cipher.final
         encrypted_data + cipher.auth_tag
       end
@@ -77,7 +76,6 @@ module TLS13
         auth_tag = encrypted_record[-16..-1]
         decipher.auth_tag = auth_tag
         decipher.auth_data = auth_data # record header of TLSCiphertext
-
         clear = decipher.update(encrypted_record[0...-16]) # auth_tag
         decipher.final
         zeros_len = scan_zeros(clear)
@@ -89,7 +87,7 @@ module TLS13
         @cipher.reset
         @cipher.key = @write_key
         iv_len = CipherSuite.iv_len(@cipher_suite)
-        @cipher.iv = xor(@write_iv, @sequence_number, iv_len)
+        @cipher.iv = @sequence_number.xor(@write_iv, iv_len)
       end
 
       # @param [String]

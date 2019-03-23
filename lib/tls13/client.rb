@@ -40,21 +40,6 @@ module TLS13
           shared_key = gen_shared_secret(key_exchange, priv_key, group)
           @key_schedule = KeySchedule.new(shared_secret: shared_key,
                                           cipher_suite: @cipher_suite)
-          messages = concat_messages(CH..SH)
-          @read_cryptographer = Cryptograph::Aead.new(
-            cipher_suite: @cipher_suite,
-            write_key: @key_schedule.server_handshake_write_key(messages),
-            write_iv: @key_schedule.server_handshake_write_iv(messages),
-            sequence_number: @read_seq_number,
-            inner_type: Message::ContentType::HANDSHAKE
-          )
-          @write_cryptographer = Cryptograph::Aead.new(
-            cipher_suite: @cipher_suite,
-            write_key: @key_schedule.client_handshake_write_key(messages),
-            write_iv: @key_schedule.client_handshake_write_iv(messages),
-            sequence_number: @write_seq_number,
-            inner_type: Message::ContentType::HANDSHAKE
-          )
           state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           recv_encrypted_extensions

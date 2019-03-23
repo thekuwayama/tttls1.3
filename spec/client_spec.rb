@@ -50,14 +50,16 @@ RSpec.describe Client do
       client = Client.new(mock_socket)
       client.instance_variable_set(:@cipher_suite,
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
+      read_seq_number = SequenceNumber.new
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        sequence_number: i2uint64(0),
+        sequence_number: read_seq_number,
         inner_type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@read_cryptographer, cipher)
+      client.instance_variable_set(:@read_seq_number, read_seq_number)
       client
     end
 
@@ -110,16 +112,25 @@ RSpec.describe Client do
       client.instance_variable_set(:@key_schedule, ks)
       client.instance_variable_set(:@cipher_suite,
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
-      cipher = Cryptograph::Aead.new(
+      write_seq_number = SequenceNumber.new
+      write_cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        sequence_number: i2uint64(0),
+        sequence_number: write_seq_number,
         inner_type: ContentType::HANDSHAKE
       )
-      client.instance_variable_set(:@write_cryptographer, cipher)
+      client.instance_variable_set(:@write_cryptographer, write_cipher)
+      client.instance_variable_set(:@write_seq_number, write_seq_number)
       client.send_finished
-      Record.deserialize(mock_socket.read, cipher)
+      read_cipher = Cryptograph::Aead.new(
+        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
+        write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
+        sequence_number: SequenceNumber.new,
+        inner_type: ContentType::HANDSHAKE
+      )
+      Record.deserialize(mock_socket.read, read_cipher)
     end
 
     it 'should send Finished' do

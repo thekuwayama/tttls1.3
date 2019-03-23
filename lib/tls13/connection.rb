@@ -23,9 +23,9 @@ module TLS13
       @key_schedule = nil
       @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cryptographer = Cryptograph::Passer.new
-      @read_seq_number = i2uint64(0)
+      @read_seq_number = nil
       @write_cryptographer = Cryptograph::Passer.new
-      @write_seq_number = i2uint64(0)
+      @write_seq_number = nil
       @transcript = {}
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
@@ -41,7 +41,20 @@ module TLS13
 
     # @param record [TLS13::Message::Record]
     def send_record(record)
+      if @write_seq_number.nil? &&
+         record.type == Message::ContentType::APPLICATION_DATA
+        @write_seq_number = SequenceNumber.new
+        messages = concat_messages(CH..SH)
+        @write_cryptographer = Cryptograph::Aead.new(
+          cipher_suite: @cipher_suite,
+          write_key: @key_schedule.client_handshake_write_key(messages),
+          write_iv: @key_schedule.client_handshake_write_iv(messages),
+          sequence_number: @write_seq_number,
+          inner_type: Message::ContentType::HANDSHAKE
+        )
+      end
       @socket.write(record.serialize)
+      @write_seq_number&.succ
     end
 
     def send_ccs
@@ -87,7 +100,21 @@ module TLS13
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
-      Message::Record.deserialize(buffer, @read_cryptographer)
+      if @read_seq_number.nil? &&
+         buffer[0] == Message::ContentType::APPLICATION_DATA
+        @read_seq_number = SequenceNumber.new
+        messages = concat_messages(CH..SH)
+        @read_cryptographer = Cryptograph::Aead.new(
+          cipher_suite: @cipher_suite,
+          write_key: @key_schedule.server_handshake_write_key(messages),
+          write_iv: @key_schedule.server_handshake_write_iv(messages),
+          sequence_number: @read_seq_number,
+          inner_type: Message::ContentType::HANDSHAKE
+        )
+      end
+      record = Message::Record.deserialize(buffer, @read_cryptographer)
+      @read_seq_number&.succ
+      record
     end
 
     # @param range [Range]
