@@ -43,14 +43,16 @@ module TLS13
           messages = concat_messages(CH..SH)
           @read_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
-            key: @key_schedule.server_handshake_write_key(messages),
-            nonce: @key_schedule.server_handshake_write_iv(messages),
+            write_key: @key_schedule.server_handshake_write_key(messages),
+            write_iv: @key_schedule.server_handshake_write_iv(messages),
+            sequence_number: @read_seq_number,
             inner_type: Message::ContentType::HANDSHAKE
           )
           @write_cryptographer = Cryptograph::Aead.new(
             cipher_suite: @cipher_suite,
-            key: @key_schedule.client_handshake_write_key(messages),
-            nonce: @key_schedule.client_handshake_write_iv(messages),
+            write_key: @key_schedule.client_handshake_write_key(messages),
+            write_iv: @key_schedule.client_handshake_write_iv(messages),
+            sequence_number: @write_seq_number,
             inner_type: Message::ContentType::HANDSHAKE
           )
           state = ClientState::WAIT_EE
@@ -87,18 +89,18 @@ module TLS13
           state = ClientState::CONNECTED
         when ClientState::CONNECTED
           messages = concat_messages(CH..SF)
-          @read_cryptographer = Cryptograph::Aead.new(
-            cipher_suite: @cipher_suite,
-            key: @key_schedule.server_application_write_key(messages),
-            nonce: @key_schedule.server_application_write_iv(messages),
-            inner_type: Message::ContentType::APPLICATION_DATA
-          )
-          @write_cryptographer = Cryptograph::Aead.new(
-            cipher_suite: @cipher_suite,
-            key: @key_schedule.client_application_write_key(messages),
-            nonce: @key_schedule.client_application_write_iv(messages),
-            inner_type: Message::ContentType::APPLICATION_DATA
-          )
+          @read_cryptographer.write_key \
+          = @key_schedule.server_application_write_key(messages)
+          @read_cryptographer.write_iv \
+          = @key_schedule.server_application_write_iv(messages)
+          @read_cryptographer.inner_type \
+          = Message::ContentType::APPLICATION_DATA
+          @write_cryptographer.write_key \
+          = @key_schedule.client_application_write_key(messages)
+          @write_cryptographer.write_iv \
+          = @key_schedule.client_application_write_iv(messages)
+          @write_cryptographer.inner_type \
+          = Message::ContentType::APPLICATION_DATA
           break
         end
       end

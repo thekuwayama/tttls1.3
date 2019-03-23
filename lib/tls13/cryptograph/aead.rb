@@ -4,6 +4,10 @@
 module TLS13
   module Cryptograph
     class Aead
+      attr_accessor :write_key
+      attr_accessor :write_iv
+      attr_accessor :inner_type
+
       # @param cipher_suite [TLS13::CipherSuite]
       # @param write_key [String]
       # @param write_iv [String]

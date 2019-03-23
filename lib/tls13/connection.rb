@@ -16,13 +16,16 @@ module TLS13
   CCV  = 11
   CF   = 12
 
+  # rubocop: disable Metrics/ClassLength
   class Connection
     def initialize(socket)
       @socket = socket
       @key_schedule = nil
       @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cryptographer = Cryptograph::Passer.new
+      @read_seq_number = i2uint64(0)
       @write_cryptographer = Cryptograph::Passer.new
+      @write_seq_number = i2uint64(0)
       @transcript = {}
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
@@ -162,4 +165,5 @@ module TLS13
       end
     end
   end
+  # rubocop: enable Metrics/ClassLength
 end
