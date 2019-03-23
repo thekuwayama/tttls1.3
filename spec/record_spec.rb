@@ -76,8 +76,9 @@ RSpec.describe Record do
     let(:record) do
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-        key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
-        nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
+        write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
+        write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
+        sequence_number: i2uint64(0),
         inner_type: ContentType::HANDSHAKE
       )
       Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD, cipher)

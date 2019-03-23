@@ -52,8 +52,9 @@ RSpec.describe Client do
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-        key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
-        nonce: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
+        write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
+        write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
+        sequence_number: i2uint64(0),
         inner_type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@read_cryptographer, cipher)
@@ -111,8 +112,9 @@ RSpec.describe Client do
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-        key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
-        nonce: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
+        write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
+        write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
+        sequence_number: i2uint64(0),
         inner_type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@write_cryptographer, cipher)

@@ -4,15 +4,16 @@
 module TLS13
   module Cryptograph
     class Aead
-      # @cipher_suite [TLS13::CipherSuite]
-      # @param key [String]
-      # @param nonce [String]
+      # @param cipher_suite [TLS13::CipherSuite]
+      # @param write_key [String]
+      # @param write_iv [String]
+      # @param sequence_number [String] uint64
       # @param inner_type [TLS13::Message::ContentType] TLSInnerPlaintext.type
       # @param length_of_padding [Integer]
-      def initialize(cipher_suite:, key:, nonce:, inner_type:,
-                     length_of_padding: 0)
-        @inner_type = inner_type
-        @length_of_padding = length_of_padding
+      # rubocop: disable Metrics/ParameterLists
+      def initialize(cipher_suite:, write_key:, write_iv:,
+                     sequence_number:, inner_type:, length_of_padding: 0)
+        @cipher_suite = cipher_suite
         case cipher_suite
         when CipherSuite::TLS_AES_128_GCM_SHA256
           @cipher = OpenSSL::Cipher::AES128.new(:GCM)
@@ -26,9 +27,13 @@ module TLS13
           # CipherSuite::TLS_CHACHA20_POLY1305_SHA256
           raise 'unsupported CipherSuite'
         end
-        @key = key
-        @nonce = nonce
+        @write_key = write_key
+        @write_iv = write_iv
+        @sequence_number = sequence_number
+        @inner_type = inner_type
+        @length_of_padding = length_of_padding
       end
+      # rubocop: enable Metrics/ParameterLists
 
       # @return [String]
       def additional_data(plaintext_len)
@@ -78,8 +83,9 @@ module TLS13
 
       def reset_cipher
         @cipher.reset
-        @cipher.key = @key
-        @cipher.iv = @nonce
+        @cipher.key = @write_key
+        iv_len = CipherSuite.iv_len(@cipher_suite)
+        @cipher.iv = xor(@write_iv, @sequence_number, iv_len)
       end
 
       # @param [String]
