@@ -34,6 +34,18 @@ module TLS13
     # @param type [Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object]
     def send_messages(type, messages)
+      if @write_seq_number.nil? &&
+         type == Message::ContentType::APPLICATION_DATA
+        @write_seq_number = SequenceNumber.new
+        ch_sh = concat_messages(CH..SH)
+        @write_cryptographer = Cryptograph::Aead.new(
+          cipher_suite: @cipher_suite,
+          write_key: @key_schedule.client_handshake_write_key(ch_sh),
+          write_iv: @key_schedule.client_handshake_write_iv(ch_sh),
+          sequence_number: @write_seq_number,
+          opaque_type: Message::ContentType::HANDSHAKE
+        )
+      end
       record = Message::Record.new(type: type, messages: messages,
                                    cryptographer: @write_cryptographer)
       send_record(record)
@@ -41,18 +53,6 @@ module TLS13
 
     # @param record [TLS13::Message::Record]
     def send_record(record)
-      if @write_seq_number.nil? &&
-         record.type == Message::ContentType::APPLICATION_DATA
-        @write_seq_number = SequenceNumber.new
-        messages = concat_messages(CH..SH)
-        @write_cryptographer = Cryptograph::Aead.new(
-          cipher_suite: @cipher_suite,
-          write_key: @key_schedule.client_handshake_write_key(messages),
-          write_iv: @key_schedule.client_handshake_write_iv(messages),
-          sequence_number: @write_seq_number,
-          opaque_type: Message::ContentType::HANDSHAKE
-        )
-      end
       @socket.write(record.serialize)
       @write_seq_number&.succ
     end
@@ -103,11 +103,11 @@ module TLS13
       if @read_seq_number.nil? &&
          buffer[0] == Message::ContentType::APPLICATION_DATA
         @read_seq_number = SequenceNumber.new
-        messages = concat_messages(CH..SH)
+        ch_sh = concat_messages(CH..SH)
         @read_cryptographer = Cryptograph::Aead.new(
           cipher_suite: @cipher_suite,
-          write_key: @key_schedule.server_handshake_write_key(messages),
-          write_iv: @key_schedule.server_handshake_write_iv(messages),
+          write_key: @key_schedule.server_handshake_write_key(ch_sh),
+          write_iv: @key_schedule.server_handshake_write_iv(ch_sh),
           sequence_number: @read_seq_number,
           opaque_type: Message::ContentType::HANDSHAKE
         )
