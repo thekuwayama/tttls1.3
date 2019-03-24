@@ -18,15 +18,16 @@ module TLS13
 
   # rubocop: disable Metrics/ClassLength
   class Connection
+    # @param socket [Socket]
     def initialize(socket)
       @socket = socket
-      @key_schedule = nil
+      @key_schedule = nil # TLS13::KeySchedule
       @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cryptographer = Cryptograph::Passer.new
-      @read_seq_number = nil
+      @read_seq_number = nil # TLS13::SequenceNumber
       @write_cryptographer = Cryptograph::Passer.new
-      @write_seq_number = nil
-      @transcript = {}
+      @write_seq_number = nil # TLS13::SequenceNumber
+      @transcript = {} # Hash of constant => TLS13::Message::$Object
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
     end
