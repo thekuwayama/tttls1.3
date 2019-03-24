@@ -56,7 +56,6 @@ module TLS13
       attr_reader :legacy_record_version
       attr_reader :messages
       attr_reader :cryptographer
-      attr_reader :fragment
 
       # @param type [TLS13::Message::ContentType]
       # @param legacy_record_version [TLS13::Message::ProtocolVersion]
@@ -72,7 +71,6 @@ module TLS13
         @legacy_record_version = legacy_record_version
         @messages = messages || []
         @cryptographer = cryptographer
-        @fragment = @cryptographer.encrypt(@messages.map(&:serialize).join)
       end
 
       # @raise [RuntimeError]
@@ -96,8 +94,8 @@ module TLS13
         binary = ''
         binary += @type
         binary += @legacy_record_version
-        binary += i2uint16(length)
-        binary += @fragment
+        fragment = @cryptographer.encrypt(@messages.map(&:serialize).join)
+        binary += uint16_length_prefix(fragment)
         binary
       end
 
