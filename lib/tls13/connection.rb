@@ -50,7 +50,7 @@ module TLS13
           write_key: @key_schedule.client_handshake_write_key(messages),
           write_iv: @key_schedule.client_handshake_write_iv(messages),
           sequence_number: @write_seq_number,
-          inner_type: Message::ContentType::HANDSHAKE
+          opaque_type: Message::ContentType::HANDSHAKE
         )
       end
       @socket.write(record.serialize)
@@ -109,7 +109,7 @@ module TLS13
           write_key: @key_schedule.server_handshake_write_key(messages),
           write_iv: @key_schedule.server_handshake_write_iv(messages),
           sequence_number: @read_seq_number,
-          inner_type: Message::ContentType::HANDSHAKE
+          opaque_type: Message::ContentType::HANDSHAKE
         )
       end
       record = Message::Record.deserialize(buffer, @read_cryptographer)

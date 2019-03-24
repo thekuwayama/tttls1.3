@@ -79,7 +79,7 @@ RSpec.describe Record do
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         sequence_number: SequenceNumber.new,
-        inner_type: ContentType::HANDSHAKE
+        opaque_type: ContentType::HANDSHAKE
       )
       Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD, cipher)
     end

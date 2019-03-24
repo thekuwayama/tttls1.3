@@ -10,7 +10,7 @@ RSpec.describe Aead do
                write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
                write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
                sequence_number: SequenceNumber.new,
-               inner_type: ContentType::HANDSHAKE)
+               opaque_type: ContentType::HANDSHAKE)
     end
 
     let(:content) do
@@ -40,7 +40,7 @@ RSpec.describe Aead do
                write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
                write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
                sequence_number: SequenceNumber.new,
-               inner_type: ContentType::HANDSHAKE)
+               opaque_type: ContentType::HANDSHAKE)
     end
 
     let(:content) do

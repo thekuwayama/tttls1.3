@@ -56,7 +56,7 @@ RSpec.describe Client do
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         sequence_number: read_seq_number,
-        inner_type: ContentType::HANDSHAKE
+        opaque_type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@read_cryptographer, cipher)
       client.instance_variable_set(:@read_seq_number, read_seq_number)
@@ -118,7 +118,7 @@ RSpec.describe Client do
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: write_seq_number,
-        inner_type: ContentType::HANDSHAKE
+        opaque_type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@write_cryptographer, write_cipher)
       client.instance_variable_set(:@write_seq_number, write_seq_number)
@@ -128,7 +128,7 @@ RSpec.describe Client do
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new,
-        inner_type: ContentType::HANDSHAKE
+        opaque_type: ContentType::HANDSHAKE
       )
       Record.deserialize(mock_socket.read, read_cipher)
     end

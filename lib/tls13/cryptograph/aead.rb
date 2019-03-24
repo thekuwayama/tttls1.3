@@ -6,17 +6,18 @@ module TLS13
     class Aead
       attr_accessor :write_key
       attr_accessor :write_iv
-      attr_accessor :inner_type
+      attr_accessor :sequence_number
+      attr_accessor :opaque_type
 
       # @param cipher_suite [TLS13::CipherSuite]
       # @param write_key [String]
       # @param write_iv [String]
       # @param sequence_number [String] uint64
-      # @param inner_type [TLS13::Message::ContentType] TLSInnerPlaintext.type
+      # @param opaque_type [TLS13::Message::ContentType] TLSInnerPlaintext.type
       # @param length_of_padding [Integer]
       # rubocop: disable Metrics/ParameterLists
       def initialize(cipher_suite:, write_key:, write_iv:,
-                     sequence_number:, inner_type:, length_of_padding: 0)
+                     sequence_number:, opaque_type:, length_of_padding: 0)
         @cipher_suite = cipher_suite
         case cipher_suite
         when CipherSuite::TLS_AES_128_GCM_SHA256
@@ -34,7 +35,7 @@ module TLS13
         @write_key = write_key
         @write_iv = write_iv
         @sequence_number = sequence_number
-        @inner_type = inner_type
+        @opaque_type = opaque_type
         @length_of_padding = length_of_padding
       end
       # rubocop: enable Metrics/ParameterLists
@@ -55,7 +56,7 @@ module TLS13
       def encrypt(content)
         reset_cipher
         cipher = @cipher.encrypt
-        plaintext = content + @inner_type + "\x00" * @length_of_padding
+        plaintext = content + @opaque_type + "\x00" * @length_of_padding
         cipher.auth_data = additional_data(plaintext.length)
         encrypted_data = cipher.update(plaintext) + cipher.final
         encrypted_data + cipher.auth_tag
