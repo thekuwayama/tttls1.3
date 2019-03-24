@@ -73,23 +73,6 @@ module TLS13
           send_finished
           state = ClientState::CONNECTED
         when ClientState::CONNECTED
-          messages = concat_messages(CH..SF)
-          @read_cryptographer.write_key \
-          = @key_schedule.server_application_write_key(messages)
-          @read_cryptographer.write_iv \
-          = @key_schedule.server_application_write_iv(messages)
-          @read_cryptographer.sequence_number \
-          =  @read_seq_number = SequenceNumber.new
-          @read_cryptographer.opaque_type \
-          = Message::ContentType::APPLICATION_DATA
-          @write_cryptographer.write_key \
-          = @key_schedule.client_application_write_key(messages)
-          @write_cryptographer.write_iv \
-          = @key_schedule.client_application_write_iv(messages)
-          @write_cryptographer.sequence_number \
-          =  @write_seq_number = SequenceNumber.new
-          @write_cryptographer.opaque_type \
-          = Message::ContentType::APPLICATION_DATA
           break
         end
       end

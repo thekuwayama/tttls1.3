@@ -35,6 +35,7 @@ module TLS13
     # @param type [Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object]
     def send_messages(type, messages)
+      # update write_cryptographer with sender_handshake_traffic_secret
       if @write_seq_number.nil? &&
          type == Message::ContentType::APPLICATION_DATA
         @write_seq_number = SequenceNumber.new
@@ -50,6 +51,18 @@ module TLS13
       record = Message::Record.new(type: type, messages: messages,
                                    cryptographer: @write_cryptographer)
       send_record(record)
+      return if messages.none? { |m| m.is_a?(Message::Finished) }
+
+      # update write_cryptographer with sender_application_traffic_secret
+      @write_seq_number = SequenceNumber.new
+      ch_sf = concat_messages(CH..SF)
+      @write_cryptographer = Cryptograph::Aead.new(
+        cipher_suite: @cipher_suite,
+        write_key: @key_schedule.client_application_write_key(ch_sf),
+        write_iv: @key_schedule.client_application_write_iv(ch_sf),
+        sequence_number: @write_seq_number,
+        opaque_type: Message::ContentType::APPLICATION_DATA
+      )
     end
 
     # @param record [TLS13::Message::Record]
@@ -102,6 +115,7 @@ module TLS13
       record_len = bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
       if @read_seq_number.nil? &&
+         # update read_cryptographer with sender_handshake_traffic_secret
          buffer[0] == Message::ContentType::APPLICATION_DATA
         @read_seq_number = SequenceNumber.new
         ch_sh = concat_messages(CH..SH)
@@ -111,6 +125,17 @@ module TLS13
           write_iv: @key_schedule.server_handshake_write_iv(ch_sh),
           sequence_number: @read_seq_number,
           opaque_type: Message::ContentType::HANDSHAKE
+        )
+      elsif @transcript.key?(SF)
+        # update read_cryptographer with sender_application_traffic_secret
+        @read_seq_number = SequenceNumber.new
+        ch_sf = concat_messages(CH..SF)
+        @read_cryptographer = Cryptograph::Aead.new(
+          cipher_suite: @cipher_suite,
+          write_key: @key_schedule.server_application_write_key(ch_sf),
+          write_iv: @key_schedule.server_application_write_iv(ch_sf),
+          sequence_number: @read_seq_number,
+          opaque_type: Message::ContentType::APPLICATION_DATA
         )
       end
       record = Message::Record.deserialize(buffer, @read_cryptographer)
