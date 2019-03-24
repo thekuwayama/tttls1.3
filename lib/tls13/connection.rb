@@ -34,16 +34,19 @@ module TLS13
 
     # @param type [Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object]
-    def send_messages(type, messages)
+    # @param sender [Symbol, :client or :server]
+    def send_messages(type, messages, sender = :client)
       # update write_cryptographer with sender_handshake_traffic_secret
       if @write_seq_number.nil? &&
          type == Message::ContentType::APPLICATION_DATA
         @write_seq_number = SequenceNumber.new
         ch_sh = concat_messages(CH..SH)
+        write_key = @key_schedule.send("#{sender}_handshake_write_key", ch_sh)
+        write_iv = @key_schedule.send("#{sender}_handshake_write_iv", ch_sh)
         @write_cryptographer = Cryptograph::Aead.new(
           cipher_suite: @cipher_suite,
-          write_key: @key_schedule.client_handshake_write_key(ch_sh),
-          write_iv: @key_schedule.client_handshake_write_iv(ch_sh),
+          write_key: write_key,
+          write_iv: write_iv,
           sequence_number: @write_seq_number,
           opaque_type: Message::ContentType::HANDSHAKE
         )
@@ -56,10 +59,12 @@ module TLS13
       # update write_cryptographer with sender_application_traffic_secret
       @write_seq_number = SequenceNumber.new
       ch_sf = concat_messages(CH..SF)
+      write_key = @key_schedule.send("#{sender}_application_write_key", ch_sf)
+      write_iv = @key_schedule.send("#{sender}_application_write_iv", ch_sf)
       @write_cryptographer = Cryptograph::Aead.new(
         cipher_suite: @cipher_suite,
-        write_key: @key_schedule.client_application_write_key(ch_sf),
-        write_iv: @key_schedule.client_application_write_iv(ch_sf),
+        write_key: write_key,
+        write_iv: write_iv,
         sequence_number: @write_seq_number,
         opaque_type: Message::ContentType::APPLICATION_DATA
       )
@@ -81,13 +86,15 @@ module TLS13
       send_record(ccs_record)
     end
 
+    # @param sender [Symbol, :client or :server]
+    #
     # @return [TLS13::Message::$Object]
-    def recv_message
+    def recv_message(sender = :server)
       return @message_queue.shift unless @message_queue.empty?
 
       loop do
         messages = []
-        record = recv_record
+        record = recv_record(sender)
         case record.type
         when Message::ContentType::HANDSHAKE
           messages = record.messages
@@ -109,20 +116,25 @@ module TLS13
       end
     end
 
+    # @param sender [Symbol, :client or :server]
+    #
     # @return [TLS13::Message::Record]
-    def recv_record
+    # rubocop: disable Metrics/MethodLength
+    def recv_record(sender)
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
       if @read_seq_number.nil? &&
-         # update read_cryptographer with sender_handshake_traffic_secret
          buffer[0] == Message::ContentType::APPLICATION_DATA
+        # update read_cryptographer with sender_handshake_traffic_secret
         @read_seq_number = SequenceNumber.new
         ch_sh = concat_messages(CH..SH)
+        write_key = @key_schedule.send("#{sender}_handshake_write_key", ch_sh)
+        write_iv = @key_schedule.send("#{sender}_handshake_write_iv", ch_sh)
         @read_cryptographer = Cryptograph::Aead.new(
           cipher_suite: @cipher_suite,
-          write_key: @key_schedule.server_handshake_write_key(ch_sh),
-          write_iv: @key_schedule.server_handshake_write_iv(ch_sh),
+          write_key: write_key,
+          write_iv: write_iv,
           sequence_number: @read_seq_number,
           opaque_type: Message::ContentType::HANDSHAKE
         )
@@ -130,10 +142,12 @@ module TLS13
         # update read_cryptographer with sender_application_traffic_secret
         @read_seq_number = SequenceNumber.new
         ch_sf = concat_messages(CH..SF)
+        write_key = @key_schedule.send("#{sender}_application_write_key", ch_sf)
+        write_iv = @key_schedule.send("#{sender}_application_write_iv", ch_sf)
         @read_cryptographer = Cryptograph::Aead.new(
           cipher_suite: @cipher_suite,
-          write_key: @key_schedule.server_application_write_key(ch_sf),
-          write_iv: @key_schedule.server_application_write_iv(ch_sf),
+          write_key: write_key,
+          write_iv: write_iv,
           sequence_number: @read_seq_number,
           opaque_type: Message::ContentType::APPLICATION_DATA
         )
@@ -142,6 +156,7 @@ module TLS13
       @read_seq_number&.succ
       record
     end
+    # rubocop: enable Metrics/MethodLength
 
     # @param range [Range]
     #
