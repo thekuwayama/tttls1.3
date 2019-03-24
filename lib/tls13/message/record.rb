@@ -25,6 +25,8 @@ module TLS13
           CertificateVerify.deserialize(binary)
         when HandshakeType::FINISHED
           Finished.deserialize(binary, hash_len)
+        when HandshakeType::NEW_SESSION_TICKET
+          'NEW_SESSION_TICKET' # TODO
         else
           raise 'unexpected HandshakeType'
         end
