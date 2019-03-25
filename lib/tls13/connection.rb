@@ -36,38 +36,20 @@ module TLS13
     # @param messages [Array of TLS13::Message::$Object]
     # @param sender [Symbol, :client or :server]
     def send_messages(type, messages, sender = :client)
-      # update write_cryptographer with sender_handshake_traffic_secret
       if @write_seq_number.nil? &&
          type == Message::ContentType::APPLICATION_DATA
         @write_seq_number = SequenceNumber.new
-        ch_sh = concat_messages(CH..SH)
-        write_key = @key_schedule.send("#{sender}_handshake_write_key", ch_sh)
-        write_iv = @key_schedule.send("#{sender}_handshake_write_iv", ch_sh)
-        @write_cryptographer = Cryptograph::Aead.new(
-          cipher_suite: @cipher_suite,
-          write_key: write_key,
-          write_iv: write_iv,
-          sequence_number: @write_seq_number,
-          opaque_type: Message::ContentType::HANDSHAKE
-        )
+        @write_cryptographer \
+        = gen_aead_with_handshake_traffic_secret(@write_seq_number, sender)
       end
       record = Message::Record.new(type: type, messages: messages,
                                    cryptographer: @write_cryptographer)
       send_record(record)
       return if messages.none? { |m| m.is_a?(Message::Finished) }
 
-      # update write_cryptographer with sender_application_traffic_secret
       @write_seq_number = SequenceNumber.new
-      ch_sf = concat_messages(CH..SF)
-      write_key = @key_schedule.send("#{sender}_application_write_key", ch_sf)
-      write_iv = @key_schedule.send("#{sender}_application_write_iv", ch_sf)
-      @write_cryptographer = Cryptograph::Aead.new(
-        cipher_suite: @cipher_suite,
-        write_key: write_key,
-        write_iv: write_iv,
-        sequence_number: @write_seq_number,
-        opaque_type: Message::ContentType::APPLICATION_DATA
-      )
+      @write_cryptographer \
+      = gen_aead_with_application_traffic_secret(@write_seq_number, sender)
     end
 
     # @param record [TLS13::Message::Record]
@@ -119,44 +101,24 @@ module TLS13
     # @param sender [Symbol, :client or :server]
     #
     # @return [TLS13::Message::Record]
-    # rubocop: disable Metrics/MethodLength
     def recv_record(sender)
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
       if @read_seq_number.nil? &&
          buffer[0] == Message::ContentType::APPLICATION_DATA
-        # update read_cryptographer with sender_handshake_traffic_secret
         @read_seq_number = SequenceNumber.new
-        ch_sh = concat_messages(CH..SH)
-        write_key = @key_schedule.send("#{sender}_handshake_write_key", ch_sh)
-        write_iv = @key_schedule.send("#{sender}_handshake_write_iv", ch_sh)
-        @read_cryptographer = Cryptograph::Aead.new(
-          cipher_suite: @cipher_suite,
-          write_key: write_key,
-          write_iv: write_iv,
-          sequence_number: @read_seq_number,
-          opaque_type: Message::ContentType::HANDSHAKE
-        )
+        @read_cryptographer \
+        = gen_aead_with_handshake_traffic_secret(@read_seq_number, sender)
       elsif @transcript.key?(SF)
-        # update read_cryptographer with sender_application_traffic_secret
         @read_seq_number = SequenceNumber.new
-        ch_sf = concat_messages(CH..SF)
-        write_key = @key_schedule.send("#{sender}_application_write_key", ch_sf)
-        write_iv = @key_schedule.send("#{sender}_application_write_iv", ch_sf)
-        @read_cryptographer = Cryptograph::Aead.new(
-          cipher_suite: @cipher_suite,
-          write_key: write_key,
-          write_iv: write_iv,
-          sequence_number: @read_seq_number,
-          opaque_type: Message::ContentType::APPLICATION_DATA
-        )
+        @read_cryptographer \
+        = gen_aead_with_application_traffic_secret(@read_seq_number, sender)
       end
       record = Message::Record.deserialize(buffer, @read_cryptographer)
       @read_seq_number&.succ
       record
     end
-    # rubocop: enable Metrics/MethodLength
 
     # @param range [Range]
     #
@@ -231,6 +193,40 @@ module TLS13
       else # TODO: other NamedGroup
         raise 'unexpected NamedGroup'
       end
+    end
+
+    # @param seq_num [TLS13::SequenceNumber]
+    # @param sender [Symbol, :client or :server]
+    #
+    # @return [TLS13::Cryptograph::Aead]
+    def gen_aead_with_handshake_traffic_secret(seq_num, sender)
+      ch_sh = concat_messages(CH..SH)
+      write_key = @key_schedule.send("#{sender}_handshake_write_key", ch_sh)
+      write_iv = @key_schedule.send("#{sender}_handshake_write_iv", ch_sh)
+      Cryptograph::Aead.new(
+        cipher_suite: @cipher_suite,
+        write_key: write_key,
+        write_iv: write_iv,
+        sequence_number: seq_num,
+        opaque_type: Message::ContentType::HANDSHAKE
+      )
+    end
+
+    # @param seq_num [TLS13::SequenceNumber]
+    # @param sender [Symbol, :client or :server]
+    #
+    # @return [TLS13::Cryptograph::Aead]
+    def gen_aead_with_application_traffic_secret(seq_num, sender)
+      ch_sf = concat_messages(CH..SF)
+      write_key = @key_schedule.send("#{sender}_application_write_key", ch_sf)
+      write_iv = @key_schedule.send("#{sender}_application_write_iv", ch_sf)
+      Cryptograph::Aead.new(
+        cipher_suite: @cipher_suite,
+        write_key: write_key,
+        write_iv: write_iv,
+        sequence_number: seq_num,
+        opaque_type: Message::ContentType::APPLICATION_DATA
+      )
     end
   end
   # rubocop: enable Metrics/ClassLength
