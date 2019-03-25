@@ -33,7 +33,7 @@ TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
   13 02 13 03 13 01
 BIN
 
-# TLS13::Message::Extension::$Class
+# TLS13::Message::Extension::$Object
 TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).map(&:chr).join
   00 0d 00 00 0a 67 69 74     68 75 62 2e 63 6f 6d
 BIN
@@ -99,9 +99,6 @@ TESTBINARY_PRE_SHARED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   e9 18 b6 7e c0 02 c3 bc     07 dd 09
 BIN
 
-# https://tools.ietf.org/html/rfc8448#section-2
-# 2.  Private Keys
-
 # https://tools.ietf.org/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
@@ -118,6 +115,19 @@ TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   02 03 08 04 08 05 08 06     04 01 05 01 06 01 02 01
   04 02 05 02 06 02 02 02     00 2d 00 02 01 01 00 1c
   00 02 40 01
+BIN
+
+TESTBINARY_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
+  00 91 00 00 00 0b 00 09     00 00 06 73 65 72 76 65
+  72 ff 01 00 01 00 00 0a     00 14 00 12 00 1d 00 17
+  00 18 00 19 01 00 01 01     01 02 01 03 01 04 00 23
+  00 00 00 33 00 26 00 24     00 1d 00 20 99 38 1d e5
+  60 e4 bd 43 d2 3d 8e 43     5a 7d ba fe b3 c0 6e 51
+  c1 3c ae 4d 54 13 69 1e     52 9a af 2c 00 2b 00 03
+  02 03 04 00 0d 00 20 00     1e 04 03 05 03 06 03 02
+  03 08 04 08 05 08 06 04     01 05 01 06 01 02 01 04
+  02 05 02 06 02 02 02 00     2d 00 02 01 01 00 1c 00
+  02 40 01
 BIN
 
 TESTBINARY_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join

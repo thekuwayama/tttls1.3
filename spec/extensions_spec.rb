@@ -87,7 +87,6 @@ RSpec.describe Extensions do
     end
 
     let(:extensions) do
-      # 1st of Extensions.keys is pre_shared_key
       exs = [pre_shared_key] + base_exs
       Extensions.new(exs)
     end
@@ -120,15 +119,18 @@ RSpec.describe Extensions do
     let(:unknown_exs_key_bb) do
       "\xbb\xbb"
     end
+
+    let(:grease_aa) do
+      UknownExtension.new(extension_type: unknown_exs_key_aa,
+                          extension_data: '')
+    end
+
+    let(:grease_bb) do
+      UknownExtension.new(extension_type: unknown_exs_key_bb,
+                          extension_data: "\x00")
+    end
+
     let(:extensions) do
-      grease_aa = UknownExtension.new(
-        extension_type: unknown_exs_key_aa,
-        extension_data: ''
-      )
-      grease_bb = UknownExtension.new(
-        extension_type: unknown_exs_key_bb,
-        extension_data: "\x00"
-      )
       exs = [grease_aa] + base_exs + [grease_bb]
       Extensions.new(exs)
     end
@@ -144,10 +146,24 @@ RSpec.describe Extensions do
         .to include ExtensionType::KEY_SHARE => key_share
       expect(extensions)
         .to include ExtensionType::SERVER_NAME => server_name
-      expect(extensions).to include unknown_exs_key_aa
-      expect(extensions[unknown_exs_key_aa].extension_data).to eq ''
-      expect(extensions).to include unknown_exs_key_bb
-      expect(extensions[unknown_exs_key_bb].extension_data).to eq "\x00"
+      expect(extensions).to include unknown_exs_key_aa => grease_aa
+      expect(extensions).to include unknown_exs_key_bb => grease_bb
+    end
+  end
+
+  context 'extensions binary' do
+    let(:extensions) do
+      Extensions.deserialize(TESTBINARY_EXTENSIONS,
+                             HandshakeType::CLIENT_HELLO)
+    end
+
+    it 'should generate object' do
+      expect(extensions).to include ExtensionType::SUPPORTED_GROUPS
+      expect(extensions).to include ExtensionType::KEY_SHARE
+      expect(extensions).to include ExtensionType::SUPPORTED_VERSIONS
+      expect(extensions).to include ExtensionType::SIGNATURE_ALGORITHMS
+      expect(extensions).to include ExtensionType::PSK_KEY_EXCHANGE_MODES
+      expect(extensions).to include ExtensionType::RECORD_SIZE_LIMIT
     end
   end
 end
