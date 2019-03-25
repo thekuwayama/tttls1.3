@@ -38,8 +38,7 @@ module TLS13
       #   Extensions.new([SupportedVersions.new, ServerName.new('example.com')]
       def initialize(extensions = [])
         extensions.each do |ex|
-          extension_type = ex.extension_type
-          super[extension_type] = ex
+          super[ex.extension_type] = ex
         end
       end
 
@@ -52,9 +51,14 @@ module TLS13
       def serialize
         binary = ''
         binary += i2uint16(length)
-        each_value do |ex|
+        exs_except_psk = values.reject do |ex|
+          ex.extension_type == ExtensionType::PRE_SHARED_KEY
+        end
+        exs_except_psk.each do |ex|
           binary += ex.serialize
         end
+        binary += self[ExtensionType::PRE_SHARED_KEY].serialize \
+          if key?(ExtensionType::PRE_SHARED_KEY)
         binary
       end
 
