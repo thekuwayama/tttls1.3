@@ -18,25 +18,25 @@ RSpec.describe Extensions do
     end
   end
 
-  let(:base_exs) do
-    exs = []
-    # supported_versions: TLS_1_3
-    exs << SupportedVersions.new(
+  let(:supported_versions) do
+    SupportedVersions.new(
       msg_type: HandshakeType::CLIENT_HELLO,
       versions: [ProtocolVersion::TLS_1_3]
     )
-    # signature_algorithms
-    exs << SignatureAlgorithms.new(
-      [SignatureScheme::RSA_PSS_RSAE_SHA256]
-    )
-    # supported_groups: only P-256
-    exs << SupportedGroups.new(
-      [NamedGroup::SECP256R1]
-    )
-    # key_share: only P-256
+  end
+
+  let(:signature_algorithms) do
+    SignatureAlgorithms.new([SignatureScheme::RSA_PSS_RSAE_SHA256])
+  end
+
+  let(:supported_groups) do
+    SupportedGroups.new([NamedGroup::SECP256R1])
+  end
+
+  let(:key_share) do
     ec = OpenSSL::PKey::EC.new('prime256v1')
     ec.generate_key!
-    exs << KeyShare.new(
+    KeyShare.new(
       msg_type: HandshakeType::CLIENT_HELLO,
       key_share_entry: [
         KeyShareEntry.new(
@@ -45,8 +45,20 @@ RSpec.describe Extensions do
         )
       ]
     )
-    # server_name
-    exs << ServerName.new('example.com')
+  end
+
+  let(:server_name) do
+    ServerName.new('example.com')
+  end
+
+  let(:base_exs) do
+    [
+      supported_versions,
+      signature_algorithms,
+      supported_groups,
+      key_share,
+      server_name
+    ]
   end
 
   context 'client_hello base extensions' do
@@ -55,29 +67,44 @@ RSpec.describe Extensions do
     end
 
     it 'should be generated' do
-      expect(extensions).to include ExtensionType::SUPPORTED_VERSIONS
-      expect(extensions).to include ExtensionType::SIGNATURE_ALGORITHMS
-      expect(extensions).to include ExtensionType::SUPPORTED_GROUPS
-      expect(extensions).to include ExtensionType::KEY_SHARE
-      expect(extensions).to include ExtensionType::SERVER_NAME
+      expect(extensions)
+        .to include ExtensionType::SUPPORTED_VERSIONS => supported_versions
+      expect(extensions)
+        .to include ExtensionType::SIGNATURE_ALGORITHMS => signature_algorithms
+      expect(extensions)
+        .to include ExtensionType::SUPPORTED_GROUPS => supported_groups
+      expect(extensions)
+        .to include ExtensionType::KEY_SHARE => key_share
+      expect(extensions)
+        .to include ExtensionType::SERVER_NAME => server_name
     end
   end
 
   context 'extensions that include pre_shared_key' do
+    let(:pre_shared_key) do
+      PreSharedKey.deserialize(TESTBINARY_PRE_SHARED_KEY,
+                               HandshakeType::CLIENT_HELLO)
+    end
+
     let(:extensions) do
-      pre_shared_key = PreSharedKey.deserialize(TESTBINARY_PRE_SHARED_KEY,
-                                                HandshakeType::CLIENT_HELLO)
+      # 1st of Extensions.keys is pre_shared_key
       exs = [pre_shared_key] + base_exs
       Extensions.new(exs)
     end
 
     it 'should be generated' do
-      expect(extensions).to include ExtensionType::SUPPORTED_VERSIONS
-      expect(extensions).to include ExtensionType::SIGNATURE_ALGORITHMS
-      expect(extensions).to include ExtensionType::SUPPORTED_GROUPS
-      expect(extensions).to include ExtensionType::KEY_SHARE
-      expect(extensions).to include ExtensionType::SERVER_NAME
-      expect(extensions).to include ExtensionType::PRE_SHARED_KEY
+      expect(extensions)
+        .to include ExtensionType::SUPPORTED_VERSIONS => supported_versions
+      expect(extensions)
+        .to include ExtensionType::SIGNATURE_ALGORITHMS => signature_algorithms
+      expect(extensions)
+        .to include ExtensionType::SUPPORTED_GROUPS => supported_groups
+      expect(extensions)
+        .to include ExtensionType::KEY_SHARE => key_share
+      expect(extensions)
+        .to include ExtensionType::SERVER_NAME => server_name
+      expect(extensions)
+        .to include ExtensionType::PRE_SHARED_KEY => pre_shared_key
     end
 
     it 'should be serialized end with pre_shared_key' do
@@ -107,13 +134,20 @@ RSpec.describe Extensions do
     end
 
     it 'should be generated' do
-      expect(extensions).to include ExtensionType::SUPPORTED_VERSIONS
-      expect(extensions).to include ExtensionType::SIGNATURE_ALGORITHMS
-      expect(extensions).to include ExtensionType::SUPPORTED_GROUPS
-      expect(extensions).to include ExtensionType::KEY_SHARE
-      expect(extensions).to include ExtensionType::SERVER_NAME
+      expect(extensions)
+        .to include ExtensionType::SUPPORTED_VERSIONS => supported_versions
+      expect(extensions)
+        .to include ExtensionType::SIGNATURE_ALGORITHMS => signature_algorithms
+      expect(extensions)
+        .to include ExtensionType::SUPPORTED_GROUPS => supported_groups
+      expect(extensions)
+        .to include ExtensionType::KEY_SHARE => key_share
+      expect(extensions)
+        .to include ExtensionType::SERVER_NAME => server_name
       expect(extensions).to include unknown_exs_key_aa
+      expect(extensions[unknown_exs_key_aa].extension_data).to eq ''
       expect(extensions).to include unknown_exs_key_bb
+      expect(extensions[unknown_exs_key_bb].extension_data).to eq "\x00"
     end
   end
 end
