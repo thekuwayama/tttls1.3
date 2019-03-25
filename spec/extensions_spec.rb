@@ -67,7 +67,8 @@ RSpec.describe Extensions do
     let(:extensions) do
       pre_shared_key = PreSharedKey.deserialize(TESTBINARY_PRE_SHARED_KEY,
                                                 HandshakeType::CLIENT_HELLO)
-      Extensions.new(base_exs.unshift(pre_shared_key))
+      exs = [pre_shared_key] + base_exs
+      Extensions.new(exs)
     end
 
     it 'should be generated' do
@@ -81,6 +82,38 @@ RSpec.describe Extensions do
 
     it 'should be serialized end with pre_shared_key' do
       expect(extensions.serialize).to end_with TESTBINARY_PRE_SHARED_KEY
+    end
+  end
+
+  context 'extensions that include GREASE' do
+    let(:unknown_exs_key_aa) do
+      "\xaa\xaa"
+    end
+
+    let(:unknown_exs_key_bb) do
+      "\xbb\xbb"
+    end
+    let(:extensions) do
+      grease_aa = UknownExtension.new(
+        extension_type: unknown_exs_key_aa,
+        extension_data: ''
+      )
+      grease_bb = UknownExtension.new(
+        extension_type: unknown_exs_key_bb,
+        extension_data: "\x00"
+      )
+      exs = [grease_aa] + base_exs + [grease_bb]
+      Extensions.new(exs)
+    end
+
+    it 'should be generated' do
+      expect(extensions).to include ExtensionType::SUPPORTED_VERSIONS
+      expect(extensions).to include ExtensionType::SIGNATURE_ALGORITHMS
+      expect(extensions).to include ExtensionType::SUPPORTED_GROUPS
+      expect(extensions).to include ExtensionType::KEY_SHARE
+      expect(extensions).to include ExtensionType::SERVER_NAME
+      expect(extensions).to include unknown_exs_key_aa
+      expect(extensions).to include unknown_exs_key_bb
     end
   end
 end
