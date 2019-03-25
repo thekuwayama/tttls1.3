@@ -19,6 +19,7 @@ module TLS13
 
     def initialize(socket)
       super(socket)
+      @endpoint = :client
       @hostname = ''
     end
 

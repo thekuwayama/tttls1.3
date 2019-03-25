@@ -21,6 +21,7 @@ module TLS13
     # @param socket [Socket]
     def initialize(socket)
       @socket = socket
+      @endpoint = nil # Symbol or String, :client or :server
       @key_schedule = nil # TLS13::KeySchedule
       @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cryptographer = Cryptograph::Passer.new
@@ -34,11 +35,11 @@ module TLS13
 
     # @param type [Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object]
-    # @param sender [Symbol, :client or :server]
-    def send_messages(type, messages, sender = :client)
+    def send_messages(type, messages)
       if @write_seq_number.nil? &&
          type == Message::ContentType::APPLICATION_DATA
         @write_seq_number = SequenceNumber.new
+        sender = @endpoint
         @write_cryptographer \
         = gen_aead_with_handshake_traffic_secret(@write_seq_number, sender)
       end
@@ -48,6 +49,7 @@ module TLS13
       return if messages.none? { |m| m.is_a?(Message::Finished) }
 
       @write_seq_number = SequenceNumber.new
+      sender = @endpoint
       @write_cryptographer \
       = gen_aead_with_application_traffic_secret(@write_seq_number, sender)
     end
@@ -68,15 +70,13 @@ module TLS13
       send_record(ccs_record)
     end
 
-    # @param sender [Symbol, :client or :server]
-    #
     # @return [TLS13::Message::$Object]
-    def recv_message(sender = :server)
+    def recv_message
       return @message_queue.shift unless @message_queue.empty?
 
       loop do
         messages = []
-        record = recv_record(sender)
+        record = recv_record
         case record.type
         when Message::ContentType::HANDSHAKE
           messages = record.messages
@@ -98,20 +98,20 @@ module TLS13
       end
     end
 
-    # @param sender [Symbol, :client or :server]
-    #
     # @return [TLS13::Message::Record]
-    def recv_record(sender)
+    def recv_record
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
       if @read_seq_number.nil? &&
          buffer[0] == Message::ContentType::APPLICATION_DATA
         @read_seq_number = SequenceNumber.new
+        sender = (@endpoint == :client ? :server : :client)
         @read_cryptographer \
         = gen_aead_with_handshake_traffic_secret(@read_seq_number, sender)
       elsif @transcript.key?(SF)
         @read_seq_number = SequenceNumber.new
+        sender = (@endpoint == :client ? :server : :client)
         @read_cryptographer \
         = gen_aead_with_application_traffic_secret(@read_seq_number, sender)
       end
