@@ -84,7 +84,8 @@ module TLS13
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::CLIENT_HELLO)
         itr += exs_len
-        raise 'malformed binary' unless itr == msg_len + 4
+        raise 'malformed binary' unless itr == msg_len + 4 &&
+                                        itr == binary.length
 
         ClientHello.new(legacy_version: legacy_version,
                         random: random,
