@@ -26,7 +26,7 @@ module TLS13
         when HandshakeType::FINISHED
           Finished.deserialize(binary, hash_len)
         when HandshakeType::NEW_SESSION_TICKET
-          'NEW_SESSION_TICKET' # TODO
+          NewSessionTicket.deserialize(binary)
         else
           raise 'unexpected HandshakeType'
         end
