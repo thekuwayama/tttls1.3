@@ -32,7 +32,6 @@ RSpec.describe KeyShare do
     it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.length).to eq 107
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
       expect(extension.key_share_entry[0].key_exchange).to eq public_key_x25519
       expect(extension.key_share_entry[1].group).to eq NamedGroup::SECP256R1
@@ -64,7 +63,6 @@ RSpec.describe KeyShare do
     it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.length).to eq 2
       expect(extension.key_share_entry).to be_empty
     end
 
@@ -95,17 +93,17 @@ RSpec.describe KeyShare do
     it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::SERVER_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.length).to eq 36
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
       expect(extension.key_share_entry[0].key_exchange).to eq public_key_x25519
     end
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + i2uint16(extension.length) \
+                                        + i2uint16(36) \
                                         + NamedGroup::X25519 \
-                                        + i2uint16(32) \
-                                        + public_key_x25519
+                                        + uint16_length_prefix(
+                                          public_key_x25519
+                                        )
     end
   end
 
@@ -126,15 +124,15 @@ RSpec.describe KeyShare do
     it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::HELLO_RETRY_REQUEST
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.length).to eq 2
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
       expect(extension.key_share_entry[0].key_exchange).to be_empty
     end
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + i2uint16(extension.length) \
-                                        + NamedGroup::X25519
+                                        + uint16_length_prefix(
+                                          NamedGroup::X25519
+                                        )
     end
   end
 
@@ -146,10 +144,15 @@ RSpec.describe KeyShare do
     it 'should generate valid object' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.length).to eq 38
-      expect(extension.key_share_entry.length).to eq 1
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
       expect(extension.key_share_entry[0].key_exchange.length).to eq 32
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_KEY_SHARE_CH
+                                        )
     end
   end
 
@@ -161,10 +164,15 @@ RSpec.describe KeyShare do
     it 'should generate valid object' do
       expect(extension.msg_type).to eq HandshakeType::SERVER_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.length).to eq 36
-      expect(extension.key_share_entry.length).to eq 1
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
       expect(extension.key_share_entry[0].key_exchange.length).to eq 32
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_KEY_SHARE_SH
+                                        )
     end
   end
 
@@ -177,10 +185,15 @@ RSpec.describe KeyShare do
     it 'should generate valid object' do
       expect(extension.msg_type).to eq HandshakeType::HELLO_RETRY_REQUEST
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.length).to eq 2
-      expect(extension.key_share_entry.length).to eq 1
       expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
       expect(extension.key_share_entry[0].key_exchange).to be_empty
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_KEY_SHARE_HRR
+                                        )
     end
   end
 end

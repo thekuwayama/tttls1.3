@@ -19,19 +19,11 @@ module TLS13
           @ke_modes = ke_modes || []
         end
 
-        # @return [Integer]
-        def length
-          1 + @ke_modes.length
-        end
-
         # @return [String]
         def serialize
-          binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
-          binary += i2uint8(@ke_modes.length)
-          binary += @ke_modes.join
-          binary
+          binary = uint8_length_prefix(@ke_modes.join)
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]

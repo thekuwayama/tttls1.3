@@ -10,7 +10,6 @@ RSpec.describe CipherSuites do
     end
 
     it 'should be generated' do
-      expect(cs.length).to eq 6
       expect(cs).to eq DEFALT_CIPHER_SUITES
     end
 
@@ -26,7 +25,6 @@ RSpec.describe CipherSuites do
     end
 
     it 'should generate valid object' do
-      expect(cs.length).to eq 6
       expect(cs).to eq DEFALT_CIPHER_SUITES
     end
   end

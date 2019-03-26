@@ -50,20 +50,13 @@ module TLS13
         # TODO: check @signature.length using type of SignatureScheme
       end
 
-      # @return [Integer]
-      def length
-        4 + @signature.length
-      end
-
       # @return [String]
       def serialize
         binary = ''
-        binary += @msg_type
-        binary += i2uint24(length)
         binary += @signature_scheme
-        binary += i2uint16(@signature.length)
-        binary += @signature
-        binary
+        binary += uint16_length_prefix(@signature)
+
+        @msg_type + uint24_length_prefix(binary)
       end
 
       alias fragment serialize

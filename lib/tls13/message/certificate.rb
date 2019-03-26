@@ -19,21 +19,13 @@ module TLS13
         @certificate_list = certificate_list || []
       end
 
-      # @return [Integer]
-      def length
-        4 + @certificate_request_context.length \
-        + @certificate_list.map(&:length).sum
-      end
-
       # @return [String]
       def serialize
         binary = ''
-        binary += @msg_type
-        binary += i2uint24(length)
         binary += uint8_length_prefix(@certificate_request_context)
-        binary += i2uint24(@certificate_list.map(&:length).sum)
-        binary += @certificate_list.map(&:serialize).join
-        binary
+        binary += uint24_length_prefix(@certificate_list.map(&:serialize).join)
+
+        @msg_type + uint24_length_prefix(binary)
       end
 
       alias fragment serialize
@@ -101,11 +93,6 @@ module TLS13
       def initialize(cert_data, extensions = Extensions.new)
         @cert_data = cert_data
         @extensions = extensions || Extensions.new
-      end
-
-      # @return [Integer]
-      def length
-        5 + @cert_data.to_der.length + @extensions.length
       end
 
       # @return [String]

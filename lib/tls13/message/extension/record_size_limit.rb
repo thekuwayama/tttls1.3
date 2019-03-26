@@ -19,18 +19,11 @@ module TLS13
           @record_size_limit = record_size_limit
         end
 
-        # @return [Integer]
-        def length
-          2
-        end
-
         # @return [String]
         def serialize
-          binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
-          binary += i2uint16(@record_size_limit)
-          binary
+          binary = i2uint16(@record_size_limit)
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]

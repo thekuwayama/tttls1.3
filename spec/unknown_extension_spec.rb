@@ -11,12 +11,11 @@ RSpec.describe UknownExtension do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq "\x8a\x8a"
-      expect(extension.length).to eq 0
       expect(extension.extension_data).to be_empty
     end
 
     it 'should be serialized' do
-      expect(extension.serialize).to eq "\x8a\x8a\x00\x00"
+      expect(extension.serialize).to eq "\x8a\x8a" + uint16_length_prefix('')
     end
   end
 
@@ -32,14 +31,12 @@ RSpec.describe UknownExtension do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq "\x8a\x8a"
-      expect(extension.length).to eq random_bytes.length
       expect(extension.extension_data).to eq random_bytes
     end
 
     it 'should be serialized' do
       expect(extension.serialize).to eq "\x8a\x8a" \
-                                        + i2uint16(random_bytes.length) \
-                                        + random_bytes
+                                        + uint16_length_prefix(random_bytes)
     end
   end
 
@@ -60,7 +57,6 @@ RSpec.describe UknownExtension do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq "\x8a\x8a"
-      expect(extension.length).to eq 0
       expect(extension.extension_data).to be_empty
     end
   end
@@ -72,7 +68,6 @@ RSpec.describe UknownExtension do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq "\x8a\x8a"
-      expect(extension.length).to eq 0
       expect(extension.extension_data).to be_empty
     end
   end
@@ -88,7 +83,6 @@ RSpec.describe UknownExtension do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq "\x8a\x8a"
-      expect(extension.length).to eq random_bytes.length
       expect(extension.extension_data).to eq random_bytes
     end
   end

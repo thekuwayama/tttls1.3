@@ -18,18 +18,11 @@ module TLS13
             if @cookie.empty? || @cookie.length > 2**16 - 3
         end
 
-        # @return [Integer]
-        def length
-          2 + @cookie.length
-        end
-
         # @return [String]
         def serialize
-          binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
-          binary += uint16_length_prefix(@cookie)
-          binary
+          binary = uint16_length_prefix(@cookie)
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]

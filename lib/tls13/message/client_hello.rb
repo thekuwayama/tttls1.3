@@ -33,24 +33,17 @@ module TLS13
         @extensions = extensions || Extensions.new
       end
 
-      # @return [Integer]
-      def length
-        41 + @legacy_session_id.length + @cipher_suites.length \
-        + @extensions.length
-      end
-
       # @return [String]
       def serialize
         binary = ''
-        binary += @msg_type
-        binary += i2uint24(length)
         binary += @legacy_version
         binary += @random
         binary += uint8_length_prefix(@legacy_session_id)
         binary += @cipher_suites.serialize
         binary += uint8_length_prefix(@legacy_compression_methods)
         binary += @extensions.serialize
-        binary
+
+        @msg_type + uint24_length_prefix(binary)
       end
 
       # @param binary [String]

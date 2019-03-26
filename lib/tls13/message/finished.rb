@@ -14,18 +14,13 @@ module TLS13
       end
 
       # @return [Integer]
-      def length
+      def hash_length
         @verify_data.length
       end
 
-      alias hash_length length
-
       # @return [String]
       def serialize
-        binary = ''
-        binary += @msg_type
-        binary += uint24_length_prefix(@verify_data)
-        binary
+        @msg_type + uint24_length_prefix(@verify_data)
       end
 
       alias fragment serialize

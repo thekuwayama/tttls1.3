@@ -36,29 +36,9 @@ module TLS13
 
         # @raise [RuntimeError]
         #
-        # @return [Integer]
-        def length
-          case @msg_type
-          when HandshakeType::CLIENT_HELLO
-            2 + @key_share_entry.map do |x|
-              4 + x.key_exchange.length
-            end.sum
-          when HandshakeType::SERVER_HELLO
-            4 + @key_share_entry.first.key_exchange.length
-          when HandshakeType::HELLO_RETRY_REQUEST
-            2
-          else
-            raise 'unexpected HandshakeType'
-          end
-        end
-
-        # @raise [RuntimeError]
-        #
         # @return [String]
         def serialize
           binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
           case @msg_type
           when HandshakeType::CLIENT_HELLO
             buf = ''
@@ -71,7 +51,8 @@ module TLS13
           else
             raise 'unexpected HandshakeType'
           end
-          binary
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]

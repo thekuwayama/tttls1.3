@@ -13,18 +13,9 @@ module TLS13
         @extensions = extensions || Extensions.new
       end
 
-      # @return [Integer]
-      def length
-        2 + @extensions.length
-      end
-
       # @return [String]
       def serialize
-        binary = ''
-        binary += @msg_type
-        binary += i2uint24(length)
-        binary += @extensions.serialize
-        binary
+        @msg_type + uint24_length_prefix(@extensions.serialize)
       end
 
       alias fragment serialize

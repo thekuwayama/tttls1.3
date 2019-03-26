@@ -32,23 +32,17 @@ module TLS13
             if @server_name.length > 2**16 - 5
         end
 
-        # @return [Integer]
-        def length
-          return 0 if @server_name.empty?
-
-          5 + @server_name.length
-        end
-
         # @return [String]
         def serialize
-          return "\x00\x00\x00\x00" if length.zero?
+          return "\x00\x00\x00\x00" if @server_name.empty?
 
+          sn_len = @server_name.length
           binary = ''
           binary += @extension_type
-          binary += i2uint16(length)
-          binary += i2uint16(length - 2)
+          binary += i2uint16(sn_len + 5)
+          binary += i2uint16(sn_len + 3)
           binary += NameType::HOST_NAME
-          binary += i2uint16(length - 5)
+          binary += i2uint16(sn_len)
           binary += @server_name
           binary
         end

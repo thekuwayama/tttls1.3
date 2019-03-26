@@ -18,7 +18,6 @@ RSpec.describe CertificateVerify do
 
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
-      expect(message.length).to eq 132
       expect(message.signature_scheme) \
         .to eq SignatureScheme::RSA_PSS_RSAE_SHA256
       expect(message.signature).to eq signature
@@ -26,10 +25,9 @@ RSpec.describe CertificateVerify do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CERTIFICATE_VERIFY \
-                                      + i2uint24(message.length) \
+                                      + i2uint24(132) \
                                       + SignatureScheme::RSA_PSS_RSAE_SHA256 \
-                                      + i2uint16(128) \
-                                      + signature
+                                      + uint16_length_prefix(signature)
     end
   end
 
@@ -40,10 +38,13 @@ RSpec.describe CertificateVerify do
 
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
-      expect(message.length).to eq 132
       expect(message.signature_scheme) \
         .to eq SignatureScheme::RSA_PSS_RSAE_SHA256
       expect(message.signature.length).to eq 128
+    end
+
+    it 'should generate serializable object' do
+      expect(message.serialize).to eq TESTBINARY_CERTIFICATE_VERIFY
     end
   end
 end

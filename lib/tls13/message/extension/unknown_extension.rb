@@ -17,17 +17,9 @@ module TLS13
           @extension_data = extension_data || ''
         end
 
-        # @return [Integer]
-        def length
-          @extension_data.length
-        end
-
         # @return [String]
         def serialize
-          binary = ''
-          binary += @extension_type
-          binary += uint16_length_prefix(@extension_data)
-          binary
+          @extension_type + uint16_length_prefix(@extension_data)
         end
 
         # @param binary [String]

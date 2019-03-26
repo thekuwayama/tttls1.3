@@ -20,7 +20,6 @@ RSpec.describe ClientHello do
 
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
-      expect(message.length).to eq 79
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.random).to eq random
       expect(message.legacy_session_id).to eq legacy_session_id
@@ -31,7 +30,7 @@ RSpec.describe ClientHello do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CLIENT_HELLO \
-                                      + i2uint24(message.length) \
+                                      + i2uint24(79) \
                                       + ProtocolVersion::TLS_1_2 \
                                       + random \
                                       + i2uint8(legacy_session_id.length) \
@@ -50,7 +49,6 @@ RSpec.describe ClientHello do
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
-      expect(message.length).to eq 192
     end
 
     it 'should generate valid serializable object' do

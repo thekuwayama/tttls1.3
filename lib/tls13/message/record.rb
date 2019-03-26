@@ -75,22 +75,6 @@ module TLS13
         @cryptographer = cryptographer
       end
 
-      # @raise [RuntimeError]
-      #
-      # @return [Integer]
-      def length
-        case @type
-        when ContentType::HANDSHAKE
-          @messages.map { |x| x.length + 4 }.sum
-        when ContentType::CCS
-          1
-        when ContentType::APPLICATION_DATA
-          @fragment.length
-        else # TODO
-          raise 'unexpected ContentType'
-        end
-      end
-
       # @return [String]
       def serialize
         binary = ''

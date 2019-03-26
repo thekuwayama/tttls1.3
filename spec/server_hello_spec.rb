@@ -25,7 +25,6 @@ RSpec.describe ServerHello do
 
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
-      expect(message.length).to eq 72
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.random).to eq random
       expect(message.legacy_session_id_echo).to eq legacy_session_id_echo
@@ -36,7 +35,7 @@ RSpec.describe ServerHello do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::SERVER_HELLO \
-                                      + i2uint24(message.length) \
+                                      + i2uint24(72) \
                                       + ProtocolVersion::TLS_1_2 \
                                       + random \
                                       + i2uint8(legacy_session_id_echo.length) \

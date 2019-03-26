@@ -17,19 +17,13 @@ module TLS13
                @supported_signature_algorithms.length * 2 > 2**16 - 3
         end
 
-        # @return [Integer]
-        def length
-          2 + @supported_signature_algorithms.length * 2
-        end
-
         # @return [String]
         def serialize
           binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
           binary += i2uint16(@supported_signature_algorithms.length * 2)
           binary += @supported_signature_algorithms.join
-          binary
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]

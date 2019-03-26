@@ -27,25 +27,17 @@ module TLS13
           @request_extensions = request_extensions || ''
         end
 
-        # @return [Integer]
-        def length
-          3 + @responder_id_list.length * 2 \
-          + @responder_id_list.map(&:length).sum \
-          + 2 + @request_extensions.length
-        end
-
         # @return [String]
         def serialize
           binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
           binary += CertificateStatusType::OCSP
           binary += i2uint16(@responder_id_list.length)
           binary += @responder_id_list.map do |id|
             i2uint16(id.length) + id
           end.join
           binary += uint16_length_prefix(@request_extensions)
-          binary
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]

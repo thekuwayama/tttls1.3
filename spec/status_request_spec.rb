@@ -11,7 +11,6 @@ RSpec.describe StatusRequest do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
-      expect(extension.length).to eq 5
       expect(extension.responder_id_list).to be_empty
       expect(extension.request_extensions).to be_empty
     end
@@ -28,7 +27,6 @@ RSpec.describe StatusRequest do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
-      expect(extension.length).to eq 5
       expect(extension.responder_id_list).to be_empty
       expect(extension.request_extensions).to be_empty
     end
@@ -45,7 +43,6 @@ RSpec.describe StatusRequest do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
-      expect(extension.length).to eq 5
       expect(extension.responder_id_list).to be_empty
       expect(extension.request_extensions).to be_empty
     end
@@ -62,9 +59,15 @@ RSpec.describe StatusRequest do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
-      expect(extension.length).to eq 5
       expect(extension.responder_id_list).to be_empty
       expect(extension.request_extensions).to be_empty
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::STATUS_REQUEST \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_STATUS_REQUEST
+                                        )
     end
   end
 end

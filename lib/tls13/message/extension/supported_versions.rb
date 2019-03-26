@@ -30,21 +30,14 @@ module TLS13
         end
         # rubocop: enable Metrics/CyclomaticComplexity
 
-        # @return [Integer]
-        def length
-          @versions.length * 2 \
-          + (@msg_type == HandshakeType::CLIENT_HELLO ? 1 : 0)
-        end
-
         # @return [String]
         def serialize
           binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
           binary += i2uint8(@versions.length * 2) \
             if @msg_type == HandshakeType::CLIENT_HELLO
           binary += @versions.join
-          binary
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]

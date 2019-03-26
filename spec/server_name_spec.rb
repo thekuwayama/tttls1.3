@@ -11,7 +11,6 @@ RSpec.describe ServerName do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
-      expect(extension.length).to eq 16
       expect(extension.server_name).to eq 'example.com'
     end
 
@@ -32,7 +31,6 @@ RSpec.describe ServerName do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
-      expect(extension.length).to eq 0
     end
 
     it 'should be serialized' do
@@ -58,8 +56,14 @@ RSpec.describe ServerName do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
-      expect(extension.length).to eq 15
       expect(extension.server_name).to eq 'github.com'
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::SERVER_NAME \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_SERVER_NAME
+                                        )
     end
   end
 

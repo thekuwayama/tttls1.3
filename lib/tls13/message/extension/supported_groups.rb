@@ -76,19 +76,11 @@ module TLS13
             if @named_group_list.empty? || @named_group_list.length >= 2**15 - 1
         end
 
-        # @return [Integer]
-        def length
-          2 + @named_group_list.length * 2
-        end
-
         # @return [String]
         def serialize
-          binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
-          binary += i2uint16(length - 2)
-          binary += @named_group_list.join
-          binary
+          binary = @named_group_list.join
+
+          @extension_type + uint16_length_prefix(uint16_length_prefix(binary))
         end
 
         # @param binary [String]

@@ -15,14 +15,13 @@ RSpec.describe Finished do
 
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::FINISHED
-      expect(message.length).to eq 128
       expect(message.verify_data).to eq verify_data
+      expect(message.hash_length).to eq 128
     end
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::FINISHED \
-                                      + i2uint24(message.length) \
-                                      + verify_data
+                                      + uint24_length_prefix(verify_data)
     end
   end
 
@@ -35,6 +34,10 @@ RSpec.describe Finished do
       expect(message.msg_type).to eq HandshakeType::FINISHED
       expect(message.hash_length).to eq 32
     end
+
+    it 'should generate serializable object' do
+      expect(message.serialize).to eq TESTBINARY_SERVER_FINISHED
+    end
   end
 
   context 'valid finished binary' do
@@ -45,6 +48,10 @@ RSpec.describe Finished do
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::FINISHED
       expect(message.hash_length).to eq 32
+    end
+
+    it 'should generate serializable object' do
+      expect(message.serialize).to eq TESTBINARY_CLIENT_FINISHED
     end
   end
 end

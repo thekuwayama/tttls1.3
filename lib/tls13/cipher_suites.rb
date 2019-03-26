@@ -66,8 +66,6 @@ module TLS13
                           CipherSuite::TLS_AES_128_GCM_SHA256].freeze
 
   class CipherSuites < Array
-    alias super_length length
-
     # @param cipher_suites [Array of CipherSuite]
     #
     # @example
@@ -78,11 +76,6 @@ module TLS13
     #   ])
     def initialize(cipher_suites = DEFALT_CIPHER_SUITES)
       super(cipher_suites)
-    end
-
-    # @return [Integer]
-    def length
-      super_length * 2
     end
 
     # @return [String]

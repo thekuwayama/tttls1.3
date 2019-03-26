@@ -14,7 +14,6 @@ RSpec.describe SupportedVersions do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 5
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3,
                                         ProtocolVersion::TLS_1_2]
     end
@@ -54,7 +53,6 @@ RSpec.describe SupportedVersions do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 2
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
     end
 
@@ -81,7 +79,6 @@ RSpec.describe SupportedVersions do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 3
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
     end
 
@@ -98,9 +95,15 @@ RSpec.describe SupportedVersions do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 5
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3,
                                         ProtocolVersion::TLS_1_2]
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_VERSIONS \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_SUPPORTED_VERSIONS_CH
+                                        )
     end
   end
 
@@ -112,8 +115,14 @@ RSpec.describe SupportedVersions do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.length).to eq 2
       expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_VERSIONS \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_SUPPORTED_VERSIONS_SH
+                                        )
     end
   end
 end

@@ -32,25 +32,9 @@ module TLS13
 
         # @raise [RuntimeError]
         #
-        # @return [Integer]
-        def length
-          case @msg_type
-          when HandshakeType::CLIENT_HELLO
-            @offered_psks.length
-          when HandshakeType::SERVER_HELLO
-            2
-          else
-            raise 'unexpected HandshakeType'
-          end
-        end
-
-        # @raise [RuntimeError]
-        #
         # @return [String]
         def serialize
           binary = ''
-          binary += @extension_type
-          binary += i2uint16(length)
           case @msg_type
           when HandshakeType::CLIENT_HELLO
             binary += @offered_psks.serialize
@@ -59,7 +43,8 @@ module TLS13
           else
             raise 'invalid HandshakeType'
           end
-          binary
+
+          @extension_type + uint16_length_prefix(binary)
         end
 
         # @param binary [String]
@@ -100,24 +85,13 @@ module TLS13
           raise 'invalid binders' if @binders.empty?
         end
 
-        # @return [Integer]
-        def length
-          2 + @identities.map(&:length).sum \
-          + 2 + @binders.length + @binders.map(&:length).sum
-        end
-
         # @return [String]
         def serialize
-          identities_bin = i2uint16(@identities.map(&:length).sum)
-          @identities.each do |psk_identity|
-            identities_bin += psk_identity.serialize
-          end
+          binary = @identities.map(&:serialize).join
+          identities_bin = uint16_length_prefix(binary)
 
-          binders_bin = i2uint16(@binders.length + @binders.map(&:length).sum)
-          @binders.each do |psk_binder_entry|
-            binders_bin += i2uint8(psk_binder_entry.length)
-            binders_bin += psk_binder_entry
-          end
+          binary = @binders.map { |pbe| uint8_length_prefix(pbe) }.join
+          binders_bin = uint16_length_prefix(binary)
 
           identities_bin + binders_bin
         end
@@ -172,11 +146,6 @@ module TLS13
           raise 'invalid identity' if @identity.empty?
 
           @obfuscated_ticket_age = obfuscated_ticket_age
-        end
-
-        # @return [Integer]
-        def length
-          2 + @identity.length + 4
         end
 
         # @return [String]

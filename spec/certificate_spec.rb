@@ -17,7 +17,6 @@ RSpec.describe Certificate do
 
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
-      expect(message.length).to eq 994
       expect(message.certificate_request_context).to be_empty
 
       certificate_entry = message.certificate_list.first
@@ -27,7 +26,7 @@ RSpec.describe Certificate do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CERTIFICATE \
-                                      + i2uint24(message.length) \
+                                      + i2uint24(994) \
                                       + i2uint8(0) \
                                       + i2uint24(990) \
                                       + i2uint24(985) \
@@ -48,6 +47,10 @@ RSpec.describe Certificate do
       certificate_entry = message.certificate_list.first
       expect(certificate_entry.cert_data.subject.to_s).to eq '/CN=rsa'
       expect(certificate_entry.extensions).to be_empty
+    end
+
+    it 'should generate serializable object' do
+      expect(message.serialize).to eq TESTBINARY_CERTIFICATE
     end
   end
 end

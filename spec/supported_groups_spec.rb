@@ -19,14 +19,13 @@ RSpec.describe SupportedGroups do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
-      expect(extension.length).to eq 12
       expect(extension.named_group_list).to eq named_group_list
     end
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + i2uint16(extension.length) \
-                                        + i2uint16(extension.length - 2) \
+                                        + i2uint16(12) \
+                                        + i2uint16(10) \
                                         + named_group_list.join
     end
   end
@@ -38,14 +37,13 @@ RSpec.describe SupportedGroups do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
-      expect(extension.length).to eq 10
       expect(extension.named_group_list).to eq DEFALT_NAMED_GROUP_LIST
     end
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + i2uint16(extension.length) \
-                                        + i2uint16(extension.length - 2) \
+                                        + i2uint16(10) \
+                                        + i2uint16(8) \
                                         + DEFALT_NAMED_GROUP_LIST.join
     end
   end
@@ -77,11 +75,17 @@ RSpec.describe SupportedGroups do
 
     it 'should generate valid object' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
-      expect(extension.length).to eq 10
       expect(extension.named_group_list).to eq [NamedGroup::SECP256R1,
                                                 NamedGroup::SECP384R1,
                                                 NamedGroup::SECP521R1,
                                                 NamedGroup::X25519]
+    end
+
+    it 'should generate serializable object' do
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
+                                        + uint16_length_prefix(
+                                          TESTBINARY_SUPPORTED_GROUPS
+                                        )
     end
   end
 

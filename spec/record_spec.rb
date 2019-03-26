@@ -17,7 +17,6 @@ RSpec.describe Record do
     it 'should be generated' do
       expect(record.type).to eq ContentType::CCS
       expect(record.legacy_record_version).to eq ProtocolVersion::TLS_1_2
-      expect(record.length).to eq 1
     end
 
     it 'should be serialized' do
@@ -36,7 +35,6 @@ RSpec.describe Record do
     it 'should generate valid record header and ChangeCipherSpec' do
       expect(record.type).to eq ContentType::CCS
       expect(record.legacy_record_version).to eq ProtocolVersion::TLS_1_2
-      expect(record.length).to eq 1
     end
 
     it 'should generate valid serializable object' do

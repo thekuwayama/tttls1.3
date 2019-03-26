@@ -42,15 +42,9 @@ module TLS13
         end
       end
 
-      # @return [Integer]
-      def length
-        values.map { |x| x.length + 4 }.sum
-      end
-
       # @return [String]
       def serialize
         binary = ''
-        binary += i2uint16(length)
         exs_except_psk = values.reject do |ex|
           ex.extension_type == ExtensionType::PRE_SHARED_KEY
         end
@@ -59,7 +53,7 @@ module TLS13
         end
         binary += self[ExtensionType::PRE_SHARED_KEY].serialize \
           if key?(ExtensionType::PRE_SHARED_KEY)
-        binary
+        uint16_length_prefix(binary)
       end
 
       # @param binary [String]
