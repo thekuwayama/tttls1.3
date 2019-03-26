@@ -10,7 +10,7 @@ RSpec.describe Aead do
                write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
                write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
                sequence_number: SequenceNumber.new,
-               opaque_type: ContentType::HANDSHAKE)
+               type: ContentType::HANDSHAKE)
     end
 
     let(:content) do
@@ -30,7 +30,8 @@ RSpec.describe Aead do
     end
 
     it 'should decrypt encrypted_record server parameters' do
-      expect(cipher.decrypt(encrypted_record, record_header)).to eq content
+      expect(cipher.decrypt(encrypted_record, record_header))
+        .to eq [content, ContentType::HANDSHAKE]
     end
   end
 
@@ -40,7 +41,7 @@ RSpec.describe Aead do
                write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
                write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
                sequence_number: SequenceNumber.new,
-               opaque_type: ContentType::HANDSHAKE)
+               type: ContentType::HANDSHAKE)
     end
 
     let(:content) do
@@ -60,7 +61,8 @@ RSpec.describe Aead do
     end
 
     it 'should decrypt encrypted_record client finished' do
-      expect(cipher.decrypt(encrypted_record, record_header)).to eq content
+      expect(cipher.decrypt(encrypted_record, record_header))
+        .to eq [content, ContentType::HANDSHAKE]
     end
   end
 end

@@ -25,39 +25,40 @@ module TLS13
       @key_schedule = nil # TLS13::KeySchedule
       @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cryptographer = Cryptograph::Passer.new
-      @read_seq_number = nil # TLS13::SequenceNumber
+      @read_seq_num = nil # TLS13::SequenceNumber
       @write_cryptographer = Cryptograph::Passer.new
-      @write_seq_number = nil # TLS13::SequenceNumber
+      @write_seq_num = nil # TLS13::SequenceNumber
       @transcript = {} # Hash of constant => TLS13::Message::$Object
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
+      @notyet_application_secret = true
     end
 
     # @param type [Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object]
     def send_messages(type, messages)
-      if @write_seq_number.nil? &&
+      if @write_seq_num.nil? &&
          type == Message::ContentType::APPLICATION_DATA
-        @write_seq_number = SequenceNumber.new
+        @write_seq_num = SequenceNumber.new
         sender = @endpoint
         @write_cryptographer \
-        = gen_aead_with_handshake_traffic_secret(@write_seq_number, sender)
+        = gen_aead_with_handshake_traffic_secret(@write_seq_num, sender)
       end
       record = Message::Record.new(type: type, messages: messages,
                                    cryptographer: @write_cryptographer)
       send_record(record)
       return if messages.none? { |m| m.is_a?(Message::Finished) }
 
-      @write_seq_number = SequenceNumber.new
+      @write_seq_num = SequenceNumber.new
       sender = @endpoint
       @write_cryptographer \
-      = gen_aead_with_application_traffic_secret(@write_seq_number, sender)
+      = gen_aead_with_application_traffic_secret(@write_seq_num, sender)
     end
 
     # @param record [TLS13::Message::Record]
     def send_record(record)
       @socket.write(record.serialize)
-      @write_seq_number&.succ
+      @write_seq_num&.succ
     end
 
     def send_ccs
@@ -81,11 +82,7 @@ module TLS13
         when Message::ContentType::HANDSHAKE
           messages = record.messages
         when Message::ContentType::APPLICATION_DATA
-          hash_len = CipherSuite.hash_len(@cipher_suite)
-          messages = Message.deserialize_server_parameters(
-            record.messages.first.fragment,
-            hash_len
-          )
+          messages = record.messages
         when Message::ContentType::CCS
           next # skip
         when Message::ContentType::ALERT
@@ -103,20 +100,22 @@ module TLS13
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
-      if @read_seq_number.nil? &&
+      if @read_seq_num.nil? &&
          buffer[0] == Message::ContentType::APPLICATION_DATA
-        @read_seq_number = SequenceNumber.new
+        @read_seq_num = SequenceNumber.new
         sender = (@endpoint == :client ? :server : :client)
         @read_cryptographer \
-        = gen_aead_with_handshake_traffic_secret(@read_seq_number, sender)
-      elsif @transcript.key?(SF)
-        @read_seq_number = SequenceNumber.new
+        = gen_aead_with_handshake_traffic_secret(@read_seq_num, sender)
+      elsif @transcript.key?(SF) && @notyet_application_secret
+        @read_seq_num = SequenceNumber.new
         sender = (@endpoint == :client ? :server : :client)
         @read_cryptographer \
-        = gen_aead_with_application_traffic_secret(@read_seq_number, sender)
+        = gen_aead_with_application_traffic_secret(@read_seq_num, sender)
+        @notyet_application_secret = false
       end
+
       record = Message::Record.deserialize(buffer, @read_cryptographer)
-      @read_seq_number&.succ
+      @read_seq_num&.succ
       record
     end
 
@@ -208,7 +207,7 @@ module TLS13
         write_key: write_key,
         write_iv: write_iv,
         sequence_number: seq_num,
-        opaque_type: Message::ContentType::HANDSHAKE
+        type: Message::ContentType::HANDSHAKE
       )
     end
 
@@ -225,7 +224,7 @@ module TLS13
         write_key: write_key,
         write_iv: write_iv,
         sequence_number: seq_num,
-        opaque_type: Message::ContentType::APPLICATION_DATA
+        type: Message::ContentType::APPLICATION_DATA
       )
     end
   end

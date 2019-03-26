@@ -227,6 +227,24 @@ module TLS13
                          message_range: CH..CV,
                          signature: signature)
     end
+
+    # @return [String]
+    def read
+      message = nil
+      loop do
+        message = recv_message
+        next if message.is_a?(Message::NewSessionTicket) # TODO
+
+        break
+      end
+      message.fragment
+    end
+
+    # @param binary [String]
+    def write(binary)
+      ap = Message::ApplicationData.new(binary)
+      send_messages(Message::ContentType::APPLICATION_DATA, [ap])
+    end
   end
   # rubocop: enable Metrics/ClassLength
 end

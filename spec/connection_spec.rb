@@ -52,8 +52,7 @@ RSpec.describe Connection do
     end
 
     let(:server_finished) do
-      hash_len = CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
-      Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
+      Finished.deserialize(TESTBINARY_SERVER_FINISHED)
     end
 
     it 'should verify server Finished.verify_data' do
@@ -67,10 +66,6 @@ RSpec.describe Connection do
   end
 
   context 'connection' do
-    let(:hash_len) do
-      CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
-    end
-
     let(:connection) do
       connection = Connection.new(nil)
       transcript = {
@@ -79,14 +74,14 @@ RSpec.describe Connection do
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
         CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
+        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
       }
       connection.instance_variable_set(:@transcript, transcript)
       connection
     end
 
     let(:client_finished) do
-      Finished.deserialize(TESTBINARY_CLIENT_FINISHED, hash_len)
+      Finished.deserialize(TESTBINARY_CLIENT_FINISHED)
     end
 
     it 'should sign client Finished.verify_data' do

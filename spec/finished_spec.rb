@@ -27,7 +27,7 @@ RSpec.describe Finished do
 
   context 'valid finished binary' do
     let(:message) do
-      Finished.deserialize(TESTBINARY_SERVER_FINISHED, 32)
+      Finished.deserialize(TESTBINARY_SERVER_FINISHED)
     end
 
     it 'should generate valid object' do
@@ -42,7 +42,7 @@ RSpec.describe Finished do
 
   context 'valid finished binary' do
     let(:message) do
-      Finished.deserialize(TESTBINARY_CLIENT_FINISHED, 32)
+      Finished.deserialize(TESTBINARY_CLIENT_FINISHED)
     end
 
     it 'should generate valid object' do

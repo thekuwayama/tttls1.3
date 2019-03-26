@@ -26,21 +26,18 @@ module TLS13
       alias fragment serialize
 
       # @param binary [String]
-      # @param hash_len [Integer]
       #
       # @raise [RuntimeError]
       #
       # @return [TLS13::Message::Finished]
-      def self.deserialize(binary, hash_len)
+      def self.deserialize(binary)
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::FINISHED
 
         msg_len = bin2i(binary.slice(1, 3))
-        raise 'malformed binary' \
-          unless hash_len == binary.length - 4 &&
-                 msg_len == hash_len
+        raise 'malformed binary' unless binary.length - 4 == msg_len
 
-        verify_data = binary.slice(4, hash_len)
+        verify_data = binary.slice(4, msg_len)
         Finished.new(verify_data)
       end
     end

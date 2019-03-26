@@ -8,11 +8,11 @@ module TLS13
       # @param write_key [String]
       # @param write_iv [String]
       # @param sequence_number [String] uint64
-      # @param opaque_type [TLS13::Message::ContentType] TLSInnerPlaintext.type
+      # @param type [TLS13::Message::ContentType] TLSInnerPlaintext.type
       # @param length_of_padding [Integer]
       # rubocop: disable Metrics/ParameterLists
       def initialize(cipher_suite:, write_key:, write_iv:,
-                     sequence_number:, opaque_type:, length_of_padding: 0)
+                     sequence_number:, type:, length_of_padding: 0)
         @cipher_suite = cipher_suite
         case cipher_suite
         when CipherSuite::TLS_AES_128_GCM_SHA256
@@ -30,7 +30,7 @@ module TLS13
         @write_key = write_key
         @write_iv = write_iv
         @sequence_number = sequence_number
-        @opaque_type = opaque_type
+        @type = type
         @length_of_padding = length_of_padding
       end
       # rubocop: enable Metrics/ParameterLists
@@ -51,7 +51,7 @@ module TLS13
       def encrypt(content)
         reset_cipher
         cipher = @cipher.encrypt
-        plaintext = content + @opaque_type + "\x00" * @length_of_padding
+        plaintext = content + @type + "\x00" * @length_of_padding
         cipher.auth_data = additional_data(plaintext.length)
         encrypted_data = cipher.update(plaintext) + cipher.final
         encrypted_data + cipher.auth_tag
@@ -65,7 +65,7 @@ module TLS13
       #
       # @raise [OpenSSL::Cipher::CipherError]
       #
-      # @return [String]
+      # @return [String and TLS13::Message::ContentType]
       def decrypt(encrypted_record, auth_data)
         reset_cipher
         decipher = @cipher.decrypt
@@ -76,7 +76,7 @@ module TLS13
         decipher.final
         zeros_len = scan_zeros(clear)
         postfix_len = 1 + zeros_len # type || zeros
-        clear[0...-postfix_len]
+        [clear[0...-postfix_len], clear[-postfix_len]]
       end
 
       def reset_cipher

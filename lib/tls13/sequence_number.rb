@@ -15,7 +15,6 @@ module TLS13
       l = i2uint64(@seq_num).unpack('C*')
       l.unshift(0) while l.length < iv_len
       r = str.unpack('C*')
-      r.unshift(0) while r.length < iv_len
       l.zip(r).map { |x, y| (x ^ y).chr }.join
     end
 

@@ -14,9 +14,9 @@ module TLS13
       # @param encrypted_record [String]
       # @param auth_data [String]
       #
-      # @return [String]
+      # @return [String and TLS13::Message::ContentType]
       def decrypt(encrypted_record, _auth_data)
-        encrypted_record
+        [encrypted_record, encrypted_record[0]]
       end
     end
   end

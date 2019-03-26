@@ -50,16 +50,16 @@ RSpec.describe Client do
       client = Client.new(mock_socket)
       client.instance_variable_set(:@cipher_suite,
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
-      read_seq_number = SequenceNumber.new
+      read_seq_num = SequenceNumber.new
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        sequence_number: read_seq_number,
-        opaque_type: ContentType::HANDSHAKE
+        sequence_number: read_seq_num,
+        type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@read_cryptographer, cipher)
-      client.instance_variable_set(:@read_seq_number, read_seq_number)
+      client.instance_variable_set(:@read_seq_num, read_seq_num)
       client
     end
 
@@ -91,10 +91,6 @@ RSpec.describe Client do
   end
 
   context 'client' do
-    let(:hash_len) do
-      CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
-    end
-
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket)
@@ -104,7 +100,7 @@ RSpec.describe Client do
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
         CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
+        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
       }
       client.instance_variable_set(:@transcript, transcript)
       ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
@@ -112,23 +108,23 @@ RSpec.describe Client do
       client.instance_variable_set(:@key_schedule, ks)
       client.instance_variable_set(:@cipher_suite,
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
-      write_seq_number = SequenceNumber.new
+      write_seq_num = SequenceNumber.new
       write_cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        sequence_number: write_seq_number,
-        opaque_type: ContentType::HANDSHAKE
+        sequence_number: write_seq_num,
+        type: ContentType::HANDSHAKE
       )
       client.instance_variable_set(:@write_cryptographer, write_cipher)
-      client.instance_variable_set(:@write_seq_number, write_seq_number)
+      client.instance_variable_set(:@write_seq_num, write_seq_num)
       client.send_finished
       read_cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new,
-        opaque_type: ContentType::HANDSHAKE
+        type: ContentType::HANDSHAKE
       )
       Record.deserialize(mock_socket.read, read_cipher)
     end
@@ -136,18 +132,13 @@ RSpec.describe Client do
     it 'should send Finished' do
       expect(record.type).to eq ContentType::APPLICATION_DATA
 
-      message = Message.deserialize_handshake(record.messages.first.fragment,
-                                              hash_len)
+      message = record.messages.first
       expect(message.msg_type).to eq HandshakeType::FINISHED
       expect(message.serialize).to eq TESTBINARY_CLIENT_FINISHED
     end
   end
 
   context 'client' do
-    let(:hash_len) do
-      CipherSuite.hash_len(CipherSuite::TLS_AES_128_GCM_SHA256)
-    end
-
     let(:client) do
       client = Client.new(nil)
       transcript = {
@@ -156,7 +147,7 @@ RSpec.describe Client do
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
         CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED, hash_len)
+        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
       }
       client.instance_variable_set(:@transcript, transcript)
       ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
@@ -168,7 +159,7 @@ RSpec.describe Client do
     end
 
     let(:client_finished) do
-      Finished.deserialize(TESTBINARY_CLIENT_FINISHED, hash_len)
+      Finished.deserialize(TESTBINARY_CLIENT_FINISHED)
     end
 
     it 'should verify server CertificateVerify' do
