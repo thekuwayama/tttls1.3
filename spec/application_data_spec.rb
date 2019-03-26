@@ -9,7 +9,7 @@ RSpec.describe ApplicationData do
       ApplicationData.new(TESTBINARY_CLIENT_APPLICATION_DATA)
     end
 
-    it 'should be serialize' do
+    it 'should be serialized' do
       expect(message.serialize).to eq TESTBINARY_CLIENT_APPLICATION_DATA
     end
   end

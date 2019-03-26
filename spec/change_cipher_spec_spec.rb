@@ -9,7 +9,7 @@ RSpec.describe ChangeCipherSpec do
       ChangeCipherSpec.new
     end
 
-    it 'should be serialize' do
+    it 'should be serialized' do
       expect(message.serialize).to eq "\x01"
     end
   end

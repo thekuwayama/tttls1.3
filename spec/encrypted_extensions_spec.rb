@@ -21,14 +21,14 @@ RSpec.describe EncryptedExtensions do
       EncryptedExtensions.new(extensions)
     end
 
-    it 'should be generate' do
+    it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
       expect(message.length).to eq 10 + server_name.length \
                                    + supported_groups.length
       expect(message.extensions).to eq extensions
     end
 
-    it 'should be serialize' do
+    it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::ENCRYPTED_EXTENSIONS \
                                       + i2uint24(message.length) \
                                       + extensions.serialize
@@ -40,13 +40,13 @@ RSpec.describe EncryptedExtensions do
       EncryptedExtensions.new(nil)
     end
 
-    it 'should be generate' do
+    it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
       expect(message.length).to eq 2
       expect(message.extensions).to eq Extensions.new
     end
 
-    it 'should be serialize' do
+    it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::ENCRYPTED_EXTENSIONS \
                                       + i2uint24(message.length) \
                                       + Extensions.new.serialize

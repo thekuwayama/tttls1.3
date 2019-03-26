@@ -18,7 +18,7 @@ RSpec.describe ClientHello do
                       legacy_session_id: legacy_session_id)
     end
 
-    it 'should be generate' do
+    it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.length).to eq 79
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
@@ -29,7 +29,7 @@ RSpec.describe ClientHello do
       expect(message.extensions).to be_empty
     end
 
-    it 'should be serialize' do
+    it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CLIENT_HELLO \
                                       + i2uint24(message.length) \
                                       + ProtocolVersion::TLS_1_2 \

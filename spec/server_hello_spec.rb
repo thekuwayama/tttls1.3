@@ -23,7 +23,7 @@ RSpec.describe ServerHello do
                       cipher_suite: cipher_suite)
     end
 
-    it 'should be generate' do
+    it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
       expect(message.length).to eq 72
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
@@ -34,7 +34,7 @@ RSpec.describe ServerHello do
       expect(message.extensions).to be_empty
     end
 
-    it 'should be serialize' do
+    it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::SERVER_HELLO \
                                       + i2uint24(message.length) \
                                       + ProtocolVersion::TLS_1_2 \
