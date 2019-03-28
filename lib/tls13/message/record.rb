@@ -3,54 +3,7 @@
 
 module TLS13
   module Message
-    class << self
-      # @param binary [String]
-      #
-      # @raise [RuntimeError]
-      #
-      # @return [Array of TLS13::Message::$Object]
-      # rubocop: disable Metrics/CyclomaticComplexity
-      def do_deserialize_handshake(binary)
-        case binary[0]
-        when HandshakeType::CLIENT_HELLO
-          ClientHello.deserialize(binary)
-        when HandshakeType::SERVER_HELLO
-          ServerHello.deserialize(binary)
-        when HandshakeType::ENCRYPTED_EXTENSIONS
-          EncryptedExtensions.deserialize(binary)
-        when HandshakeType::CERTIFICATE
-          Certificate.deserialize(binary)
-        when HandshakeType::CERTIFICATE_VERIFY
-          CertificateVerify.deserialize(binary)
-        when HandshakeType::FINISHED
-          Finished.deserialize(binary)
-        when HandshakeType::NEW_SESSION_TICKET
-          NewSessionTicket.deserialize(binary)
-        else
-          raise 'unexpected HandshakeType'
-        end
-      end
-      # rubocop: enable Metrics/CyclomaticComplexity
-
-      # @param binary [String]
-      #
-      # @return [Array of TLS13::Message::$Object]
-      def deserialize_handshake(binary)
-        handshakes = []
-        itr = 0
-        while itr < binary.length
-          msg_len = bin2i(binary.slice(itr + 1, 3))
-          msg_bin = binary.slice(itr, msg_len + 4)
-          message = do_deserialize_handshake(msg_bin)
-          itr += msg_len + 4
-          handshakes << message
-        end
-        raise 'malformed binary' unless itr == binary.length
-
-        handshakes
-      end
-    end
-
+    # rubocop: disable Metrics/ClassLength
     class Record
       attr_reader :type
       attr_reader :legacy_record_version
@@ -71,28 +24,6 @@ module TLS13
         @legacy_record_version = legacy_record_version
         @messages = messages || []
         @cryptographer = cryptographer
-      end
-
-      def messages_type
-        types = @messages.map(&:class).uniq
-        raise 'invalid messages' unless types.length == 1
-
-        type = types.first
-        if [Message::ClientHello,
-            Message::ServerHello,
-            Message::EncryptedExtensions,
-            Message::Certificate,
-            Message::CertificateVerify,
-            Message::Finished,
-            Message::NewSessionTicket].include?(type)
-          ContentType::HANDSHAKE
-        elsif type == ChangeCipherSpec
-          ContentType::CCS
-        elsif type == Message::ApplicationData
-          ContentType::APPLICATION_DATA
-        else # TODO: Alert
-          raise 'unexpected messages'
-        end
       end
 
       # @return [String]
@@ -130,26 +61,99 @@ module TLS13
                    cryptographer: cryptographer)
       end
 
-      # @param binary [String]
-      # @param type [TLS13::Message::ContentType]
-      #
-      # @raise [RuntimeError]
-      #
-      # @return [Array of TLS13::Message::$Object]
-      def self.deserialize_fragment(binary, type)
-        raise 'zero-length fragments' if binary.nil? || binary.empty?
+      private
 
-        case type
-        when ContentType::HANDSHAKE
-          Message.deserialize_handshake(binary)
-        when ContentType::CCS
-          [ChangeCipherSpec.deserialize(binary)]
-        when ContentType::APPLICATION_DATA
-          [ApplicationData.deserialize(binary)]
-        else
-          raise 'unknown ContentType'
+      def messages_type
+        types = @messages.map(&:class).uniq
+        raise 'invalid messages' unless types.length == 1
+
+        type = types.first
+        if [Message::ClientHello,
+            Message::ServerHello,
+            Message::EncryptedExtensions,
+            Message::Certificate,
+            Message::CertificateVerify,
+            Message::Finished,
+            Message::NewSessionTicket].include?(type)
+          ContentType::HANDSHAKE
+        elsif type == ChangeCipherSpec
+          ContentType::CCS
+        elsif type == Message::ApplicationData
+          ContentType::APPLICATION_DATA
+        else # TODO: Alert
+          raise 'unexpected messages'
+        end
+      end
+
+      class << self
+        # @param binary [String]
+        # @param type [TLS13::Message::ContentType]
+        #
+        # @raise [RuntimeError]
+        #
+        # @return [Array of TLS13::Message::$Object]
+        def deserialize_fragment(binary, type)
+          raise 'zero-length fragments' if binary.nil? || binary.empty?
+
+          case type
+          when ContentType::HANDSHAKE
+            deserialize_handshake(binary)
+          when ContentType::CCS
+            [ChangeCipherSpec.deserialize(binary)]
+          when ContentType::APPLICATION_DATA
+            [ApplicationData.deserialize(binary)]
+          else
+            raise 'unknown ContentType'
+          end
+        end
+
+        # @param binary [String]
+        #
+        # @raise [RuntimeError]
+        #
+        # @return [Array of TLS13::Message::$Object]
+        # rubocop: disable Metrics/CyclomaticComplexity
+        def do_deserialize_handshake(binary)
+          case binary[0]
+          when HandshakeType::CLIENT_HELLO
+            ClientHello.deserialize(binary)
+          when HandshakeType::SERVER_HELLO
+            ServerHello.deserialize(binary)
+          when HandshakeType::ENCRYPTED_EXTENSIONS
+            EncryptedExtensions.deserialize(binary)
+          when HandshakeType::CERTIFICATE
+            Certificate.deserialize(binary)
+          when HandshakeType::CERTIFICATE_VERIFY
+            CertificateVerify.deserialize(binary)
+          when HandshakeType::FINISHED
+            Finished.deserialize(binary)
+          when HandshakeType::NEW_SESSION_TICKET
+            NewSessionTicket.deserialize(binary)
+          else
+            raise 'unexpected HandshakeType'
+          end
+        end
+        # rubocop: enable Metrics/CyclomaticComplexity
+
+        # @param binary [String]
+        #
+        # @return [Array of TLS13::Message::$Object]
+        def deserialize_handshake(binary)
+          handshakes = []
+          itr = 0
+          while itr < binary.length
+            msg_len = bin2i(binary.slice(itr + 1, 3))
+            msg_bin = binary.slice(itr, msg_len + 4)
+            message = do_deserialize_handshake(msg_bin)
+            itr += msg_len + 4
+            handshakes << message
+          end
+          raise 'malformed binary' unless itr == binary.length
+
+          handshakes
         end
       end
     end
+    # rubocop: enable Metrics/ClassLength
   end
 end
