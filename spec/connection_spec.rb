@@ -27,13 +27,16 @@ RSpec.describe Connection do
     end
 
     it 'should verify server CertificateVerify.signature' do
-      expect(connection.do_verify_certificate_verify(
-               certificate_pem: ct.certificate_list.first.cert_data.to_pem,
-               signature_scheme: cv.signature_scheme,
-               signature: cv.signature,
-               context: 'TLS 1.3, server CertificateVerify',
-               message_range: CH..CT
-             )).to be true
+      certificate_pem = ct.certificate_list.first.cert_data.to_pem
+      signature_scheme = cv.signature_scheme
+      signature = cv.signature
+      expect(connection.send(:do_verify_certificate_verify,
+                             certificate_pem: certificate_pem,
+                             signature_scheme: signature_scheme,
+                             signature: signature,
+                             context: 'TLS 1.3, server CertificateVerify',
+                             message_range: CH..CT))
+        .to be true
     end
   end
 
@@ -56,12 +59,12 @@ RSpec.describe Connection do
     end
 
     it 'should verify server Finished.verify_data' do
-      expect(connection.do_verify_finished(
-               digest: 'SHA256',
-               finished_key: TESTBINARY_SERVER_FINISHED_KEY,
-               message_range: CH..CV,
-               signature: server_finished.verify_data
-             )).to be true
+      expect(connection.send(:do_verify_finished,
+                             digest: 'SHA256',
+                             finished_key: TESTBINARY_SERVER_FINISHED_KEY,
+                             message_range: CH..CV,
+                             signature: server_finished.verify_data))
+        .to be true
     end
   end
 
@@ -85,11 +88,11 @@ RSpec.describe Connection do
     end
 
     it 'should sign client Finished.verify_data' do
-      expect(connection.do_sign_finished(
-               digest: 'SHA256',
-               finished_key: TESTBINARY_CLIENT_FINISHED_KEY,
-               message_range: CH..EOED
-             )).to eq client_finished.verify_data
+      expect(connection.send(:do_sign_finished,
+                             digest: 'SHA256',
+                             finished_key: TESTBINARY_CLIENT_FINISHED_KEY,
+                             message_range: CH..EOED))
+        .to eq client_finished.verify_data
     end
   end
 end

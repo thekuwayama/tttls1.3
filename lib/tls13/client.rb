@@ -80,6 +80,8 @@ module TLS13
     end
     # rubocop: enable all
 
+    private
+
     # @return [TLS13::Message::Extensions]
     def gen_extensions
       exs = []
@@ -125,7 +127,7 @@ module TLS13
         ),
         extensions: exs
       )
-      send_messages(Message::ContentType::HANDSHAKE, [ch])
+      send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch
     end
 
@@ -187,7 +189,7 @@ module TLS13
     # @return [TLS13::Message::Finished]
     def send_finished
       cf = Message::Finished.new(sign_finished)
-      send_messages(Message::ContentType::APPLICATION_DATA, [cf])
+      send_handshakes(Message::ContentType::APPLICATION_DATA, [cf])
       @transcript[CF] = cf
     end
 
@@ -226,24 +228,6 @@ module TLS13
                          finished_key: finished_key,
                          message_range: CH..CV,
                          signature: signature)
-    end
-
-    # @return [String]
-    def read
-      message = nil
-      loop do
-        message = recv_message
-        next if message.is_a?(Message::NewSessionTicket) # TODO
-
-        break
-      end
-      message.fragment
-    end
-
-    # @param binary [String]
-    def write(binary)
-      ap = Message::ApplicationData.new(binary)
-      send_messages(Message::ContentType::APPLICATION_DATA, [ap])
     end
   end
   # rubocop: enable Metrics/ClassLength

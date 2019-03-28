@@ -57,28 +57,30 @@ module TLS13
         )
       end
 
-      # @param binary [String]
-      #
-      # @return [Array of CertificateEntry]
-      def self.deserialize_certificate_list(binary)
-        itr = 0
-        certificate_list = []
-        while itr < binary.length
-          cd_len = bin2i(binary.slice(itr, 3))
-          itr += 3
-          cd_bin = binary.slice(itr, cd_len)
-          cert_data = OpenSSL::X509::Certificate.new(cd_bin)
-          itr += cd_len
-          exs_len = bin2i(binary.slice(itr, 2))
-          itr += 2
-          exs_bin = binary.slice(itr, exs_len)
-          extensions = Extensions.deserialize(exs_bin,
-                                              HandshakeType::CERTIFICATE)
-          itr += exs_len
-          certificate_list \
-          << CertificateEntry.new(cert_data, extensions)
+      class << self
+        # @param binary [String]
+        #
+        # @return [Array of CertificateEntry]
+        def deserialize_certificate_list(binary)
+          itr = 0
+          certificate_list = []
+          while itr < binary.length
+            cd_len = bin2i(binary.slice(itr, 3))
+            itr += 3
+            cd_bin = binary.slice(itr, cd_len)
+            cert_data = OpenSSL::X509::Certificate.new(cd_bin)
+            itr += cd_len
+            exs_len = bin2i(binary.slice(itr, 2))
+            itr += 2
+            exs_bin = binary.slice(itr, exs_len)
+            extensions = Extensions.deserialize(exs_bin,
+                                                HandshakeType::CERTIFICATE)
+            itr += exs_len
+            certificate_list \
+            << CertificateEntry.new(cert_data, extensions)
+          end
+          certificate_list
         end
-        certificate_list
       end
     end
 

@@ -32,14 +32,6 @@ module TLS13
         @length_of_padding = length_of_padding
       end
 
-      # @return [String]
-      def additional_data(plaintext_len)
-        ciphertext_len = plaintext_len + 16 # length of auth_tag is 16
-        Message::ContentType::APPLICATION_DATA \
-        + Message::ProtocolVersion::TLS_1_2 \
-        + i2uint16(ciphertext_len)
-      end
-
       # AEAD-Encrypt(write_key, nonce, additional_data, plaintext)
       #
       # @param content [String]
@@ -75,6 +67,16 @@ module TLS13
         zeros_len = scan_zeros(clear)
         postfix_len = 1 + zeros_len # type || zeros
         [clear[0...-postfix_len], clear[-postfix_len]]
+      end
+
+      private
+
+      # @return [String]
+      def additional_data(plaintext_len)
+        ciphertext_len = plaintext_len + 16 # length of auth_tag is 16
+        Message::ContentType::APPLICATION_DATA \
+        + Message::ProtocolVersion::TLS_1_2 \
+        + i2uint16(ciphertext_len)
       end
 
       def reset_cipher

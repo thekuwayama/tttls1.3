@@ -34,9 +34,35 @@ module TLS13
       @notyet_application_secret = true
     end
 
+    # @return [String]
+    def read
+      message = nil
+      loop do
+        message = recv_message
+        next \
+          if message.is_a?(Message::NewSessionTicket) &&
+             @endpoint == :client # TODO
+
+        raise 'unexpected message' \
+          if message.is_a?(Message::NewSessionTicket) &&
+             @endpoint == :server
+
+        break
+      end
+      message.fragment
+    end
+
+    # @param binary [String]
+    def write(binary)
+      ap = Message::ApplicationData.new(binary)
+      send_application_data([ap])
+    end
+
+    private
+
     # @param type [Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object]
-    def send_messages(type, messages)
+    def send_handshakes(type, messages)
       if @write_seq_num.nil? &&
          type == Message::ContentType::APPLICATION_DATA
         @write_seq_num = SequenceNumber.new
@@ -55,20 +81,30 @@ module TLS13
       = gen_aead_with_application_traffic_secret(@write_seq_num, sender)
     end
 
-    # @param record [TLS13::Message::Record]
-    def send_record(record)
-      @socket.write(record.serialize)
-      @write_seq_num&.succ
-    end
-
     def send_ccs
       ccs_record = Message::Record.new(
         type: Message::ContentType::CCS,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [Message::ChangeCipherSpec.new],
-        cryptographer: Cryptograph::Passer.new
+        cryptographer: @write_cryptographer
       )
       send_record(ccs_record)
+    end
+
+    def send_application_data(messages)
+      ap_record = Message::Record.new(
+        type: Message::ContentType::APPLICATION_DATA,
+        legacy_record_version: Message::ProtocolVersion::TLS_1_2,
+        messages: messages,
+        cryptographer: @write_cryptographer
+      )
+      send_record(ap_record)
+    end
+
+    # @param record [TLS13::Message::Record]
+    def send_record(record)
+      @socket.write(record.serialize)
+      @write_seq_num&.succ
     end
 
     # @return [TLS13::Message::$Object]
@@ -96,6 +132,7 @@ module TLS13
     end
 
     # @return [TLS13::Message::Record]
+    # rubocop: disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def recv_record
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
@@ -118,6 +155,7 @@ module TLS13
       @read_seq_num&.succ
       record
     end
+    # rubocop: enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # @param range [Range]
     #

@@ -8,7 +8,7 @@ RSpec.describe Client do
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket)
-      client.send_client_hello
+      client.send(:send_client_hello)
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
 
@@ -32,7 +32,7 @@ RSpec.describe Client do
                         + i2uint16(msg_len) \
                         + TESTBINARY_SERVER_HELLO)
       client = Client.new(mock_socket)
-      client.recv_server_hello
+      client.send(:recv_server_hello)
     end
 
     it 'should receive ServerHello' do
@@ -63,28 +63,28 @@ RSpec.describe Client do
     end
 
     it 'should receive EncryptedExtensions' do
-      message = client.recv_encrypted_extensions
+      message = client.send(:recv_encrypted_extensions)
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
     end
 
     it 'should receive Certificate' do
-      client.recv_encrypted_extensions # to skip
-      message = client.recv_certificate
+      client.send(:recv_encrypted_extensions) # to skip
+      message = client.send(:recv_certificate)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
     end
 
     it 'should receive CertificateVerify' do
-      client.recv_encrypted_extensions # to skip
-      client.recv_certificate          # to skip
-      message = client.recv_certificate_verify
+      client.send(:recv_encrypted_extensions) # to skip
+      client.send(:recv_certificate)          # to skip
+      message = client.send(:recv_certificate_verify)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
     end
 
     it 'should receive Finished' do
-      client.recv_encrypted_extensions # to skip
-      client.recv_certificate          # to skip
-      client.recv_certificate_verify   # to skip
-      message = client.recv_finished
+      client.send(:recv_encrypted_extensions) # to skip
+      client.send(:recv_certificate)          # to skip
+      client.send(:recv_certificate_verify)   # to skip
+      message = client.send(:recv_finished)
       expect(message.msg_type).to eq HandshakeType::FINISHED
     end
   end
@@ -116,7 +116,7 @@ RSpec.describe Client do
       )
       client.instance_variable_set(:@write_cryptographer, write_cipher)
       client.instance_variable_set(:@write_seq_num, write_seq_num)
-      client.send_finished
+      client.send(:send_finished)
       read_cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
@@ -160,15 +160,15 @@ RSpec.describe Client do
     end
 
     it 'should verify server CertificateVerify' do
-      expect(client.verify_certificate_verify).to be true
+      expect(client.send(:verify_certificate_verify)).to be true
     end
 
     it 'should verify server Finished' do
-      expect(client.verify_finished).to be true
+      expect(client.send(:verify_finished)).to be true
     end
 
     it 'should sign client Finished' do
-      expect(client.sign_finished).to eq client_finished.verify_data
+      expect(client.send(:sign_finished)).to eq client_finished.verify_data
     end
   end
 end
