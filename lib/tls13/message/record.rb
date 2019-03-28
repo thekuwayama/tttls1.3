@@ -73,12 +73,35 @@ module TLS13
         @cryptographer = cryptographer
       end
 
+      def messages_type
+        types = @messages.map(&:class).uniq
+        raise 'invalid messages' unless types.length == 1
+
+        type = types.first
+        if [Message::ClientHello,
+            Message::ServerHello,
+            Message::EncryptedExtensions,
+            Message::Certificate,
+            Message::CertificateVerify,
+            Message::Finished,
+            Message::NewSessionTicket].include?(type)
+          ContentType::HANDSHAKE
+        elsif type == ChangeCipherSpec
+          ContentType::CCS
+        elsif type == Message::ApplicationData
+          ContentType::APPLICATION_DATA
+        else # TODO: Alert
+          raise 'unexpected messages'
+        end
+      end
+
       # @return [String]
       def serialize
         binary = ''
         binary += @type
         binary += @legacy_record_version
-        fragment = @cryptographer.encrypt(@messages.map(&:serialize).join)
+        fragment = @cryptographer.encrypt(@messages.map(&:serialize).join,
+                                          messages_type)
         binary += uint16_length_prefix(fragment)
         binary
       end

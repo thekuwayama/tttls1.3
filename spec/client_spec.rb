@@ -55,8 +55,7 @@ RSpec.describe Client do
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        sequence_number: read_seq_num,
-        type: ContentType::HANDSHAKE
+        sequence_number: read_seq_num
       )
       client.instance_variable_set(:@read_cryptographer, cipher)
       client.instance_variable_set(:@read_seq_num, read_seq_num)
@@ -113,8 +112,7 @@ RSpec.describe Client do
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        sequence_number: write_seq_num,
-        type: ContentType::HANDSHAKE
+        sequence_number: write_seq_num
       )
       client.instance_variable_set(:@write_cryptographer, write_cipher)
       client.instance_variable_set(:@write_seq_num, write_seq_num)
@@ -123,8 +121,7 @@ RSpec.describe Client do
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        sequence_number: SequenceNumber.new,
-        type: ContentType::HANDSHAKE
+        sequence_number: SequenceNumber.new
       )
       Record.deserialize(mock_socket.read, read_cipher)
     end

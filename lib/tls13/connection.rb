@@ -206,8 +206,7 @@ module TLS13
         cipher_suite: @cipher_suite,
         write_key: write_key,
         write_iv: write_iv,
-        sequence_number: seq_num,
-        type: Message::ContentType::HANDSHAKE
+        sequence_number: seq_num
       )
     end
 
@@ -223,8 +222,7 @@ module TLS13
         cipher_suite: @cipher_suite,
         write_key: write_key,
         write_iv: write_iv,
-        sequence_number: seq_num,
-        type: Message::ContentType::APPLICATION_DATA
+        sequence_number: seq_num
       )
     end
   end

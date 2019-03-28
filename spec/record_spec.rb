@@ -72,8 +72,7 @@ RSpec.describe Record do
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        sequence_number: SequenceNumber.new,
-        type: ContentType::HANDSHAKE
+        sequence_number: SequenceNumber.new
       )
       Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD, cipher)
     end

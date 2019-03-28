@@ -9,8 +9,7 @@ RSpec.describe Aead do
       Aead.new(cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
                write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
                write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-               sequence_number: SequenceNumber.new,
-               type: ContentType::HANDSHAKE)
+               sequence_number: SequenceNumber.new)
     end
 
     let(:content) do
@@ -26,7 +25,8 @@ RSpec.describe Aead do
     end
 
     it 'should encrypt content of server parameters' do
-      expect(cipher.encrypt(content)).to eq encrypted_record
+      expect(cipher.encrypt(content, ContentType::HANDSHAKE))
+        .to eq encrypted_record
     end
 
     it 'should decrypt encrypted_record server parameters' do
@@ -40,8 +40,7 @@ RSpec.describe Aead do
       Aead.new(cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
                write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
                write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-               sequence_number: SequenceNumber.new,
-               type: ContentType::HANDSHAKE)
+               sequence_number: SequenceNumber.new)
     end
 
     let(:content) do
@@ -57,7 +56,8 @@ RSpec.describe Aead do
     end
 
     it 'should encrypt content of client finished' do
-      expect(cipher.encrypt(content)).to eq encrypted_record
+      expect(cipher.encrypt(content, ContentType::HANDSHAKE))
+        .to eq encrypted_record
     end
 
     it 'should decrypt encrypted_record client finished' do

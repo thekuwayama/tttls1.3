@@ -7,12 +7,11 @@ module TLS13
       # @param content [String]
       #
       # @return [String]
-      def encrypt(content)
+      def encrypt(content, _type)
         content
       end
 
       # @param encrypted_record [String]
-      # @param auth_data [String]
       #
       # @return [String and TLS13::Message::ContentType]
       def decrypt(encrypted_record, _auth_data)
