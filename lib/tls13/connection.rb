@@ -160,11 +160,13 @@ module TLS13
     # @param range [Range]
     #
     # @return [String]
-    def concat_messages(range)
+    def transcript_hash(range)
       # TODO: HRR
-      range.to_a.map do |m|
+      messages = range.to_a.map do |m|
         @transcript.key?(m) ? @transcript[m].serialize : ''
       end.join
+      digest = CipherSuite.digest(@cipher_suite)
+      OpenSSL::Digest.digest(digest, messages)
     end
 
     # @param certificate_pem [String]
@@ -178,10 +180,9 @@ module TLS13
     # @return [Boolean]
     def do_verify_certificate_verify(certificate_pem:, signature_scheme:,
                                      signature:, context:, message_range:)
-      messages = concat_messages(message_range)
+      hash = transcript_hash(message_range)
       case signature_scheme
       when Message::SignatureScheme::RSA_PSS_RSAE_SHA256
-        hash = OpenSSL::Digest::SHA256.digest(messages)
         content = "\x20" * 64 + context + "\x00" + hash
         public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA256', signature, content, salt_length: :auto,
@@ -197,8 +198,7 @@ module TLS13
     #
     # @return [String]
     def do_sign_finished(digest:, finished_key:, message_range:)
-      messages = concat_messages(message_range)
-      hash = OpenSSL::Digest.digest(digest, messages)
+      hash = transcript_hash(message_range)
       OpenSSL::HMAC.digest(digest, finished_key, hash)
     end
 
@@ -237,7 +237,7 @@ module TLS13
     #
     # @return [TLS13::Cryptograph::Aead]
     def gen_aead_with_handshake_traffic_secret(seq_num, sender)
-      ch_sh = concat_messages(CH..SH)
+      ch_sh = transcript_hash(CH..SH)
       write_key = @key_schedule.send("#{sender}_handshake_write_key", ch_sh)
       write_iv = @key_schedule.send("#{sender}_handshake_write_iv", ch_sh)
       Cryptograph::Aead.new(
@@ -253,7 +253,7 @@ module TLS13
     #
     # @return [TLS13::Cryptograph::Aead]
     def gen_aead_with_application_traffic_secret(seq_num, sender)
-      ch_sf = concat_messages(CH..SF)
+      ch_sf = transcript_hash(CH..SF)
       write_key = @key_schedule.send("#{sender}_application_write_key", ch_sf)
       write_iv = @key_schedule.send("#{sender}_application_write_iv", ch_sf)
       Cryptograph::Aead.new(

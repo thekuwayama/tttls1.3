@@ -11,21 +11,30 @@ RSpec.describe KeySchedule do
     end
 
     let(:ch_sh) do
-      TESTBINARY_CLIENT_HELLO \
-      + TESTBINARY_SERVER_HELLO
+      OpenSSL::Digest.digest('SHA256',
+                             TESTBINARY_CLIENT_HELLO \
+                             + TESTBINARY_SERVER_HELLO)
     end
 
     let(:ch_sf) do
-      ch_sh \
-      + TESTBINARY_ENCRYPTED_EXTENSIONS \
-      + TESTBINARY_CERTIFICATE \
-      + TESTBINARY_CERTIFICATE_VERIFY \
-      + TESTBINARY_SERVER_FINISHED
+      OpenSSL::Digest.digest('SHA256',
+                             TESTBINARY_CLIENT_HELLO \
+                             + TESTBINARY_SERVER_HELLO \
+                             + TESTBINARY_ENCRYPTED_EXTENSIONS \
+                             + TESTBINARY_CERTIFICATE \
+                             + TESTBINARY_CERTIFICATE_VERIFY \
+                             + TESTBINARY_SERVER_FINISHED)
     end
 
     let(:ch_cf) do
-      ch_sf \
-      + TESTBINARY_CLIENT_FINISHED
+      OpenSSL::Digest.digest('SHA256',
+                             TESTBINARY_CLIENT_HELLO \
+                             + TESTBINARY_SERVER_HELLO \
+                             + TESTBINARY_ENCRYPTED_EXTENSIONS \
+                             + TESTBINARY_CERTIFICATE \
+                             + TESTBINARY_CERTIFICATE_VERIFY \
+                             + TESTBINARY_SERVER_FINISHED \
+                             + TESTBINARY_CLIENT_FINISHED)
     end
 
     it 'should generate secret' do

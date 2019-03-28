@@ -23,6 +23,8 @@ RSpec.describe Connection do
         CV => cv
       }
       connection.instance_variable_set(:@transcript, transcript)
+      connection.instance_variable_set(:@cipher_suite,
+                                       CipherSuite::TLS_AES_128_GCM_SHA256)
       connection
     end
 
@@ -51,6 +53,8 @@ RSpec.describe Connection do
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
       }
       connection.instance_variable_set(:@transcript, transcript)
+      connection.instance_variable_set(:@cipher_suite,
+                                       CipherSuite::TLS_AES_128_GCM_SHA256)
       connection
     end
 
@@ -80,6 +84,8 @@ RSpec.describe Connection do
         SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
       }
       connection.instance_variable_set(:@transcript, transcript)
+      connection.instance_variable_set(:@cipher_suite,
+                                       CipherSuite::TLS_AES_128_GCM_SHA256)
       connection
     end
 
