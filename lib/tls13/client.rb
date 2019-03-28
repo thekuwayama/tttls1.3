@@ -92,7 +92,8 @@ module TLS13
       )
       # signature_algorithms
       exs << Message::Extension::SignatureAlgorithms.new(
-        [Message::SignatureScheme::RSA_PSS_RSAE_SHA256]
+        [Message::SignatureScheme::RSA_PSS_RSAE_SHA256,
+         Message::SignatureScheme::RSA_PSS_RSAE_SHA384]
       )
       # supported_groups: only P-256
       exs << Message::Extension::SupportedGroups.new(
@@ -122,9 +123,7 @@ module TLS13
     def send_client_hello
       exs = gen_extensions
       ch = Message::ClientHello.new(
-        cipher_suites: CipherSuites.new(
-          [CipherSuite::TLS_AES_128_GCM_SHA256]
-        ),
+        cipher_suites: CipherSuites.new,
         extensions: exs
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])

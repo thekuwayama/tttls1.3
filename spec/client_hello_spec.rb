@@ -30,7 +30,7 @@ RSpec.describe ClientHello do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CLIENT_HELLO \
-                                      + i2uint24(79) \
+                                      + i2uint24(77) \
                                       + ProtocolVersion::TLS_1_2 \
                                       + random \
                                       + i2uint8(legacy_session_id.length) \

@@ -18,7 +18,7 @@ RSpec.describe Client do
       message = record.messages.first
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
-      expect(message.cipher_suites).to eq [CipherSuite::TLS_AES_128_GCM_SHA256]
+      expect(message.cipher_suites).to eq DEFALT_CIPHER_SUITES
       expect(message.legacy_compression_methods).to eq "\x00"
     end
   end

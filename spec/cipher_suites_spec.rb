@@ -25,7 +25,9 @@ RSpec.describe CipherSuites do
     end
 
     it 'should generate valid object' do
-      expect(cs).to eq DEFALT_CIPHER_SUITES
+      expect(cs).to eq [CipherSuite::TLS_AES_256_GCM_SHA384,
+                        CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
+                        CipherSuite::TLS_AES_128_GCM_SHA256]
     end
   end
 

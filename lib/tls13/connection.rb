@@ -187,6 +187,11 @@ module TLS13
         public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA256', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA256')
+      when Message::SignatureScheme::RSA_PSS_RSAE_SHA384
+        content = "\x20" * 64 + context + "\x00" + hash
+        public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
+        public_key.verify_pss('SHA384', signature, content, salt_length: :auto,
+                                                            mgf1_hash: 'SHA384')
       else # TODO: other SignatureScheme
         raise 'unexpected SignatureScheme'
       end
