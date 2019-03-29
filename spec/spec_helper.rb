@@ -321,6 +321,10 @@ TESTBINARY_CLIENT_APPLICATION_DATA = <<BIN.split.map(&:hex).map(&:chr).join
   30 31
 BIN
 
+TESTBINARY_ALERT = <<BIN.split.map(&:hex).map(&:chr).join
+  01 00
+BIN
+
 TESTBINARY_SERVER_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   00 8d 3b 66 f8 16 ea 55     9f 96 b5 37 e8 85 c3 1f
   c0 68 bf 49 2c 65 2f 01     f2 88 a1 d8 cd c1 9f c8
