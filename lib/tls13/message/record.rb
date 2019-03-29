@@ -94,6 +94,7 @@ module TLS13
         # @raise [RuntimeError]
         #
         # @return [Array of TLS13::Message::$Object]
+        # rubocop: disable Metrics/CyclomaticComplexity
         def deserialize_fragment(binary, type)
           raise 'zero-length fragments' if binary.nil? || binary.empty?
 
@@ -110,6 +111,7 @@ module TLS13
             raise 'unknown ContentType'
           end
         end
+        # rubocop: enable Metrics/CyclomaticComplexity
 
         # @param binary [String]
         #

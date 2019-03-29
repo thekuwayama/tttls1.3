@@ -86,12 +86,12 @@ module TLS13
         type: Message::ContentType::CCS,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [Message::ChangeCipherSpec.new],
-        cryptographer: @write_cryptographer
+        cryptographer: Cryptograph::Passer.new
       )
       send_record(ccs_record)
     end
 
-    # @param messages [Array of TLS13::Message::ApplicationData]
+    # @param messages [Array of ApplicationData]
     def send_application_data(messages)
       ap_record = Message::Record.new(
         type: Message::ContentType::APPLICATION_DATA,
