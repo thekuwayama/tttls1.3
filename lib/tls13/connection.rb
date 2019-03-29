@@ -91,6 +91,7 @@ module TLS13
       send_record(ccs_record)
     end
 
+    # @param messages [Array of TLS13::Message::ApplicationData]
     def send_application_data(messages)
       ap_record = Message::Record.new(
         type: Message::ContentType::APPLICATION_DATA,
@@ -99,6 +100,17 @@ module TLS13
         cryptographer: @write_cryptographer
       )
       send_record(ap_record)
+    end
+
+    # @param messages [TLS13::Message::Alert]
+    def send_alert(message)
+      alert_record = Message::Record.new(
+        type: Message::ContentType::ALERT,
+        legacy_record_version: Message::ProtocolVersion::TLS_1_2,
+        messages: [message],
+        cryptographer: @write_cryptographer
+      )
+      send_record(alert_record)
     end
 
     # @param record [TLS13::Message::Record]
@@ -122,7 +134,7 @@ module TLS13
         when Message::ContentType::CCS
           next # skip
         when Message::ContentType::ALERT
-          next # TODO
+          messages = record.messages
         else
           raise 'unexpected ContentType'
         end

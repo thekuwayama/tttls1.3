@@ -80,7 +80,9 @@ module TLS13
           ContentType::CCS
         elsif type == Message::ApplicationData
           ContentType::APPLICATION_DATA
-        else # TODO: Alert
+        elsif type == Message::Alert
+          ContentType::ALERT
+        else
           raise 'unexpected messages'
         end
       end
@@ -102,6 +104,8 @@ module TLS13
             [ChangeCipherSpec.deserialize(binary)]
           when ContentType::APPLICATION_DATA
             [ApplicationData.deserialize(binary)]
+          when ContentType::ALERT
+            [Alert.deserialize(binary)]
           else
             raise 'unknown ContentType'
           end
