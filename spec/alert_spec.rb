@@ -7,12 +7,12 @@ RSpec.describe Alert do
   context 'unexpected_message alert' do
     let(:message) do
       Alert.new(level: AlertLevel::FATAL,
-                description: AlertDescription::UNEXPECTED_MESSAGE)
+                description: ALERT_DESCRIPTION[:unexpected_message])
     end
 
     it 'should be serialized' do
       expect(message.serialize).to eq AlertLevel::FATAL \
-                                      + AlertDescription::UNEXPECTED_MESSAGE
+                                      + ALERT_DESCRIPTION[:unexpected_message]
     end
   end
 
@@ -23,7 +23,7 @@ RSpec.describe Alert do
 
     it 'should generate object' do
       expect(message.level).to eq AlertLevel::WARNING
-      expect(message.description).to eq AlertDescription::CLOSE_NOTIFY
+      expect(message.description).to eq ALERT_DESCRIPTION[:close_notify]
     end
 
     it 'should generate serializable object' do

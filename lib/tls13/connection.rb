@@ -51,7 +51,7 @@ module TLS13
 
         break
       end
-      raise message.description if message.is_a?(Message::Alert)
+      raise message.to_error if message.is_a?(Message::Alert)
 
       message.fragment
     end
@@ -59,7 +59,7 @@ module TLS13
     # @param binary [String]
     def write(binary)
       ap = Message::ApplicationData.new(binary)
-      send_application_data([ap])
+      send_application_data(ap)
     end
 
     private
@@ -95,12 +95,12 @@ module TLS13
       send_record(ccs_record)
     end
 
-    # @param messages [Array of ApplicationData]
-    def send_application_data(messages)
+    # @param message [TLS13::Message::ApplicationData]
+    def send_application_data(message)
       ap_record = Message::Record.new(
         type: Message::ContentType::APPLICATION_DATA,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
-        messages: messages,
+        messages: [message],
         cryptographer: @write_cryptographer
       )
       send_record(ap_record)

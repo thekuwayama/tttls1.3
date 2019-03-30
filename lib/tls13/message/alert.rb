@@ -8,35 +8,37 @@ module TLS13
       FATAL   = "\x02"
     end
 
-    module AlertDescription
-      CLOSE_NOTIFY                    = "\x00"
-      UNEXPECTED_MESSAGE              = "\x0a"
-      BAD_RECORD_MAC                  = "\x14"
-      RECORD_OVERFLOW                 = "\x16"
-      HANDSHAKE_FAILURE               = "\x28"
-      BAD_CERTIFICATE                 = "\x2a"
-      UNSUPPORTED_CERTIFICATE         = "\x2b"
-      CERTIFICATE_REVOKED             = "\x2c"
-      CERTIFICATE_EXPIRED             = "\x2d"
-      CERTIFICATE_UNKNOWN             = "\x2e"
-      ILLEGAL_PARAMETER               = "\x2f"
-      UNKNOWN_CA                      = "\x30"
-      ACCESS_DENIED                   = "\x31"
-      DECODE_ERROR                    = "\x32"
-      DECRYPT_ERROR                   = "\x33"
-      PROTOCOL_VERSION                = "\x46"
-      INSUFFICIENT_SECURITY           = "\x47"
-      INTERNAL_ERROR                  = "\x50"
-      INAPPROPRIATE_FALLBACK          = "\x56"
-      USER_CANCELED                   = "\x5a"
-      MISSING_EXTENSION               = "\x6d"
-      UNSUPPORTED_EXTENSION           = "\x6e"
-      UNRECOGNIZED_NAME               = "\x70"
-      BAD_CERTIFICATE_STATUS_RESPONSE = "\x71"
-      UNKNOWN_PSK_IDENTITY            = "\x73"
-      CERTIFICATE_REQUIRED            = "\x74"
-      NO_APPLICATION_PROTOCOL         = "\x78"
-    end
+    # rubocop: disable Layout/AlignHash
+    ALERT_DESCRIPTION = {
+      close_notify:                    "\x00",
+      unexpected_message:              "\x0a",
+      bad_record_mac:                  "\x14",
+      record_overflow:                 "\x16",
+      handshake_failure:               "\x28",
+      bad_certificate:                 "\x2a",
+      unsupported_certificate:         "\x2b",
+      certificate_revoked:             "\x2c",
+      certificate_expired:             "\x2d",
+      certificate_unknown:             "\x2e",
+      illegal_parameter:               "\x2f",
+      unknown_ca:                      "\x30",
+      access_denied:                   "\x31",
+      decode_error:                    "\x32",
+      decrypt_error:                   "\x33",
+      protocol_version:                "\x46",
+      insufficient_security:           "\x47",
+      internal_error:                  "\x50",
+      inappropriate_fallback:          "\x56",
+      user_canceled:                   "\x5a",
+      missing_extension:               "\x6d",
+      unsupported_extension:           "\x6e",
+      unrecognized_name:               "\x70",
+      bad_certificate_status_response: "\x71",
+      unknown_psk_identity:            "\x73",
+      certificate_required:            "\x74",
+      no_application_protocol:         "\x78"
+    }.freeze
+    # rubocop: enable Layout/AlignHash
 
     class Alert
       attr_reader :level
@@ -65,6 +67,11 @@ module TLS13
         level = binary[0]
         description = binary[1]
         Alert.new(level: level, description: description)
+      end
+
+      def to_error
+        desc = ALERT_DESCRIPTION.invert[@description]
+        StandardError.new(desc)
       end
     end
   end
