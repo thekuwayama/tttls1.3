@@ -34,6 +34,8 @@ module TLS13
       @notyet_application_secret = true
     end
 
+    # @raise [RuntimeError]
+    #
     # @return [String]
     def read
       message = nil
@@ -49,6 +51,8 @@ module TLS13
 
         break
       end
+      raise message.description if message.is_a?(Message::Alert)
+
       message.fragment
     end
 
