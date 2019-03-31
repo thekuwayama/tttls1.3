@@ -154,7 +154,9 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::Record]
-    # rubocop: disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/PerceivedComplexity
     def recv_record
       buffer = @socket.read(5)
       record_len = bin2i(buffer.slice(3, 2))
@@ -174,10 +176,19 @@ module TLS13
       end
 
       record = Message::Record.deserialize(buffer, @read_cryptographer)
+      # receives a protected change_cipher_spec
+      if record.type == Message::ContentType::APPLICATION_DATA &&
+         record.messages.first.is_a?(Message::ChangeCipherSpec)
+        alert = Alert.new(description: ALERT_DESCRIPTION[:unexpected_message])
+        send_alert(alert)
+        raise alert.to_error
+      end
       @read_seq_num&.succ
       record
     end
-    # rubocop: enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/PerceivedComplexity
 
     # @param range [Range]
     #
@@ -292,6 +303,9 @@ module TLS13
     end
 
     # @return [Boolean]
+    #
+    # change_cipher_spec record received before the first ClientHello message
+    # or after the peer's Finished message
     def ccs_receivable?
       return false unless @transcript.key?(CH)
       return false if @endpoint == :client && @transcript.key?(SF)
