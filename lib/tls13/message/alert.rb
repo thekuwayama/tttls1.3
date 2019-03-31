@@ -77,7 +77,7 @@ module TLS13
 
       def to_error
         desc = ALERT_DESCRIPTION.invert[@description]
-        StandardError.new(desc)
+        Error::TLSError.new(desc)
       end
     end
   end

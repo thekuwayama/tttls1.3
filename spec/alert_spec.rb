@@ -16,7 +16,7 @@ RSpec.describe Alert do
     end
 
     it 'should return error' do
-      expect(message.to_error).to be_a_kind_of(StandardError)
+      expect(message.to_error).to be_a_kind_of(TLSError)
     end
   end
 
