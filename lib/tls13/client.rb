@@ -23,7 +23,11 @@ module TLS13
       @hostname = ''
     end
 
-    # rubocop: disable all
+    # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/BlockLength
+    # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/MethodLength
+    # rubocop: disable Metrics/PerceivedComplexity
     def connect
       state = ClientState::START
       loop do
@@ -34,7 +38,8 @@ module TLS13
         when ClientState::WAIT_SH
           sh = recv_server_hello # TODO: Recv HelloRetryRequest
           @cipher_suite = sh.cipher_suite
-          kse = sh.extensions[Message::ExtensionType::KEY_SHARE].key_share_entry.first
+          kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
+                  .key_share_entry.first
           key_exchange = kse.key_exchange
           group = kse.group
           priv_key = @priv_keys[group]
@@ -64,10 +69,12 @@ module TLS13
         when ClientState::WAIT_CV
           recv_certificate_verify
           raise 'decrypt_error' unless verify_certificate_verify
+
           state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           recv_finished
           raise 'decrypt_error' unless verify_finished
+
           send_ccs # compatibility mode
           # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
@@ -78,7 +85,11 @@ module TLS13
         end
       end
     end
-    # rubocop: enable all
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/BlockLength
+    # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/MethodLength
+    # rubocop: enable Metrics/PerceivedComplexity
 
     private
 
