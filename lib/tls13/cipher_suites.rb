@@ -19,7 +19,7 @@ module TLS13
         when TLS_AES_256_GCM_SHA384
           'SHA384'
         else
-          raise 'unsupported CipherSuite'
+          raise Error::InternalError
         end
       end
 
@@ -32,7 +32,7 @@ module TLS13
         when TLS_AES_256_GCM_SHA384
           48
         else
-          raise 'unsupported CipherSuite'
+          raise Error::InternalError
         end
       end
 
@@ -44,7 +44,7 @@ module TLS13
         when TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256
           32
         else
-          raise 'unsupported CipherSuite'
+          raise Error::InternalError
         end
       end
 
@@ -55,7 +55,7 @@ module TLS13
              TLS_AES_128_CCM_8_SHA256
           12
         else
-          raise 'unsupported CipherSuite'
+          raise Error::InternalError
         end
       end
     end

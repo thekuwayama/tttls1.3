@@ -2,13 +2,13 @@
 # frozen_string_literal: true
 
 def i2uint8(int)
-  raise 'invalid argument' if int.negative? || int >= (1 << 8)
+  raise Error::InternalError if int.negative? || int >= (1 << 8)
 
   int.chr
 end
 
 def i2uint16(int)
-  raise 'invalid argument' if int.negative? || int >= (1 << 16)
+  raise Error::InternalError if int.negative? || int >= (1 << 16)
 
   [
     int / (1 << 8),
@@ -17,7 +17,7 @@ def i2uint16(int)
 end
 
 def i2uint24(int)
-  raise 'invalid argument' if int.negative? || int >= (1 << 24)
+  raise Error::InternalError if int.negative? || int >= (1 << 24)
 
   [
     int / (1 << 16),
@@ -27,7 +27,7 @@ def i2uint24(int)
 end
 
 def i2uint32(int)
-  raise 'invalid argument' if int.negative? || int >= (1 << 32)
+  raise Error::InternalError if int.negative? || int >= (1 << 32)
 
   [
     int / (1 << 24),
@@ -38,7 +38,7 @@ def i2uint32(int)
 end
 
 def i2uint64(int)
-  raise 'invalid argument' if int.negative? || int >= (1 << 64)
+  raise Error::InternalError if int.negative? || int >= (1 << 64)
 
   [
     int / (1 << 32),

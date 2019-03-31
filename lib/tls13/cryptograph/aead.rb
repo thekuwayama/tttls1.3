@@ -23,8 +23,8 @@ module TLS13
         when CipherSuite::TLS_AES_128_CCM_8_SHA256
           @cipher = OpenSSL::Cipher::AES128.new(:CCM)
         else
-          # CipherSuite::TLS_CHACHA20_POLY1305_SHA256
-          raise 'unsupported CipherSuite'
+          # TODO: CipherSuite::TLS_CHACHA20_POLY1305_SHA256
+          raise Error::InternalError
         end
         @write_key = write_key
         @write_iv = write_iv

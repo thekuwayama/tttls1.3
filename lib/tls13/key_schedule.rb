@@ -208,11 +208,11 @@ module TLS13
     # @param info [String]
     # @param length [Integer]
     #
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::InternalError]
     #
     # @param [String]
     def hkdf_expand(secret, info, length)
-      raise 'too long length' if length > 255 * @hash_len
+      raise Error::InternalError if length > 255 * @hash_len
 
       n = (length.to_f / @hash_len).ceil
       okm = ''
