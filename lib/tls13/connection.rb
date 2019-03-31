@@ -65,7 +65,7 @@ module TLS13
     private
 
     # @param type [Message::ContentType]
-    # @param messages [Array of TLS13::Message::$Object]
+    # @param messages [Array of TLS13::Message::$Object] handshake messages
     def send_handshakes(type, messages)
       if @write_seq_num.nil? &&
          type == Message::ContentType::APPLICATION_DATA
@@ -124,6 +124,7 @@ module TLS13
     end
 
     # @return [TLS13::Message::$Object]
+    # rubocop: disable Metrics/CyclomaticComplexity
     def recv_message
       return @message_queue.shift unless @message_queue.empty?
 
@@ -136,7 +137,11 @@ module TLS13
         when Message::ContentType::APPLICATION_DATA
           messages = record.messages
         when Message::ContentType::CCS
-          next # skip
+          next if ccs_receivable?
+
+          alert = Alert.new(description: ALERT_DESCRIPTION[:unexpected_message])
+          send_alert(alert)
+          raise alert.to_error
         when Message::ContentType::ALERT
           messages = record.messages
         else
@@ -146,6 +151,7 @@ module TLS13
         return messages.first
       end
     end
+    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::Record]
     # rubocop: disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -283,6 +289,15 @@ module TLS13
         write_iv: write_iv,
         sequence_number: seq_num
       )
+    end
+
+    # @return [Boolean]
+    def ccs_receivable?
+      return false unless @transcript.key?(CH)
+      return false if @endpoint == :client && @transcript.key?(SF)
+      return false if @endpoint == :server && @transcript.key?(CF)
+
+      true
     end
   end
   # rubocop: enable Metrics/ClassLength
