@@ -45,10 +45,16 @@ module TLS13
       attr_reader :description
 
       # @param level [TLS13::Message::AlertLevel]
-      # @param description [TLS13::Message::AlertDescription]
-      def initialize(level:, description:)
+      # @param description [String] value of ALERT_DESCRIPTION
+      def initialize(level: nil, description:)
         @level = level
         @description = description
+        if @level.nil? && (@description == ALERT_DESCRIPTION[:user_canceled] ||
+                           @description == ALERT_DESCRIPTION[:close_notify])
+          @level = AlertLevel::WARNING
+        elsif @level.nil?
+          @level = AlertLevel::FATAL
+        end
       end
 
       # @return [String]

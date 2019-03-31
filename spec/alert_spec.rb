@@ -14,6 +14,25 @@ RSpec.describe Alert do
       expect(message.serialize).to eq AlertLevel::FATAL \
                                       + ALERT_DESCRIPTION[:unexpected_message]
     end
+
+    it 'should return error' do
+      expect(message.to_error).to be_a_kind_of(StandardError)
+    end
+  end
+
+  context 'unexpected_message alert, not given level' do
+    let(:message) do
+      Alert.new(description: ALERT_DESCRIPTION[:unexpected_message])
+    end
+
+    it 'should be serialized' do
+      expect(message.serialize).to eq AlertLevel::FATAL \
+                                      + ALERT_DESCRIPTION[:unexpected_message]
+    end
+
+    it 'should return error' do
+      expect(message.to_error).to be_a_kind_of(StandardError)
+    end
   end
 
   context 'valid alert binary' do
