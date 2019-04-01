@@ -312,6 +312,14 @@ module TLS13
 
       true
     end
+
+    # @param symbol [Symbol] key of ALERT_DESCRIPTION
+    #
+    # @raise [TLS13::Error::TLSError]
+    def terminate(symbol)
+      send_alert(symbol)
+      raise Error::TLSError, symbol
+    end
   end
   # rubocop: enable Metrics/ClassLength
 end
