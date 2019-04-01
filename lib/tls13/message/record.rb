@@ -15,8 +15,6 @@ module TLS13
       # @param legacy_record_version [TLS13::Message::ProtocolVersion]
       # @param messages [Array of TLS13::Message::$Object]
       # @param cipher [TLS13::Cryptograph::$Object]
-      #
-      # @raise [RuntimeError]
       def initialize(type:,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
                      messages: [],
@@ -41,25 +39,28 @@ module TLS13
       # @param binary [String]
       # @param cipher [TLS13::Cryptograph::$Object]
       #
-      # @raise [RuntimeError]
+      # @raise [TLS13::Error::InternalError, TLSError]
       #
       # @return [TLS13::Message::Record
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, cipher)
-        raise 'too short binary' if binary.nil? || binary.length < 5
+        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, 'decode_error' if binary.length < 5
 
         type = binary[0]
         legacy_record_version = binary.slice(1, 2)
         fragment_len = Convert.bin2i(binary.slice(3, 2))
-        raise Error::TLSError, :record_overflow \
+        raise Error::TLSError, 'record_overflow' \
           if (cipher.is_a?(Cryptograph::Passer) && fragment_len > 2**14) ||
              (cipher.is_a?(Cryptograph::Aead) && fragment_len > 2**14 + 256)
 
         fragment = binary.slice(5, fragment_len)
+        raise Error::TLSError, 'decode_error' \
+          unless binary.length == 5 + fragment_len
+
         if type == ContentType::APPLICATION_DATA
-          fragment, inner_type \
-                    = cipher.decrypt(fragment, binary.slice(0, 5))
+          fragment, inner_type = cipher.decrypt(fragment, binary.slice(0, 5))
         end
         messages = deserialize_fragment(fragment, inner_type || type)
         Record.new(type: type,
@@ -72,9 +73,12 @@ module TLS13
 
       private
 
+      # @raise [TLS13::Error::InternalError]
+      #
+      # @return [TLS13::Message::ContentType]
       def messages_type
         types = @messages.map(&:class).uniq
-        raise 'invalid messages' unless types.length == 1
+        raise Error::InternalError unless types.length == 1
 
         type = types.first
         if [Message::ClientHello,
@@ -92,7 +96,7 @@ module TLS13
         elsif type == Message::Alert
           ContentType::ALERT
         else
-          raise 'unexpected messages'
+          raise Error::InternalError
         end
       end
 
@@ -100,12 +104,11 @@ module TLS13
         # @param binary [String]
         # @param type [TLS13::Message::ContentType]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError, TLSError]
         #
         # @return [Array of TLS13::Message::$Object]
-        # rubocop: disable Metrics/CyclomaticComplexity
         def deserialize_fragment(binary, type)
-          raise 'zero-length fragments' if binary.nil? || binary.empty?
+          raise Error::InternalError if binary.nil?
 
           case type
           when ContentType::HANDSHAKE
@@ -117,18 +120,42 @@ module TLS13
           when ContentType::ALERT
             [Alert.deserialize(binary)]
           else
-            raise 'unknown ContentType'
+            raise Error::TLSError, 'unexpected_message'
           end
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError, TLSError]
+        #
+        # @return [Array of TLS13::Message::$Object]
+        def deserialize_handshake(binary)
+          handshakes = []
+          itr = 0
+          while itr < binary.length
+            raise Error::TLSError, 'decode_error' if itr + 4 > binary.length
+
+            msg_len = Convert.bin2i(binary.slice(itr + 1, 3))
+            msg_bin = binary.slice(itr, msg_len + 4)
+            message = do_deserialize_handshake(msg_bin)
+            itr += msg_len + 4
+            handshakes << message
+          end
+          raise Error::TLSError, 'decode_error' unless itr == binary.length
+
+          handshakes
+        end
+
+        # @param binary [String]
+        #
+        # @raise [TLS13::Error::InternalError, TLSError]
         #
         # @return [Array of TLS13::Message::$Object]
         # rubocop: disable Metrics/CyclomaticComplexity
         def do_deserialize_handshake(binary)
+          raise Error::InternalError if binary.nil?
+          raise Error::TLSError, 'decode_error' if binary.empty?
+
           case binary[0]
           when HandshakeType::CLIENT_HELLO
             ClientHello.deserialize(binary)
@@ -145,28 +172,10 @@ module TLS13
           when HandshakeType::NEW_SESSION_TICKET
             NewSessionTicket.deserialize(binary)
           else
-            raise 'unexpected HandshakeType'
+            raise Error::TLSError, 'unexpected_message'
           end
         end
         # rubocop: enable Metrics/CyclomaticComplexity
-
-        # @param binary [String]
-        #
-        # @return [Array of TLS13::Message::$Object]
-        def deserialize_handshake(binary)
-          handshakes = []
-          itr = 0
-          while itr < binary.length
-            msg_len = Convert.bin2i(binary.slice(itr + 1, 3))
-            msg_bin = binary.slice(itr, msg_len + 4)
-            message = do_deserialize_handshake(msg_bin)
-            itr += msg_len + 4
-            handshakes << message
-          end
-          raise 'malformed binary' unless itr == binary.length
-
-          handshakes
-        end
       end
     end
     # rubocop: enable Metrics/ClassLength
