@@ -130,6 +130,8 @@ module TLS13
         #
         # @return [Array of TLS13::Message::$Object]
         def deserialize_handshake(binary)
+          raise Error::InternalError if binary.nil?
+
           handshakes = []
           itr = 0
           while itr < binary.length

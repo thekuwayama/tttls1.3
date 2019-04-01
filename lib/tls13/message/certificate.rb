@@ -33,11 +33,13 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [RuntimeError]
+      # @raise [TLS13::Error::InternalError, TLSError]
       #
       # @return [TLS13::Message::Certificate]
       def self.deserialize(binary)
-        raise 'invalid HandshakeType' \
+        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, 'decode_error' if binary.length < 5
+        raise Error::InternalError \
           unless binary[0] == HandshakeType::CERTIFICATE
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
@@ -49,8 +51,8 @@ module TLS13
         cl_bin = binary.slice(itr, cl_len)
         itr += cl_len
         certificate_list = deserialize_certificate_list(cl_bin)
-        raise 'malformed binary' unless msg_len + 4 == binary.length &&
-                                        itr == binary.length
+        raise Error::TLSError, 'decode_error' unless itr == msg_len + 4 &&
+                                                     itr == binary.length
 
         Certificate.new(
           certificate_request_context: certificate_request_context,
@@ -61,27 +63,38 @@ module TLS13
       class << self
         # @param binary [String]
         #
+        # @raise [TLS13::Error::InternalError, TLSError]
+        #
         # @return [Array of CertificateEntry]
+        # rubocop: disable Metrics/AbcSize
         def deserialize_certificate_list(binary)
+          raise Error::InternalError if binary.nil?
+
           itr = 0
           certificate_list = []
           while itr < binary.length
+            raise Error::TLSError, 'decode_error' if itr + 3 > binary.length
+
             cd_len = Convert.bin2i(binary.slice(itr, 3))
             itr += 3
             cd_bin = binary.slice(itr, cd_len)
             cert_data = OpenSSL::X509::Certificate.new(cd_bin)
             itr += cd_len
+            raise Error::TLSError, 'decode_error' if itr + 2 > binary.length
+
             exs_len = Convert.bin2i(binary.slice(itr, 2))
             itr += 2
             exs_bin = binary.slice(itr, exs_len)
             extensions = Extensions.deserialize(exs_bin,
                                                 HandshakeType::CERTIFICATE)
             itr += exs_len
-            certificate_list \
-            << CertificateEntry.new(cert_data, extensions)
+            certificate_list << CertificateEntry.new(cert_data, extensions)
           end
+          raise Error::TLSError, 'decode_error' unless itr == binary.length
+
           certificate_list
         end
+        # rubocop: enable Metrics/AbcSize
       end
     end
 
