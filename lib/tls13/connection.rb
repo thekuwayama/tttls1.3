@@ -70,9 +70,8 @@ module TLS13
       if @write_seq_num.nil? &&
          type == Message::ContentType::APPLICATION_DATA
         @write_seq_num = SequenceNumber.new
-        sender = @endpoint
         @write_cipher \
-        = gen_aead_with_handshake_traffic_secret(@write_seq_num, sender)
+        = gen_aead_with_handshake_traffic_secret(@write_seq_num, @endpoint)
       end
       record = Message::Record.new(type: type, messages: messages,
                                    cipher: @write_cipher)
@@ -80,9 +79,8 @@ module TLS13
       return if messages.none? { |m| m.is_a?(Message::Finished) }
 
       @write_seq_num = SequenceNumber.new
-      sender = @endpoint
       @write_cipher \
-      = gen_aead_with_application_traffic_secret(@write_seq_num, sender)
+      = gen_aead_with_application_traffic_secret(@write_seq_num, @endpoint)
     end
 
     def send_ccs
@@ -142,12 +140,11 @@ module TLS13
         when Message::ContentType::CCS
           next if ccs_receivable?
 
-          send_alert(:unexpected_message)
-          raise alert.to_error
+          terminate(:unexpected_message)
         when Message::ContentType::ALERT
           messages = record.messages
         else
-          raise 'unexpected ContentType'
+          terminate(:unexpected_message)
         end
         @message_queue += messages[1..]
         return messages.first
@@ -180,8 +177,7 @@ module TLS13
       # receives a protected change_cipher_spec
       if record.type == Message::ContentType::APPLICATION_DATA &&
          record.messages.first.is_a?(Message::ChangeCipherSpec)
-        send_alert(:unexpected_message)
-        raise alert.to_error
+        terminate(:unexpected_message)
       end
       @read_seq_num&.succ
       record
