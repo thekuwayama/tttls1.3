@@ -68,13 +68,11 @@ module TLS13
           state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
           recv_certificate_verify
-          raise 'decrypt_error' unless verify_certificate_verify
-
+          terminate(:decrypt_error) unless verify_certificate_verify
           state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           recv_finished
-          raise 'decrypt_error' unless verify_finished
-
+          terminate(:decrypt_error) unless verify_finished
           send_ccs # compatibility mode
           # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
