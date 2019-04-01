@@ -106,8 +106,11 @@ module TLS13
       send_record(ap_record)
     end
 
-    # @param messages [TLS13::Message::Alert]
-    def send_alert(message)
+    # @param symbol [Symbol] key of ALERT_DESCRIPTION
+    def send_alert(symbol)
+      message = Message::Alert.new(
+        description: Message::ALERT_DESCRIPTION[symbol]
+      )
       alert_record = Message::Record.new(
         type: Message::ContentType::ALERT,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
@@ -139,8 +142,7 @@ module TLS13
         when Message::ContentType::CCS
           next if ccs_receivable?
 
-          alert = Alert.new(description: ALERT_DESCRIPTION[:unexpected_message])
-          send_alert(alert)
+          send_alert(:unexpected_message)
           raise alert.to_error
         when Message::ContentType::ALERT
           messages = record.messages
@@ -154,7 +156,6 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::Record]
-    # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/PerceivedComplexity
     def recv_record
@@ -179,14 +180,12 @@ module TLS13
       # receives a protected change_cipher_spec
       if record.type == Message::ContentType::APPLICATION_DATA &&
          record.messages.first.is_a?(Message::ChangeCipherSpec)
-        alert = Alert.new(description: ALERT_DESCRIPTION[:unexpected_message])
-        send_alert(alert)
+        send_alert(:unexpected_message)
         raise alert.to_error
       end
       @read_seq_num&.succ
       record
     end
-    # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/PerceivedComplexity
 
