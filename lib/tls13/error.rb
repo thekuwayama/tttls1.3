@@ -14,6 +14,11 @@ module TLS13
 
     # Raised on received Alert message or invalid message.
     # Terminated the connection, so you *cannot* recover from this exception.
-    class TLSError < Error; end
+    class TLSError < Error
+      # @return [TLS13::Message::Alert]
+      def to_alert
+        Message::Alert.new(description: ALERT_DESCRIPTION[message.to_sym])
+      end
+    end
   end
 end
