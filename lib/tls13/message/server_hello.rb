@@ -49,11 +49,15 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [RuntimeError]
+      # @raise [TLS13::Error::InternalError, TLSError]
       #
       # @return [TLS13::Message::ServerHello]
+      # rubocop: disable Metrics/AbcSize
+      # rubocop: disable Metrics/CyclomaticComplexity
       def self.deserialize(binary)
-        raise 'invalid HandshakeType' \
+        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, 'decode_error' if binary.length < 39
+        raise Error::InternalError \
           unless binary[0] == HandshakeType::SERVER_HELLO
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
@@ -64,8 +68,8 @@ module TLS13
         itr = 39 + lsid_len
         cipher_suite = binary.slice(itr, 2)
         itr += 2
-        raise 'legacy_compression_method is not 0' unless \
-          binary[itr] == "\x00"
+        raise Error::TLSError, 'illegal_parameter' \
+          unless binary[itr] == "\x00"
 
         itr += 1
         exs_len = Convert.bin2i(binary.slice(itr, 2))
@@ -74,7 +78,8 @@ module TLS13
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::SERVER_HELLO)
         itr += exs_len
-        raise 'malformed binary' unless itr == msg_len + 4
+        raise Error::TLSError, 'decode_error' unless itr == msg_len + 4 &&
+                                                     itr == binary.length
 
         ServerHello.new(legacy_version: legacy_version,
                         random: random,
@@ -82,6 +87,8 @@ module TLS13
                         cipher_suite: cipher_suite,
                         extensions: extensions)
       end
+      # rubocop: enable Metrics/AbcSize
+      # rubocop: enable Metrics/CyclomaticComplexity
     end
   end
 end
