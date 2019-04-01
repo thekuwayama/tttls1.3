@@ -9,22 +9,22 @@ module TLS13
       attr_reader :type
       attr_reader :legacy_record_version
       attr_reader :messages
-      attr_reader :cryptographer
+      attr_reader :cipher
 
       # @param type [TLS13::Message::ContentType]
       # @param legacy_record_version [TLS13::Message::ProtocolVersion]
       # @param messages [Array of TLS13::Message::$Object]
-      # @param cryptographer [TLS13::Cryptograph::$Object]
+      # @param cipher [TLS13::Cryptograph::$Object]
       #
       # @raise [RuntimeError]
       def initialize(type:,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
                      messages: [],
-                     cryptographer:)
+                     cipher:)
         @type = type
         @legacy_record_version = legacy_record_version
         @messages = messages || []
-        @cryptographer = cryptographer
+        @cipher = cipher
       end
 
       # @return [String]
@@ -32,35 +32,43 @@ module TLS13
         binary = ''
         binary += @type
         binary += @legacy_record_version
-        fragment = @cryptographer.encrypt(@messages.map(&:serialize).join,
-                                          messages_type)
+        fragment = @cipher.encrypt(@messages.map(&:serialize).join,
+                                   messages_type)
         binary += fragment.prefix_uint16_length
         binary
       end
 
       # @param binary [String]
-      # @param cryptographer [TLS13::Cryptograph::$Object]
+      # @param cipher [TLS13::Cryptograph::$Object]
       #
       # @raise [RuntimeError]
       #
-      # @return [TLS13::Message::Record]
-      def self.deserialize(binary, cryptographer)
+      # @return [TLS13::Message::Record
+      # rubocop: disable Metrics/CyclomaticComplexity
+      # rubocop: disable Metrics/PerceivedComplexity
+      def self.deserialize(binary, cipher)
         raise 'too short binary' if binary.nil? || binary.length < 5
 
         type = binary[0]
         legacy_record_version = binary.slice(1, 2)
         fragment_len = Convert.bin2i(binary.slice(3, 2))
+        raise Error::TLSError, :record_overflow \
+          if (cipher.is_a?(Cryptograph::Passer) && fragment_len > 2**14) ||
+             (cipher.is_a?(Cryptograph::Aead) && fragment_len > 2**14 + 256)
+
         fragment = binary.slice(5, fragment_len)
         if type == ContentType::APPLICATION_DATA
           fragment, inner_type \
-                    = cryptographer.decrypt(fragment, binary.slice(0, 5))
+                    = cipher.decrypt(fragment, binary.slice(0, 5))
         end
         messages = deserialize_fragment(fragment, inner_type || type)
         Record.new(type: type,
                    legacy_record_version: legacy_record_version,
                    messages: messages,
-                   cryptographer: cryptographer)
+                   cipher: cipher)
       end
+      # rubocop: enable Metrics/CyclomaticComplexity
+      # rubocop: enable Metrics/PerceivedComplexity
 
       private
 

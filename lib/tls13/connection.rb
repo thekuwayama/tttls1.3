@@ -24,9 +24,9 @@ module TLS13
       @endpoint = nil # Symbol or String, :client or :server
       @key_schedule = nil # TLS13::KeySchedule
       @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
-      @read_cryptographer = Cryptograph::Passer.new
+      @read_cipher = Cryptograph::Passer.new
       @read_seq_num = nil # TLS13::SequenceNumber
-      @write_cryptographer = Cryptograph::Passer.new
+      @write_cipher = Cryptograph::Passer.new
       @write_seq_num = nil # TLS13::SequenceNumber
       @transcript = {} # Hash of constant => TLS13::Message::$Object
       @message_queue = [] # Array of TLS13::Message::$Object
@@ -71,17 +71,17 @@ module TLS13
          type == Message::ContentType::APPLICATION_DATA
         @write_seq_num = SequenceNumber.new
         sender = @endpoint
-        @write_cryptographer \
+        @write_cipher \
         = gen_aead_with_handshake_traffic_secret(@write_seq_num, sender)
       end
       record = Message::Record.new(type: type, messages: messages,
-                                   cryptographer: @write_cryptographer)
+                                   cipher: @write_cipher)
       send_record(record)
       return if messages.none? { |m| m.is_a?(Message::Finished) }
 
       @write_seq_num = SequenceNumber.new
       sender = @endpoint
-      @write_cryptographer \
+      @write_cipher \
       = gen_aead_with_application_traffic_secret(@write_seq_num, sender)
     end
 
@@ -90,7 +90,7 @@ module TLS13
         type: Message::ContentType::CCS,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [Message::ChangeCipherSpec.new],
-        cryptographer: Cryptograph::Passer.new
+        cipher: Cryptograph::Passer.new
       )
       send_record(ccs_record)
     end
@@ -101,7 +101,7 @@ module TLS13
         type: Message::ContentType::APPLICATION_DATA,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
-        cryptographer: @write_cryptographer
+        cipher: @write_cipher
       )
       send_record(ap_record)
     end
@@ -115,7 +115,7 @@ module TLS13
         type: Message::ContentType::ALERT,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
-        cryptographer: @write_cryptographer
+        cipher: @write_cipher
       )
       send_record(alert_record)
     end
@@ -166,17 +166,17 @@ module TLS13
          buffer[0] == Message::ContentType::APPLICATION_DATA
         @read_seq_num = SequenceNumber.new
         sender = (@endpoint == :client ? :server : :client)
-        @read_cryptographer \
+        @read_cipher \
         = gen_aead_with_handshake_traffic_secret(@read_seq_num, sender)
       elsif @transcript.key?(SF) && @notyet_application_secret
         @read_seq_num = SequenceNumber.new
         sender = (@endpoint == :client ? :server : :client)
-        @read_cryptographer \
+        @read_cipher \
         = gen_aead_with_application_traffic_secret(@read_seq_num, sender)
         @notyet_application_secret = false
       end
 
-      record = Message::Record.deserialize(buffer, @read_cryptographer)
+      record = Message::Record.deserialize(buffer, @read_cipher)
       # receives a protected change_cipher_spec
       if record.type == Message::ContentType::APPLICATION_DATA &&
          record.messages.first.is_a?(Message::ChangeCipherSpec)

@@ -58,7 +58,7 @@ RSpec.describe Client do
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         sequence_number: read_seq_num
       )
-      client.instance_variable_set(:@read_cryptographer, cipher)
+      client.instance_variable_set(:@read_cipher, cipher)
       client.instance_variable_set(:@read_seq_num, read_seq_num)
       client
     end
@@ -115,7 +115,7 @@ RSpec.describe Client do
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: write_seq_num
       )
-      client.instance_variable_set(:@write_cryptographer, write_cipher)
+      client.instance_variable_set(:@write_cipher, write_cipher)
       client.instance_variable_set(:@write_seq_num, write_seq_num)
       client.send(:send_finished)
       read_cipher = Cryptograph::Aead.new(

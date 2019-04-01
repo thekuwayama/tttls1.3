@@ -11,7 +11,7 @@ RSpec.describe Record do
         type: ContentType::CCS,
         legacy_record_version: ProtocolVersion::TLS_1_2,
         messages: [ChangeCipherSpec.new],
-        cryptographer: Passer.new
+        cipher: Passer.new
       )
     end
 
