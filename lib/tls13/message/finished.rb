@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     class Finished
       attr_reader :msg_type
@@ -20,7 +21,7 @@ module TLS13
 
       # @return [String]
       def serialize
-        @msg_type + uint24_length_prefix(@verify_data)
+        @msg_type + @verify_data.prefix_uint24_length
       end
 
       alias fragment serialize
@@ -34,7 +35,7 @@ module TLS13
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::FINISHED
 
-        msg_len = bin2i(binary.slice(1, 3))
+        msg_len = Convert.bin2i(binary.slice(1, 3))
         raise 'malformed binary' unless binary.length - 4 == msg_len
 
         verify_data = binary.slice(4, msg_len)

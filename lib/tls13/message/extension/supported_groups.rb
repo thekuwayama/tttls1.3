@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       module NamedGroup
@@ -80,7 +81,7 @@ module TLS13
         def serialize
           binary = @named_group_list.join
 
-          @extension_type + uint16_length_prefix(uint16_length_prefix(binary))
+          @extension_type + binary.prefix_uint16_length.prefix_uint16_length
         end
 
         # @param binary [String]
@@ -91,7 +92,7 @@ module TLS13
         def self.deserialize(binary)
           raise 'too short binary' if binary.nil? || binary.length < 2
 
-          nglist_len = bin2i(binary.slice(0, 2))
+          nglist_len = Convert.bin2i(binary.slice(0, 2))
           raise 'malformed binary' unless binary.length == nglist_len + 2
 
           itr = 2

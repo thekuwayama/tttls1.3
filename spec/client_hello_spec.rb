@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe ClientHello do
   context 'default client_hello' do
@@ -30,10 +31,10 @@ RSpec.describe ClientHello do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CLIENT_HELLO \
-                                      + i2uint24(77) \
+                                      + 77.to_uint24 \
                                       + ProtocolVersion::TLS_1_2 \
                                       + random \
-                                      + i2uint8(legacy_session_id.length) \
+                                      + legacy_session_id.length.to_uint8 \
                                       + legacy_session_id \
                                       + CipherSuites.new.serialize \
                                       + "\x01\x00" \

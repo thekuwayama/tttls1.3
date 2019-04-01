@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       module CertificateStatusType
@@ -31,13 +32,13 @@ module TLS13
         def serialize
           binary = ''
           binary += CertificateStatusType::OCSP
-          binary += i2uint16(@responder_id_list.length)
+          binary += @responder_id_list.length.to_uint16
           binary += @responder_id_list.map do |id|
-            i2uint16(id.length) + id
+            id.length.to_uint16 + id
           end.join
-          binary += uint16_length_prefix(@request_extensions)
+          binary += @request_extensions.prefix_uint16_length
 
-          @extension_type + uint16_length_prefix(binary)
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]
@@ -51,12 +52,12 @@ module TLS13
           raise 'unknown status_type' \
             unless binary[0] == CertificateStatusType::OCSP
 
-          ril_len = bin2i(binary.slice(1, 2))
+          ril_len = Convert.bin2i(binary.slice(1, 2))
           itr = 3
           responder_id_list =
             deserialize_request_ids(binary.slice(itr, ril_len))
           itr += ril_len
-          re_len = bin2i(binary.slice(itr, 2))
+          re_len = Convert.bin2i(binary.slice(itr, 2))
           itr += 2
           request_extensions = deserialize_extensions(binary.slice(itr, re_len))
           itr += re_len
@@ -77,7 +78,7 @@ module TLS13
           itr = 0
           request_ids = []
           while itr < binary.length
-            id_len = bin2i(binary.slice(itr, 2))
+            id_len = Convert.bin2i(binary.slice(itr, 2))
             itr += 2
             id = binary.slice(itr, id_len) || ''
             request_ids += id

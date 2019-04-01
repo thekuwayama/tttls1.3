@@ -4,6 +4,7 @@
 require 'openssl'
 
 module TLS13
+  using Refinements
   module Message
     module SignatureScheme
       # RSASSA-PKCS1-v1_5 algorithms
@@ -54,9 +55,9 @@ module TLS13
       def serialize
         binary = ''
         binary += @signature_scheme
-        binary += uint16_length_prefix(@signature)
+        binary += @signature.prefix_uint16_length
 
-        @msg_type + uint24_length_prefix(binary)
+        @msg_type + binary.prefix_uint24_length
       end
 
       alias fragment serialize
@@ -70,9 +71,9 @@ module TLS13
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::CERTIFICATE_VERIFY
 
-        msg_len = bin2i(binary.slice(1, 3))
+        msg_len = Convert.bin2i(binary.slice(1, 3))
         signature_scheme = binary.slice(4, 2)
-        signature_len = bin2i(binary.slice(6, 2))
+        signature_len = Convert.bin2i(binary.slice(6, 2))
         signature = binary.slice(8, signature_len)
         raise 'malformed binary' \
           unless binary.length == signature_len + 8 &&

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Cryptograph
     class Aead
       # @param cipher_suite [TLS13::CipherSuite]
@@ -76,7 +77,7 @@ module TLS13
         ciphertext_len = plaintext_len + 16 # length of auth_tag is 16
         Message::ContentType::APPLICATION_DATA \
         + Message::ProtocolVersion::TLS_1_2 \
-        + i2uint16(ciphertext_len)
+        + ciphertext_len.to_uint16
       end
 
       def reset_cipher

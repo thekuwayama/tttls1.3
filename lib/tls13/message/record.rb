@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     # rubocop: disable Metrics/ClassLength
     class Record
@@ -33,7 +34,7 @@ module TLS13
         binary += @legacy_record_version
         fragment = @cryptographer.encrypt(@messages.map(&:serialize).join,
                                           messages_type)
-        binary += uint16_length_prefix(fragment)
+        binary += fragment.prefix_uint16_length
         binary
       end
 
@@ -48,7 +49,7 @@ module TLS13
 
         type = binary[0]
         legacy_record_version = binary.slice(1, 2)
-        fragment_len = bin2i(binary.slice(3, 2))
+        fragment_len = Convert.bin2i(binary.slice(3, 2))
         fragment = binary.slice(5, fragment_len)
         if type == ContentType::APPLICATION_DATA
           fragment, inner_type \
@@ -148,7 +149,7 @@ module TLS13
           handshakes = []
           itr = 0
           while itr < binary.length
-            msg_len = bin2i(binary.slice(itr + 1, 3))
+            msg_len = Convert.bin2i(binary.slice(itr + 1, 3))
             msg_bin = binary.slice(itr, msg_len + 4)
             message = do_deserialize_handshake(msg_bin)
             itr += msg_len + 4

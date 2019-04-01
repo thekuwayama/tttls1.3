@@ -4,6 +4,7 @@
 require 'openssl'
 
 module TLS13
+  using Refinements
   module Message
     class Certificate
       attr_reader :msg_type
@@ -22,10 +23,10 @@ module TLS13
       # @return [String]
       def serialize
         binary = ''
-        binary += uint8_length_prefix(@certificate_request_context)
-        binary += uint24_length_prefix(@certificate_list.map(&:serialize).join)
+        binary += @certificate_request_context.prefix_uint8_length
+        binary += @certificate_list.map(&:serialize).join.prefix_uint24_length
 
-        @msg_type + uint24_length_prefix(binary)
+        @msg_type + binary.prefix_uint24_length
       end
 
       alias fragment serialize
@@ -39,11 +40,11 @@ module TLS13
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::CERTIFICATE
 
-        msg_len = bin2i(binary.slice(1, 3))
-        crc_len = bin2i(binary.slice(4, 1))
+        msg_len = Convert.bin2i(binary.slice(1, 3))
+        crc_len = Convert.bin2i(binary.slice(4, 1))
         certificate_request_context = binary.slice(5, crc_len)
         itr = 5 + crc_len
-        cl_len = bin2i(binary.slice(itr, 3))
+        cl_len = Convert.bin2i(binary.slice(itr, 3))
         itr += 3
         cl_bin = binary.slice(itr, cl_len)
         itr += cl_len
@@ -65,12 +66,12 @@ module TLS13
           itr = 0
           certificate_list = []
           while itr < binary.length
-            cd_len = bin2i(binary.slice(itr, 3))
+            cd_len = Convert.bin2i(binary.slice(itr, 3))
             itr += 3
             cd_bin = binary.slice(itr, cd_len)
             cert_data = OpenSSL::X509::Certificate.new(cd_bin)
             itr += cd_len
-            exs_len = bin2i(binary.slice(itr, 2))
+            exs_len = Convert.bin2i(binary.slice(itr, 2))
             itr += 2
             exs_bin = binary.slice(itr, exs_len)
             extensions = Extensions.deserialize(exs_bin,
@@ -100,7 +101,7 @@ module TLS13
       # @return [String]
       def serialize
         binary = ''
-        binary += uint24_length_prefix(@cert_data.to_der)
+        binary += @cert_data.to_der.prefix_uint24_length
         binary += @extensions.serialize
         binary
       end

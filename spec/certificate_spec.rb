@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe Certificate do
   context 'valid certificate' do
@@ -26,12 +27,12 @@ RSpec.describe Certificate do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CERTIFICATE \
-                                      + i2uint24(994) \
-                                      + i2uint8(0) \
-                                      + i2uint24(990) \
-                                      + i2uint24(985) \
+                                      + 994.to_uint24 \
+                                      + 0.to_uint8 \
+                                      + 990.to_uint24 \
+                                      + 985.to_uint24 \
                                       + certificate.to_der \
-                                      + i2uint16(0)
+                                      + 0.to_uint16
     end
   end
 

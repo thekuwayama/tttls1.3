@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe Finished do
   context 'valid finished' do
@@ -21,7 +22,7 @@ RSpec.describe Finished do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::FINISHED \
-                                      + uint24_length_prefix(verify_data)
+                                      + verify_data.prefix_uint24_length
     end
   end
 

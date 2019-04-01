@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     class EncryptedExtensions
       attr_reader :msg_type
@@ -15,7 +16,7 @@ module TLS13
 
       # @return [String]
       def serialize
-        @msg_type + uint24_length_prefix(@extensions.serialize)
+        @msg_type + @extensions.serialize.prefix_uint24_length
       end
 
       alias fragment serialize
@@ -29,8 +30,8 @@ module TLS13
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::ENCRYPTED_EXTENSIONS
 
-        ee_len = bin2i(binary.slice(1, 3))
-        exs_len = bin2i(binary.slice(4, 2))
+        ee_len = Convert.bin2i(binary.slice(1, 3))
+        exs_len = Convert.bin2i(binary.slice(4, 2))
         raise 'malformed binary' unless ee_len == exs_len + 2
 
         extensions = Extensions.deserialize(binary.slice(6, exs_len),

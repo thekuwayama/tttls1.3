@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe KeyShare do
   context 'valid key_share, KeyShareClientHello,' do
@@ -41,13 +42,13 @@ RSpec.describe KeyShare do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + i2uint16(107) \
-                                        + i2uint16(105) \
+                                        + 107.to_uint16 \
+                                        + 105.to_uint16 \
                                         + NamedGroup::X25519 \
-                                        + i2uint16(32) \
+                                        + 32.to_uint16 \
                                         + public_key_x25519 \
                                         + NamedGroup::SECP256R1 \
-                                        + i2uint16(65) \
+                                        + 65.to_uint16 \
                                         + public_key_secp256r1
     end
   end
@@ -68,8 +69,8 @@ RSpec.describe KeyShare do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + i2uint16(2) \
-                                        + i2uint16(0)
+                                        + 2.to_uint16 \
+                                        + 0.to_uint16
     end
   end
 
@@ -99,11 +100,9 @@ RSpec.describe KeyShare do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + i2uint16(36) \
+                                        + 36.to_uint16 \
                                         + NamedGroup::X25519 \
-                                        + uint16_length_prefix(
-                                          public_key_x25519
-                                        )
+                                        + public_key_x25519.prefix_uint16_length
     end
   end
 
@@ -129,10 +128,9 @@ RSpec.describe KeyShare do
     end
 
     it 'should be serialized' do
-      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + uint16_length_prefix(
-                                          NamedGroup::X25519
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::KEY_SHARE \
+               + NamedGroup::X25519.prefix_uint16_length
     end
   end
 
@@ -149,10 +147,9 @@ RSpec.describe KeyShare do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_KEY_SHARE_CH
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::KEY_SHARE \
+               + TESTBINARY_KEY_SHARE_CH.prefix_uint16_length
     end
   end
 
@@ -169,10 +166,9 @@ RSpec.describe KeyShare do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_KEY_SHARE_SH
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::KEY_SHARE \
+               + TESTBINARY_KEY_SHARE_SH.prefix_uint16_length
     end
   end
 
@@ -190,10 +186,9 @@ RSpec.describe KeyShare do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_KEY_SHARE_HRR
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::KEY_SHARE \
+               + TESTBINARY_KEY_SHARE_HRR.prefix_uint16_length
     end
   end
 end

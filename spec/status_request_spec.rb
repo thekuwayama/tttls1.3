@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe StatusRequest do
   context 'default status_request' do
@@ -64,10 +65,9 @@ RSpec.describe StatusRequest do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::STATUS_REQUEST \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_STATUS_REQUEST
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::STATUS_REQUEST \
+               + TESTBINARY_STATUS_REQUEST.prefix_uint16_length
     end
   end
 end

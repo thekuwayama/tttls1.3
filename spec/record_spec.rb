@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe Record do
   context 'valid record' do
@@ -22,7 +23,7 @@ RSpec.describe Record do
     it 'should be serialized' do
       expect(record.serialize).to eq ContentType::CCS \
                                      + ProtocolVersion::TLS_1_2 \
-                                     + i2uint16(1) \
+                                     + 1.to_uint16 \
                                      + ChangeCipherSpec.new.serialize
     end
   end
@@ -40,7 +41,7 @@ RSpec.describe Record do
     it 'should generate valid serializable object' do
       expect(record.serialize).to eq  ContentType::CCS \
                                      + ProtocolVersion::TLS_1_2 \
-                                     + i2uint16(1) \
+                                     + 1.to_uint16 \
                                      + ChangeCipherSpec.new.serialize
     end
   end

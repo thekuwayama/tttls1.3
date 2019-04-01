@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       module PskKeyExchangeMode
@@ -21,9 +22,9 @@ module TLS13
 
         # @return [String]
         def serialize
-          binary = uint8_length_prefix(@ke_modes.join)
+          binary = @ke_modes.join.prefix_uint8_length
 
-          @extension_type + uint16_length_prefix(binary)
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]
@@ -34,7 +35,7 @@ module TLS13
         def self.deserialize(binary)
           raise 'too short binary' if binary.nil? || binary.empty?
 
-          kem_len = bin2i(binary[0])
+          kem_len = Convert.bin2i(binary[0])
           raise 'malformed binary' unless binary.length == kem_len + 1
 
           ke_modes = []

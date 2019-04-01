@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       class RecordSizeLimit
@@ -21,9 +22,9 @@ module TLS13
 
         # @return [String]
         def serialize
-          binary = i2uint16(@record_size_limit)
+          binary = @record_size_limit.to_uint16
 
-          @extension_type + uint16_length_prefix(binary)
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]
@@ -34,7 +35,7 @@ module TLS13
         def self.deserialize(binary)
           raise 'malformed binary' if binary.nil? || binary.length != 2
 
-          record_size_limit = bin2i(binary)
+          record_size_limit = Convert.bin2i(binary)
           RecordSizeLimit.new(record_size_limit)
         end
       end

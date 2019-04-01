@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe CertificateVerify do
   context 'valid certificate_verify' do
@@ -25,9 +26,9 @@ RSpec.describe CertificateVerify do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CERTIFICATE_VERIFY \
-                                      + i2uint24(132) \
+                                      + 132.to_uint24 \
                                       + SignatureScheme::RSA_PSS_RSAE_SHA256 \
-                                      + uint16_length_prefix(signature)
+                                      + signature.prefix_uint16_length
     end
   end
 

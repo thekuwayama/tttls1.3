@@ -4,6 +4,7 @@
 require 'openssl'
 
 module TLS13
+  using Refinements
   # rubocop: disable Metrics/ClassLength
   class KeySchedule
     def initialize(psk: nil, shared_secret:, cipher_suite:)
@@ -198,9 +199,9 @@ module TLS13
     #
     # @return [String]
     def hkdf_expand_label(secret, label, context, length)
-      binary = i2uint16(length)
-      binary += uint8_length_prefix('tls13 ' + label)
-      binary += uint8_length_prefix(context)
+      binary = length.to_uint16
+      binary += ('tls13 ' + label).prefix_uint8_length
+      binary += context.prefix_uint8_length
       hkdf_expand(secret, binary, length)
     end
 

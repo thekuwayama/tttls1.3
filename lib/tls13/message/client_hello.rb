@@ -4,6 +4,7 @@
 require 'openssl'
 
 module TLS13
+  using Refinements
   module Message
     class ClientHello
       attr_reader :msg_type
@@ -38,12 +39,12 @@ module TLS13
         binary = ''
         binary += @legacy_version
         binary += @random
-        binary += uint8_length_prefix(@legacy_session_id)
+        binary += @legacy_session_id.prefix_uint8_length
         binary += @cipher_suites.serialize
-        binary += uint8_length_prefix(@legacy_compression_methods)
+        binary += @legacy_compression_methods.prefix_uint8_length
         binary += @extensions.serialize
 
-        @msg_type + uint24_length_prefix(binary)
+        @msg_type + binary.prefix_uint24_length
       end
 
       # @param binary [String]
@@ -56,13 +57,13 @@ module TLS13
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::CLIENT_HELLO
 
-        msg_len = bin2i(binary.slice(1, 3))
+        msg_len = Convert.bin2i(binary.slice(1, 3))
         legacy_version = binary.slice(4, 2)
         random = binary.slice(6, 32)
-        lsid_len = bin2i(binary[38])
+        lsid_len = Convert.bin2i(binary[38])
         legacy_session_id = binary.slice(39, lsid_len)
         itr = 39 + lsid_len
-        cs_len = bin2i(binary.slice(itr, 2))
+        cs_len = Convert.bin2i(binary.slice(itr, 2))
         itr += 2
         cs_bin = binary.slice(itr, cs_len)
         cipher_suites = CipherSuites.deserialize(cs_bin)
@@ -71,7 +72,7 @@ module TLS13
           binary.slice(itr, 2) == "\x01\x00"
 
         itr += 2
-        exs_len = bin2i(binary.slice(itr, 2))
+        exs_len = Convert.bin2i(binary.slice(itr, 2))
         itr += 2
         exs_bin = binary.slice(itr, exs_len)
         extensions = Extensions.deserialize(exs_bin,

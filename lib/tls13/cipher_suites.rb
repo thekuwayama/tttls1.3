@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module CipherSuite
     TLS_AES_128_GCM_SHA256       = "\x13\x01"
     TLS_AES_256_GCM_SHA384       = "\x13\x02"
@@ -79,7 +80,7 @@ module TLS13
 
     # @return [String]
     def serialize
-      uint16_length_prefix(join)
+      join.prefix_uint16_length
     end
 
     # @param binary [String]

@@ -1,74 +1,86 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-def i2uint8(int)
-  raise Error::InternalError if int.negative? || int >= (1 << 8)
+module TLS13
+  module Refinements
+    refine Integer do
+      def to_uint8
+        raise Error::InternalError if negative? || self >= (1 << 8)
 
-  int.chr
-end
+        chr
+      end
 
-def i2uint16(int)
-  raise Error::InternalError if int.negative? || int >= (1 << 16)
+      def to_uint16
+        raise Error::InternalError if negative? || self >= (1 << 16)
 
-  [
-    int / (1 << 8),
-    int % (1 << 8)
-  ].map(&:chr).join
-end
+        [
+          self / (1 << 8),
+          self % (1 << 8)
+        ].map(&:chr).join
+      end
 
-def i2uint24(int)
-  raise Error::InternalError if int.negative? || int >= (1 << 24)
+      def to_uint24
+        raise Error::InternalError if negative? || self >= (1 << 24)
 
-  [
-    int / (1 << 16),
-    int % (1 << 16) / (1 << 8),
-    int % (1 << 8)
-  ].map(&:chr).join
-end
+        [
+          self / (1 << 16),
+          self % (1 << 16) / (1 << 8),
+          self % (1 << 8)
+        ].map(&:chr).join
+      end
 
-def i2uint32(int)
-  raise Error::InternalError if int.negative? || int >= (1 << 32)
+      def to_uint32
+        raise Error::InternalError if negative? || self >= (1 << 32)
 
-  [
-    int / (1 << 24),
-    int % (1 << 24) / (1 << 16),
-    int % (1 << 16) / (1 << 8),
-    int % (1 << 8)
-  ].map(&:chr).join
-end
+        [
+          self / (1 << 24),
+          self % (1 << 24) / (1 << 16),
+          self % (1 << 16) / (1 << 8),
+          self % (1 << 8)
+        ].map(&:chr).join
+      end
 
-def i2uint64(int)
-  raise Error::InternalError if int.negative? || int >= (1 << 64)
+      def to_uint64
+        raise Error::InternalError if negative? || self >= (1 << 64)
 
-  [
-    int / (1 << 32),
-    int % (1 << 32) / (1 << 24),
-    int % (1 << 24) / (1 << 16),
-    int % (1 << 16) / (1 << 8),
-    int % (1 << 8)
-  ].map(&:chr).join
-end
+        [
+          self / (1 << 32),
+          self % (1 << 32) / (1 << 24),
+          self % (1 << 24) / (1 << 16),
+          self % (1 << 16) / (1 << 8),
+          self % (1 << 8)
+        ].map(&:chr).join
+      end
+    end
 
-def bin2i(binary)
-  binary.bytes.reverse.map.with_index { |x, i| x << 8 * i }.sum
-end
+    refine String do
+      def prefix_uint8_length
+        length.to_uint8 + self
+      end
 
-def uint8_length_prefix(opaque)
-  i2uint8(opaque.length) + opaque
-end
+      def prefix_uint16_length
+        length.to_uint16 + self
+      end
 
-def uint16_length_prefix(opaque)
-  i2uint16(opaque.length) + opaque
-end
+      def prefix_uint24_length
+        length.to_uint24 + self
+      end
 
-def uint24_length_prefix(opaque)
-  i2uint24(opaque.length) + opaque
-end
+      def prefix_uint32_length
+        length.to_uint32 + self
+      end
 
-def uint32_length_prefix(opaque)
-  i2uint32(opaque.length) + opaque
-end
+      def prefix_uint64_length
+        length.to_uint64 + self
+      end
+    end
+  end
 
-def uint64_length_prefix(opaque)
-  i2uint64(opaque.length) + opaque
+  module Convert
+    class << self
+      def bin2i(binary)
+        binary.unpack('C*').reverse.map.with_index { |x, i| x << 8 * i }.sum
+      end
+    end
+  end
 end

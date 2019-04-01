@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe NewSessionTicket do
   context 'new_session_ticket' do
@@ -39,11 +40,11 @@ RSpec.describe NewSessionTicket do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::NEW_SESSION_TICKET \
-                                      + i2uint24(523) \
-                                      + i2uint32(ticket_lifetime) \
+                                      + 523.to_uint24 \
+                                      + ticket_lifetime.to_uint32 \
                                       + ticket_age_add \
-                                      + uint8_length_prefix(ticket_nonce) \
-                                      + uint16_length_prefix(ticket) \
+                                      + ticket_nonce.prefix_uint8_length \
+                                      + ticket.prefix_uint16_length \
                                       + Extensions.new.serialize
     end
   end
@@ -83,6 +84,10 @@ RSpec.describe NewSessionTicket do
       expect(message.msg_type).to eq HandshakeType::NEW_SESSION_TICKET
       expect(message.ticket_lifetime).to eq 30
       expect(message.ticket_nonce).to eq "\x00\x00"
+    end
+
+    it 'should generate serializable object' do
+      expect(message.serialize).to eq TESTBINARY_NEW_SESSION_TICKET
     end
   end
 end

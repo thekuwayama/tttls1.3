@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe RecordSizeLimit do
   context 'vailid record_size_limit' do
@@ -16,8 +17,8 @@ RSpec.describe RecordSizeLimit do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::RECORD_SIZE_LIMIT \
-                                        + i2uint16(2) \
-                                        + i2uint16(2**14)
+                                        + 2.to_uint16 \
+                                        + (2**14).to_uint16
     end
   end
 
@@ -42,10 +43,9 @@ RSpec.describe RecordSizeLimit do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::RECORD_SIZE_LIMIT \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_RECORD_SIZE_LIMIT
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::RECORD_SIZE_LIMIT \
+               + TESTBINARY_RECORD_SIZE_LIMIT.prefix_uint16_length
     end
   end
 end

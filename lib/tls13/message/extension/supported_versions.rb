@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       class SupportedVersions
@@ -33,11 +34,11 @@ module TLS13
         # @return [String]
         def serialize
           binary = ''
-          binary += i2uint8(@versions.length * 2) \
+          binary += (@versions.length * 2).to_uint8 \
             if @msg_type == HandshakeType::CLIENT_HELLO
           binary += @versions.join
 
-          @extension_type + uint16_length_prefix(binary)
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]
@@ -71,7 +72,7 @@ module TLS13
         def self.deserialize_versions(binary)
           raise 'too short binary' if binary.nil? || binary.empty?
 
-          versions_len = bin2i(binary[0])
+          versions_len = Convert.bin2i(binary[0])
           itr = 1
           versions = []
           while itr < versions_len + 1

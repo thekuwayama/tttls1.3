@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       module NameType
@@ -21,14 +22,14 @@ module TLS13
 
         # @param server_name [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError]
         #
         # @example
         #   ServerName.new('example.com')
         def initialize(server_name)
           @extension_type = ExtensionType::SERVER_NAME
           @server_name = server_name || ''
-          raise 'too long HostName' \
+          raise Error::InternalError \
             if @server_name.length > 2**16 - 5
         end
 
@@ -39,10 +40,10 @@ module TLS13
           sn_len = @server_name.length
           binary = ''
           binary += @extension_type
-          binary += i2uint16(sn_len + 5)
-          binary += i2uint16(sn_len + 3)
+          binary += (sn_len + 5).to_uint16
+          binary += (sn_len + 3).to_uint16
           binary += NameType::HOST_NAME
-          binary += i2uint16(sn_len)
+          binary += sn_len.to_uint16
           binary += @server_name
           binary
         end
@@ -68,12 +69,12 @@ module TLS13
         def self.deserialize_host_name(binary)
           raise 'too short binary' if binary.nil? || binary.length < 2
 
-          snlist_len = bin2i(binary.slice(0, 2))
+          snlist_len = Convert.bin2i(binary.slice(0, 2))
           raise 'malformed binary' unless snlist_len + 2 == binary.length
 
           raise 'unknown name_type' unless binary[2] == NameType::HOST_NAME
 
-          sn_len = bin2i(binary.slice(3, 2))
+          sn_len = Convert.bin2i(binary.slice(3, 2))
           raise 'malformed binary' unless sn_len + 5 == binary.length
 
           server_name = binary.slice(5, sn_len)

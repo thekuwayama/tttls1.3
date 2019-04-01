@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe Cookie do
   context 'valid cookie' do
@@ -20,8 +21,8 @@ RSpec.describe Cookie do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::COOKIE \
-                                        + i2uint16(2**16 - 1) \
-                                        + i2uint16(2**16 - 3) \
+                                        + (2**16 - 1).to_uint16 \
+                                        + (2**16 - 3).to_uint16 \
                                         + cookie
     end
   end
@@ -68,9 +69,7 @@ RSpec.describe Cookie do
 
     it 'should generate serializable object' do
       expect(extension.serialize).to eq ExtensionType::COOKIE \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_COOKIE
-                                        )
+                                        + TESTBINARY_COOKIE.prefix_uint16_length
     end
   end
 

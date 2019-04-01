@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe SupportedGroups do
   context 'valid supported_groups' do
@@ -24,8 +25,8 @@ RSpec.describe SupportedGroups do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + i2uint16(12) \
-                                        + i2uint16(10) \
+                                        + 12.to_uint16 \
+                                        + 10.to_uint16 \
                                         + named_group_list.join
     end
   end
@@ -42,8 +43,8 @@ RSpec.describe SupportedGroups do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + i2uint16(10) \
-                                        + i2uint16(8) \
+                                        + 10.to_uint16 \
+                                        + 8.to_uint16 \
                                         + DEFALT_NAMED_GROUP_LIST.join
     end
   end
@@ -60,7 +61,7 @@ RSpec.describe SupportedGroups do
 
   context 'invalid supported_groups, too long,' do
     let(:extension) do
-      SupportedGroups.new((0..2**15 - 1).to_a.map { |x| i2uint16(x) })
+      SupportedGroups.new((0..2**15 - 1).to_a.map(&:to_uint16))
     end
 
     it 'should not be generated' do
@@ -82,10 +83,9 @@ RSpec.describe SupportedGroups do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_SUPPORTED_GROUPS
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::SUPPORTED_GROUPS \
+               + TESTBINARY_SUPPORTED_GROUPS.prefix_uint16_length
     end
   end
 

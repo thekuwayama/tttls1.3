@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe UknownExtension do
   context 'valid uknown extension, no extension_data' do
@@ -15,7 +16,7 @@ RSpec.describe UknownExtension do
     end
 
     it 'should be serialized' do
-      expect(extension.serialize).to eq "\x8a\x8a" + uint16_length_prefix('')
+      expect(extension.serialize).to eq "\x8a\x8a" + ''.prefix_uint16_length
     end
   end
 
@@ -36,7 +37,7 @@ RSpec.describe UknownExtension do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq "\x8a\x8a" \
-                                        + uint16_length_prefix(random_bytes)
+                                        + random_bytes.prefix_uint16_length
     end
   end
 

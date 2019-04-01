@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     class NewSessionTicket
       attr_reader :msg_type
@@ -35,12 +36,12 @@ module TLS13
       # @return [String]
       def serialize
         binary = ''
-        binary += i2uint32(@ticket_lifetime)
+        binary += @ticket_lifetime.to_uint32
         binary += @ticket_age_add
-        binary += uint8_length_prefix(@ticket_nonce)
-        binary += uint16_length_prefix(@ticket)
+        binary += @ticket_nonce.prefix_uint8_length
+        binary += @ticket.prefix_uint16_length
         binary += @extensions.serialize
-        @msg_type + uint24_length_prefix(binary)
+        @msg_type + binary.prefix_uint24_length
       end
 
       # @param binary [String]
@@ -53,17 +54,17 @@ module TLS13
         raise 'invalid HandshakeType' \
           unless binary[0] == HandshakeType::NEW_SESSION_TICKET
 
-        msg_len = bin2i(binary.slice(1, 3))
-        ticket_lifetime = bin2i(binary.slice(4, 4))
+        msg_len = Convert.bin2i(binary.slice(1, 3))
+        ticket_lifetime = Convert.bin2i(binary.slice(4, 4))
         ticket_age_add = binary.slice(8, 4)
-        tn_len = bin2i(binary[12])
+        tn_len = Convert.bin2i(binary[12])
         ticket_nonce = binary.slice(13, tn_len)
         itr = 13 + tn_len
-        ticket_len = bin2i(binary.slice(itr, 2))
+        ticket_len = Convert.bin2i(binary.slice(itr, 2))
         itr += 2
         ticket = binary.slice(itr, ticket_len)
         itr += ticket_len
-        exs_len = bin2i(binary.slice(itr, 2))
+        exs_len = Convert.bin2i(binary.slice(itr, 2))
         itr += 2
         exs_bin = binary.slice(itr, exs_len)
         extensions = Extensions.deserialize(exs_bin,

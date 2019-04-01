@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe PreSharedKey do
   context 'valid pre_shared_key of ClientHello' do
@@ -49,12 +50,12 @@ RSpec.describe PreSharedKey do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
-                                        + i2uint16(75) \
-                                        + i2uint16(38) \
-                                        + i2uint16(32) \
+                                        + 75.to_uint16 \
+                                        + 38.to_uint16 \
+                                        + 32.to_uint16 \
                                         + identity \
-                                        + i2uint32(obfuscated_ticket_age) \
-                                        + i2uint16(33) \
+                                        + obfuscated_ticket_age.to_uint32 \
+                                        + 33.to_uint16 \
                                         + "\x20" \
                                         + binders.join
     end
@@ -116,15 +117,15 @@ RSpec.describe PreSharedKey do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
-                                        + i2uint16(146) \
-                                        + i2uint16(76) \
-                                        + uint16_length_prefix(identity_1) \
-                                        + i2uint32(obfuscated_ticket_age_1) \
-                                        + uint16_length_prefix(identity_2) \
-                                        + i2uint32(obfuscated_ticket_age_2) \
-                                        + i2uint16(66) \
-                                        + uint8_length_prefix(binders[0]) \
-                                        + uint8_length_prefix(binders[1])
+                                        + 146.to_uint16 \
+                                        + 76.to_uint16 \
+                                        + identity_1.prefix_uint16_length \
+                                        + obfuscated_ticket_age_1.to_uint32 \
+                                        + identity_2.prefix_uint16_length \
+                                        + obfuscated_ticket_age_2.to_uint32 \
+                                        + 66.to_uint16 \
+                                        + binders[0].prefix_uint8_length \
+                                        + binders[1].prefix_uint8_length
     end
   end
 
@@ -140,10 +141,9 @@ RSpec.describe PreSharedKey do
     end
 
     it 'should generate valid serializable object' do
-      expect(extension.serialize).to eq ExtensionType::PRE_SHARED_KEY \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_PRE_SHARED_KEY
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::PRE_SHARED_KEY \
+               + TESTBINARY_PRE_SHARED_KEY.prefix_uint16_length
     end
   end
 end

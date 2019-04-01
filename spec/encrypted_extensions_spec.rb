@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe EncryptedExtensions do
   context 'valid encrypted_extensions' do
@@ -27,10 +28,9 @@ RSpec.describe EncryptedExtensions do
     end
 
     it 'should be serialized' do
-      expect(message.serialize).to eq HandshakeType::ENCRYPTED_EXTENSIONS \
-                                      + uint24_length_prefix(
-                                        extensions.serialize
-                                      )
+      expect(message.serialize)
+        .to eq HandshakeType::ENCRYPTED_EXTENSIONS \
+               + extensions.serialize.prefix_uint24_length
     end
   end
 
@@ -45,10 +45,9 @@ RSpec.describe EncryptedExtensions do
     end
 
     it 'should be serialized' do
-      expect(message.serialize).to eq HandshakeType::ENCRYPTED_EXTENSIONS \
-                                      + uint24_length_prefix(
-                                        Extensions.new.serialize
-                                      )
+      expect(message.serialize)
+        .to eq HandshakeType::ENCRYPTED_EXTENSIONS \
+               + Extensions.new.serialize.prefix_uint24_length
     end
   end
 

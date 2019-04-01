@@ -4,6 +4,7 @@
 Dir[File.dirname(__FILE__) + '/extension/*.rb'].each { |f| require f }
 
 module TLS13
+  using Refinements
   module Message
     module ExtensionType
       SERVER_NAME                            = "\x00\x00"
@@ -53,7 +54,7 @@ module TLS13
         end
         binary += self[ExtensionType::PRE_SHARED_KEY].serialize \
           if key?(ExtensionType::PRE_SHARED_KEY)
-        uint16_length_prefix(binary)
+        binary.prefix_uint16_length
       end
 
       # @param binary [String]
@@ -70,7 +71,7 @@ module TLS13
         while itr < binary.length
           extension_type = binary.slice(itr, 2)
           itr += 2
-          ex_len = bin2i(binary.slice(itr, 2))
+          ex_len = Convert.bin2i(binary.slice(itr, 2))
           itr += 2
           ex_bin = binary.slice(itr, ex_len)
           extensions << deserialize_extension(ex_bin,

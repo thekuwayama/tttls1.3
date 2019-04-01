@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe SignatureAlgorithms do
   context 'valid signature_algorithms' do
@@ -29,8 +30,8 @@ RSpec.describe SignatureAlgorithms do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SIGNATURE_ALGORITHMS \
-                                        + i2uint16(20) \
-                                        + i2uint16(18) \
+                                        + 20.to_uint16 \
+                                        + 18.to_uint16 \
                                         + supported_signature_algorithms.join
     end
   end
@@ -47,7 +48,7 @@ RSpec.describe SignatureAlgorithms do
 
   context 'invalid signature_algorithms, too long,' do
     let(:extension) do
-      SignatureAlgorithms.new((0..2**15 - 2).to_a.map { |x| i2uint16(x) })
+      SignatureAlgorithms.new((0..2**15 - 2).to_a.map(&:to_uint16))
     end
 
     it 'should not be generated' do
@@ -81,10 +82,9 @@ RSpec.describe SignatureAlgorithms do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::SIGNATURE_ALGORITHMS \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_SIGNATURE_ALGORITHMS
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::SIGNATURE_ALGORITHMS \
+               + TESTBINARY_SIGNATURE_ALGORITHMS.prefix_uint16_length
     end
   end
 

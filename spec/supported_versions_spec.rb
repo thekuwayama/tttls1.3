@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe SupportedVersions do
   context 'valid supported_versions of ClientHello' do
@@ -37,7 +38,7 @@ RSpec.describe SupportedVersions do
   context 'invalid supported_versions of ClientHello, too large,' do
     let(:extension) do
       SupportedVersions.new(msg_type: HandshakeType::CLIENT_HELLO,
-                            versions: (0..127).to_a.map { |x| i2uint16(x) })
+                            versions: (0..127).to_a.map(&:to_uint16))
     end
 
     it 'should not be generated' do
@@ -100,10 +101,9 @@ RSpec.describe SupportedVersions do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::SUPPORTED_VERSIONS \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_SUPPORTED_VERSIONS_CH
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::SUPPORTED_VERSIONS \
+               + TESTBINARY_SUPPORTED_VERSIONS_CH.prefix_uint16_length
     end
   end
 
@@ -119,10 +119,9 @@ RSpec.describe SupportedVersions do
     end
 
     it 'should generate serializable object' do
-      expect(extension.serialize).to eq ExtensionType::SUPPORTED_VERSIONS \
-                                        + uint16_length_prefix(
-                                          TESTBINARY_SUPPORTED_VERSIONS_SH
-                                        )
+      expect(extension.serialize)
+        .to eq ExtensionType::SUPPORTED_VERSIONS \
+               + TESTBINARY_SUPPORTED_VERSIONS_SH.prefix_uint16_length
     end
   end
 end

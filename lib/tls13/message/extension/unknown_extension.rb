@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       class UknownExtension
@@ -19,7 +20,7 @@ module TLS13
 
         # @return [String]
         def serialize
-          @extension_type + uint16_length_prefix(@extension_data)
+          @extension_type + @extension_data.prefix_uint16_length
         end
 
         # @param binary [String]

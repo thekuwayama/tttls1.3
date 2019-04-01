@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe Client do
   context 'client' do
@@ -29,7 +30,7 @@ RSpec.describe Client do
       mock_socket = SimpleStream.new
       mock_socket.write(ContentType::HANDSHAKE \
                         + ProtocolVersion::TLS_1_2 \
-                        + i2uint16(msg_len) \
+                        + msg_len.to_uint16 \
                         + TESTBINARY_SERVER_HELLO)
       client = Client.new(mock_socket)
       client.send(:recv_server_hello)

@@ -159,7 +159,7 @@ module TLS13
     # rubocop: disable Metrics/PerceivedComplexity
     def recv_record
       buffer = @socket.read(5)
-      record_len = bin2i(buffer.slice(3, 2))
+      record_len = Convert.bin2i(buffer.slice(3, 2))
       buffer += @socket.read(record_len)
       if @read_seq_num.nil? &&
          buffer[0] == Message::ContentType::APPLICATION_DATA

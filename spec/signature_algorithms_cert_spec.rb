@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe SignatureAlgorithmsCert do
   context 'valid signature_algorithms' do
@@ -33,8 +34,8 @@ RSpec.describe SignatureAlgorithmsCert do
     it 'should be serialized' do
       expect(extension.serialize)
         .to eq ExtensionType::SIGNATURE_ALGORITHMS_CERT \
-               + i2uint16(20) \
-               + i2uint16(18) \
+               + 20.to_uint16 \
+               + 18.to_uint16 \
                + supported_signature_algorithms.join
     end
   end
@@ -68,9 +69,7 @@ RSpec.describe SignatureAlgorithmsCert do
     it 'should generate serializable object' do
       expect(extension.serialize)
         .to eq ExtensionType::SIGNATURE_ALGORITHMS_CERT \
-               + uint16_length_prefix(
-                 TESTBINARY_SIGNATURE_ALGORITHMS_CERT
-               )
+               + TESTBINARY_SIGNATURE_ALGORITHMS_CERT.prefix_uint16_length
     end
   end
 end

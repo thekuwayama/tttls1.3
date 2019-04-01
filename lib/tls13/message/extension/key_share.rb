@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       class KeyShare
@@ -45,14 +46,14 @@ module TLS13
             @key_share_entry.each do |entry|
               buf += entry.serialize
             end
-            binary += uint16_length_prefix(buf)
+            binary += buf.prefix_uint16_length
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             binary += @key_share_entry.first.serialize
           else
             raise 'unexpected HandshakeType'
           end
 
-          @extension_type + uint16_length_prefix(binary)
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]
@@ -88,13 +89,13 @@ module TLS13
         def self.deserialize_keyshare_ch(binary)
           raise 'too short binary' if binary.nil? || binary.length < 2
 
-          cs_len = bin2i(binary.slice(0, 2))
+          cs_len = Convert.bin2i(binary.slice(0, 2))
           key_share_entry = []
           itr = 2
           while itr < cs_len + 2
             group = binary.slice(itr, 2)
             itr += 2
-            ke_len = bin2i(binary.slice(itr, 2))
+            ke_len = Convert.bin2i(binary.slice(itr, 2))
             itr += 2
             key_exchange = binary.slice(itr, ke_len)
             key_share_entry << KeyShareEntry.new(group: group,
@@ -119,7 +120,7 @@ module TLS13
           raise 'too short binary' if binary.nil? || binary.length < 4
 
           group = binary.slice(0, 2)
-          ke_len = bin2i(binary.slice(2, 2))
+          ke_len = Convert.bin2i(binary.slice(2, 2))
           raise 'malformed binary' unless binary.length == ke_len + 4
 
           key_exchange = binary.slice(4, ke_len)
@@ -176,7 +177,7 @@ module TLS13
           binary += @group
           # HandshakeType::HELLO_RETRY_REQUEST
           # extension_data is single NamedGroup
-          binary += uint16_length_prefix(@key_exchange) \
+          binary += @key_exchange.prefix_uint16_length \
             unless @key_exchange.empty?
           binary
         end

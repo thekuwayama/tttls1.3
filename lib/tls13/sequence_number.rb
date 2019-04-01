@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   class SequenceNumber
     def initialize
       @seq_num = 0
@@ -12,7 +13,7 @@ module TLS13
     #
     # @return [String]
     def xor(str, iv_len)
-      l = i2uint64(@seq_num).unpack('C*')
+      l = @seq_num.to_uint64.unpack('C*')
       l.unshift(0) while l.length < iv_len
       r = str.unpack('C*')
       l.zip(r).map { |x, y| (x ^ y).chr }.join

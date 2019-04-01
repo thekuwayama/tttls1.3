@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+using Refinements
 
 RSpec.describe CipherSuites do
   context 'default cipher suites' do
@@ -14,8 +15,7 @@ RSpec.describe CipherSuites do
     end
 
     it 'should be serialized' do
-      expect(cs.serialize).to eq i2uint16(DEFALT_CIPHER_SUITES.length * 2) \
-                                 + DEFALT_CIPHER_SUITES.join
+      expect(cs.serialize).to eq DEFALT_CIPHER_SUITES.join.prefix_uint16_length
     end
   end
 

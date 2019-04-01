@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module Message
     module Extension
       class PreSharedKey
@@ -44,7 +45,7 @@ module TLS13
             raise 'invalid HandshakeType'
           end
 
-          @extension_type + uint16_length_prefix(binary)
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]
@@ -88,10 +89,10 @@ module TLS13
         # @return [String]
         def serialize
           binary = @identities.map(&:serialize).join
-          identities_bin = uint16_length_prefix(binary)
+          identities_bin = binary.prefix_uint16_length
 
-          binary = @binders.map { |pbe| uint8_length_prefix(pbe) }.join
-          binders_bin = uint16_length_prefix(binary)
+          binary = @binders.map(&:prefix_uint8_length).join
+          binders_bin = binary.prefix_uint16_length
 
           identities_bin + binders_bin
         end
@@ -101,15 +102,15 @@ module TLS13
         # @return [TLS13::Message::Extensions::OfferedPsks]
         # rubocop: disable Metrics/AbcSize
         def self.deserialize(binary)
-          pksids_len = bin2i(binary.slice(0, 2))
+          pksids_len = Convert.bin2i(binary.slice(0, 2))
           itr = 2
           identities = [] # Array of PskIdentity
           while itr < pksids_len + 2
-            id_len = bin2i(binary.slice(itr, 2))
+            id_len = Convert.bin2i(binary.slice(itr, 2))
             itr += 2
             identity = binary.slice(itr, id_len)
             itr += id_len
-            obfuscated_ticket_age = bin2i(binary.slice(itr, 4))
+            obfuscated_ticket_age = Convert.bin2i(binary.slice(itr, 4))
             itr += 4
             identities << PskIdentity.new(
               identity: identity,
@@ -117,11 +118,11 @@ module TLS13
             )
           end
 
-          binders_tail = itr + bin2i(binary.slice(itr, 2)) + 2
+          binders_tail = itr + Convert.bin2i(binary.slice(itr, 2)) + 2
           itr += 2
           binders = [] # Array of String
           while itr < binders_tail
-            pbe_len = bin2i(binary[itr])
+            pbe_len = Convert.bin2i(binary[itr])
             itr += 1
             binders << binary.slice(itr, pbe_len)
             itr += pbe_len
@@ -151,8 +152,8 @@ module TLS13
         # @return [String]
         def serialize
           binary = ''
-          binary += uint16_length_prefix(@identity)
-          binary += i2uint32(@obfuscated_ticket_age)
+          binary += @identity.prefix_uint16_length
+          binary += @obfuscated_ticket_age.to_uint32
           binary
         end
       end
