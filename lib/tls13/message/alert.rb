@@ -64,17 +64,19 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [RuntimeError]
+      # @raise [TLS13::Error::InternalError, TLSError]
       #
       # @return [TLS13::Message::Alert]
       def self.deserialize(binary)
-        raise 'malformed binary' unless binary.length == 2
+        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, 'decode_error' unless binary.length == 2
 
         level = binary[0]
         description = binary[1]
         Alert.new(level: level, description: description)
       end
 
+      # @return [TLS13::Error::TLSError]
       def to_error
         desc = ALERT_DESCRIPTION.invert[@description]
         Error::TLSError.new(desc)
