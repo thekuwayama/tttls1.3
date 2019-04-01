@@ -19,14 +19,16 @@ module TLS13
       # @param ticket_nonce [String]
       # @param ticket [String]
       # @param extensions [TLS13::Message::Extensions]
+      #
+      # @raise [TLS13::Error::InternalError]
       def initialize(ticket_lifetime:, ticket_age_add:,
                      ticket_nonce:, ticket:, extensions: Extensions.new)
         @msg_type = HandshakeType::NEW_SESSION_TICKET
         @ticket_lifetime = ticket_lifetime
-        raise 'too long ticket_lifetime' if ticket_lifetime >= SEVEN_DAYS
+        raise Error::InternalError if ticket_lifetime >= SEVEN_DAYS
 
         @ticket_age_add = ticket_age_add
-        raise 'invalid ticket_age_add' unless ticket_age_add.length == 4
+        raise Error::InternalError unless ticket_age_add.length == 4
 
         @ticket_nonce = ticket_nonce
         @ticket = ticket
@@ -41,17 +43,20 @@ module TLS13
         binary += @ticket_nonce.prefix_uint8_length
         binary += @ticket.prefix_uint16_length
         binary += @extensions.serialize
+
         @msg_type + binary.prefix_uint24_length
       end
 
       # @param binary [String]
       #
-      # @raise [RuntimeError]
+      # @raise [TLS13::Error::InternalError, TLSError]
       #
       # @return [TLS13::Message::NewSessionTicket]
       # rubocop: disable Metrics/AbcSize
       def self.deserialize(binary)
-        raise 'invalid HandshakeType' \
+        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, 'decode_error' if binary.length < 13
+        raise Error::InternalError \
           unless binary[0] == HandshakeType::NEW_SESSION_TICKET
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
@@ -70,8 +75,8 @@ module TLS13
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::NEW_SESSION_TICKET)
         itr += exs_len
-        raise 'malformed binary' unless itr == msg_len + 4 &&
-                                        itr == binary.length
+        raise Error::TLSError, 'decode_error' unless itr == msg_len + 4 &&
+                                                     itr == binary.length
 
         NewSessionTicket.new(ticket_lifetime: ticket_lifetime,
                              ticket_age_add: ticket_age_add,

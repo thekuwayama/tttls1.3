@@ -58,7 +58,7 @@ RSpec.describe NewSessionTicket do
     end
 
     it 'should not be generated' do
-      expect { message }.to raise_error(RuntimeError)
+      expect { message }.to raise_error(InternalError)
     end
   end
 
@@ -71,7 +71,7 @@ RSpec.describe NewSessionTicket do
     end
 
     it 'should not be generated' do
-      expect { message }.to raise_error(RuntimeError)
+      expect { message }.to raise_error(InternalError)
     end
   end
 
