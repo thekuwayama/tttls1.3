@@ -11,11 +11,13 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [RuntimeError]
+      # @raise [TLS13::Error::InternalError, TLSError]
       #
       # @return [TLS13::Message::ChangeCipherSpec]
       def self.deserialize(binary)
-        raise 'invalid binary' unless binary[0] == "\x01"
+        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, 'decode_error' unless binary.length == 1
+        raise Error::TLSError, 'unexpected_message' unless binary[0] == "\x01"
 
         ChangeCipherSpec.new
       end
