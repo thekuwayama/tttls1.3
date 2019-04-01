@@ -17,7 +17,6 @@ RSpec.describe Finished do
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::FINISHED
       expect(message.verify_data).to eq verify_data
-      expect(message.hash_length).to eq 128
     end
 
     it 'should be serialized' do
@@ -33,7 +32,6 @@ RSpec.describe Finished do
 
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::FINISHED
-      expect(message.hash_length).to eq 32
     end
 
     it 'should generate serializable object' do
@@ -48,7 +46,6 @@ RSpec.describe Finished do
 
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::FINISHED
-      expect(message.hash_length).to eq 32
     end
 
     it 'should generate serializable object' do
