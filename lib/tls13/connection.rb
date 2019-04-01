@@ -34,22 +34,16 @@ module TLS13
       @notyet_application_secret = true
     end
 
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::TLSError]
     #
     # @return [String]
     def read
       message = nil
       loop do
         message = recv_message
-        next \
-          if message.is_a?(Message::NewSessionTicket) &&
-             @endpoint == :client # TODO
+        break unless message.is_a?(Message::NewSessionTicket)
 
-        raise 'unexpected message' \
-          if message.is_a?(Message::NewSessionTicket) &&
-             @endpoint == :server
-
-        break
+        precess_new_session_ticket
       end
       raise message.to_error if message.is_a?(Message::Alert)
 
@@ -315,6 +309,12 @@ module TLS13
     def terminate(symbol)
       send_alert(symbol)
       raise Error::TLSError, symbol
+    end
+
+    # @raise [TLS13::Error::TLSError]
+    def precess_new_session_ticket
+      terminate(:unexpected_message) if @endpoint == :server
+      # TODO: @endpoint == :client
     end
   end
   # rubocop: enable Metrics/ClassLength
