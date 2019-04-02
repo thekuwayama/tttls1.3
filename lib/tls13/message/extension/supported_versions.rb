@@ -73,14 +73,14 @@ module TLS13
           raise 'too short binary' if binary.nil? || binary.empty?
 
           versions_len = Convert.bin2i(binary[0])
-          itr = 1
+          i = 1
           versions = []
-          while itr < versions_len + 1
-            versions << binary.slice(itr, 2)
-            itr += 2
+          while i < versions_len + 1
+            versions << binary.slice(i, 2)
+            i += 2
           end
-          raise 'malformed binary' unless itr == binary.length \
-                                          && itr == versions_len + 1
+          raise 'malformed binary' unless i == binary.length \
+                                          && i == versions_len + 1
 
           versions
         end

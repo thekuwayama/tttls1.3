@@ -50,10 +50,10 @@ module TLS13
             )
           end
           ke_modes = []
-          itr = 1
-          while itr < kem_len + 1
-            ke_modes << binary[itr]
-            itr += 1
+          i = 1
+          while i < kem_len + 1
+            ke_modes << binary[i]
+            i += 1
           end
           PskKeyExchangeModes.new(ke_modes)
         end

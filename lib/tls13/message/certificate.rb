@@ -45,14 +45,14 @@ module TLS13
         msg_len = Convert.bin2i(binary.slice(1, 3))
         crc_len = Convert.bin2i(binary.slice(4, 1))
         certificate_request_context = binary.slice(5, crc_len)
-        itr = 5 + crc_len
-        cl_len = Convert.bin2i(binary.slice(itr, 3))
-        itr += 3
-        cl_bin = binary.slice(itr, cl_len)
-        itr += cl_len
+        i = 5 + crc_len
+        cl_len = Convert.bin2i(binary.slice(i, 3))
+        i += 3
+        cl_bin = binary.slice(i, cl_len)
+        i += cl_len
         certificate_list = deserialize_certificate_list(cl_bin)
-        raise Error::TLSError, :decode_error unless itr == msg_len + 4 &&
-                                                    itr == binary.length
+        raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
+                                                    i == binary.length
 
         Certificate.new(
           certificate_request_context: certificate_request_context,
@@ -70,27 +70,27 @@ module TLS13
         def deserialize_certificate_list(binary)
           raise Error::InternalError if binary.nil?
 
-          itr = 0
+          i = 0
           certificate_list = []
-          while itr < binary.length
-            raise Error::TLSError, :decode_error if itr + 3 > binary.length
+          while i < binary.length
+            raise Error::TLSError, :decode_error if i + 3 > binary.length
 
-            cd_len = Convert.bin2i(binary.slice(itr, 3))
-            itr += 3
-            cd_bin = binary.slice(itr, cd_len)
+            cd_len = Convert.bin2i(binary.slice(i, 3))
+            i += 3
+            cd_bin = binary.slice(i, cd_len)
             cert_data = OpenSSL::X509::Certificate.new(cd_bin)
-            itr += cd_len
-            raise Error::TLSError, :decode_error if itr + 2 > binary.length
+            i += cd_len
+            raise Error::TLSError, :decode_error if i + 2 > binary.length
 
-            exs_len = Convert.bin2i(binary.slice(itr, 2))
-            itr += 2
-            exs_bin = binary.slice(itr, exs_len)
+            exs_len = Convert.bin2i(binary.slice(i, 2))
+            i += 2
+            exs_bin = binary.slice(i, exs_len)
             extensions = Extensions.deserialize(exs_bin,
                                                 HandshakeType::CERTIFICATE)
-            itr += exs_len
+            i += exs_len
             certificate_list << CertificateEntry.new(cert_data, extensions)
           end
-          raise Error::TLSError, :decode_error unless itr == binary.length
+          raise Error::TLSError, :decode_error unless i == binary.length
 
           certificate_list
         end

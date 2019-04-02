@@ -133,17 +133,17 @@ module TLS13
           raise Error::InternalError if binary.nil?
 
           handshakes = []
-          itr = 0
-          while itr < binary.length
-            raise Error::TLSError, :decode_error if itr + 4 > binary.length
+          i = 0
+          while i < binary.length
+            raise Error::TLSError, :decode_error if i + 4 > binary.length
 
-            msg_len = Convert.bin2i(binary.slice(itr + 1, 3))
-            msg_bin = binary.slice(itr, msg_len + 4)
+            msg_len = Convert.bin2i(binary.slice(i + 1, 3))
+            msg_bin = binary.slice(i, msg_len + 4)
             message = do_deserialize_handshake(msg_bin)
-            itr += msg_len + 4
+            i += msg_len + 4
             handshakes << message
           end
-          raise Error::TLSError, :decode_error unless itr == binary.length
+          raise Error::TLSError, :decode_error unless i == binary.length
 
           handshakes
         end

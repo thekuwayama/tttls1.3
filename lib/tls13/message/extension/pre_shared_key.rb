@@ -103,31 +103,31 @@ module TLS13
         # rubocop: disable Metrics/AbcSize
         def self.deserialize(binary)
           pksids_len = Convert.bin2i(binary.slice(0, 2))
-          itr = 2
+          i = 2
           identities = [] # Array of PskIdentity
-          while itr < pksids_len + 2
-            id_len = Convert.bin2i(binary.slice(itr, 2))
-            itr += 2
-            identity = binary.slice(itr, id_len)
-            itr += id_len
-            obfuscated_ticket_age = Convert.bin2i(binary.slice(itr, 4))
-            itr += 4
+          while i < pksids_len + 2
+            id_len = Convert.bin2i(binary.slice(i, 2))
+            i += 2
+            identity = binary.slice(i, id_len)
+            i += id_len
+            obfuscated_ticket_age = Convert.bin2i(binary.slice(i, 4))
+            i += 4
             identities << PskIdentity.new(
               identity: identity,
               obfuscated_ticket_age: obfuscated_ticket_age
             )
           end
 
-          binders_tail = itr + Convert.bin2i(binary.slice(itr, 2)) + 2
-          itr += 2
+          binders_tail = i + Convert.bin2i(binary.slice(i, 2)) + 2
+          i += 2
           binders = [] # Array of String
-          while itr < binders_tail
-            pbe_len = Convert.bin2i(binary[itr])
-            itr += 1
-            binders << binary.slice(itr, pbe_len)
-            itr += pbe_len
+          while i < binders_tail
+            pbe_len = Convert.bin2i(binary[i])
+            i += 1
+            binders << binary.slice(i, pbe_len)
+            i += pbe_len
           end
-          raise 'malformed binary' unless itr == binary.length
+          raise 'malformed binary' unless i == binary.length
 
           OfferedPsks.new(identities: identities, binders: binders)
         end

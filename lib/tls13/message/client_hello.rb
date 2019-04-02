@@ -66,24 +66,24 @@ module TLS13
         random = binary.slice(6, 32)
         lsid_len = Convert.bin2i(binary[38])
         legacy_session_id = binary.slice(39, lsid_len)
-        itr = 39 + lsid_len
-        cs_len = Convert.bin2i(binary.slice(itr, 2))
-        itr += 2
-        cs_bin = binary.slice(itr, cs_len)
+        i = 39 + lsid_len
+        cs_len = Convert.bin2i(binary.slice(i, 2))
+        i += 2
+        cs_bin = binary.slice(i, cs_len)
         cipher_suites = CipherSuites.deserialize(cs_bin)
-        itr += cs_len
+        i += cs_len
         raise Error::TLSError, :illegal_parameter \
-          unless binary.slice(itr, 2) == "\x01\x00"
+          unless binary.slice(i, 2) == "\x01\x00"
 
-        itr += 2
-        exs_len = Convert.bin2i(binary.slice(itr, 2))
-        itr += 2
-        exs_bin = binary.slice(itr, exs_len)
+        i += 2
+        exs_len = Convert.bin2i(binary.slice(i, 2))
+        i += 2
+        exs_bin = binary.slice(i, exs_len)
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::CLIENT_HELLO)
-        itr += exs_len
-        raise Error::TLSError, :decode_error unless itr == msg_len + 4 &&
-                                                    itr == binary.length
+        i += exs_len
+        raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
+                                                    i == binary.length
 
         ClientHello.new(legacy_version: legacy_version,
                         random: random,

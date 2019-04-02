@@ -65,21 +65,21 @@ module TLS13
         random = binary.slice(6, 32)
         lsid_len = Convert.bin2i(binary[38])
         legacy_session_id_echo = binary.slice(39, lsid_len)
-        itr = 39 + lsid_len
-        cipher_suite = binary.slice(itr, 2)
-        itr += 2
+        i = 39 + lsid_len
+        cipher_suite = binary.slice(i, 2)
+        i += 2
         raise Error::TLSError, :illegal_parameter \
-          unless binary[itr] == "\x00"
+          unless binary[i] == "\x00"
 
-        itr += 1
-        exs_len = Convert.bin2i(binary.slice(itr, 2))
-        itr += 2
-        exs_bin = binary.slice(itr, exs_len)
+        i += 1
+        exs_len = Convert.bin2i(binary.slice(i, 2))
+        i += 2
+        exs_bin = binary.slice(i, exs_len)
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::SERVER_HELLO)
-        itr += exs_len
-        raise Error::TLSError, :decode_error unless itr == msg_len + 4 &&
-                                                    itr == binary.length
+        i += exs_len
+        raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
+                                                    i == binary.length
 
         ServerHello.new(legacy_version: legacy_version,
                         random: random,

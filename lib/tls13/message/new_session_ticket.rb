@@ -62,19 +62,19 @@ module TLS13
         ticket_age_add = binary.slice(8, 4)
         tn_len = Convert.bin2i(binary[12])
         ticket_nonce = binary.slice(13, tn_len)
-        itr = 13 + tn_len
-        ticket_len = Convert.bin2i(binary.slice(itr, 2))
-        itr += 2
-        ticket = binary.slice(itr, ticket_len)
-        itr += ticket_len
-        exs_len = Convert.bin2i(binary.slice(itr, 2))
-        itr += 2
-        exs_bin = binary.slice(itr, exs_len)
+        i = 13 + tn_len
+        ticket_len = Convert.bin2i(binary.slice(i, 2))
+        i += 2
+        ticket = binary.slice(i, ticket_len)
+        i += ticket_len
+        exs_len = Convert.bin2i(binary.slice(i, 2))
+        i += 2
+        exs_bin = binary.slice(i, exs_len)
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::NEW_SESSION_TICKET)
-        itr += exs_len
-        raise Error::TLSError, :decode_error unless itr == msg_len + 4 &&
-                                                    itr == binary.length
+        i += exs_len
+        raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
+                                                    i == binary.length
 
         NewSessionTicket.new(ticket_lifetime: ticket_lifetime,
                              ticket_age_add: ticket_age_add,

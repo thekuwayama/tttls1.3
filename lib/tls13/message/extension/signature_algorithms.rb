@@ -38,11 +38,11 @@ module TLS13
           ssa_len = Convert.bin2i(binary.slice(0, 2))
           raise 'malformed binary' unless binary.length == ssa_len + 2
 
-          itr = 2
+          i = 2
           supported_signature_algorithms = []
-          while itr < ssa_len + 2
-            supported_signature_algorithms << binary.slice(itr, 2)
-            itr += 2
+          while i < ssa_len + 2
+            supported_signature_algorithms << binary.slice(i, 2)
+            i += 2
           end
           SignatureAlgorithms.new(supported_signature_algorithms)
         end

@@ -92,12 +92,12 @@ module TLS13
       raise 'too short binary' if binary.nil?
 
       cipher_suites = []
-      itr = 0
-      while itr < binary.length
-        cipher_suites << binary.slice(itr, 2)
-        itr += 2
+      i = 0
+      while i < binary.length
+        cipher_suites << binary.slice(i, 2)
+        i += 2
       end
-      raise 'malformed binary' unless itr == binary.length
+      raise 'malformed binary' unless i == binary.length
 
       CipherSuites.new(cipher_suites)
     end

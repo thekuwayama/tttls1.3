@@ -91,18 +91,18 @@ module TLS13
 
           cs_len = Convert.bin2i(binary.slice(0, 2))
           key_share_entry = []
-          itr = 2
-          while itr < cs_len + 2
-            group = binary.slice(itr, 2)
-            itr += 2
-            ke_len = Convert.bin2i(binary.slice(itr, 2))
-            itr += 2
-            key_exchange = binary.slice(itr, ke_len)
+          i = 2
+          while i < cs_len + 2
+            group = binary.slice(i, 2)
+            i += 2
+            ke_len = Convert.bin2i(binary.slice(i, 2))
+            i += 2
+            key_exchange = binary.slice(i, ke_len)
             key_share_entry << KeyShareEntry.new(group: group,
                                                  key_exchange: key_exchange)
-            itr += ke_len
+            i += ke_len
           end
-          raise 'malformed binary' unless itr == binary.length
+          raise 'malformed binary' unless i == binary.length
 
           key_share_entry
         end

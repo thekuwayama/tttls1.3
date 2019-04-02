@@ -95,13 +95,13 @@ module TLS13
           nglist_len = Convert.bin2i(binary.slice(0, 2))
           raise 'malformed binary' unless binary.length == nglist_len + 2
 
-          itr = 2
+          i = 2
           named_group_list = []
-          while itr < nglist_len + 2
-            named_group_list << binary.slice(itr, 2)
-            itr += 2
+          while i < nglist_len + 2
+            named_group_list << binary.slice(i, 2)
+            i += 2
           end
-          raise 'malformed binary' unless itr == binary.length
+          raise 'malformed binary' unless i == binary.length
 
           SupportedGroups.new(named_group_list)
         end

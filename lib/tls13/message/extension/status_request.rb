@@ -53,15 +53,15 @@ module TLS13
             unless binary[0] == CertificateStatusType::OCSP
 
           ril_len = Convert.bin2i(binary.slice(1, 2))
-          itr = 3
+          i = 3
           responder_id_list =
-            deserialize_request_ids(binary.slice(itr, ril_len))
-          itr += ril_len
-          re_len = Convert.bin2i(binary.slice(itr, 2))
-          itr += 2
-          request_extensions = deserialize_extensions(binary.slice(itr, re_len))
-          itr += re_len
-          raise 'malformed binary' unless itr == binary.length
+            deserialize_request_ids(binary.slice(i, ril_len))
+          i += ril_len
+          re_len = Convert.bin2i(binary.slice(i, 2))
+          i += 2
+          request_extensions = deserialize_extensions(binary.slice(i, re_len))
+          i += re_len
+          raise 'malformed binary' unless i == binary.length
 
           StatusRequest.new(responder_id_list: responder_id_list,
                             request_extensions: request_extensions)
@@ -75,16 +75,16 @@ module TLS13
         def self.deserialize_request_ids(binary)
           return [] if binary.nil? || binary.empty?
 
-          itr = 0
+          i = 0
           request_ids = []
-          while itr < binary.length
-            id_len = Convert.bin2i(binary.slice(itr, 2))
-            itr += 2
-            id = binary.slice(itr, id_len) || ''
+          while i < binary.length
+            id_len = Convert.bin2i(binary.slice(i, 2))
+            i += 2
+            id = binary.slice(i, id_len) || ''
             request_ids += id
-            itr += id_len
+            i += id_len
           end
-          raise 'malformed binary' unless itr == binary.length
+          raise 'malformed binary' unless i == binary.length
 
           request_ids
         end

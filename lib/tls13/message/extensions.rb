@@ -67,21 +67,21 @@ module TLS13
         raise Error::InternalError if binary.nil?
 
         extensions = []
-        itr = 0
-        while itr < binary.length
-          raise Error::TLSError, :decode_error if itr + 4 > binary.length
+        i = 0
+        while i < binary.length
+          raise Error::TLSError, :decode_error if i + 4 > binary.length
 
-          extension_type = binary.slice(itr, 2)
-          itr += 2
-          ex_len = Convert.bin2i(binary.slice(itr, 2))
-          itr += 2
-          ex_bin = binary.slice(itr, ex_len)
+          extension_type = binary.slice(i, 2)
+          i += 2
+          ex_len = Convert.bin2i(binary.slice(i, 2))
+          i += 2
+          ex_bin = binary.slice(i, ex_len)
           extensions << deserialize_extension(ex_bin,
                                               extension_type,
                                               msg_type)
-          itr += ex_len
+          i += ex_len
         end
-        raise Error::TLSError, :decode_error unless itr == binary.length
+        raise Error::TLSError, :decode_error unless i == binary.length
 
         Extensions.new(extensions)
       end
