@@ -58,8 +58,8 @@ module TLS13
             versions << binary.slice(0, 2)
           else
             extension_type = ExtensionType::SUPPORTED_VERSION
-            return UknownExtension.new(extension_type: extension_type,
-                                       extension_data: binary)
+            return UnknownExtension.new(extension_type: extension_type,
+                                        extension_data: binary)
           end
           SupportedVersions.new(msg_type: msg_type, versions: versions)
         end

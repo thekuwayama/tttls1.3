@@ -59,7 +59,7 @@ module TLS13
         # @param binary [String]
         # @param msg_type [TLS13::Message::HandshakeType]
         #
-        # @return [TLS13::Message::Extensions::KeyShare, UknownExtension]
+        # @return [TLS13::Message::Extensions::KeyShare, UnknownExtension]
         def self.deserialize(binary, msg_type)
           key_share_entry = []
           case msg_type
@@ -70,8 +70,10 @@ module TLS13
           when HandshakeType::HELLO_RETRY_REQUEST
             key_share_entry = deserialize_keyshare_hrr(binary)
           else
-            return UknownExtension.new(extension_type: ExtensionType::KEY_SHARE,
-                                       extension_data: binary)
+            return UnknownExtension.new(
+              extension_type: ExtensionType::KEY_SHARE,
+              extension_data: binary
+            )
           end
           KeyShare.new(msg_type: msg_type,
                        key_share_entry: key_share_entry)

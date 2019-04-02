@@ -5,7 +5,7 @@ module TLS13
   using Refinements
   module Message
     module Extension
-      class UknownExtension
+      class UnknownExtension
         attr_accessor :extension_type
         attr_accessor :extension_data
 
@@ -24,10 +24,10 @@ module TLS13
         # @param binary [String]
         # @param extension_type [String]
         #
-        # @return [TLS13::Message::Extension::UknownExtension]
+        # @return [TLS13::Message::Extension::UnknownExtension]
         def self.deserialize(binary, extension_type)
-          UknownExtension.new(extension_type: extension_type,
-                              extension_data: binary)
+          UnknownExtension.new(extension_type: extension_type,
+                               extension_data: binary)
         end
       end
     end

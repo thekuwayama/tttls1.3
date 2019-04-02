@@ -51,12 +51,12 @@ module TLS13
         #
         # @raise [TLS13::Error::InternalError]
         #
-        # @return [TLS13::Message::Extension::ServerName, UknownExtension]
+        # @return [TLS13::Message::Extension::ServerName, UnknownExtension]
         def self.deserialize(binary)
           raise Error::InternalError if binary.nil?
 
           if binary.length == 1
-            return UknownExtension.new(
+            return UnknownExtension.new(
               extension_type: ExtensionType::SERVER_NAME,
               extension_data: binary
             )
@@ -70,12 +70,12 @@ module TLS13
         #
         # @raise [TLS13::Error::InternalError]
         #
-        # @return [TLS13::Message::Extension::ServerName, UknownExtension]
+        # @return [TLS13::Message::Extension::ServerName, UnknownExtension]
         def self.deserialize_host_name(binary)
           raise Error::InternalError if binary.nil?
 
           if binary.length < 5 || binary[2] != NameType::HOST_NAME
-            return UknownExtension.new(
+            return UnknownExtension.new(
               extension_type: ExtensionType::SERVER_NAME,
               extension_data: binary
             )
@@ -84,7 +84,7 @@ module TLS13
           sn_len = Convert.bin2i(binary.slice(3, 2))
           server_name = binary.slice(5, sn_len)
           if snlist_len + 2 != binary.length || sn_len + 5 != binary.length
-            return UknownExtension.new(
+            return UnknownExtension.new(
               extension_type: ExtensionType::SERVER_NAME,
               extension_data: binary
             )

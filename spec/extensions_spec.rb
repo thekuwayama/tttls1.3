@@ -121,13 +121,13 @@ RSpec.describe Extensions do
     end
 
     let(:grease_aa) do
-      UknownExtension.new(extension_type: unknown_exs_key_aa,
-                          extension_data: '')
+      UnknownExtension.new(extension_type: unknown_exs_key_aa,
+                           extension_data: '')
     end
 
     let(:grease_bb) do
-      UknownExtension.new(extension_type: unknown_exs_key_bb,
-                          extension_data: "\x00")
+      UnknownExtension.new(extension_type: unknown_exs_key_bb,
+                           extension_data: "\x00")
     end
 
     let(:extensions) do

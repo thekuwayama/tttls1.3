@@ -4,10 +4,10 @@
 require 'spec_helper'
 using Refinements
 
-RSpec.describe UknownExtension do
+RSpec.describe UnknownExtension do
   context 'valid uknown extension, no extension_data' do
     let(:extension) do
-      UknownExtension.new(extension_type: "\x8a\x8a")
+      UnknownExtension.new(extension_type: "\x8a\x8a")
     end
 
     it 'should be generated' do
@@ -26,8 +26,8 @@ RSpec.describe UknownExtension do
     end
 
     let(:extension) do
-      UknownExtension.new(extension_type: "\x8a\x8a",
-                          extension_data: random_bytes)
+      UnknownExtension.new(extension_type: "\x8a\x8a",
+                           extension_data: random_bytes)
     end
 
     it 'should be generated' do
@@ -43,7 +43,7 @@ RSpec.describe UknownExtension do
 
   context 'invalid uknown extension, no extension_type,' do
     let(:extension) do
-      UknownExtension.new
+      UnknownExtension.new
     end
 
     it 'should not be generated' do
@@ -53,7 +53,7 @@ RSpec.describe UknownExtension do
 
   context 'valid uknown extension binary, binary is nil,' do
     let(:extension) do
-      UknownExtension.deserialize(nil, "\x8a\x8a")
+      UnknownExtension.deserialize(nil, "\x8a\x8a")
     end
 
     it 'should generate valid object' do
@@ -64,7 +64,7 @@ RSpec.describe UknownExtension do
 
   context 'valid uknown extension binary, binary is empty,' do
     let(:extension) do
-      UknownExtension.deserialize([], "\x8a\x8a")
+      UnknownExtension.deserialize([], "\x8a\x8a")
     end
 
     it 'should generate valid object' do
@@ -79,7 +79,7 @@ RSpec.describe UknownExtension do
     end
 
     let(:extension) do
-      UknownExtension.deserialize(random_bytes, "\x8a\x8a")
+      UnknownExtension.deserialize(random_bytes, "\x8a\x8a")
     end
 
     it 'should generate valid object' do

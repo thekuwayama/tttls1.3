@@ -72,7 +72,7 @@ RSpec.describe ServerName do
       ServerName.deserialize(TESTBINARY_SERVER_NAME[0...-1])
     end
 
-    it 'should generate UknownExtension object' do
+    it 'should generate UnknownExtension object' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
       expect(extension.extension_data).to eq TESTBINARY_SERVER_NAME[0...-1]
     end
@@ -89,7 +89,7 @@ RSpec.describe ServerName do
       ServerName.deserialize(testbinary)
     end
 
-    it 'should generate UknownExtension object' do
+    it 'should generate UnknownExtension object' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
       expect(extension.extension_data).to eq testbinary
     end
@@ -105,7 +105,7 @@ RSpec.describe ServerName do
       ServerName.deserialize(testbinary)
     end
 
-    it 'should generate UknownExtension object' do
+    it 'should generate UnknownExtension object' do
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
       expect(extension.extension_data).to eq testbinary
     end

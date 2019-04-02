@@ -118,7 +118,7 @@ module TLS13
           when ExtensionType::KEY_SHARE
             Extension::KeyShare.deserialize(binary, msg_type)
           else
-            Extension::UknownExtension.deserialize(binary, extension_type)
+            Extension::UnknownExtension.deserialize(binary, extension_type)
           end
         end
         # rubocop: enable Metrics/CyclomaticComplexity

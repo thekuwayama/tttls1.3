@@ -91,7 +91,7 @@ RSpec.describe Cookie do
       Cookie.deserialize(TESTBINARY_COOKIE[0...-1])
     end
 
-    it 'should generat UknownExtension object' do
+    it 'should generat UnknownExtension object' do
       expect(extension.extension_type).to eq ExtensionType::COOKIE
       expect(extension.extension_data).to eq TESTBINARY_COOKIE[0...-1]
     end

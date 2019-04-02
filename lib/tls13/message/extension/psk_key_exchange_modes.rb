@@ -32,19 +32,19 @@ module TLS13
         # @raise [TLS13::Error::InternalError]
         #
         # @return [TLS13::Message::Extensions::PskKeyExchangeModes,
-        #          UknownExtension]
+        #          UnknownExtension]
         def self.deserialize(binary)
           raise Error::InternalError if binary.nil?
 
           if binary.empty?
-            return UknownExtension.new(
+            return UnknownExtension.new(
               extension_type: ExtensionType::PSK_KEY_EXCHANGE_MODES,
               extension_data: binary
             )
           end
           kem_len = Convert.bin2i(binary[0])
           if kem_len + 1 != binary.length
-            return UknownExtension.new(
+            return UnknownExtension.new(
               extension_type: ExtensionType::PSK_KEY_EXCHANGE_MODES,
               extension_data: binary
             )
