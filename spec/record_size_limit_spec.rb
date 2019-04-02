@@ -24,11 +24,11 @@ RSpec.describe RecordSizeLimit do
 
   context 'invalid record_size_limit' do
     let(:extension) do
-      RecordSizeLimit.new(64)
+      RecordSizeLimit.new(63)
     end
 
     it 'should not generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect { extension }.to raise_error(InternalError)
     end
   end
 
@@ -46,6 +46,16 @@ RSpec.describe RecordSizeLimit do
       expect(extension.serialize)
         .to eq ExtensionType::RECORD_SIZE_LIMIT \
                + TESTBINARY_RECORD_SIZE_LIMIT.prefix_uint16_length
+    end
+  end
+
+  context 'invalid record_size_limit binary, too short record_size_limit,' do
+    let(:extension) do
+      RecordSizeLimit.deserialize(63.to_uint16)
+    end
+
+    it 'should not generate object' do
+      expect { extension }.to raise_error(TLSError)
     end
   end
 end
