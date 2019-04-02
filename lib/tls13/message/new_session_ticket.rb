@@ -53,7 +53,7 @@ module TLS13
       # rubocop: disable Metrics/AbcSize
       def self.deserialize(binary)
         raise Error::InternalError if binary.nil?
-        raise Error::TLSError, 'decode_error' if binary.length < 13
+        raise Error::TLSError, :decode_error if binary.length < 13
         raise Error::InternalError \
           unless binary[0] == HandshakeType::NEW_SESSION_TICKET
 
@@ -73,8 +73,8 @@ module TLS13
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::NEW_SESSION_TICKET)
         itr += exs_len
-        raise Error::TLSError, 'decode_error' unless itr == msg_len + 4 &&
-                                                     itr == binary.length
+        raise Error::TLSError, :decode_error unless itr == msg_len + 4 &&
+                                                    itr == binary.length
 
         NewSessionTicket.new(ticket_lifetime: ticket_lifetime,
                              ticket_age_add: ticket_age_add,

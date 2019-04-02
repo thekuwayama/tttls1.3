@@ -56,7 +56,7 @@ module TLS13
       # rubocop: disable Metrics/CyclomaticComplexity
       def self.deserialize(binary)
         raise Error::InternalError if binary.nil?
-        raise Error::TLSError, 'decode_error' if binary.length < 39
+        raise Error::TLSError, :decode_error if binary.length < 39
         raise Error::InternalError \
           unless binary[0] == HandshakeType::SERVER_HELLO
 
@@ -68,7 +68,7 @@ module TLS13
         itr = 39 + lsid_len
         cipher_suite = binary.slice(itr, 2)
         itr += 2
-        raise Error::TLSError, 'illegal_parameter' \
+        raise Error::TLSError, :illegal_parameter \
           unless binary[itr] == "\x00"
 
         itr += 1
@@ -78,8 +78,8 @@ module TLS13
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::SERVER_HELLO)
         itr += exs_len
-        raise Error::TLSError, 'decode_error' unless itr == msg_len + 4 &&
-                                                     itr == binary.length
+        raise Error::TLSError, :decode_error unless itr == msg_len + 4 &&
+                                                    itr == binary.length
 
         ServerHello.new(legacy_version: legacy_version,
                         random: random,

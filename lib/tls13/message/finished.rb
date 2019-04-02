@@ -28,13 +28,13 @@ module TLS13
       # @return [TLS13::Message::Finished]
       def self.deserialize(binary)
         raise Error::InternalError if binary.nil?
-        raise Error::TLSError, 'decode_error' if binary.length < 4
+        raise Error::TLSError, :decode_error if binary.length < 4
         raise Error::InternalError \
           unless binary[0] == HandshakeType::FINISHED
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
         verify_data = binary.slice(4, msg_len)
-        raise Error::TLSError, 'decode_error' \
+        raise Error::TLSError, :decode_error \
           unless msg_len + 4 == binary.length
 
         Finished.new(verify_data)

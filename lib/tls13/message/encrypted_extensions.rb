@@ -28,7 +28,7 @@ module TLS13
       # @return [TLS13::Message::EncryptedExtensions]
       def self.deserialize(binary)
         raise Error::InternalError if binary.nil?
-        raise Error::TLSError, 'decode_error' if binary.length < 6
+        raise Error::TLSError, :decode_error if binary.length < 6
         raise Error::InternalError \
           unless binary[0] == HandshakeType::ENCRYPTED_EXTENSIONS
 
@@ -36,7 +36,7 @@ module TLS13
         exs_len = Convert.bin2i(binary.slice(4, 2))
         extensions = Extensions.deserialize(binary.slice(6, exs_len),
                                             HandshakeType::ENCRYPTED_EXTENSIONS)
-        raise Error::TLSError, 'decode_error' \
+        raise Error::TLSError, :decode_error \
           unless exs_len + 2 == ee_len && exs_len + 6 == binary.length
 
         EncryptedExtensions.new(extensions)

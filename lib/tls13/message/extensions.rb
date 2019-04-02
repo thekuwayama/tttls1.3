@@ -69,7 +69,7 @@ module TLS13
         extensions = []
         itr = 0
         while itr < binary.length
-          raise Error::TLSError, 'decode_error' if itr + 4 > binary.length
+          raise Error::TLSError, :decode_error if itr + 4 > binary.length
 
           extension_type = binary.slice(itr, 2)
           itr += 2
@@ -81,7 +81,7 @@ module TLS13
                                               msg_type)
           itr += ex_len
         end
-        raise Error::TLSError, 'decode_error' unless itr == binary.length
+        raise Error::TLSError, :decode_error unless itr == binary.length
 
         Extensions.new(extensions)
       end

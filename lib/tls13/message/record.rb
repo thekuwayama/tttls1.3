@@ -46,17 +46,17 @@ module TLS13
       # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, cipher)
         raise Error::InternalError if binary.nil?
-        raise Error::TLSError, 'decode_error' if binary.length < 5
+        raise Error::TLSError, :decode_error if binary.length < 5
 
         type = binary[0]
         legacy_record_version = binary.slice(1, 2)
         fragment_len = Convert.bin2i(binary.slice(3, 2))
-        raise Error::TLSError, 'record_overflow' \
+        raise Error::TLSError, :record_overflow \
           if (cipher.is_a?(Cryptograph::Passer) && fragment_len > 2**14) ||
              (cipher.is_a?(Cryptograph::Aead) && fragment_len > 2**14 + 256)
 
         fragment = binary.slice(5, fragment_len)
-        raise Error::TLSError, 'decode_error' \
+        raise Error::TLSError, :decode_error \
           unless binary.length == 5 + fragment_len
 
         if type == ContentType::APPLICATION_DATA
@@ -120,7 +120,7 @@ module TLS13
           when ContentType::ALERT
             [Alert.deserialize(binary)]
           else
-            raise Error::TLSError, 'unexpected_message'
+            raise Error::TLSError, :unexpected_message
           end
         end
 
@@ -135,7 +135,7 @@ module TLS13
           handshakes = []
           itr = 0
           while itr < binary.length
-            raise Error::TLSError, 'decode_error' if itr + 4 > binary.length
+            raise Error::TLSError, :decode_error if itr + 4 > binary.length
 
             msg_len = Convert.bin2i(binary.slice(itr + 1, 3))
             msg_bin = binary.slice(itr, msg_len + 4)
@@ -143,7 +143,7 @@ module TLS13
             itr += msg_len + 4
             handshakes << message
           end
-          raise Error::TLSError, 'decode_error' unless itr == binary.length
+          raise Error::TLSError, :decode_error unless itr == binary.length
 
           handshakes
         end
@@ -156,7 +156,7 @@ module TLS13
         # rubocop: disable Metrics/CyclomaticComplexity
         def do_deserialize_handshake(binary)
           raise Error::InternalError if binary.nil?
-          raise Error::TLSError, 'decode_error' if binary.empty?
+          raise Error::TLSError, :decode_error if binary.empty?
 
           case binary[0]
           when HandshakeType::CLIENT_HELLO
@@ -174,7 +174,7 @@ module TLS13
           when HandshakeType::NEW_SESSION_TICKET
             NewSessionTicket.deserialize(binary)
           else
-            raise Error::TLSError, 'unexpected_message'
+            raise Error::TLSError, :unexpected_message
           end
         end
         # rubocop: enable Metrics/CyclomaticComplexity

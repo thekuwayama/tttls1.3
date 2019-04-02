@@ -69,7 +69,7 @@ module TLS13
       # @return [TLS13::Message::Alert]
       def self.deserialize(binary)
         raise Error::InternalError if binary.nil?
-        raise Error::TLSError, 'decode_error' unless binary.length == 2
+        raise Error::TLSError, :decode_error unless binary.length == 2
 
         level = binary[0]
         description = binary[1]

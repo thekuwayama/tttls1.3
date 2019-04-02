@@ -65,7 +65,7 @@ module TLS13
       # @return [TLS13::Message::CertificateVerify]
       def self.deserialize(binary)
         raise Error::InternalError if binary.nil?
-        raise Error::TLSError, 'decode_error' if binary.length < 8
+        raise Error::TLSError, :decode_error if binary.length < 8
         raise Error::InternalError \
           unless binary[0] == HandshakeType::CERTIFICATE_VERIFY
 
