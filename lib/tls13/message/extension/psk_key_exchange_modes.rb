@@ -29,15 +29,26 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError]
         #
-        # @return [TLS13::Message::Extensions::PskKeyExchangeModes]
+        # @return [TLS13::Message::Extensions::PskKeyExchangeModes,
+        #          UknownExtension]
         def self.deserialize(binary)
-          raise 'too short binary' if binary.nil? || binary.empty?
+          raise Error::InternalError if binary.nil?
 
+          if binary.empty?
+            return UknownExtension.new(
+              extension_type: ExtensionType::PSK_KEY_EXCHANGE_MODES,
+              extension_data: binary
+            )
+          end
           kem_len = Convert.bin2i(binary[0])
-          raise 'malformed binary' unless binary.length == kem_len + 1
-
+          if kem_len + 1 != binary.length
+            return UknownExtension.new(
+              extension_type: ExtensionType::PSK_KEY_EXCHANGE_MODES,
+              extension_data: binary
+            )
+          end
           ke_modes = []
           itr = 1
           while itr < kem_len + 1
