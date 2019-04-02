@@ -29,8 +29,7 @@ module TLS13
         def initialize(server_name)
           @extension_type = ExtensionType::SERVER_NAME
           @server_name = server_name || ''
-          raise Error::InternalError \
-            if @server_name.length > 2**16 - 5
+          raise Error::InternalError if @server_name.length > 2**16 - 5
         end
 
         # @return [String]
@@ -50,12 +49,18 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError]
         #
-        # @return [TLS13::Message::Extension::ServerName]
+        # @return [TLS13::Message::Extension::ServerName, UknownExtension]
         def self.deserialize(binary)
-          raise 'too short binary' if binary.nil? || binary.length == 1
+          raise Error::InternalError if binary.nil?
 
+          if binary.length == 1
+            return UknownExtension.new(
+              extension_type: ExtensionType::SERVER_NAME,
+              extension_data: binary
+            )
+          end
           return ServerName.new('') if binary.empty?
 
           deserialize_host_name(binary)
@@ -63,21 +68,27 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError]
         #
-        # @return [TLS13::Message::Extension::ServerName]
+        # @return [TLS13::Message::Extension::ServerName, UknownExtension]
         def self.deserialize_host_name(binary)
-          raise 'too short binary' if binary.nil? || binary.length < 2
+          raise Error::InternalError if binary.nil?
 
+          if binary.length < 5 || binary[2] != NameType::HOST_NAME
+            return UknownExtension.new(
+              extension_type: ExtensionType::SERVER_NAME,
+              extension_data: binary
+            )
+          end
           snlist_len = Convert.bin2i(binary.slice(0, 2))
-          raise 'malformed binary' unless snlist_len + 2 == binary.length
-
-          raise 'unknown name_type' unless binary[2] == NameType::HOST_NAME
-
           sn_len = Convert.bin2i(binary.slice(3, 2))
-          raise 'malformed binary' unless sn_len + 5 == binary.length
-
           server_name = binary.slice(5, sn_len)
+          if snlist_len + 2 != binary.length || sn_len + 5 != binary.length
+            return UknownExtension.new(
+              extension_type: ExtensionType::SERVER_NAME,
+              extension_data: binary
+            )
+          end
           ServerName.new(server_name)
         end
       end

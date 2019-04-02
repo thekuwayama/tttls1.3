@@ -72,33 +72,42 @@ RSpec.describe ServerName do
       ServerName.deserialize(TESTBINARY_SERVER_NAME[0...-1])
     end
 
-    it 'should not generate object' do
-      expect { extension }.to raise_error(RuntimeError)
+    it 'should generate UknownExtension object' do
+      expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
+      expect(extension.extension_data).to eq TESTBINARY_SERVER_NAME[0...-1]
     end
   end
 
   context 'invalid server_name binary, unknown NameType,' do
-    let(:extension) do
+    let(:testbinary) do
       name_type = "\xff"
       binary = name_type + 'example.com'.prefix_uint16_length
-      host_name = binary.prefix_uint16_length.prefix_uint16_length
-      ServerName.deserialize(host_name)
+      binary.prefix_uint16_length.prefix_uint16_length
     end
 
-    it 'should not generate object' do
-      expect { extension }.to raise_error(RuntimeError)
+    let(:extension) do
+      ServerName.deserialize(testbinary)
+    end
+
+    it 'should generate UknownExtension object' do
+      expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
+      expect(extension.extension_data).to eq testbinary
     end
   end
 
   context 'invalid server_name binary, empty HostName,' do
-    let(:extension) do
+    let(:testbinary) do
       binary = NameType::HOST_NAME + ''.prefix_uint16_length
-      host_name = binary.prefix_uint16_length.prefix_uint16_length
-      ServerName.deserialize(host_name)
+      binary.prefix_uint16_length.prefix_uint16_length
     end
 
-    it 'should not generate object' do
-      expect { extension }.to raise_error(RuntimeError)
+    let(:extension) do
+      ServerName.deserialize(testbinary)
+    end
+
+    it 'should generate UknownExtension object' do
+      expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
+      expect(extension.extension_data).to eq testbinary
     end
   end
 end
