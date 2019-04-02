@@ -60,15 +60,17 @@ module TLS13
       # @param binary [String]
       # @param msg_type [TLS13::Message::HandshakeType]
       #
-      # @raise [RuntimeError]
+      # @raise [TLS13::Error::InternalError, TLSError]
       #
       # @return [TLS13::Message::Extensions]
       def self.deserialize(binary, msg_type)
-        raise 'too short binary' if binary.nil?
+        raise Error::InternalError if binary.nil?
 
         extensions = []
         itr = 0
         while itr < binary.length
+          raise Error::TLSError, 'decode_error' if itr + 4 > binary.length
+
           extension_type = binary.slice(itr, 2)
           itr += 2
           ex_len = Convert.bin2i(binary.slice(itr, 2))
@@ -79,7 +81,7 @@ module TLS13
                                               msg_type)
           itr += ex_len
         end
-        raise 'malformed binary' unless itr == binary.length
+        raise Error::TLSError, 'decode_error' unless itr == binary.length
 
         Extensions.new(extensions)
       end
@@ -89,10 +91,13 @@ module TLS13
         # @param extension_type [TLS13::Message::ExtensionType]
         # @param msg_type [TLS13::Message::HandshakeType]
         #
+        # @raise [TLS13::Error::InternalError]
+        #
         # @return [TLS13::Message::Extension::$Object, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         def deserialize_extension(binary, extension_type, msg_type)
-          # TODO
+          raise Error::InternalError if binary.nil?
+
           case extension_type
           when ExtensionType::SERVER_NAME
             Extension::ServerName.deserialize(binary)
