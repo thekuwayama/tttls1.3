@@ -29,12 +29,12 @@ module TLS13
     # rubocop: disable Metrics/MethodLength
     # rubocop: disable Metrics/PerceivedComplexity
     def connect
-      state = ClientState::START
+      @state = ClientState::START
       loop do
-        case state
+        case @state
         when ClientState::START
           send_client_hello
-          state = ClientState::WAIT_SH
+          @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           sh = recv_server_hello # TODO: Recv HelloRetryRequest
           @cipher_suite = sh.cipher_suite
@@ -46,30 +46,30 @@ module TLS13
           shared_key = gen_shared_secret(key_exchange, priv_key, group)
           @key_schedule = KeySchedule.new(shared_secret: shared_key,
                                           cipher_suite: @cipher_suite)
-          state = ClientState::WAIT_EE
+          @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           recv_encrypted_extensions
           # TODO: get server parameters
           # TODO: Using PSK
-          state = ClientState::WAIT_CERT_CR
+          @state = ClientState::WAIT_CERT_CR
         when ClientState::WAIT_CERT_CR
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             @transcript[CT] = message
-            state = ClientState::WAIT_CV
+            @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
             @transcript[CR] = message
-            state = ClientState::WAIT_CERT
+            @state = ClientState::WAIT_CERT
           else
             raise 'unexpected message'
           end
         when ClientState::WAIT_CERT
           recv_recv_certificate
-          state = ClientState::WAIT_CV
+          @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
           recv_certificate_verify
           terminate(:decrypt_error) unless verify_certificate_verify
-          state = ClientState::WAIT_FINISHED
+          @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           recv_finished
           terminate(:decrypt_error) unless verify_finished
@@ -77,7 +77,7 @@ module TLS13
           # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
           send_finished
-          state = ClientState::CONNECTED
+          @state = ClientState::CONNECTED
         when ClientState::CONNECTED
           break
         end

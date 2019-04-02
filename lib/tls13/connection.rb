@@ -32,12 +32,16 @@ module TLS13
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
       @notyet_application_secret = true
+      @state = 0 # ClientState or ServerState
     end
 
     # @raise [TLS13::Error::TLSError]
     #
     # @return [String]
     def read
+      raise Error::ConfigError unless @endpoint == :client &&
+                                      @state == ClientState::CONNECTED
+
       message = nil
       loop do
         message = recv_message
@@ -52,6 +56,9 @@ module TLS13
 
     # @param binary [String]
     def write(binary)
+      raise Error::ConfigError unless @endpoint == :client &&
+                                      @state == ClientState::CONNECTED
+
       ap = Message::ApplicationData.new(binary)
       send_application_data(ap)
     end
