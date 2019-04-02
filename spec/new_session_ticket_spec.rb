@@ -49,19 +49,6 @@ RSpec.describe NewSessionTicket do
     end
   end
 
-  context 'new_session_ticket, too long ticket_lifetime,' do
-    let(:message) do
-      NewSessionTicket.new(ticket_lifetime: 60 * 60 * 24 * 7, # 7 days
-                           ticket_age_add: OpenSSL::Random.random_bytes(4),
-                           ticket_nonce: "\x00" * 255,
-                           ticket: OpenSSL::Random.random_bytes(255))
-    end
-
-    it 'should not be generated' do
-      expect { message }.to raise_error(InternalError)
-    end
-  end
-
   context 'new_session_ticket, invalid ticket_age_add,' do
     let(:message) do
       NewSessionTicket.new(ticket_lifetime: 60 * 60 * 2, # 2 hours

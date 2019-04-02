@@ -25,8 +25,6 @@ module TLS13
                      ticket_nonce:, ticket:, extensions: Extensions.new)
         @msg_type = HandshakeType::NEW_SESSION_TICKET
         @ticket_lifetime = ticket_lifetime
-        raise Error::InternalError if ticket_lifetime >= SEVEN_DAYS
-
         @ticket_age_add = ticket_age_add
         raise Error::InternalError unless ticket_age_add.length == 4
 
