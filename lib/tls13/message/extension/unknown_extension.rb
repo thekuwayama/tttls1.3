@@ -11,8 +11,6 @@ module TLS13
 
         # @param extension_type [String]
         # @param extension_data [String]
-        #
-        # @raise [RuntimeError]
         def initialize(extension_type:, extension_data: '')
           @extension_type = extension_type
           @extension_data = extension_data || ''

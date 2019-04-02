@@ -27,23 +27,25 @@ RSpec.describe Cookie do
     end
   end
 
-  context 'invalid cookie, empty,' do
+  context 'ignored cookie, empty,' do
     let(:extension) do
       Cookie.new('')
     end
 
-    it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+    it 'should be generated' do
+      expect(extension.extension_type).to eq ExtensionType::COOKIE
+      expect(extension.cookie).to eq ''
     end
   end
 
-  context 'invalid cookie, nil,' do
+  context 'ignored cookie, nil,' do
     let(:extension) do
       Cookie.new(nil)
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect(extension.extension_type).to eq ExtensionType::COOKIE
+      expect(extension.cookie).to eq ''
     end
   end
 
@@ -53,7 +55,7 @@ RSpec.describe Cookie do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect { extension }.to raise_error(InternalError)
     end
   end
 
@@ -73,13 +75,14 @@ RSpec.describe Cookie do
     end
   end
 
-  context 'invalid cookie binary, empty,' do
+  context 'cookie binary, empty,' do
     let(:extension) do
       Cookie.deserialize("\x00\x00")
     end
 
-    it 'should not generat object' do
-      expect { extension }.to raise_error(RuntimeError)
+    it 'should generat object' do
+      expect(extension.extension_type).to eq ExtensionType::COOKIE
+      expect(extension.cookie).to eq ''
     end
   end
 
@@ -88,8 +91,9 @@ RSpec.describe Cookie do
       Cookie.deserialize(TESTBINARY_COOKIE[0...-1])
     end
 
-    it 'should not generat object' do
-      expect { extension }.to raise_error(RuntimeError)
+    it 'should generat UknownExtension object' do
+      expect(extension.extension_type).to eq ExtensionType::COOKIE
+      expect(extension.extension_data).to eq TESTBINARY_COOKIE[0...-1]
     end
   end
 end

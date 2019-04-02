@@ -11,33 +11,36 @@ module TLS13
 
         # @param cookie [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError]
         def initialize(cookie)
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || ''
-          raise 'invalid cookie' \
-            if @cookie.empty? || @cookie.length > 2**16 - 3
+          raise Error::InternalError if @cookie.length > 2**16 - 3
         end
 
         # @return [String]
         def serialize
-          binary = @cookie.prefix_uint16_length
-
-          @extension_type + binary.prefix_uint16_length
+          @extension_type + @cookie.prefix_uint16_length.prefix_uint16_length
         end
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::InternalError]
         #
-        # @return [TLS13::Message::Extensions::Cookie]
+        # @return [TLS13::Message::Extensions::Cookie, UknownExtension]
         def self.deserialize(binary)
-          raise 'too short binary' if binary.nil? || binary.length < 2
+          raise Error::InternalError if binary.nil?
 
+          if binary.length < 2
+            return UknownExtension.new(extension_type: ExtensionType::COOKIE,
+                                       extension_data: binary)
+          end
           cookie_len = Convert.bin2i(binary.slice(0, 2))
-          raise 'malformed binary' unless binary.length == cookie_len + 2
-
           cookie = binary.slice(2, cookie_len)
+          if cookie_len + 2 != binary.length || cookie_len > 2**16 - 3
+            return UknownExtension.new(extension_type: ExtensionType::COOKIE,
+                                       extension_data: binary)
+          end
           Cookie.new(cookie)
         end
       end
