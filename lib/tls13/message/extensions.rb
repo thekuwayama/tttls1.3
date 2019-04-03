@@ -60,11 +60,11 @@ module TLS13
       # @param binary [String]
       # @param msg_type [TLS13::Message::HandshakeType]
       #
-      # @raise [TLS13::Error::InternalError, TLSError]
+      # @raise [TLS13::Error::TLSError]
       #
       # @return [TLS13::Message::Extensions]
       def self.deserialize(binary, msg_type)
-        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, :internal_error if binary.nil?
 
         extensions = []
         i = 0
@@ -87,16 +87,21 @@ module TLS13
       end
 
       class << self
+        # Note:
+        # deserialize_extension ignores unrecognized or unparsable extensions.
+        # Received unrecognized or unparsable binary, $ExtensionClass::deserialize
+        # returns UnknownExtension, doesn't raise TLSError :decode_error.
+        #
         # @param binary [String]
         # @param extension_type [TLS13::Message::ExtensionType]
         # @param msg_type [TLS13::Message::HandshakeType]
         #
-        # @raise [TLS13::Error::InternalError]
+        # @raise [TLS13::Error::TLSError]
         #
         # @return [TLS13::Message::Extension::$Object, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         def deserialize_extension(binary, extension_type, msg_type)
-          raise Error::InternalError if binary.nil?
+          raise Error::TLSError, :internal_error if binary.nil?
 
           case extension_type
           when ExtensionType::SERVER_NAME

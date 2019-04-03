@@ -49,15 +49,15 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [TLS13::Error::InternalError, TLSError]
+      # @raise [TLS13::Error::TLSError]
       #
       # @return [TLS13::Message::ServerHello]
       # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/CyclomaticComplexity
       def self.deserialize(binary)
-        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 39
-        raise Error::InternalError \
+        raise Error::TLSError, :internal_error \
           unless binary[0] == HandshakeType::SERVER_HELLO
 
         msg_len = Convert.bin2i(binary.slice(1, 3))

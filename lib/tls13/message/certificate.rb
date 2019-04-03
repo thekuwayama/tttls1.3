@@ -33,13 +33,13 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [TLS13::Error::InternalError, TLSError]
+      # @raise [TLS13::Error::TLSError]
       #
       # @return [TLS13::Message::Certificate]
       def self.deserialize(binary)
-        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 5
-        raise Error::InternalError \
+        raise Error::TLSError, :internal_error \
           unless binary[0] == HandshakeType::CERTIFICATE
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
@@ -63,12 +63,12 @@ module TLS13
       class << self
         # @param binary [String]
         #
-        # @raise [TLS13::Error::InternalError, TLSError]
+        # @raise [TLS13::Error::TLSError]
         #
         # @return [Array of CertificateEntry]
         # rubocop: disable Metrics/AbcSize
         def deserialize_certificate_list(binary)
-          raise Error::InternalError if binary.nil?
+          raise Error::TLSError, :internal_error if binary.nil?
 
           i = 0
           certificate_list = []

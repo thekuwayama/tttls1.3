@@ -39,13 +39,13 @@ module TLS13
       # @param binary [String]
       # @param cipher [TLS13::Cryptograph::$Object]
       #
-      # @raise [TLS13::Error::InternalError, TLSError]
+      # @raise [TLS13::Error::TLSError]
       #
       # @return [TLS13::Message::Record
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, cipher)
-        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 5
 
         type = binary[0]
@@ -73,12 +73,12 @@ module TLS13
 
       private
 
-      # @raise [TLS13::Error::InternalError]
+      # @raise [TLS13::Error::TLSError]
       #
       # @return [TLS13::Message::ContentType]
       def messages_type
         types = @messages.map(&:class).uniq
-        raise Error::InternalError unless types.length == 1
+        raise Error::TLSError, :internal_error unless types.length == 1
 
         type = types.first
         if [Message::ClientHello,
@@ -96,7 +96,7 @@ module TLS13
         elsif type == Message::Alert
           ContentType::ALERT
         else
-          raise Error::InternalError
+          raise Error::TLSError, :internal_error
         end
       end
 
@@ -104,11 +104,11 @@ module TLS13
         # @param binary [String]
         # @param type [TLS13::Message::ContentType]
         #
-        # @raise [TLS13::Error::InternalError, TLSError]
+        # @raise [TLS13::Error::TLSError]
         #
         # @return [Array of TLS13::Message::$Object]
         def deserialize_fragment(binary, type)
-          raise Error::InternalError if binary.nil?
+          raise Error::TLSError, :internal_error if binary.nil?
 
           case type
           when ContentType::HANDSHAKE
@@ -126,11 +126,11 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::InternalError, TLSError]
+        # @raise [TLS13::Error::TLSError]
         #
         # @return [Array of TLS13::Message::$Object]
         def deserialize_handshake(binary)
-          raise Error::InternalError if binary.nil?
+          raise Error::TLSError, :internal_error if binary.nil?
 
           handshakes = []
           i = 0
@@ -150,12 +150,12 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::InternalError, TLSError]
+        # @raise [TLS13::Error::TLSError]
         #
         # @return [Array of TLS13::Message::$Object]
         # rubocop: disable Metrics/CyclomaticComplexity
         def do_deserialize_handshake(binary)
-          raise Error::InternalError if binary.nil?
+          raise Error::TLSError, :internal_error if binary.nil?
           raise Error::TLSError, :decode_error if binary.empty?
 
           case binary[0]

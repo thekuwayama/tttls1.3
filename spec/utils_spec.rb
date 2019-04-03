@@ -37,23 +37,23 @@ RSpec.describe TLS13::Refinements do
     end
 
     it 'should not return uint8' do
-      expect { integer.to_uint8 }.to raise_error(InternalError)
+      expect { integer.to_uint8 }.to raise_error(TLSError)
     end
 
     it 'should not return uint16' do
-      expect { integer.to_uint16 }.to raise_error(InternalError)
+      expect { integer.to_uint16 }.to raise_error(TLSError)
     end
 
     it 'should not return uint24' do
-      expect { integer.to_uint24 }.to raise_error(InternalError)
+      expect { integer.to_uint24 }.to raise_error(TLSError)
     end
 
     it 'should not return uint32' do
-      expect { integer.to_uint32 }.to raise_error(InternalError)
+      expect { integer.to_uint32 }.to raise_error(TLSError)
     end
 
     it 'should not return uint64' do
-      expect { integer.to_uint64 }.to raise_error(InternalError)
+      expect { integer.to_uint64 }.to raise_error(TLSError)
     end
   end
 
@@ -63,7 +63,7 @@ RSpec.describe TLS13::Refinements do
     end
 
     it 'should not return uint8' do
-      expect { integer.to_uint8 }.to raise_error(InternalError)
+      expect { integer.to_uint8 }.to raise_error(TLSError)
     end
 
     it 'should return uint16' do
@@ -89,11 +89,11 @@ RSpec.describe TLS13::Refinements do
     end
 
     it 'should not return uint8' do
-      expect { integer.to_uint8 }.to raise_error(InternalError)
+      expect { integer.to_uint8 }.to raise_error(TLSError)
     end
 
     it 'should not return uint16' do
-      expect { integer.to_uint16 }.to raise_error(InternalError)
+      expect { integer.to_uint16 }.to raise_error(TLSError)
     end
 
     it 'should return uint24' do
@@ -115,15 +115,15 @@ RSpec.describe TLS13::Refinements do
     end
 
     it 'should not return uint8' do
-      expect { integer.to_uint8 }.to raise_error(InternalError)
+      expect { integer.to_uint8 }.to raise_error(TLSError)
     end
 
     it 'should not return uint16' do
-      expect { integer.to_uint16 }.to raise_error(InternalError)
+      expect { integer.to_uint16 }.to raise_error(TLSError)
     end
 
     it 'should not return uint24' do
-      expect { integer.to_uint24 }.to raise_error(InternalError)
+      expect { integer.to_uint24 }.to raise_error(TLSError)
     end
 
     it 'should return uint32' do
@@ -141,19 +141,19 @@ RSpec.describe TLS13::Refinements do
     end
 
     it 'should not return uint8' do
-      expect { integer.to_uint8 }.to raise_error(InternalError)
+      expect { integer.to_uint8 }.to raise_error(TLSError)
     end
 
     it 'should not return uint16' do
-      expect { integer.to_uint16 }.to raise_error(InternalError)
+      expect { integer.to_uint16 }.to raise_error(TLSError)
     end
 
     it 'should not return uint24' do
-      expect { integer.to_uint24 }.to raise_error(InternalError)
+      expect { integer.to_uint24 }.to raise_error(TLSError)
     end
 
     it 'should not return uint32' do
-      expect { integer.to_uint32 }.to raise_error(InternalError)
+      expect { integer.to_uint32 }.to raise_error(TLSError)
     end
 
     it 'should return uint64' do
@@ -167,23 +167,23 @@ RSpec.describe TLS13::Refinements do
     end
 
     it 'should not return uint8' do
-      expect { integer.to_uint8 }.to raise_error(InternalError)
+      expect { integer.to_uint8 }.to raise_error(TLSError)
     end
 
     it 'should not return uint16' do
-      expect { integer.to_uint16 }.to raise_error(InternalError)
+      expect { integer.to_uint16 }.to raise_error(TLSError)
     end
 
     it 'should not return uint24' do
-      expect { integer.to_uint24 }.to raise_error(InternalError)
+      expect { integer.to_uint24 }.to raise_error(TLSError)
     end
 
     it 'should not return uint32' do
-      expect { integer.to_uint32 }.to raise_error(InternalError)
+      expect { integer.to_uint32 }.to raise_error(TLSError)
     end
 
     it 'should not return uint64' do
-      expect { integer.to_uint64 }.to raise_error(InternalError)
+      expect { integer.to_uint64 }.to raise_error(TLSError)
     end
   end
 

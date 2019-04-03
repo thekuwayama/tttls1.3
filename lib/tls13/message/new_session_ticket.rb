@@ -20,13 +20,13 @@ module TLS13
       # @param ticket [String]
       # @param extensions [TLS13::Message::Extensions]
       #
-      # @raise [TLS13::Error::InternalError]
+      # @raise [TLS13::Error::TLSError]
       def initialize(ticket_lifetime:, ticket_age_add:,
                      ticket_nonce:, ticket:, extensions: Extensions.new)
         @msg_type = HandshakeType::NEW_SESSION_TICKET
         @ticket_lifetime = ticket_lifetime
         @ticket_age_add = ticket_age_add
-        raise Error::InternalError unless ticket_age_add.length == 4
+        raise Error::TLSError, :internal_error unless ticket_age_add.length == 4
 
         @ticket_nonce = ticket_nonce
         @ticket = ticket
@@ -47,14 +47,14 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [TLS13::Error::InternalError, TLSError]
+      # @raise [TLS13::Error::TLSError]
       #
       # @return [TLS13::Message::NewSessionTicket]
       # rubocop: disable Metrics/AbcSize
       def self.deserialize(binary)
-        raise Error::InternalError if binary.nil?
+        raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 13
-        raise Error::InternalError \
+        raise Error::TLSError, :internal_error \
           unless binary[0] == HandshakeType::NEW_SESSION_TICKET
 
         msg_len = Convert.bin2i(binary.slice(1, 3))

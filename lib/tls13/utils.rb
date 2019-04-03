@@ -5,13 +5,13 @@ module TLS13
   module Refinements
     refine Integer do
       def to_uint8
-        raise Error::InternalError if negative? || self >= (1 << 8)
+        raise Error::TLSError, :internal_error if negative? || self >= (1 << 8)
 
         chr
       end
 
       def to_uint16
-        raise Error::InternalError if negative? || self >= (1 << 16)
+        raise Error::TLSError, :internal_error if negative? || self >= (1 << 16)
 
         [
           self / (1 << 8),
@@ -20,7 +20,7 @@ module TLS13
       end
 
       def to_uint24
-        raise Error::InternalError if negative? || self >= (1 << 24)
+        raise Error::TLSError, :internal_error if negative? || self >= (1 << 24)
 
         [
           self / (1 << 16),
@@ -30,7 +30,7 @@ module TLS13
       end
 
       def to_uint32
-        raise Error::InternalError if negative? || self >= (1 << 32)
+        raise Error::TLSError, :internal_error if negative? || self >= (1 << 32)
 
         [
           self / (1 << 24),
@@ -41,7 +41,7 @@ module TLS13
       end
 
       def to_uint64
-        raise Error::InternalError if negative? || self >= (1 << 64)
+        raise Error::TLSError, :internal_error if negative? || self >= (1 << 64)
 
         [
           self / (1 << 32),

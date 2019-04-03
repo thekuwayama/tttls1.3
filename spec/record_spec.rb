@@ -63,7 +63,7 @@ RSpec.describe Record do
     end
 
     it 'should not generate object' do
-      expect { record }.to raise_error(InternalError)
+      expect { record }.to raise_error(TLSError)
     end
   end
 

@@ -25,7 +25,7 @@ module TLS13
           @cipher = OpenSSL::Cipher::AES128.new(:CCM)
         else
           # TODO: CipherSuite::TLS_CHACHA20_POLY1305_SHA256
-          raise Error::InternalError
+          raise Error::TLSError, :internal_error
         end
         @write_key = write_key
         @write_iv = write_iv

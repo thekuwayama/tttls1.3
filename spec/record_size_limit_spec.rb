@@ -28,7 +28,7 @@ RSpec.describe RecordSizeLimit do
     end
 
     it 'should not generated' do
-      expect { extension }.to raise_error(InternalError)
+      expect { extension }.to raise_error(TLSError)
     end
   end
 
