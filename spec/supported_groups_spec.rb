@@ -38,14 +38,14 @@ RSpec.describe SupportedGroups do
 
     it 'should be generated' do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
-      expect(extension.named_group_list).to eq DEFALT_NAMED_GROUP_LIST
+      expect(extension.named_group_list).to eq DEFAULT_NAMED_GROUP_LIST
     end
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + 10.to_uint16 \
-                                        + 8.to_uint16 \
-                                        + DEFALT_NAMED_GROUP_LIST.join
+                                        + 4.to_uint16 \
+                                        + 2.to_uint16 \
+                                        + DEFAULT_NAMED_GROUP_LIST.join
     end
   end
 

@@ -11,11 +11,11 @@ RSpec.describe CipherSuites do
     end
 
     it 'should be generated' do
-      expect(cs).to eq DEFALT_CIPHER_SUITES
+      expect(cs).to eq DEFAULT_CIPHER_SUITES
     end
 
     it 'should be serialized' do
-      expect(cs.serialize).to eq DEFALT_CIPHER_SUITES.join.prefix_uint16_length
+      expect(cs.serialize).to eq DEFAULT_CIPHER_SUITES.join.prefix_uint16_length
     end
   end
 

@@ -24,7 +24,7 @@ RSpec.describe ClientHello do
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.random).to eq random
       expect(message.legacy_session_id).to eq legacy_session_id
-      expect(message.cipher_suites).to eq DEFALT_CIPHER_SUITES
+      expect(message.cipher_suites).to eq DEFAULT_CIPHER_SUITES
       expect(message.legacy_compression_methods).to eq "\x00"
       expect(message.extensions).to be_empty
     end

@@ -58,10 +58,7 @@ module TLS13
         end
       end
 
-      DEFALT_NAMED_GROUP_LIST = [NamedGroup::SECP256R1,
-                                 NamedGroup::SECP384R1,
-                                 NamedGroup::SECP521R1,
-                                 NamedGroup::X25519].freeze
+      DEFAULT_NAMED_GROUP_LIST = [NamedGroup::SECP256R1].freeze
 
       class SupportedGroups
         attr_reader :extension_type
@@ -70,7 +67,7 @@ module TLS13
         # @param named_group_list [Array of NamedGroup]
         #
         # @raise [RuntimeError]
-        def initialize(named_group_list = DEFALT_NAMED_GROUP_LIST)
+        def initialize(named_group_list = DEFAULT_NAMED_GROUP_LIST)
           @extension_type = ExtensionType::SUPPORTED_GROUPS
           @named_group_list = named_group_list || []
           raise 'invalid named_group_list' \

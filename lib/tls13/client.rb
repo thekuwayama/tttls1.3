@@ -106,9 +106,7 @@ module TLS13
          Message::SignatureScheme::RSA_PSS_RSAE_SHA384]
       )
       # supported_groups: only P-256
-      exs << Message::Extension::SupportedGroups.new(
-        [Message::Extension::NamedGroup::SECP256R1]
-      )
+      exs << Message::Extension::SupportedGroups.new
       # key_share: only P-256
       ec = OpenSSL::PKey::EC.new('prime256v1')
       ec.generate_key!
