@@ -85,19 +85,21 @@ module TLS13
 
     # @param binary [String]
     #
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::TLSError]
     #
     # @return [TLS13::CipherSuites]
     def self.deserialize(binary)
-      raise 'too short binary' if binary.nil?
+      raise Error::TLSError, :internal_error if binary.nil?
 
       cipher_suites = []
       i = 0
       while i < binary.length
+        raise Error::TLSError, :decode_error if i + 2 > binary.length
+
         cipher_suites << binary.slice(i, 2)
         i += 2
       end
-      raise 'malformed binary' unless i == binary.length
+      raise Error::TLSError, :decode_error unless i == binary.length
 
       CipherSuites.new(cipher_suites)
     end

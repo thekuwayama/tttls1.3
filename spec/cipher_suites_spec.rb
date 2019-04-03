@@ -37,7 +37,7 @@ RSpec.describe CipherSuites do
     end
 
     it 'should not generate object' do
-      expect { cs }.to raise_error(RuntimeError)
+      expect { cs }.to raise_error(TLSError)
     end
   end
 
@@ -47,7 +47,7 @@ RSpec.describe CipherSuites do
     end
 
     it 'should not generate object' do
-      expect { cs }.to raise_error(RuntimeError)
+      expect { cs }.to raise_error(TLSError)
     end
   end
 end
