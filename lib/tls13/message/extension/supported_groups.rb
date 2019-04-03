@@ -66,11 +66,11 @@ module TLS13
 
         # @param named_group_list [Array of NamedGroup]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         def initialize(named_group_list = DEFAULT_NAMED_GROUP_LIST)
           @extension_type = ExtensionType::SUPPORTED_GROUPS
           @named_group_list = named_group_list || []
-          raise 'invalid named_group_list' \
+          raise Error::TLSError, :internal_error \
             if @named_group_list.empty? || @named_group_list.length >= 2**15 - 1
         end
 
@@ -83,25 +83,41 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extension::SupportedGroups]
+        # @return [TLS13::Message::Extension::SupportedGroups, UnknownExtension]
+        # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize(binary)
-          raise 'too short binary' if binary.nil? || binary.length < 2
+          raise Error::TLSError, :internal_error if binary.nil?
 
+          if binary.length < 2
+            return UnknownExtension.new(
+              extension_type: ExtensionType::SUPPORTED_GROUPS,
+              extension_data: binary
+            )
+          end
           nglist_len = Convert.bin2i(binary.slice(0, 2))
-          raise 'malformed binary' unless binary.length == nglist_len + 2
-
           i = 2
           named_group_list = []
           while i < nglist_len + 2
+            if i + 2 > binary.length
+              return UnknownExtension.new(
+                extension_type: ExtensionType::SUPPORTED_GROUPS,
+                extension_data: binary
+              )
+            end
             named_group_list << binary.slice(i, 2)
             i += 2
           end
-          raise 'malformed binary' unless i == binary.length
-
+          if i != binary.length || nglist_len + 2 != binary.length
+            return UnknownExtension.new(
+              extension_type: ExtensionType::SUPPORTED_GROUPS,
+              extension_data: binary
+            )
+          end
           SupportedGroups.new(named_group_list)
         end
+        # rubocop: enable Metrics/CyclomaticComplexity
       end
     end
   end
