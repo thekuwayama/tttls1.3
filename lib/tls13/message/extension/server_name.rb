@@ -67,30 +67,34 @@ module TLS13
           deserialize_host_name(binary)
         end
 
-        # @param binary [String]
-        #
-        # @raise [TLS13::Error::TLSError]
-        #
-        # @return [TLS13::Message::Extension::ServerName, UnknownExtension]
-        def self.deserialize_host_name(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+        class << self
+          private
 
-          if binary.length < 5 || binary[2] != NameType::HOST_NAME
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SERVER_NAME,
-              extension_data: binary
-            )
+          # @param binary [String]
+          #
+          # @raise [TLS13::Error::TLSError]
+          #
+          # @return [TLS13::Message::Extension::ServerName, UnknownExtension]
+          def deserialize_host_name(binary)
+            raise Error::TLSError, :internal_error if binary.nil?
+
+            if binary.length < 5 || binary[2] != NameType::HOST_NAME
+              return UnknownExtension.new(
+                extension_type: ExtensionType::SERVER_NAME,
+                extension_data: binary
+              )
+            end
+            snlist_len = Convert.bin2i(binary.slice(0, 2))
+            sn_len = Convert.bin2i(binary.slice(3, 2))
+            server_name = binary.slice(5, sn_len)
+            if snlist_len + 2 != binary.length || sn_len + 5 != binary.length
+              return UnknownExtension.new(
+                extension_type: ExtensionType::SERVER_NAME,
+                extension_data: binary
+              )
+            end
+            ServerName.new(server_name)
           end
-          snlist_len = Convert.bin2i(binary.slice(0, 2))
-          sn_len = Convert.bin2i(binary.slice(3, 2))
-          server_name = binary.slice(5, sn_len)
-          if snlist_len + 2 != binary.length || sn_len + 5 != binary.length
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SERVER_NAME,
-              extension_data: binary
-            )
-          end
-          ServerName.new(server_name)
         end
       end
     end

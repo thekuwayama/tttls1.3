@@ -101,6 +101,8 @@ module TLS13
       end
 
       class << self
+        private
+
         # @param binary [String]
         # @param type [TLS13::Message::ContentType]
         #

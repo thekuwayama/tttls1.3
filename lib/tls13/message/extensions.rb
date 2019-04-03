@@ -87,6 +87,8 @@ module TLS13
       end
 
       class << self
+        private
+
         # NOTE:
         # deserialize_extension ignores unrecognized or unparsable extensions.
         # Received unrecognized or unparsable binary,
