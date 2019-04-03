@@ -27,20 +27,17 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extensions::Cookie, UnknownExtension]
+        # @return [TLS13::Message::Extensions::Cookie, nil]
         def self.deserialize(binary)
           raise Error::TLSError, :internal_error if binary.nil?
 
-          if binary.length < 2
-            return UnknownExtension.new(extension_type: ExtensionType::COOKIE,
-                                        extension_data: binary)
-          end
+          return nil if binary.length < 2
+
           cookie_len = Convert.bin2i(binary.slice(0, 2))
           cookie = binary.slice(2, cookie_len)
-          if cookie_len + 2 != binary.length || cookie_len > 2**16 - 3
-            return UnknownExtension.new(extension_type: ExtensionType::COOKIE,
-                                        extension_data: binary)
-          end
+          return nil unless cookie_len + 2 == binary.length &&
+                            cookie_len <= 2**16 - 3
+
           Cookie.new(cookie)
         end
       end

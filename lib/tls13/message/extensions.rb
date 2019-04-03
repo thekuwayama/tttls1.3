@@ -76,9 +76,8 @@ module TLS13
           ex_len = Convert.bin2i(binary.slice(i, 2))
           i += 2
           ex_bin = binary.slice(i, ex_len)
-          extensions << deserialize_extension(ex_bin,
-                                              extension_type,
-                                              msg_type)
+          ex = deserialize_extension(ex_bin, extension_type, msg_type)
+          extensions << ex unless ex.nil? # if unparsable, ignore
           i += ex_len
         end
         raise Error::TLSError, :decode_error unless i == binary.length
@@ -90,9 +89,8 @@ module TLS13
         private
 
         # NOTE:
-        # deserialize_extension ignores unrecognized or unparsable extensions.
-        # Received unrecognized or unparsable binary,
-        # $ExtensionClass::deserialize returns UnknownExtension, doesn't raise
+        # deserialize_extension ignores unparsable extension.
+        # Received unparsable binary, returns nil, doesn't raise
         # TLSError :decode_error.
         #
         # @param binary [String]

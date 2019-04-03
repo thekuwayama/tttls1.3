@@ -94,10 +94,8 @@ RSpec.describe SupportedGroups do
       SupportedGroups.deserialize(TESTBINARY_SUPPORTED_GROUPS[0...-1])
     end
 
-    it 'should generate UnknownExtension object' do
-      expect(extension).to be_a_kind_of(UnknownExtension)
-      expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
-      expect(extension.extension_data).to eq TESTBINARY_SUPPORTED_GROUPS[0...-1]
+    it 'should return nil' do
+      expect(extension).to be nil
     end
   end
 end

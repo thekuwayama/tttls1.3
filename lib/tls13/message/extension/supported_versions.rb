@@ -46,8 +46,7 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extensions::SupportedVersions,
-        #          UnknownExtension]
+        # @return [TLS13::Message::Extensions::SupportedVersions, nil]
         def self.deserialize(binary, msg_type)
           raise Error::TLSError, :internal_error if binary.nil?
 
@@ -55,25 +54,14 @@ module TLS13
           case msg_type
           when HandshakeType::CLIENT_HELLO
             versions = deserialize_versions(binary)
-            if versions.nil? # unparsable versions
-              return UnknownExtension.new(
-                extension_type: ExtensionType::SUPPORTED_VERSIONS,
-                extension_data: binary
-              )
-            end
+            return nil if versions.nil? # unparsable versions
+
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
-            if binary.length != 2
-              return UnknownExtension.new(
-                extension_type: ExtensionType::SUPPORTED_VERSIONS,
-                extension_data: binary
-              )
-            end
+            return nil if binary.length != 2
+
             versions << binary.slice(0, 2)
           else
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SUPPORTED_VERSIONS,
-              extension_data: binary
-            )
+            return nil
           end
           SupportedVersions.new(msg_type: msg_type, versions: versions)
         end

@@ -45,51 +45,33 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extension::StatusRequest,
-        #          UnknownExtension]
+        # @return [TLS13::Message::Extension::StatusRequest, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
-        # rubocop: disable Metrics/MethodLength
         def self.deserialize(binary)
           raise Error::TLSError, :internal_error if binary.nil?
+          return nil if binary.length < 5 ||
+                        binary[0] != CertificateStatusType::OCSP
 
-          if binary.length < 5 || binary[0] != CertificateStatusType::OCSP
-            return UnknownExtension.new(
-              extension_type: ExtensionType::STATUS_REQUEST,
-              extension_data: binary
-            )
-          end
           ril_len = Convert.bin2i(binary.slice(1, 2))
           i = 3
           responder_id_list =
             deserialize_request_ids(binary.slice(i, ril_len))
-          if responder_id_list.nil? # unparsable responder_id_list
-            return UnknownExtension.new(
-              extension_type: ExtensionType::STATUS_REQUEST,
-              extension_data: binary
-            )
-          end
+          # unparsable responder_id_list
+          return nil if responder_id_list.nil?
+
           i += ril_len
-          if i + 2 > binary.length
-            return UnknownExtension.new(
-              extension_type: ExtensionType::STATUS_REQUEST,
-              extension_data: binary
-            )
-          end
+          return nil if i + 2 > binary.length
+
           re_len = Convert.bin2i(binary.slice(i, 2))
           i += 2
           request_extensions = binary.slice(i, re_len)
           i += re_len
-          if i != binary.length
-            return UnknownExtension.new(
-              extension_type: ExtensionType::STATUS_REQUEST,
-              extension_data: binary
-            )
-          end
+          return nil unless i == binary.length
+
           StatusRequest.new(responder_id_list: responder_id_list,
                             request_extensions: request_extensions)
         end
         # rubocop: enable Metrics/CyclomaticComplexity
-        # rubocop: enable Metrics/MethodLength
 
         class << self
           private

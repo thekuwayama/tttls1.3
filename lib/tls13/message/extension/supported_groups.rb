@@ -85,36 +85,25 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extension::SupportedGroups, UnknownExtension]
+        # @return [TLS13::Message::Extension::SupportedGroups, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize(binary)
           raise Error::TLSError, :internal_error if binary.nil?
 
-          if binary.length < 2
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SUPPORTED_GROUPS,
-              extension_data: binary
-            )
-          end
+          return nil if binary.length < 2
+
           nglist_len = Convert.bin2i(binary.slice(0, 2))
           i = 2
           named_group_list = []
           while i < nglist_len + 2
-            if i + 2 > binary.length
-              return UnknownExtension.new(
-                extension_type: ExtensionType::SUPPORTED_GROUPS,
-                extension_data: binary
-              )
-            end
+            return nil if i + 2 > binary.length
+
             named_group_list << binary.slice(i, 2)
             i += 2
           end
-          if i != binary.length || nglist_len + 2 != binary.length
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SUPPORTED_GROUPS,
-              extension_data: binary
-            )
-          end
+          return nil unless i == binary.length &&
+                            nglist_len + 2 == binary.length
+
           SupportedGroups.new(named_group_list)
         end
         # rubocop: enable Metrics/CyclomaticComplexity

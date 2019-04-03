@@ -31,30 +31,21 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extensions::PskKeyExchangeModes,
-        #          UnknownExtension]
+        # @return [TLS13::Message::Extensions::PskKeyExchangeModes, nil]
         def self.deserialize(binary)
           raise Error::TLSError, :internal_error if binary.nil?
 
-          if binary.empty?
-            return UnknownExtension.new(
-              extension_type: ExtensionType::PSK_KEY_EXCHANGE_MODES,
-              extension_data: binary
-            )
-          end
+          return nil if binary.empty?
+
           kem_len = Convert.bin2i(binary[0])
-          if kem_len + 1 != binary.length
-            return UnknownExtension.new(
-              extension_type: ExtensionType::PSK_KEY_EXCHANGE_MODES,
-              extension_data: binary
-            )
-          end
           ke_modes = []
           i = 1
           while i < kem_len + 1
             ke_modes << binary[i]
             i += 1
           end
+          return nil unless kem_len + 1 == binary.length
+
           PskKeyExchangeModes.new(ke_modes)
         end
       end

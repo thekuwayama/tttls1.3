@@ -29,36 +29,23 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extensions::SignatureAlgorithms,
-        #          UnknownExtension]
+        # @return [TLS13::Message::Extensions::SignatureAlgorithms, nil]
         def self.deserialize(binary)
           raise Error::TLSError, :internal_error if binary.nil?
 
-          if binary.length < 2
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SIGNATURE_ALGORITHMS,
-              extension_data: binary
-            )
-          end
+          return nil if binary.length < 2
+
           ssa_len = Convert.bin2i(binary.slice(0, 2))
           i = 2
           supported_signature_algorithms = []
           while i < ssa_len + 2
-            if i + 2 > binary.length
-              return UnknownExtension.new(
-                extension_type: ExtensionType::SIGNATURE_ALGORITHMS,
-                extension_data: binary
-              )
-            end
+            return nil if i + 2 > binary.length
+
             supported_signature_algorithms << binary.slice(i, 2)
             i += 2
           end
-          if ssa_len + 2 != binary.length
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SIGNATURE_ALGORITHMS,
-              extension_data: binary
-            )
-          end
+          return nil unless ssa_len + 2 == binary.length
+
           SignatureAlgorithms.new(supported_signature_algorithms)
         end
       end

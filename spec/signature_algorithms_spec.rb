@@ -93,11 +93,8 @@ RSpec.describe SignatureAlgorithms do
       SignatureAlgorithms.deserialize(TESTBINARY_SIGNATURE_ALGORITHMS[0...-1])
     end
 
-    it 'should generate UnknownExtension object' do
-      expect(extension).to be_a_kind_of(UnknownExtension)
-      expect(extension.extension_type).to eq ExtensionType::SIGNATURE_ALGORITHMS
-      expect(extension.extension_data)
-        .to eq TESTBINARY_SIGNATURE_ALGORITHMS[0...-1]
+    it 'should return nil' do
+      expect(extension).to be nil
     end
   end
 end

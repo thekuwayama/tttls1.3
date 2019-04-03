@@ -52,16 +52,11 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extension::ServerName, UnknownExtension]
+        # @return [TLS13::Message::Extension::ServerName, nil]
         def self.deserialize(binary)
           raise Error::TLSError, :internal_error if binary.nil?
 
-          if binary.length == 1
-            return UnknownExtension.new(
-              extension_type: ExtensionType::SERVER_NAME,
-              extension_data: binary
-            )
-          end
+          return nil if binary.length == 1
           return ServerName.new('') if binary.empty?
 
           deserialize_host_name(binary)
@@ -74,25 +69,19 @@ module TLS13
           #
           # @raise [TLS13::Error::TLSError]
           #
-          # @return [TLS13::Message::Extension::ServerName, UnknownExtension]
+          # @return [TLS13::Message::Extension::ServerName, nil]
           def deserialize_host_name(binary)
             raise Error::TLSError, :internal_error if binary.nil?
 
-            if binary.length < 5 || binary[2] != NameType::HOST_NAME
-              return UnknownExtension.new(
-                extension_type: ExtensionType::SERVER_NAME,
-                extension_data: binary
-              )
-            end
+            return nil unless binary.length > 5 &&
+                              binary[2] == NameType::HOST_NAME
+
             snlist_len = Convert.bin2i(binary.slice(0, 2))
             sn_len = Convert.bin2i(binary.slice(3, 2))
             server_name = binary.slice(5, sn_len)
-            if snlist_len + 2 != binary.length || sn_len + 5 != binary.length
-              return UnknownExtension.new(
-                extension_type: ExtensionType::SERVER_NAME,
-                extension_data: binary
-              )
-            end
+            return nil unless snlist_len + 2 == binary.length &&
+                              sn_len + 5 == binary.length
+
             ServerName.new(server_name)
           end
         end
