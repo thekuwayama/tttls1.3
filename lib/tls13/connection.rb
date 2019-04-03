@@ -143,9 +143,8 @@ module TLS13
         when Message::ContentType::APPLICATION_DATA
           messages = record.messages
         when Message::ContentType::CCS
-          next if ccs_receivable?
-
-          terminate(:unexpected_message)
+          terminate(:unexpected_message) unless ccs_receivable?
+          next
         when Message::ContentType::ALERT
           messages = record.messages
         else
@@ -226,7 +225,7 @@ module TLS13
         public_key.verify_pss('SHA384', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA384')
       else # TODO: other SignatureScheme
-        raise 'unexpected SignatureScheme'
+        terminate(:internal_error)
       end
     end
 
@@ -266,7 +265,7 @@ module TLS13
         )
         priv_key.dh_compute_key(pub_key)
       else # TODO: other NamedGroup
-        raise 'unexpected NamedGroup'
+        terminate(:internal_error)
       end
     end
 

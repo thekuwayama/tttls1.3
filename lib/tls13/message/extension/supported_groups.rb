@@ -28,6 +28,8 @@ module TLS13
           #       } UncompressedPointRepresentation;
           # @param group [TLS13::Message::Extension::NamedGroup]
           #
+          # @raise [TLS13::Error::TLSError]
+          #
           # @return [Integer]
           # rubocop: disable Metrics/CyclomaticComplexity
           def key_exchange_len(group)
@@ -51,7 +53,7 @@ module TLS13
             when FFDHE8192
               1024
             else
-              raise 'unsupported NamedGroup'
+              raise Error::TLSError, :internal_error
             end
           end
           # rubocop: enable Metrics/CyclomaticComplexity
