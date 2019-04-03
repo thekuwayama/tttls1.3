@@ -42,7 +42,7 @@ RSpec.describe SignatureAlgorithms do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect { extension }.to raise_error(TLSError)
     end
   end
 
@@ -52,7 +52,7 @@ RSpec.describe SignatureAlgorithms do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect { extension }.to raise_error(TLSError)
     end
   end
 
@@ -93,8 +93,11 @@ RSpec.describe SignatureAlgorithms do
       SignatureAlgorithms.deserialize(TESTBINARY_SIGNATURE_ALGORITHMS[0...-1])
     end
 
-    it 'should not generate object' do
-      expect { extension }.to raise_error(RuntimeError)
+    it 'should generate UnknownExtension object' do
+      expect(extension).to be_a_kind_of(UnknownExtension)
+      expect(extension.extension_type).to eq ExtensionType::SIGNATURE_ALGORITHMS
+      expect(extension.extension_data)
+        .to eq TESTBINARY_SIGNATURE_ALGORITHMS[0...-1]
     end
   end
 end

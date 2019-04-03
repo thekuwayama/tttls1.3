@@ -73,6 +73,7 @@ RSpec.describe ServerName do
     end
 
     it 'should generate UnknownExtension object' do
+      expect(extension).to be_a_kind_of(UnknownExtension)
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
       expect(extension.extension_data).to eq TESTBINARY_SERVER_NAME[0...-1]
     end
@@ -90,6 +91,7 @@ RSpec.describe ServerName do
     end
 
     it 'should generate UnknownExtension object' do
+      expect(extension).to be_a_kind_of(UnknownExtension)
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
       expect(extension.extension_data).to eq testbinary
     end
@@ -106,6 +108,7 @@ RSpec.describe ServerName do
     end
 
     it 'should generate UnknownExtension object' do
+      expect(extension).to be_a_kind_of(UnknownExtension)
       expect(extension.extension_type).to eq ExtensionType::SERVER_NAME
       expect(extension.extension_data).to eq testbinary
     end

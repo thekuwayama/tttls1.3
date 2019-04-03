@@ -87,10 +87,11 @@ module TLS13
       end
 
       class << self
-        # Note:
+        # NOTE:
         # deserialize_extension ignores unrecognized or unparsable extensions.
-        # Received unrecognized or unparsable binary, $ExtensionClass::deserialize
-        # returns UnknownExtension, doesn't raise TLSError :decode_error.
+        # Received unrecognized or unparsable binary,
+        # $ExtensionClass::deserialize returns UnknownExtension, doesn't raise
+        # TLSError :decode_error.
         #
         # @param binary [String]
         # @param extension_type [TLS13::Message::ExtensionType]

@@ -92,6 +92,7 @@ RSpec.describe Cookie do
     end
 
     it 'should generat UnknownExtension object' do
+      expect(extension).to be_a_kind_of(UnknownExtension)
       expect(extension.extension_type).to eq ExtensionType::COOKIE
       expect(extension.extension_data).to eq TESTBINARY_COOKIE[0...-1]
     end
