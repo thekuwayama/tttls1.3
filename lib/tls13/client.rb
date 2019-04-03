@@ -97,8 +97,7 @@ module TLS13
       exs = []
       # supported_versions: TLS_1_3
       exs << Message::Extension::SupportedVersions.new(
-        msg_type: Message::HandshakeType::CLIENT_HELLO,
-        versions: [Message::ProtocolVersion::TLS_1_3]
+        msg_type: Message::HandshakeType::CLIENT_HELLO
       )
       # signature_algorithms
       exs << Message::Extension::SignatureAlgorithms.new(

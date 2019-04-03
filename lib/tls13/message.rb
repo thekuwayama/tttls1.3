@@ -20,6 +20,8 @@ module TLS13
       TLS_1_3 = "\x03\x04"
     end
 
+    DEFAULT_VERSIONS = [ProtocolVersion::TLS_1_3].freeze
+
     module HandshakeType
       HELLO_REQUEST        = "\x00" # RESERVED
       CLIENT_HELLO         = "\x01"

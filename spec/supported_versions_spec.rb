@@ -20,7 +20,29 @@ RSpec.describe SupportedVersions do
     end
 
     it 'should be serialized' do
-      expect(extension.serialize).to eq "\x00\x2b\x00\x05\x04\x03\x04\x03\x03"
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_VERSIONS \
+                                        + 5.to_uint16 \
+                                        + 4.to_uint8 \
+                                        + ProtocolVersion::TLS_1_3 \
+                                        + ProtocolVersion::TLS_1_2
+    end
+  end
+
+  context 'default supported_versions of ClientHello' do
+    let(:extension) do
+      SupportedVersions.new(msg_type: HandshakeType::CLIENT_HELLO)
+    end
+
+    it 'should be generated' do
+      expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
+      expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
+    end
+
+    it 'should be serialized' do
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_VERSIONS \
+                                        + 3.to_uint16 \
+                                        + 2.to_uint8 \
+                                        + ProtocolVersion::TLS_1_3
     end
   end
 
@@ -31,7 +53,7 @@ RSpec.describe SupportedVersions do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect { extension }.to raise_error(TLSError)
     end
   end
 
@@ -42,7 +64,7 @@ RSpec.describe SupportedVersions do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
+      expect { extension }.to raise_error(TLSError)
     end
   end
 
@@ -58,7 +80,9 @@ RSpec.describe SupportedVersions do
     end
 
     it 'should be serialized' do
-      expect(extension.serialize).to eq "\x00\x2b\x00\x02\x03\x04"
+      expect(extension.serialize).to eq ExtensionType::SUPPORTED_VERSIONS \
+                                        + 2.to_uint16 \
+                                        + ProtocolVersion::TLS_1_3
     end
   end
 
@@ -69,22 +93,7 @@ RSpec.describe SupportedVersions do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(RuntimeError)
-    end
-  end
-
-  context 'default supported_versions of ClientHello' do
-    let(:extension) do
-      SupportedVersions.new(msg_type: HandshakeType::CLIENT_HELLO)
-    end
-
-    it 'should be generated' do
-      expect(extension.extension_type).to eq ExtensionType::SUPPORTED_VERSIONS
-      expect(extension.versions).to eq [ProtocolVersion::TLS_1_3]
-    end
-
-    it 'should be serialized' do
-      expect(extension.serialize).to eq "\x00\x2b\x00\x03\x02\x03\x04"
+      expect { extension }.to raise_error(TLSError)
     end
   end
 
