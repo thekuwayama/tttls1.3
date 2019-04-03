@@ -177,7 +177,12 @@ module TLS13
         @notyet_application_secret = false
       end
 
-      record = Message::Record.deserialize(buffer, @read_cipher)
+      begin
+        record = Message::Record.deserialize(buffer, @read_cipher)
+      rescue Error::TLSError => e
+        terminate(e.message)
+      end
+
       # Received a protected ccs, peer MUST abort the handshake.
       if record.type == Message::ContentType::APPLICATION_DATA &&
          record.messages.first.is_a?(Message::ChangeCipherSpec)
