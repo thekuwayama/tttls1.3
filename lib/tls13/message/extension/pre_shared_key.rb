@@ -5,6 +5,12 @@ module TLS13
   using Refinements
   module Message
     module Extension
+      # struct {
+      #     select (Handshake.msg_type) {
+      #         case client_hello: OfferedPsks;
+      #         case server_hello: uint16 selected_identity;
+      #     };
+      # } PreSharedKeyExtension;
       class PreSharedKey
         attr_reader :extension_type
         attr_reader :msg_type
@@ -15,7 +21,7 @@ module TLS13
         # @param offered_psks [TLS13::Message::Extension::OfferedPsks]
         # @param selected_identity [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         def initialize(msg_type:, offered_psks: nil, selected_identity: '')
           @extension_type = ExtensionType::PRE_SHARED_KEY
           @msg_type = msg_type
@@ -27,11 +33,11 @@ module TLS13
             @selected_identity = selected_identity || ''
             # TODO: argument check
           else
-            raise 'invalid HandshakeType'
+            raise Error::TLSError, :internal_error
           end
         end
 
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         #
         # @return [String]
         def serialize
@@ -42,7 +48,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO
             binary += @selected_identity
           else
-            raise 'invalid HandshakeType'
+            raise Error::TLSError, :internal_error
           end
 
           @extension_type + binary.prefix_uint16_length
@@ -51,39 +57,50 @@ module TLS13
         # @param binary [String]
         # @param msg_type [TLS13::Message::ContentType]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extensions::PreSharedKey]
+        # @return [TLS13::Message::Extensions::PreSharedKey, nil]
         def self.deserialize(binary, msg_type)
+          raise Error::TLSError, :internal_error if binary.nil?
+
           case msg_type
           when HandshakeType::CLIENT_HELLO
             offered_psks = OfferedPsks.deserialize(binary)
+            return nil if offered_psks.nil?
+
             PreSharedKey.new(msg_type: HandshakeType::CLIENT_HELLO,
                              offered_psks: offered_psks)
           when HandshakeType::SERVER_HELLO
-            raise 'malformed binary' unless binary.length == 2
+            return nil unless binary.length == 2
 
             selected_identity = binary.slice(0, 2)
             PreSharedKey.new(msg_type: HandshakeType::SERVER_HELLO,
                              selected_identity: selected_identity)
           else
-            raise 'unexpected HandshakeType'
+            raise Error::TLSError, :internal_error
           end
         end
       end
 
+      # opaque PskBinderEntry<32..255>;
+      #
+      # struct {
+      #     PskIdentity identities<7..2^16-1>;
+      #     PskBinderEntry binders<33..2^16-1>;
+      # } OfferedPsks;
       class OfferedPsks
         attr_reader :identities
         attr_reader :binders
 
         # @param identities [Array of PskIdentity]
         # @param binders [Array of String]
+        #
+        # @raise [TLS13::Error::TLSError]
         def initialize(identities: [], binders: [])
           @identities = identities || []
-          raise 'invalid identities' if @identities.empty?
-
           @binders = binders || []
-          raise 'invalid binders' if @binders.empty?
+          raise Error::TLSError, :internal_error if @identities.empty? ||
+                                                    @binders.empty?
         end
 
         # @return [String]
@@ -99,17 +116,30 @@ module TLS13
 
         # @param binary [String]
         #
-        # @return [TLS13::Message::Extensions::OfferedPsks]
+        # @return [TLS13::Message::Extensions::OfferedPsks, nil]
         # rubocop: disable Metrics/AbcSize
+        # rubocop: disable Metrics/CyclomaticComplexity
+        # rubocop: disable Metrics/MethodLength
+        # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
+          raise Error::TLSError, :internal_error if binary.nil?
+
+          return nil if binary.length < 2
+
           pksids_len = Convert.bin2i(binary.slice(0, 2))
           i = 2
           identities = [] # Array of PskIdentity
           while i < pksids_len + 2
+            return nil if i + 2 > binary.length
+
             id_len = Convert.bin2i(binary.slice(i, 2))
+            return nil if id_len.zero?
+
             i += 2
             identity = binary.slice(i, id_len)
             i += id_len
+            return nil if i + 4 > binary.length
+
             obfuscated_ticket_age = Convert.bin2i(binary.slice(i, 4))
             i += 4
             identities << PskIdentity.new(
@@ -118,22 +148,32 @@ module TLS13
             )
           end
 
-          binders_tail = i + Convert.bin2i(binary.slice(i, 2)) + 2
           i += 2
           binders = [] # Array of String
-          while i < binders_tail
+          while i < binary.length
+            return nil if i > binary.length
+
             pbe_len = Convert.bin2i(binary[i])
+            return nil if pbe_len < 32
+
             i += 1
             binders << binary.slice(i, pbe_len)
             i += pbe_len
           end
-          raise 'malformed binary' unless i == binary.length
+          return nil unless i == binary.length
 
           OfferedPsks.new(identities: identities, binders: binders)
         end
         # rubocop: enable Metrics/AbcSize
+        # rubocop: enable Metrics/CyclomaticComplexity
+        # rubocop: enable Metrics/MethodLength
+        # rubocop: enable Metrics/PerceivedComplexity
       end
 
+      # struct {
+      #     opaque identity<1..2^16-1>;
+      #     uint32 obfuscated_ticket_age;
+      # } PskIdentity;
       class PskIdentity
         attr_reader :identity
         attr_reader :obfuscated_ticket_age
@@ -141,12 +181,12 @@ module TLS13
         # @param identity [String]
         # @param obfuscated_ticket_age [Integer]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         def initialize(identity: '', obfuscated_ticket_age: 0)
           @identity = identity || ''
-          raise 'invalid identity' if @identity.empty?
-
           @obfuscated_ticket_age = obfuscated_ticket_age
+          raise Error::TLSError, :internal_error \
+            if @identity.empty? || @obfuscated_ticket_age.negative?
         end
 
         # @return [String]
