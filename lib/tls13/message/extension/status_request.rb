@@ -43,59 +43,80 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         #
-        # @return [TLS13::Message::Extension::StatusRequest]
+        # @return [TLS13::Message::Extension::StatusRequest,
+        #          UnknownExtension]
+        # rubocop: disable Metrics/CyclomaticComplexity
+        # rubocop: disable Metrics/MethodLength
         def self.deserialize(binary)
-          raise 'too short binary' if binary.nil? || binary.length < 5
+          raise Error::TLSError, :internal_error if binary.nil?
 
-          raise 'unknown status_type' \
-            unless binary[0] == CertificateStatusType::OCSP
-
+          if binary.length < 5 || binary[0] != CertificateStatusType::OCSP
+            return UnknownExtension.new(
+              extension_type: ExtensionType::STATUS_REQUEST,
+              extension_data: binary
+            )
+          end
           ril_len = Convert.bin2i(binary.slice(1, 2))
           i = 3
           responder_id_list =
             deserialize_request_ids(binary.slice(i, ril_len))
+          if responder_id_list.nil? # unparsable responder_id_list
+            return UnknownExtension.new(
+              extension_type: ExtensionType::STATUS_REQUEST,
+              extension_data: binary
+            )
+          end
           i += ril_len
+          if i + 2 > binary.length
+            return UnknownExtension.new(
+              extension_type: ExtensionType::STATUS_REQUEST,
+              extension_data: binary
+            )
+          end
           re_len = Convert.bin2i(binary.slice(i, 2))
           i += 2
-          request_extensions = deserialize_extensions(binary.slice(i, re_len))
+          request_extensions = binary.slice(i, re_len)
           i += re_len
-          raise 'malformed binary' unless i == binary.length
-
+          if i != binary.length
+            return UnknownExtension.new(
+              extension_type: ExtensionType::STATUS_REQUEST,
+              extension_data: binary
+            )
+          end
           StatusRequest.new(responder_id_list: responder_id_list,
                             request_extensions: request_extensions)
         end
+        # rubocop: enable Metrics/CyclomaticComplexity
+        # rubocop: enable Metrics/MethodLength
 
-        # @param binary [String]
-        #
-        # @raise [RuntimeError]
-        #
-        # @return [Array of String]
-        def self.deserialize_request_ids(binary)
-          return [] if binary.nil? || binary.empty?
+        class << self
+          private
 
-          i = 0
-          request_ids = []
-          while i < binary.length
-            id_len = Convert.bin2i(binary.slice(i, 2))
-            i += 2
-            id = binary.slice(i, id_len) || ''
-            request_ids += id
-            i += id_len
+          # @param binary [String]
+          #
+          # @raise [TLS13::Error::TLSError]
+          #
+          # @return [Array of String, nil] received unparsable binary, nil
+          def deserialize_request_ids(binary)
+            raise Error::TLSError, :internal_error if binary.nil?
+
+            i = 0
+            request_ids = []
+            while i < binary.length
+              return nil if i + 2 > binary.length
+
+              id_len = Convert.bin2i(binary.slice(i, 2))
+              i += 2
+              id = binary.slice(i, id_len)
+              request_ids += id
+              i += id_len
+            end
+            return nil if i != binary.length
+
+            request_ids
           end
-          raise 'malformed binary' unless i == binary.length
-
-          request_ids
-        end
-
-        # @param binary [String]
-        #
-        # @return [String]
-        def self.deserialize_extensions(binary)
-          return '' if binary.nil? || binary.empty?
-
-          binary
         end
       end
     end
