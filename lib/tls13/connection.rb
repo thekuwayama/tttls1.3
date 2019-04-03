@@ -39,10 +39,13 @@ module TLS13
     #
     # @return [String]
     def read
+      # secure channel has not established yet
       raise Error::ConfigError unless @endpoint == :client &&
                                       @state == ClientState::CONNECTED
 
       message = nil
+      # At any time after the server has received the client Finished
+      # message, it MAY send a NewSessionTicket message.
       loop do
         message = recv_message
         break unless message.is_a?(Message::NewSessionTicket)
@@ -56,6 +59,7 @@ module TLS13
 
     # @param binary [String]
     def write(binary)
+      # secure channel has not established yet
       raise Error::ConfigError unless @endpoint == :client &&
                                       @state == ClientState::CONNECTED
 
@@ -175,7 +179,7 @@ module TLS13
       end
 
       record = Message::Record.deserialize(buffer, @read_cipher)
-      # receives a protected change_cipher_spec
+      # Received a protected ccs, peer MUST abort the handshake.
       if record.type == Message::ContentType::APPLICATION_DATA &&
          record.messages.first.is_a?(Message::ChangeCipherSpec)
         terminate(:unexpected_message)
@@ -300,8 +304,8 @@ module TLS13
 
     # @return [Boolean]
     #
-    # change_cipher_spec record received before the first ClientHello message
-    # or after the peer's Finished message
+    # Received ccs before the first ClientHello message or after the peer's
+    # Finished message, peer MUST abort.
     def ccs_receivable?
       return false unless @transcript.key?(CH)
       return false if @endpoint == :client && @transcript.key?(SF)
