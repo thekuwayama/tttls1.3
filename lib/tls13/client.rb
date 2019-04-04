@@ -39,9 +39,10 @@ module TLS13
         when ClientState::WAIT_SH
           sh = recv_server_hello # TODO: Recv HelloRetryRequest
           # TODO: protocol version negotiate
-          terminate(:illegal_parameter) unless echo_legacy_session_id?
+          terminate(:illegal_parameter) unless echoed_legacy_session_id?
           terminate(:illegal_parameter) unless offerd_cipher_suite?
           @cipher_suite = sh.cipher_suite
+          terminate(:illegal_parameter) unless valid_compression_method?
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           key_exchange = kse.key_exchange
@@ -240,7 +241,7 @@ module TLS13
     end
 
     # @return [Boolean]
-    def echo_legacy_session_id?
+    def echoed_legacy_session_id?
       @transcript[CH].legacy_session_id ==
         @transcript[SH].legacy_session_id_echo
     end
@@ -248,6 +249,11 @@ module TLS13
     # @return [Boolean]
     def offerd_cipher_suite?
       @transcript[CH].cipher_suites.include?(@transcript[SH].cipher_suite)
+    end
+
+    # @return [Boolean]
+    def valid_compression_method?
+      @transcript[SH].legacy_compression_method == "\x00"
     end
   end
   # rubocop: enable Metrics/ClassLength

@@ -20,7 +20,7 @@ RSpec.describe Client do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.cipher_suites).to eq DEFAULT_CIPHER_SUITES
-      expect(message.legacy_compression_methods).to eq "\x00"
+      expect(message.legacy_compression_methods).to eq ["\x00"]
     end
   end
 
@@ -186,12 +186,16 @@ RSpec.describe Client do
 
     it 'should check that ServerHello.legacy_session_id_echo matches ' \
        'ClientHello.legacy_session_id' do
-      expect(client.send(:echo_legacy_session_id?)).to be true
+      expect(client.send(:echoed_legacy_session_id?)).to be true
     end
 
     it 'should check that ServerHello.cipher_suite is included in' \
        'ClientHello.cipher_suites' do
       expect(client.send(:offerd_cipher_suite?)).to be true
+    end
+
+    it 'should check that ServerHello.compression_method is valid value' do
+      expect(client.send(:valid_compression_method?)).to be true
     end
   end
 end

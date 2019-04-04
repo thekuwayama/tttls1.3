@@ -19,20 +19,24 @@ module TLS13
       # @param random [String]
       # @param legacy_session_id_echo [String]
       # @param cipher_suite [TLS13::CipherSuite]
+      # @param legacy_compression_method [String]
       # @param extensions [TLS13::Message::Extensions]
+      # rubocop: disable Metrics/ParameterLists
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
-                     legacy_session_id_echo: nil,
+                     legacy_session_id_echo:,
                      cipher_suite:,
+                     legacy_compression_method: "\x00",
                      extensions: Extensions.new)
         @msg_type = HandshakeType::SERVER_HELLO
         @legacy_version = legacy_version
         @random = random
         @legacy_session_id_echo = legacy_session_id_echo
-        @cipher_suite = cipher_suite || ''
-        @legacy_compression_method = "\x00"
-        @extensions = extensions || Extensions.new
+        @cipher_suite = cipher_suite
+        @legacy_compression_method = legacy_compression_method
+        @extensions = extensions
       end
+      # rubocop: enable Metrics/ParameterLists
 
       # @return [String]
       def serialize
@@ -53,7 +57,6 @@ module TLS13
       #
       # @return [TLS13::Message::ServerHello]
       # rubocop: disable Metrics/AbcSize
-      # rubocop: disable Metrics/CyclomaticComplexity
       def self.deserialize(binary)
         raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 39
@@ -68,9 +71,7 @@ module TLS13
         i = 39 + lsid_len
         cipher_suite = binary.slice(i, 2)
         i += 2
-        raise Error::TLSError, :illegal_parameter \
-          unless binary[i] == "\x00"
-
+        legacy_compression_method = binary[i]
         i += 1
         exs_len = Convert.bin2i(binary.slice(i, 2))
         i += 2
@@ -85,10 +86,10 @@ module TLS13
                         random: random,
                         legacy_session_id_echo: legacy_session_id_echo,
                         cipher_suite: cipher_suite,
+                        legacy_compression_method: legacy_compression_method,
                         extensions: extensions)
       end
       # rubocop: enable Metrics/AbcSize
-      # rubocop: enable Metrics/CyclomaticComplexity
     end
   end
 end

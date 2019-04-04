@@ -19,20 +19,24 @@ module TLS13
       # @param random [String]
       # @param legacy_session_id [String]
       # @param cipher_suites [TLS13::CipherSuites]
+      # @param legacy_compression_methods [Array of String]
       # @param extensions [TLS13::Message::Extensions]
+      # rubocop: disable Metrics/ParameterLists
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
                      legacy_session_id: Array.new(32, 0).map(&:chr).join,
                      cipher_suites: CipherSuites.new,
+                     legacy_compression_methods: ["\x00"],
                      extensions: Extensions.new)
         @msg_type = HandshakeType::CLIENT_HELLO
         @legacy_version = legacy_version
         @random = random
         @legacy_session_id = legacy_session_id
-        @cipher_suites = cipher_suites || CipherSuites.new
-        @legacy_compression_methods = "\x00"
-        @extensions = extensions || Extensions.new
+        @cipher_suites = cipher_suites
+        @legacy_compression_methods = legacy_compression_methods
+        @extensions = extensions
       end
+      # rubocop: enable Metrics/ParameterLists
 
       # @return [String]
       def serialize
@@ -41,7 +45,7 @@ module TLS13
         binary += @random
         binary += @legacy_session_id.prefix_uint8_length
         binary += @cipher_suites.serialize
-        binary += @legacy_compression_methods.prefix_uint8_length
+        binary += @legacy_compression_methods.join.prefix_uint8_length
         binary += @extensions.serialize
 
         @msg_type + binary.prefix_uint24_length
@@ -53,7 +57,6 @@ module TLS13
       #
       # @return [TLS13::Message::ClientHello]
       # rubocop: disable Metrics/AbcSize
-      # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/MethodLength
       def self.deserialize(binary)
         raise Error::TLSError, :internal_error if binary.nil?
@@ -72,10 +75,10 @@ module TLS13
         cs_bin = binary.slice(i, cs_len)
         cipher_suites = CipherSuites.deserialize(cs_bin)
         i += cs_len
-        raise Error::TLSError, :illegal_parameter \
-          unless binary.slice(i, 2) == "\x01\x00"
-
-        i += 2
+        cm_len = Convert.bin2i(binary[i])
+        i += 1
+        legacy_compression_methods = binary.slice(i, cm_len).split('')
+        i += cm_len
         exs_len = Convert.bin2i(binary.slice(i, 2))
         i += 2
         exs_bin = binary.slice(i, exs_len)
@@ -89,10 +92,10 @@ module TLS13
                         random: random,
                         legacy_session_id: legacy_session_id,
                         cipher_suites: cipher_suites,
+                        legacy_compression_methods: legacy_compression_methods,
                         extensions: extensions)
       end
       # rubocop: enable Metrics/AbcSize
-      # rubocop: enable Metrics/CyclomaticComplexity
       # rubocop: enable Metrics/MethodLength
     end
   end
