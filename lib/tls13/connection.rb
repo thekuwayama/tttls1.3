@@ -44,15 +44,14 @@ module TLS13
                                       @state == ClientState::CONNECTED
 
       message = nil
-      # At any time after the server has received the client Finished
-      # message, it MAY send a NewSessionTicket message.
       loop do
         message = recv_message
+        # At any time after the server has received the client Finished
+        # message, it MAY send a NewSessionTicket message.
         break unless message.is_a?(Message::NewSessionTicket)
 
         precess_new_session_ticket
       end
-      raise message.to_error if message.is_a?(Message::Alert)
 
       message.fragment
     end
@@ -129,6 +128,8 @@ module TLS13
       @write_seq_num&.succ
     end
 
+    # @raise [TLS13::Error::TLSError
+    #
     # @return [TLS13::Message::$Object]
     # rubocop: disable Metrics/CyclomaticComplexity
     def recv_message
@@ -146,7 +147,7 @@ module TLS13
           terminate(:unexpected_message) unless ccs_receivable?
           next
         when Message::ContentType::ALERT
-          messages = record.messages
+          raise record.messages.first.to_error
         else
           terminate(:unexpected_message)
         end
