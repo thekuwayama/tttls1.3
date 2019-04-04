@@ -40,6 +40,7 @@ module TLS13
           sh = recv_server_hello # TODO: Recv HelloRetryRequest
           # TODO: protocol version negotiate
           terminate(:illegal_parameter) unless echo_legacy_session_id?
+          terminate(:illegal_parameter) unless offerd_cipher_suite?
           @cipher_suite = sh.cipher_suite
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
@@ -242,6 +243,11 @@ module TLS13
     def echo_legacy_session_id?
       @transcript[CH].legacy_session_id ==
         @transcript[SH].legacy_session_id_echo
+    end
+
+    # @return [Boolean]
+    def offerd_cipher_suite?
+      @transcript[CH].cipher_suites.include?(@transcript[SH].cipher_suite)
     end
   end
   # rubocop: enable Metrics/ClassLength
