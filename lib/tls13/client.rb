@@ -38,6 +38,8 @@ module TLS13
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           sh = recv_server_hello # TODO: Recv HelloRetryRequest
+          # TODO: protocol version negotiate
+          terminate(:illegal_parameter) unless echo_legacy_session_id?
           @cipher_suite = sh.cipher_suite
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
@@ -234,6 +236,12 @@ module TLS13
                          finished_key: finished_key,
                          message_range: CH..CV,
                          signature: signature)
+    end
+
+    # @return [Boolean]
+    def echo_legacy_session_id?
+      @transcript[CH].legacy_session_id ==
+        @transcript[SH].legacy_session_id_echo
     end
   end
   # rubocop: enable Metrics/ClassLength

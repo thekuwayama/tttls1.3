@@ -172,4 +172,21 @@ RSpec.describe Client do
       expect(client.send(:sign_finished)).to eq client_finished.verify_data
     end
   end
+
+  context 'client' do
+    let(:client) do
+      client = Client.new(nil)
+      transcript = {
+        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
+        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      }
+      client.instance_variable_set(:@transcript, transcript)
+      client
+    end
+
+    it 'should check that ClientHello.legacy_session_id matchs' \
+       'ServerHello.legacy_session_id_echo' do
+      expect(client.send(:echo_legacy_session_id?)).to be true
+    end
+  end
 end
