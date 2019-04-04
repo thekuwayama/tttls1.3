@@ -38,7 +38,8 @@ module TLS13
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           sh = recv_server_hello # TODO: Recv HelloRetryRequest
-          # TODO: protocol version negotiate
+          # only TLS 1.3
+          terminate(:protocol_version) unless negotiated_tls_1_3?
           terminate(:illegal_parameter) unless echoed_legacy_session_id?
           terminate(:illegal_parameter) unless offerd_cipher_suite?
           @cipher_suite = sh.cipher_suite
@@ -99,7 +100,7 @@ module TLS13
     # @return [TLS13::Message::Extensions]
     def gen_extensions
       exs = []
-      # supported_versions: TLS_1_3
+      # supported_versions: only TLS 1.3
       exs << Message::Extension::SupportedVersions.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO
       )
@@ -141,7 +142,7 @@ module TLS13
       @transcript[CH] = ch
     end
 
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::TLSError]
     #
     # @return [TLS13::Message::ServerHello]
     def recv_server_hello
@@ -152,7 +153,7 @@ module TLS13
       @transcript[SH] = sh
     end
 
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::TLSError]
     #
     # @return [TLS13::Message::EncryptedExtensions]
     def recv_encrypted_extensions
@@ -163,7 +164,7 @@ module TLS13
       @transcript[EE] = ee
     end
 
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::TLSError]
     #
     # @return [TLS13::Message::Certificate]
     def recv_certificate
@@ -174,7 +175,7 @@ module TLS13
       @transcript[CT] = ct
     end
 
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::TLSError]
     #
     # @return [TLS13::Message::CertificateVerify]
     def recv_certificate_verify
@@ -185,7 +186,7 @@ module TLS13
       @transcript[CV] = cv
     end
 
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::TLSError]
     #
     # @return [TLS13::Message::Finished]
     def recv_finished
@@ -239,6 +240,45 @@ module TLS13
                          message_range: CH..CV,
                          signature: signature)
     end
+
+    DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
+    DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
+
+    # NOTE:
+    # This implementation supports only TLS 1.3,
+    # so negotiated_tls_1_3? assumes that it sent ClientHello with:
+    #     1. supported_versions == ["\x03\x04"]
+    #     2. legacy_versions == ["\x03\x03"]
+    #
+    # @raise [TLS13::Error::TLSError]
+    #
+    # @return [Boolean]
+    # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/PerceivedComplexity
+    def negotiated_tls_1_3?
+      sh = @transcript[SH]
+      sh_sv = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS].versions
+      sh_lv = sh.legacy_version
+      sh_r8 = sh.random[-8..]
+      if sh_sv&.first == Message::ProtocolVersion::TLS_1_3 &&
+         sh_lv == Message::ProtocolVersion::TLS_1_2 &&
+         sh_r8 != DOWNGRADE_PROTECTION_TLS_1_2 &&
+         sh_r8 != DOWNGRADE_PROTECTION_TLS_1_1
+        true
+      elsif sh_sv&.first == Message::ProtocolVersion::TLS_1_3 &&
+            sh_lv == Message::ProtocolVersion::TLS_1_2 &&
+            sh_r8 == DOWNGRADE_PROTECTION_TLS_1_2
+        terminate(:illegal_parameter)
+      elsif sh_sv&.first == Message::ProtocolVersion::TLS_1_3 &&
+            sh_lv == Message::ProtocolVersion::TLS_1_2 &&
+            sh_r8 == DOWNGRADE_PROTECTION_TLS_1_1
+        terminate(:illegal_parameter)
+      else
+        false
+      end
+    end
+    # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [Boolean]
     def echoed_legacy_session_id?

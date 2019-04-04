@@ -197,5 +197,9 @@ RSpec.describe Client do
     it 'should check that ServerHello.compression_method is valid value' do
       expect(client.send(:valid_compression_method?)).to be true
     end
+
+    it 'should check negotiated protocol_version is TLS 1.3' do
+      expect(client.send(:negotiated_tls_1_3?)).to be true
+    end
   end
 end

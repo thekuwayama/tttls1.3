@@ -68,7 +68,7 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [RuntimeError]
+        # @raise [TLS13::Error::TLSError]
         #
         # @return [Array of String, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
