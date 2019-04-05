@@ -70,7 +70,7 @@ module TLS13
             terminate(:unexpected_message)
           end
         when ClientState::WAIT_CERT
-          recv_recv_certificate
+          recv_certificate
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
           recv_certificate_verify
@@ -147,8 +147,7 @@ module TLS13
     # @return [TLS13::Message::ServerHello]
     def recv_server_hello
       sh = recv_message
-      terminate(:unexpected_message) \
-        unless sh.msg_type == Message::HandshakeType::SERVER_HELLO
+      terminate(:unexpected_message) unless sh.is_a?(Message::ServerHello)
 
       @transcript[SH] = sh
     end
@@ -159,7 +158,7 @@ module TLS13
     def recv_encrypted_extensions
       ee = recv_message
       terminate(:unexpected_message) \
-        unless ee.msg_type == Message::HandshakeType::ENCRYPTED_EXTENSIONS
+        unless ee.is_a?(Message::EncryptedExtensions)
 
       @transcript[EE] = ee
     end
@@ -169,8 +168,7 @@ module TLS13
     # @return [TLS13::Message::Certificate]
     def recv_certificate
       ct = recv_message
-      terminate(:unexpected_message) \
-        unless ct.msg_type == Message::HandshakeType::CERTIFICATE
+      terminate(:unexpected_message) unless ct.is_a?(Message::Certificate)
 
       @transcript[CT] = ct
     end
@@ -180,8 +178,7 @@ module TLS13
     # @return [TLS13::Message::CertificateVerify]
     def recv_certificate_verify
       cv = recv_message
-      terminate(:unexpected_message) \
-        unless cv.msg_type == Message::HandshakeType::CERTIFICATE_VERIFY
+      terminate(:unexpected_message) unless cv.is_a?(Message::CertificateVerify)
 
       @transcript[CV] = cv
     end
@@ -191,8 +188,7 @@ module TLS13
     # @return [TLS13::Message::Finished]
     def recv_finished
       sf = recv_message
-      terminate(:unexpected_message) \
-        unless sf.msg_type == Message::HandshakeType::FINISHED
+      terminate(:unexpected_message) unless sf.is_a?(Message::Finished)
 
       @transcript[SF] = sf
     end
