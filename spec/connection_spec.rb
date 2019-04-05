@@ -15,13 +15,14 @@ RSpec.describe Connection do
 
     let(:connection) do
       connection = Connection.new(nil)
-      transcript = {
+      transcript = Transcript.new
+      transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
         SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
         CT => ct,
         CV => cv
-      }
+      )
       connection.instance_variable_set(:@transcript, transcript)
       connection.instance_variable_set(:@cipher_suite,
                                        CipherSuite::TLS_AES_128_GCM_SHA256)
@@ -45,13 +46,14 @@ RSpec.describe Connection do
   context 'connection' do
     let(:connection) do
       connection = Connection.new(nil)
-      transcript = {
+      transcript = Transcript.new
+      transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
         SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
         CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
-      }
+      )
       connection.instance_variable_set(:@transcript, transcript)
       connection.instance_variable_set(:@cipher_suite,
                                        CipherSuite::TLS_AES_128_GCM_SHA256)
@@ -75,14 +77,15 @@ RSpec.describe Connection do
   context 'connection' do
     let(:connection) do
       connection = Connection.new(nil)
-      transcript = {
+      transcript = Transcript.new
+      transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
         SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
         CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
         SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
-      }
+      )
       connection.instance_variable_set(:@transcript, transcript)
       connection.instance_variable_set(:@cipher_suite,
                                        CipherSuite::TLS_AES_128_GCM_SHA256)

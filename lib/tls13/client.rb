@@ -53,7 +53,8 @@ module TLS13
           priv_key = @priv_keys[group]
           shared_key = gen_shared_secret(key_exchange, priv_key, group)
           @key_schedule = KeySchedule.new(shared_secret: shared_key,
-                                          cipher_suite: @cipher_suite)
+                                          cipher_suite: @cipher_suite,
+                                          transcript: @transcript)
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           ee = recv_encrypted_extensions
@@ -231,8 +232,7 @@ module TLS13
     # @return [String]
     def sign_finished
       digest = CipherSuite.digest(@cipher_suite)
-      ch_sh = transcript_hash(CH..SH)
-      finished_key = @key_schedule.client_finished_key(ch_sh)
+      finished_key = @key_schedule.client_finished_key
       do_sign_finished(digest: digest,
                        finished_key: finished_key,
                        message_range: CH..EOED)
@@ -241,8 +241,7 @@ module TLS13
     # @return [Boolean]
     def verify_finished
       digest = CipherSuite.digest(@cipher_suite)
-      ch_sh = transcript_hash(CH..SH)
-      finished_key = @key_schedule.server_finished_key(ch_sh)
+      finished_key = @key_schedule.server_finished_key
       signature = @transcript[SF].verify_data
       do_verify_finished(digest: digest,
                          finished_key: finished_key,

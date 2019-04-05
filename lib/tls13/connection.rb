@@ -2,20 +2,6 @@
 # frozen_string_literal: true
 
 module TLS13
-  CH1  = 0
-  HRR  = 1
-  CH   = 2
-  SH   = 3
-  EE   = 4
-  CR   = 5
-  CT   = 6
-  CV   = 7
-  SF   = 8
-  EOED = 9
-  CCT  = 10
-  CCV  = 11
-  CF   = 12
-
   # rubocop: disable Metrics/ClassLength
   class Connection
     # @param socket [Socket]
@@ -28,7 +14,7 @@ module TLS13
       @read_seq_num = nil # TLS13::SequenceNumber
       @write_cipher = Cryptograph::Passer.new
       @write_seq_num = nil # TLS13::SequenceNumber
-      @transcript = {} # Hash of constant => TLS13::Message::$Object
+      @transcript = Transcript.new
       @message_queue = [] # Array of TLS13::Message::$Object
       @cipher_suite = nil # TLS13::CipherSuite
       @notyet_application_secret = true
@@ -195,18 +181,6 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/PerceivedComplexity
 
-    # @param range [Range]
-    #
-    # @return [String]
-    def transcript_hash(range)
-      # TODO: HRR
-      messages = range.to_a.map do |m|
-        @transcript.key?(m) ? @transcript[m].serialize : ''
-      end.join
-      digest = CipherSuite.digest(@cipher_suite)
-      OpenSSL::Digest.digest(digest, messages)
-    end
-
     # @param certificate_pem [String]
     # @param signature_scheme [TLS13::Message::SignatureScheme]
     # @param signature [String]
@@ -218,7 +192,8 @@ module TLS13
     # @return [Boolean]
     def do_verify_certificate_verify(certificate_pem:, signature_scheme:,
                                      signature:, context:, message_range:)
-      hash = transcript_hash(message_range)
+      digest = CipherSuite.digest(@cipher_suite)
+      hash = @transcript.hash(digest, message_range)
       case signature_scheme
       when Message::SignatureScheme::RSA_PSS_RSAE_SHA256
         content = "\x20" * 64 + context + "\x00" + hash
@@ -241,7 +216,7 @@ module TLS13
     #
     # @return [String]
     def do_sign_finished(digest:, finished_key:, message_range:)
-      hash = transcript_hash(message_range)
+      hash = @transcript.hash(digest, message_range)
       OpenSSL::HMAC.digest(digest, finished_key, hash)
     end
 
@@ -280,9 +255,8 @@ module TLS13
     #
     # @return [TLS13::Cryptograph::Aead]
     def gen_aead_with_handshake_traffic_secret(seq_num, sender)
-      ch_sh = transcript_hash(CH..SH)
-      write_key = @key_schedule.send("#{sender}_handshake_write_key", ch_sh)
-      write_iv = @key_schedule.send("#{sender}_handshake_write_iv", ch_sh)
+      write_key = @key_schedule.send("#{sender}_handshake_write_key")
+      write_iv = @key_schedule.send("#{sender}_handshake_write_iv")
       Cryptograph::Aead.new(
         cipher_suite: @cipher_suite,
         write_key: write_key,
@@ -296,9 +270,8 @@ module TLS13
     #
     # @return [TLS13::Cryptograph::Aead]
     def gen_aead_with_application_traffic_secret(seq_num, sender)
-      ch_sf = transcript_hash(CH..SF)
-      write_key = @key_schedule.send("#{sender}_application_write_key", ch_sf)
-      write_iv = @key_schedule.send("#{sender}_application_write_iv", ch_sf)
+      write_key = @key_schedule.send("#{sender}_application_write_key")
+      write_iv = @key_schedule.send("#{sender}_application_write_iv")
       Cryptograph::Aead.new(
         cipher_suite: @cipher_suite,
         write_key: write_key,

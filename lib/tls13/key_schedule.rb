@@ -5,7 +5,7 @@ module TLS13
   using Refinements
   # rubocop: disable Metrics/ClassLength
   class KeySchedule
-    def initialize(psk: nil, shared_secret:, cipher_suite:)
+    def initialize(psk: nil, shared_secret:, cipher_suite:, transcript:)
       @digest = CipherSuite.digest(cipher_suite)
       @hash_len = CipherSuite.hash_len(cipher_suite)
       @key_len = CipherSuite.key_len(cipher_suite)
@@ -13,6 +13,7 @@ module TLS13
       @psk = psk || "\x00" * @hash_len
       @shared_secret = shared_secret
       # TODO: check shared_secret.length
+      @transcript = transcript
     end
 
     # @return [String]
@@ -48,65 +49,51 @@ module TLS13
       hkdf_extract(@shared_secret, handshake_salt)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def client_handshake_traffic_secret(hash)
+    def client_handshake_traffic_secret
+      hash = @transcript.hash(@digest, CH..SH)
       derive_secret(handshake_secret, 'c hs traffic', hash)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def client_finished_key(hash)
-      secret = client_handshake_traffic_secret(hash)
+    def client_finished_key
+      secret = client_handshake_traffic_secret
       hkdf_expand_label(secret, 'finished', '', @hash_len)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def client_handshake_write_key(hash)
-      secret = client_handshake_traffic_secret(hash)
+    def client_handshake_write_key
+      secret = client_handshake_traffic_secret
       hkdf_expand_label(secret, 'key', '', @key_len)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def client_handshake_write_iv(hash)
-      secret = client_handshake_traffic_secret(hash)
+    def client_handshake_write_iv
+      secret = client_handshake_traffic_secret
       hkdf_expand_label(secret, 'iv', '', @iv_len)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def server_handshake_traffic_secret(hash)
+    def server_handshake_traffic_secret
+      hash = @transcript.hash(@digest, CH..SH)
       derive_secret(handshake_secret, 's hs traffic', hash)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def server_finished_key(hash)
-      secret = server_handshake_traffic_secret(hash)
+    def server_finished_key
+      secret = server_handshake_traffic_secret
       hkdf_expand_label(secret, 'finished', '', @hash_len)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def server_handshake_write_key(hash)
-      secret = server_handshake_traffic_secret(hash)
+    def server_handshake_write_key
+      secret = server_handshake_traffic_secret
       hkdf_expand_label(secret, 'key', '', @key_len)
     end
 
-    # @param hash [String] transcript hash ClientHello and ServerHello
-    #
     # @return [String]
-    def server_handshake_write_iv(hash)
-      secret = server_handshake_traffic_secret(hash)
+    def server_handshake_write_iv
+      secret = server_handshake_traffic_secret
       hkdf_expand_label(secret, 'iv', '', @iv_len)
     end
 
@@ -122,63 +109,51 @@ module TLS13
       hkdf_extract(ikm, master_salt)
     end
 
-    # @param hash [String] transcript hash ClientHello...server Finished
-    #
     # @return [String]
-    def client_application_traffic_secret(hash)
+    def client_application_traffic_secret
+      hash = @transcript.hash(@digest, CH..SF)
       derive_secret(master_secret, 'c ap traffic', hash)
     end
 
-    # @param hash [String] transcript hash ClientHello...server Finished
-    #
     # @return [String]
-    def client_application_write_key(hash)
-      secret = client_application_traffic_secret(hash)
+    def client_application_write_key
+      secret = client_application_traffic_secret
       hkdf_expand_label(secret, 'key', '', @key_len)
     end
 
-    # @param hash [String] transcript hash ClientHello...server Finished
-    #
     # @return [String]
-    def client_application_write_iv(hash)
-      secret = client_application_traffic_secret(hash)
+    def client_application_write_iv
+      secret = client_application_traffic_secret
       hkdf_expand_label(secret, 'iv', '', @iv_len)
     end
 
-    # @param hash [String] transcript hash ClientHello...server Finished
-    #
     # @return [String]
-    def server_application_traffic_secret(hash)
+    def server_application_traffic_secret
+      hash = @transcript.hash(@digest, CH..SF)
       derive_secret(master_secret, 's ap traffic', hash)
     end
 
-    # @param hash [String] transcript hash ClientHello...server Finished
-    #
     # @return [String]
-    def server_application_write_key(hash)
-      secret = server_application_traffic_secret(hash)
+    def server_application_write_key
+      secret = server_application_traffic_secret
       hkdf_expand_label(secret, 'key', '', @key_len)
     end
 
-    # @param hash [String] transcript hash ClientHello...server Finished
-    #
     # @return [String]
-    def server_application_write_iv(hash)
-      secret = server_application_traffic_secret(hash)
+    def server_application_write_iv
+      secret = server_application_traffic_secret
       hkdf_expand_label(secret, 'iv', '', @iv_len)
     end
 
-    # @param hash [String] transcript hash ClientHello...server Finished
-    #
     # @return [String]
-    def exporter_master_secret(hash)
+    def exporter_master_secret
+      hash = @transcript.hash(@digest, CH..SF)
       derive_secret(master_secret, 'exp master', hash)
     end
 
-    # @param hash [String] transcript hash ClientHello...client Finished
-    #
     # @return [String]
-    def resumption_master_secret(hash)
+    def resumption_master_secret
+      hash = @transcript.hash(@digest, CH..CF)
       derive_secret(master_secret, 'res master', hash)
     end
 
