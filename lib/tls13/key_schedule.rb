@@ -1,8 +1,6 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-require 'openssl'
-
 module TLS13
   using Refinements
   # rubocop: disable Metrics/ClassLength

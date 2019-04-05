@@ -147,10 +147,9 @@ module TLS13
 
     # @return [TLS13::Message::ClientHello]
     def send_client_hello
-      exs = gen_extensions
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new,
-        extensions: exs
+        extensions: gen_extensions
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch

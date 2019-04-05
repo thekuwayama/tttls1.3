@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'openssl'
+
 require 'tls13/version'
 require 'tls13/utils'
 require 'tls13/error'
