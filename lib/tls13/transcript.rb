@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
+
   CH1  = 0
   HRR  = 1
   CH   = 2
@@ -24,15 +26,22 @@ module TLS13
     # @param digest [String] name of digest algorithm
     # @param range [Range]
     #
-    # @raise [TLS13::Error::TLSError]
-    #
     # @return [String]
     def hash(digest, range)
-      # TODO: HRR
-      messages = range.to_a.map do |m|
+      prefix = ''
+      if range.include?(HRR)
+        # as an exception to the general rule
+        prefix = Message::HandshakeType::MESSAGE_HASH \
+                 + "\x00\x00" \
+                 + OpenSSL::Digest.new(digest).digest_length.to_uint8 \
+                 + OpenSSL::Digest.digest(digest, self[CH1].serialize)
+      end
+
+      messages = range.to_a.reject { |m| m == CH1 }.map do |m|
         key?(m) ? self[m].serialize : ''
       end
-      OpenSSL::Digest.digest(digest, messages.join)
+      s = prefix + messages.join
+      OpenSSL::Digest.digest(digest, s)
     end
   end
 end

@@ -404,6 +404,94 @@ TESTBINARY_RES_MASTER = <<BIN.split.map(&:hex).map(&:chr).join
   da f8 6c c8 56 23 1f 2d     5a ba 46 c4 34 ec 19 6c
 BIN
 
+TESTBINARY_CH_CF_TRANSCRIPT_HASH = <<BIN.split.map(&:hex).map(&:chr).join
+  20 91 45 a9 6e e8 e2 a1     22 ff 81 00 47 cc 95 26
+  84 65 8d 60 49 e8 64 29     42 6d b8 7c 54 ad 14 3d
+BIN
+
+# https://tools.ietf.org/html/rfc8448#section-5
+# 5.  HelloRetryRequest
+
+TESTBINARY_HRR_CLIENT_HELLO1 = <<BIN.split.map(&:hex).map(&:chr).join
+  01 00 00 b0 03 03 b0 b1     c5 a5 aa 37 c5 91 9f 2e
+  d1 d5 c6 ff f7 fc b7 84     97 16 94 5a 2b 8c ee 92
+  58 a3 46 67 7b 6f 00 00     06 13 01 13 03 13 02 01
+  00 00 81 00 00 00 0b 00     09 00 00 06 73 65 72 76
+  65 72 ff 01 00 01 00 00     0a 00 08 00 06 00 1d 00
+  17 00 18 00 33 00 26 00     24 00 1d 00 20 e8 e8 e3
+  f3 b9 3a 25 ed 97 a1 4a     7d ca cb 8a 27 2c 62 88
+  e5 85 c6 48 4d 05 26 2f     ca d0 62 ad 1f 00 2b 00
+  03 02 03 04 00 0d 00 20     00 1e 04 03 05 03 06 03
+  02 03 08 04 08 05 08 06     04 01 05 01 06 01 02 01
+  04 02 05 02 06 02 02 02     00 2d 00 02 01 01 00 1c
+  00 02 40 01
+BIN
+
+TESTBINARY_HRR_HELLO_RETRY_REQUEST = <<BIN.split.map(&:hex).map(&:chr).join
+  02 00 00 ac 03 03 cf 21     ad 74 e5 9a 61 11 be 1d
+  8c 02 1e 65 b8 91 c2 a2     11 16 7a bb 8c 5e 07 9e
+  09 e2 c8 a8 33 9c 00 13     01 00 00 84 00 33 00 02
+  00 17 00 2c 00 74 00 72     71 dc d0 4b b8 8b c3 18
+  91 19 39 8a 00 00 00 00     ee fa fc 76 c1 46 b8 23
+  b0 96 f8 aa ca d3 65 dd     00 30 95 3f 4e df 62 56
+  36 e5 f2 1b b2 e2 3f cc     65 4b 1b 5b 40 31 8d 10
+  d1 37 ab cb b8 75 74 e3     6e 8a 1f 02 5f 7d fa 5d
+  6e 50 78 1b 5e da 4a a1     5b 0c 8b e7 78 25 7d 16
+  aa 30 30 e9 e7 84 1d d9     e4 c0 34 22 67 e8 ca 0c
+  af 57 1f b2 b7 cf f0 f9     34 b0 00 2b 00 02 03 04
+BIN
+
+TESTBINARY_HRR_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
+  01 00 01 fc 03 03 b0 b1     c5 a5 aa 37 c5 91 9f 2e
+  d1 d5 c6 ff f7 fc b7 84     97 16 94 5a 2b 8c ee 92
+  58 a3 46 67 7b 6f 00 00     06 13 01 13 03 13 02 01
+  00 01 cd 00 00 00 0b 00     09 00 00 06 73 65 72 76
+  65 72 ff 01 00 01 00 00     0a 00 08 00 06 00 1d 00
+  17 00 18 00 33 00 47 00     45 00 17 00 41 04 a6 da
+  73 92 ec 59 1e 17 ab fd     53 59 64 b9 98 94 d1 3b
+  ef b2 21 b3 de f2 eb e3     83 0e ac 8f 01 51 81 26
+  77 c4 d6 d2 23 7e 85 cf     01 d6 91 0c fb 83 95 4e
+  76 ba 73 52 83 05 34 15     98 97 e8 06 57 80 00 2b
+  00 03 02 03 04 00 0d 00     20 00 1e 04 03 05 03 06
+  03 02 03 08 04 08 05 08     06 04 01 05 01 06 01 02
+  01 04 02 05 02 06 02 02     02 00 2c 00 74 00 72 71
+  dc d0 4b b8 8b c3 18 91     19 39 8a 00 00 00 00 ee
+  fa fc 76 c1 46 b8 23 b0     96 f8 aa ca d3 65 dd 00
+  30 95 3f 4e df 62 56 36     e5 f2 1b b2 e2 3f cc 65
+  4b 1b 5b 40 31 8d 10 d1     37 ab cb b8 75 74 e3 6e
+  8a 1f 02 5f 7d fa 5d 6e     50 78 1b 5e da 4a a1 5b
+  0c 8b e7 78 25 7d 16 aa     30 30 e9 e7 84 1d d9 e4
+  c0 34 22 67 e8 ca 0c af     57 1f b2 b7 cf f0 f9 34
+  b0 00 2d 00 02 01 01 00     1c 00 02 40 01 00 15 00
+  af 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+BIN
+
+TESTBINARY_HRR_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
+  02 00 00 77 03 03 bb 34     1d 84 7f d7 89 c4 7c 38
+  71 72 dc 0c 9b f1 47 fc     ca cb 50 43 d8 6c a4 c5
+  98 d3 ff 57 1b 98 00 13     01 00 00 4f 00 33 00 45
+  00 17 00 41 04 58 3e 05     4b 7a 66 67 2a e0 20 ad
+  9d 26 86 fc c8 5b 5a d4     1a 13 4a 0f 03 ee 72 b8
+  93 05 2b d8 5b 4c 8d e6     77 6f 5b 04 ac 07 d8 35
+  40 ea b3 e3 d9 c5 47 bc     65 28 c4 31 7d 29 46 86
+  09 3a 6c ad 7d 00 2b 00     02 03 04
+BIN
+
+TESTBINARY_CH1_SH_TRANSCRIPT_HASH = <<BIN.split.map(&:hex).map(&:chr).join
+  8a a8 e8 28 ec 2f 8a 88     4f ec 95 a3 13 9d e0 1c
+  15 a3 da a7 ff 5b fc 3f     4b fc c2 1b 43 8d 7b f8
+BIN
+
 # https://tools.ietf.org/html/rfc8448#section-7
 # 7.  Compatibility Mode
 TESTBINARY_RECORD_CCS = <<BIN.split.map(&:hex).map(&:chr).join

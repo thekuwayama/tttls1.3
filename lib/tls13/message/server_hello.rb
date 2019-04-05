@@ -5,6 +5,11 @@ module TLS13
   using Refinements
   module Message
     class ServerHello
+      # special value of the SHA-256 of "HelloRetryRequest"
+      HRR_RANDOM \
+      = "\xcf\x21\xad\x74\xe5\x9a\x61\x11\xbe\x1d\x8c\x02\x1e\x65\xb8\x91" \
+        "\xc2\xa2\x11\x16\x7a\xbb\x8c\x5e\x07\x9e\x09\xe2\xc8\xa8\x33\x9c"
+
       attr_reader :msg_type
       attr_reader :legacy_version
       attr_reader :random
@@ -55,6 +60,7 @@ module TLS13
       #
       # @return [TLS13::Message::ServerHello]
       # rubocop: disable Metrics/AbcSize
+      # rubocop: disable Metrics/CyclomaticComplexity
       def self.deserialize(binary)
         raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 39
@@ -74,8 +80,9 @@ module TLS13
         exs_len = Convert.bin2i(binary.slice(i, 2))
         i += 2
         exs_bin = binary.slice(i, exs_len)
-        extensions = Extensions.deserialize(exs_bin,
-                                            HandshakeType::SERVER_HELLO)
+        msg_type = HandshakeType::SERVER_HELLO
+        msg_type = HandshakeType::HELLO_RETRY_REQUEST if random == HRR_RANDOM
+        extensions = Extensions.deserialize(exs_bin, msg_type)
         i += exs_len
         raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
                                                     i == binary.length
@@ -88,6 +95,7 @@ module TLS13
                         extensions: extensions)
       end
       # rubocop: enable Metrics/AbcSize
+      # rubocop: enable Metrics/CyclomaticComplexity
     end
   end
 end
