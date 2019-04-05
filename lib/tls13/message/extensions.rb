@@ -77,7 +77,12 @@ module TLS13
           i += 2
           ex_bin = binary.slice(i, ex_len)
           ex = deserialize_extension(ex_bin, extension_type, msg_type)
-          extensions << ex unless ex.nil? # if unparsable, ignore
+          if ex.nil?
+            # ignore unparsable binary, but only push extension_type
+            extensions[extension_type] = nil
+          else
+            extensions << ex
+          end
           i += ex_len
         end
         raise Error::TLSError, :decode_error unless i == binary.length

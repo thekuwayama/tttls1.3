@@ -44,6 +44,8 @@ module TLS13
           terminate(:illegal_parameter) unless offerd_cipher_suite?
           @cipher_suite = sh.cipher_suite
           terminate(:illegal_parameter) unless valid_compression_method?
+          terminate(:unsupported_extension) \
+            unless offerd_ch_extensions?(sh.extensions)
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           key_exchange = kse.key_exchange
@@ -54,14 +56,20 @@ module TLS13
                                           cipher_suite: @cipher_suite)
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
-          recv_encrypted_extensions
-          # TODO: get server parameters
+          ee = recv_encrypted_extensions
+          terminate(:illegal_parameter) if ee.any_forbidden_extensions?
+          terminate(:unsupported_extension) \
+            unless offerd_ch_extensions?(ee.extensions)
+
           # TODO: Using PSK
           @state = ClientState::WAIT_CERT_CR
         when ClientState::WAIT_CERT_CR
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             @transcript[CT] = message
+            message.certificate_list.map(&:extensions).each do |ex|
+              terminate(:unsupported_extension) unless offerd_ch_extensions?(ex)
+            end
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
             @transcript[CR] = message
@@ -70,7 +78,10 @@ module TLS13
             terminate(:unexpected_message)
           end
         when ClientState::WAIT_CERT
-          recv_certificate
+          ct = recv_certificate
+          ct.certificate_list.map(&:extensions).each do |ex|
+            terminate(:unsupported_extension) unless offerd_ch_extensions?(ex)
+          end
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
           recv_certificate_verify
@@ -162,7 +173,6 @@ module TLS13
       ee = recv_message
       terminate(:unexpected_message) \
         unless ee.is_a?(Message::EncryptedExtensions)
-      terminate(:illegal_parameter) if ee.any_forbidden_extensions?
 
       @transcript[EE] = ee
     end
@@ -280,6 +290,16 @@ module TLS13
     # @return [Boolean]
     def valid_compression_method?
       @transcript[SH].legacy_compression_method == "\x00"
+    end
+
+    # @param extensions [TLS13::Message::Extensions]
+    # @param msg_symbol [Symbol]
+    #
+    # @return [Boolean]
+    def offerd_ch_extensions?(extensions, msg_symbol = nil)
+      keys = extensions.keys - @transcript[CH].extensions.keys
+      keys -= [Message::ExtensionType::COOKIE] if msg_symbol == HRR
+      keys.empty?
     end
   end
   # rubocop: enable Metrics/ClassLength
