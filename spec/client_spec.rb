@@ -198,8 +198,74 @@ RSpec.describe Client do
       expect(client.send(:valid_compression_method?)).to be true
     end
 
-    it 'should check negotiated protocol_version is TLS 1.3' do
+    it 'should check that negotiated protocol_version is TLS 1.3' do
       expect(client.send(:negotiated_tls_1_3?)).to be true
+    end
+  end
+
+  context 'client, received ServerHello with random[-8..] == ' \
+          'downgrade protection value(TLS 1.2),' do
+    let(:client) do
+      mock_socket = SimpleStream.new
+      client = Client.new(mock_socket)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      random = OpenSSL::Random.random_bytes(24) + \
+               Client::DOWNGRADE_PROTECTION_TLS_1_2
+      sh.instance_variable_set(:@random, random)
+      transcript = {
+        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
+        SH => sh
+      }
+      client.instance_variable_set(:@transcript, transcript)
+      client
+    end
+
+    it 'should check downgrade protection value' do
+      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(TLSError)
+    end
+  end
+
+  context 'client, received ServerHello with random[-8..] == ' \
+          'downgrade protection value(prior to TLS 1.2),' do
+    let(:client) do
+      mock_socket = SimpleStream.new
+      client = Client.new(mock_socket)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      random = OpenSSL::Random.random_bytes(24) + \
+               Client::DOWNGRADE_PROTECTION_TLS_1_1
+      sh.instance_variable_set(:@random, random)
+      transcript = {
+        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
+        SH => sh
+      }
+      client.instance_variable_set(:@transcript, transcript)
+      client
+    end
+
+    it 'should check downgrade protection value' do
+      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(TLSError)
+    end
+  end
+
+  context 'client, received ServerHello with supported_versions not ' \
+          'including "\x03\x04",' do
+    let(:client) do
+      mock_socket = SimpleStream.new
+      client = Client.new(mock_socket)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      extensions = sh.instance_variable_get(:@extensions)
+      extensions[ExtensionType::SUPPORTED_VERSIONS] = nil
+      sh.instance_variable_set(:@extensions, extensions)
+      transcript = {
+        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
+        SH => sh
+      }
+      client.instance_variable_set(:@transcript, transcript)
+      client
+    end
+
+    it 'should check negotiated protocol_version' do
+      expect(client.send(:negotiated_tls_1_3?)).to be false
     end
   end
 end

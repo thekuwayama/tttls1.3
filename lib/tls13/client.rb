@@ -253,32 +253,21 @@ module TLS13
     # @raise [TLS13::Error::TLSError]
     #
     # @return [Boolean]
-    # rubocop: disable Metrics/CyclomaticComplexity
-    # rubocop: disable Metrics/PerceivedComplexity
     def negotiated_tls_1_3?
       sh = @transcript[SH]
-      sh_sv = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS].versions
-      sh_lv = sh.legacy_version
+      sh_sv = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
+                &.versions
       sh_r8 = sh.random[-8..]
       if sh_sv&.first == Message::ProtocolVersion::TLS_1_3 &&
-         sh_lv == Message::ProtocolVersion::TLS_1_2 &&
          sh_r8 != DOWNGRADE_PROTECTION_TLS_1_2 &&
          sh_r8 != DOWNGRADE_PROTECTION_TLS_1_1
         true
-      elsif sh_sv&.first == Message::ProtocolVersion::TLS_1_3 &&
-            sh_lv == Message::ProtocolVersion::TLS_1_2 &&
-            sh_r8 == DOWNGRADE_PROTECTION_TLS_1_2
-        terminate(:illegal_parameter)
-      elsif sh_sv&.first == Message::ProtocolVersion::TLS_1_3 &&
-            sh_lv == Message::ProtocolVersion::TLS_1_2 &&
-            sh_r8 == DOWNGRADE_PROTECTION_TLS_1_1
-        terminate(:illegal_parameter)
-      else
+      elsif sh_sv.nil?
         false
+      else
+        terminate(:illegal_parameter)
       end
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
-    # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [Boolean]
     def echoed_legacy_session_id?
