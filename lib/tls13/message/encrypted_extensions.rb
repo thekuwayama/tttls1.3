@@ -8,6 +8,20 @@ module TLS13
       attr_reader :msg_type
       attr_reader :extensions
 
+      # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+      ALLOWED_EXTENSIONS = [
+        ExtensionType::SERVER_NAME,
+        ExtensionType::MAX_FRAGMENT_LENGTH,
+        ExtensionType::SUPPORTED_GROUPS,
+        ExtensionType::USE_SRTP,
+        ExtensionType::HEARTBEAT,
+        ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
+        ExtensionType::CLIENT_CERTIFICATE_TYPE,
+        ExtensionType::SERVER_CERTIFICATE_TYPE,
+        ExtensionType::RECORD_SIZE_LIMIT,
+        ExtensionType::EARLY_DATA
+      ].freeze
+
       # @param extensions [TLS13::Message::Extensions]
       def initialize(extensions = Extensions.new)
         @msg_type = HandshakeType::ENCRYPTED_EXTENSIONS
@@ -40,6 +54,11 @@ module TLS13
           unless exs_len + 2 == ee_len && exs_len + 6 == binary.length
 
         EncryptedExtensions.new(extensions)
+      end
+
+      # @return [Boolean]
+      def any_forbidden_extensions?
+        !(@extensions.keys - ALLOWED_EXTENSIONS).empty?
       end
     end
   end

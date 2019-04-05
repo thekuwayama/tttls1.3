@@ -97,6 +97,9 @@ module TLS13
 
     private
 
+    DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
+    DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
+
     # @return [TLS13::Message::Extensions]
     def gen_extensions
       exs = []
@@ -159,6 +162,7 @@ module TLS13
       ee = recv_message
       terminate(:unexpected_message) \
         unless ee.is_a?(Message::EncryptedExtensions)
+      terminate(:illegal_parameter) if ee.any_forbidden_extensions?
 
       @transcript[EE] = ee
     end
@@ -236,9 +240,6 @@ module TLS13
                          message_range: CH..CV,
                          signature: signature)
     end
-
-    DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
-    DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
 
     # NOTE:
     # This implementation supports only TLS 1.3,

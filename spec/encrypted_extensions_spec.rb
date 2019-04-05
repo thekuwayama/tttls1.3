@@ -25,12 +25,31 @@ RSpec.describe EncryptedExtensions do
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
       expect(message.extensions).to eq extensions
+      expect(message.any_forbidden_extensions?).to be false
     end
 
     it 'should be serialized' do
       expect(message.serialize)
         .to eq HandshakeType::ENCRYPTED_EXTENSIONS \
                + extensions.serialize.prefix_uint24_length
+    end
+  end
+
+  context 'invalid encrypted_extensions, including forbidden extension type,' do
+    let(:extensions) do
+      signature_algorithms \
+      = SignatureAlgorithms.new([SignatureScheme::ECDSA_SECP256R1_SHA256])
+      Extensions.new([signature_algorithms])
+    end
+
+    let(:message) do
+      EncryptedExtensions.new(extensions)
+    end
+
+    it 'should be generated' do
+      expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
+      expect(message.extensions).to eq extensions
+      expect(message.any_forbidden_extensions?).to be true
     end
   end
 
@@ -42,6 +61,7 @@ RSpec.describe EncryptedExtensions do
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
       expect(message.extensions).to eq Extensions.new
+      expect(message.any_forbidden_extensions?).to be false
     end
 
     it 'should be serialized' do
@@ -58,6 +78,7 @@ RSpec.describe EncryptedExtensions do
 
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
+      expect(message.any_forbidden_extensions?).to be false
     end
 
     it 'should generate valid serializable object' do
