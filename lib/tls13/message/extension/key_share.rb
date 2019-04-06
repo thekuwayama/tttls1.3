@@ -5,6 +5,7 @@ module TLS13
   using Refinements
   module Message
     module Extension
+      # rubocop: disable Metrics/ClassLength
       class KeyShare
         attr_reader :extension_type
         attr_reader :msg_type
@@ -81,6 +82,32 @@ module TLS13
                        key_share_entry: key_share_entry)
         end
         # rubocop: enable Metrics/CyclomaticComplexity
+
+        # @param groups [Array of TLS13::Message::Extension::NamedGroup]
+        #
+        # @return [TLS13::Message::Extensions::KeyShare]
+        # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
+        def self.gen_ch_key_share(groups)
+          priv_keys = {}
+          kse = groups.map do |group|
+            curve = NamedGroup.curve_name(group)
+            ec = OpenSSL::PKey::EC.new(curve)
+            ec.generate_key!
+            # store private key to do the key-exchange
+            priv_keys.store(group, ec)
+            KeyShareEntry.new(
+              group: group,
+              key_exchange: ec.public_key.to_octet_string(:uncompressed)
+            )
+          end
+
+          key_share = KeyShare.new(
+            msg_type: HandshakeType::CLIENT_HELLO,
+            key_share_entry: kse
+          )
+
+          [key_share, priv_keys]
+        end
 
         class << self
           private
@@ -160,6 +187,7 @@ module TLS13
           end
         end
       end
+      # rubocop: enable Metrics/ClassLength
 
       class KeyShareEntry
         attr_reader :group

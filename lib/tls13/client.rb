@@ -170,34 +170,15 @@ module TLS13
                 Message::Extension::NamedGroup::SECP384R1]
       exs << Message::Extension::SupportedGroups.new(groups)
       # key_share
-      exs << gen_ch_key_share(groups)
+      key_share, priv_keys \
+                 = Message::Extension::KeyShare.gen_ch_key_share(groups)
+      exs << key_share
+      @priv_keys = priv_keys.merge(@priv_keys)
       # server_name
       exs << Message::Extension::ServerName.new(@hostname) \
         unless @hostname.nil? || @hostname.empty?
 
       Message::Extensions.new(exs)
-    end
-
-    # @param groups [Array of TLS13::Message::Extension::NamedGroup]
-    #
-    # @return [TLS13::Message::Extensions::KeyShare]
-    def gen_ch_key_share(groups)
-      kse = groups.map do |group|
-        curve = Message::Extension::NamedGroup.curve_name(group)
-        ec = OpenSSL::PKey::EC.new(curve)
-        ec.generate_key!
-        # store private key to do the key-exchange
-        @priv_keys[group] = ec
-        Message::Extension::KeyShareEntry.new(
-          group: group,
-          key_exchange: ec.public_key.to_octet_string(:uncompressed)
-        )
-      end
-
-      Message::Extension::KeyShare.new(
-        msg_type: Message::HandshakeType::CLIENT_HELLO,
-        key_share_entry: kse
-      )
     end
 
     # @return [TLS13::Message::ClientHello]
