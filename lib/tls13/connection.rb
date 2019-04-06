@@ -54,7 +54,7 @@ module TLS13
 
     private
 
-    # @param type [Message::ContentType]
+    # @param type [TLS13::Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object] handshake messages
     def send_handshakes(type, messages)
       if @write_seq_num.nil? &&

@@ -24,6 +24,40 @@ module TLS13
       @hostname = ''
     end
 
+    # NOTE:
+    #                           START <----+
+    #            Send ClientHello |        | Recv HelloRetryRequest
+    #       [K_send = early data] |        |
+    #                             v        |
+    #        /                 WAIT_SH ----+
+    #        |                    | Recv ServerHello
+    #        |                    | K_recv = handshake
+    #    Can |                    V
+    #   send |                 WAIT_EE
+    #  early |                    | Recv EncryptedExtensions
+    #   data |           +--------+--------+
+    #        |     Using |                 | Using certificate
+    #        |       PSK |                 v
+    #        |           |            WAIT_CERT_CR
+    #        |           |        Recv |       | Recv CertificateRequest
+    #        |           | Certificate |       v
+    #        |           |             |    WAIT_CERT
+    #        |           |             |       | Recv Certificate
+    #        |           |             v       v
+    #        |           |              WAIT_CV
+    #        |           |                 | Recv CertificateVerify
+    #        |           +> WAIT_FINISHED <+
+    #        |                  | Recv Finished
+    #        \                  | [Send EndOfEarlyData]
+    #                           | K_send = handshake
+    #                           | [Send Certificate [+ CertificateVerify]]
+    # Can send                  | Send Finished
+    # app data   -->            | K_send = K_recv = application
+    # after here                v
+    #                       CONNECTED
+    #
+    # https://tools.ietf.org/html/rfc8446#appendix-A
+    #
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/BlockLength
     # rubocop: disable Metrics/CyclomaticComplexity
