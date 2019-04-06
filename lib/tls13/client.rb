@@ -124,26 +124,39 @@ module TLS13
         [Message::SignatureScheme::RSA_PSS_RSAE_SHA256,
          Message::SignatureScheme::RSA_PSS_RSAE_SHA384]
       )
-      # supported_groups: only P-256
-      exs << Message::Extension::SupportedGroups.new
-      # key_share: only P-256
-      ec = OpenSSL::PKey::EC.new('prime256v1')
-      ec.generate_key!
-      @priv_keys[Message::Extension::NamedGroup::SECP256R1] = ec
-      exs << Message::Extension::KeyShare.new(
-        msg_type: Message::HandshakeType::CLIENT_HELLO,
-        key_share_entry: [
-          Message::Extension::KeyShareEntry.new(
-            group: Message::Extension::NamedGroup::SECP256R1,
-            key_exchange: ec.public_key.to_octet_string(:uncompressed)
-          )
-        ]
-      )
+      # supported_groups
+      groups = [Message::Extension::NamedGroup::SECP256R1,
+                Message::Extension::NamedGroup::SECP384R1]
+      exs << Message::Extension::SupportedGroups.new(groups)
+      # key_share
+      exs << gen_ch_key_share(groups)
       # server_name
       exs << Message::Extension::ServerName.new(@hostname) \
         unless @hostname.nil? || @hostname.empty?
 
       Message::Extensions.new(exs)
+    end
+
+    # @param groups [Array of TLS13::Message::Extension::NamedGroup]
+    #
+    # @return [TLS13::Message::Extensions::KeyShare]
+    def gen_ch_key_share(groups)
+      kse = groups.map do |group|
+        curve = Message::Extension::NamedGroup.curve_name(group)
+        ec = OpenSSL::PKey::EC.new(curve)
+        ec.generate_key!
+        # store private key to do the key-exchange
+        @priv_keys[group] = ec
+        Message::Extension::KeyShareEntry.new(
+          group: group,
+          key_exchange: ec.public_key.to_octet_string(:uncompressed)
+        )
+      end
+
+      Message::Extension::KeyShare.new(
+        msg_type: Message::HandshakeType::CLIENT_HELLO,
+        key_share_entry: kse
+      )
     end
 
     # @return [TLS13::Message::ClientHello]

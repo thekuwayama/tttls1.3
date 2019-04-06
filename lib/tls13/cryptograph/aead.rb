@@ -9,7 +9,6 @@ module TLS13
       # @param write_key [String]
       # @param write_iv [String]
       # @param sequence_number [String] uint64
-      # @param type [TLS13::Message::ContentType] TLSInnerPlaintext.type
       # @param length_of_padding [Integer]
       def initialize(cipher_suite:, write_key:, write_iv:,
                      sequence_number:, length_of_padding: 0)

@@ -57,10 +57,38 @@ module TLS13
             end
           end
           # rubocop: enable Metrics/CyclomaticComplexity
+
+          # NOTE:
+          # SECG        |  ANSI X9.62   |  NIST
+          # ------------+---------------+-------------
+          # secp256r1   |  prime256v1   |   NIST P-256
+          # secp384r1   |               |   NIST P-384
+          # secp521r1   |               |   NIST P-521
+          #
+          # https://tools.ietf.org/html/rfc4492#appendix-A
+          #
+          # @param groups [Array of TLS13::Message::Extension::NamedGroup]
+          #
+          # @raise [TLS13::Error::TLSError]
+          #
+          # @return [String] EC_builtin_curves
+          def curve_name(group)
+            case group
+            when NamedGroup::SECP256R1
+              'prime256v1'
+            when NamedGroup::SECP384R1
+              'secp384r1'
+            when NamedGroup::SECP521R1
+              'secp521r1'
+            else # TODO: other NamedGroup
+              raise Error::TLSError, :internal_error
+            end
+          end
         end
       end
 
-      DEFAULT_NAMED_GROUP_LIST = [NamedGroup::SECP256R1].freeze
+      DEFAULT_NAMED_GROUP_LIST = [NamedGroup::SECP256R1,
+                                  NamedGroup::SECP384R1].freeze
 
       class SupportedGroups
         attr_reader :extension_type

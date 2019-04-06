@@ -43,8 +43,8 @@ RSpec.describe SupportedGroups do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
+                                        + 6.to_uint16 \
                                         + 4.to_uint16 \
-                                        + 2.to_uint16 \
                                         + DEFAULT_NAMED_GROUP_LIST.join
     end
   end

@@ -238,16 +238,13 @@ module TLS13
     #
     # @return [String]
     def gen_shared_secret(key_exchange, priv_key, group)
-      case group
-      when Message::Extension::NamedGroup::SECP256R1
-        pub_key = OpenSSL::PKey::EC::Point.new(
-          OpenSSL::PKey::EC::Group.new('prime256v1'),
-          OpenSSL::BN.new(key_exchange, 2)
-        )
-        priv_key.dh_compute_key(pub_key)
-      else # TODO: other NamedGroup
-        terminate(:internal_error)
-      end
+      curve = Message::Extension::NamedGroup.curve_name(group)
+      terminate(:internal_error) if curve.nil?
+      pub_key = OpenSSL::PKey::EC::Point.new(
+        OpenSSL::PKey::EC::Group.new(curve),
+        OpenSSL::BN.new(key_exchange, 2)
+      )
+      priv_key.dh_compute_key(pub_key)
     end
 
     # @param seq_num [TLS13::SequenceNumber]
