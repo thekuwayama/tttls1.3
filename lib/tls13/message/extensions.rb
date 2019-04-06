@@ -43,6 +43,8 @@ module TLS13
         end
       end
 
+      alias super_fetch fetch
+
       # @return [String]
       def serialize
         binary = ''
@@ -52,7 +54,7 @@ module TLS13
         exs_except_psk.each do |ex|
           binary += ex.serialize
         end
-        binary += self[ExtensionType::PRE_SHARED_KEY].serialize \
+        binary += super_fetch(ExtensionType::PRE_SHARED_KEY).serialize \
           if key?(ExtensionType::PRE_SHARED_KEY)
         binary.prefix_uint16_length
       end
@@ -79,7 +81,8 @@ module TLS13
           ex = deserialize_extension(ex_bin, extension_type, msg_type)
           if ex.nil?
             # ignore unparsable binary, but only push extension_type
-            extensions[extension_type] = nil
+            extensions << Extension::UnknownExtension.new(extension_type,
+                                                          ex_bin)
           else
             extensions << ex
           end
@@ -88,6 +91,25 @@ module TLS13
         raise Error::TLSError, :decode_error unless i == binary.length
 
         Extensions.new(extensions)
+      end
+
+      # @param key [TLS13::Message::ExtensionType]
+      #
+      # @return [TLS13::Message::Extension::$Object]
+      def [](key)
+        return nil if super_fetch(key).is_a?(Extension::UnknownExtension)
+
+        super_fetch(key)
+      end
+
+      # @param key [TLS13::Message::ExtensionType]
+      # @param default
+      #
+      # @return [TLS13::Message::Extension::$Object]
+      def fetch(key, default = nil)
+        return nil if super_fetch(key).is_a?(Extension::UnknownExtension)
+
+        super_fetch(key, default)
       end
 
       class << self
