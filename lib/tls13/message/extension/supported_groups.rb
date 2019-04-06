@@ -31,7 +31,6 @@ module TLS13
           # @raise [TLS13::Error::TLSError]
           #
           # @return [Integer]
-          # rubocop: disable Metrics/CyclomaticComplexity
           def key_exchange_len(group)
             case group
             when SECP256R1
@@ -40,23 +39,24 @@ module TLS13
               97
             when SECP521R1
               133
-            when X25519
-              32
-            when X448
-              56
-            when FFDHE2048
-              256
-            when FFDHE4096
-              512
-            when FFDHE6144
-              768
-            when FFDHE8192
-              1024
+            # NOTE:
+            # not supported other NamedGroup
+            # when X25519
+            #   32
+            # when X448
+            #   56
+            # when FFDHE2048
+            #   256
+            # when FFDHE4096
+            #   512
+            # when FFDHE6144
+            #   768
+            # when FFDHE8192
+            #   1024
             else
               raise Error::TLSError, :internal_error
             end
           end
-          # rubocop: enable Metrics/CyclomaticComplexity
 
           # NOTE:
           # SECG        |  ANSI X9.62   |  NIST
@@ -80,7 +80,9 @@ module TLS13
               'secp384r1'
             when NamedGroup::SECP521R1
               'secp521r1'
-            else # TODO: other NamedGroup
+            else
+              # NOTE:
+              # not supported other NamedGroup
               raise Error::TLSError, :internal_error
             end
           end
