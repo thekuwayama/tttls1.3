@@ -146,8 +146,9 @@ RSpec.describe Extensions do
         .to include ExtensionType::KEY_SHARE => key_share
       expect(extensions)
         .to include ExtensionType::SERVER_NAME => server_name
-      expect(extensions).to include unknown_exs_key_aa => nil # ignore UnknownExtension
-      expect(extensions).to include unknown_exs_key_bb => nil # ignore UnknownExtension
+      # ignore UnknownExtension, so return nil
+      expect(extensions).to include unknown_exs_key_aa => nil
+      expect(extensions).to include unknown_exs_key_bb => nil
     end
   end
 
