@@ -38,6 +38,7 @@ module TLS13
         @cipher_suite = cipher_suite
         @legacy_compression_method = legacy_compression_method
         @extensions = extensions
+        @hrr = (random == HRR_RANDOM)
       end
       # rubocop: enable Metrics/ParameterLists
 
@@ -61,6 +62,8 @@ module TLS13
       # @return [TLS13::Message::ServerHello]
       # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/CyclomaticComplexity
+      # rubocop: disable Metrics/MethodLength
+      # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary)
         raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 39
@@ -80,8 +83,13 @@ module TLS13
         exs_len = Convert.bin2i(binary.slice(i, 2))
         i += 2
         exs_bin = binary.slice(i, exs_len)
-        msg_type = HandshakeType::SERVER_HELLO
-        msg_type = HandshakeType::HELLO_RETRY_REQUEST if random == HRR_RANDOM
+        if random == HRR_RANDOM
+          msg_type = HandshakeType::HELLO_RETRY_REQUEST
+          @hrr = true
+        else
+          msg_type = HandshakeType::SERVER_HELLO
+          @hrr = false
+        end
         extensions = Extensions.deserialize(exs_bin, msg_type)
         i += exs_len
         raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
@@ -96,6 +104,13 @@ module TLS13
       end
       # rubocop: enable Metrics/AbcSize
       # rubocop: enable Metrics/CyclomaticComplexity
+      # rubocop: enable Metrics/MethodLength
+      # rubocop: enable Metrics/PerceivedComplexity
+
+      # @return [Boolean]
+      def hrr?
+        @hrr
+      end
     end
   end
 end

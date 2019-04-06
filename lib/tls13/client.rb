@@ -71,7 +71,14 @@ module TLS13
           send_client_hello
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
-          sh = recv_server_hello # TODO: Recv HelloRetryRequest
+          sh = recv_server_hello
+          if sh.hrr?
+            @transcript[CH1] = @transcript.delete(CH)
+            @transcript[HRR] = @transcript.delete(SH)
+            # TODO: processing HRR
+            @state = ClientState::START
+            next
+          end
           # only TLS 1.3
           terminate(:protocol_version) unless negotiated_tls_1_3?
           terminate(:illegal_parameter) unless echoed_legacy_session_id?

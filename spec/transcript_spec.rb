@@ -37,7 +37,7 @@ RSpec.describe Transcript do
 
     it 'should return valid transcript-hash' do
       expect(transcript.hash('SHA256', CH1..SH))
-        .to eq TESTBINARY_CH1_SH_TRANSCRIPT_HASH
+        .to eq TESTBINARY_HRR_CH1_SH_TRANSCRIPT_HASH
     end
   end
 end

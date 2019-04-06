@@ -63,4 +63,22 @@ RSpec.describe ServerHello do
       expect(message.serialize).to eq TESTBINARY_SERVER_HELLO
     end
   end
+
+  context 'hello_retry_request binary' do
+    let(:message) do
+      ServerHello.deserialize(TESTBINARY_HRR_HELLO_RETRY_REQUEST)
+    end
+
+    it 'should generate valid object' do
+      expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
+      expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
+      expect(message.cipher_suite).to eq CipherSuite::TLS_AES_128_GCM_SHA256
+      expect(message.legacy_compression_method).to eq "\x00"
+      expect(message.hrr?).to be true
+    end
+
+    it 'should generate valid serializable object' do
+      expect(message.serialize).to eq TESTBINARY_HRR_HELLO_RETRY_REQUEST
+    end
+  end
 end

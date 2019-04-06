@@ -487,7 +487,7 @@ TESTBINARY_HRR_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   09 3a 6c ad 7d 00 2b 00     02 03 04
 BIN
 
-TESTBINARY_CH1_SH_TRANSCRIPT_HASH = <<BIN.split.map(&:hex).map(&:chr).join
+TESTBINARY_HRR_CH1_SH_TRANSCRIPT_HASH = <<BIN.split.map(&:hex).map(&:chr).join
   8a a8 e8 28 ec 2f 8a 88     4f ec 95 a3 13 9d e0 1c
   15 a3 da a7 ff 5b fc 3f     4b fc c2 1b 43 8d 7b f8
 BIN
