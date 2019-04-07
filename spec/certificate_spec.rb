@@ -11,9 +11,7 @@ RSpec.describe Certificate do
     end
 
     let(:message) do
-      Certificate.new(
-        certificate_list: [CertificateEntry.new(certificate)]
-      )
+      Certificate.new(certificate_list: [CertificateEntry.new(certificate)])
     end
 
     it 'should be generated' do

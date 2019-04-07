@@ -272,4 +272,27 @@ RSpec.describe Client do
       expect(client.send(:negotiated_tls_1_3?)).to be false
     end
   end
+
+  context 'client, received Certificate signed by private CA,' do
+    let(:certificate) do
+      server_crt = OpenSSL::X509::Certificate.new(
+        File.read(__dir__ + '/../tmp/server.crt')
+      )
+      Certificate.new(certificate_list: [CertificateEntry.new(server_crt)])
+    end
+
+    let(:client) do
+      Client.new(nil)
+    end
+
+    it 'should not certify certificate' do
+      expect(client.send(:certified_certificate?, certificate.certificate_list))
+        .to be false
+    end
+
+    it 'should certify certificate, received path to private ca.crt' do
+      expect(client.send(:certified_certificate?, certificate.certificate_list,
+                         __dir__ + '/../tmp/ca.crt')).to be true
+    end
+  end
 end

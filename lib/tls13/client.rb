@@ -83,10 +83,12 @@ module TLS13
           terminate(:protocol_version) unless negotiated_tls_1_3?
           terminate(:illegal_parameter) unless echoed_legacy_session_id?
           terminate(:illegal_parameter) unless offerd_cipher_suite?
+
           @cipher_suite = sh.cipher_suite
           terminate(:illegal_parameter) unless valid_compression_method?
           terminate(:unsupported_extension) \
             unless offerd_ch_extensions?(sh.extensions)
+
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           key_exchange = kse.key_exchange
@@ -96,6 +98,7 @@ module TLS13
           @key_schedule = KeySchedule.new(shared_secret: shared_key,
                                           cipher_suite: @cipher_suite,
                                           transcript: @transcript)
+
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           ee = recv_encrypted_extensions
@@ -112,6 +115,10 @@ module TLS13
             message.certificate_list.map(&:extensions).each do |ex|
               terminate(:unsupported_extension) unless offerd_ch_extensions?(ex)
             end
+
+            terminate(:certificate_unknown) \
+              unless certified_certificate?(message.certificate_list)
+
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
             @transcript[CR] = message
@@ -124,6 +131,10 @@ module TLS13
           ct.certificate_list.map(&:extensions).each do |ex|
             terminate(:unsupported_extension) unless offerd_ch_extensions?(ex)
           end
+
+          terminate(:certificate_unknown) \
+            unless certified_certificate?(ct.certificate_list)
+
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
           recv_certificate_verify

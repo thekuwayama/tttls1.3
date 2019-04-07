@@ -36,7 +36,7 @@ module TLS13
         # message, it MAY send a NewSessionTicket message.
         break unless message.is_a?(Message::NewSessionTicket)
 
-        precess_new_session_ticket
+        process_new_session_ticket
       end
 
       message.fragment
@@ -240,10 +240,12 @@ module TLS13
     def gen_shared_secret(key_exchange, priv_key, group)
       curve = Message::Extension::NamedGroup.curve_name(group)
       terminate(:internal_error) if curve.nil?
+
       pub_key = OpenSSL::PKey::EC::Point.new(
         OpenSSL::PKey::EC::Group.new(curve),
         OpenSSL::BN.new(key_exchange, 2)
       )
+
       priv_key.dh_compute_key(pub_key)
     end
 
@@ -254,6 +256,7 @@ module TLS13
     def gen_aead_with_handshake_traffic_secret(seq_num, sender)
       write_key = @key_schedule.send("#{sender}_handshake_write_key")
       write_iv = @key_schedule.send("#{sender}_handshake_write_iv")
+
       Cryptograph::Aead.new(
         cipher_suite: @cipher_suite,
         write_key: write_key,
@@ -269,6 +272,7 @@ module TLS13
     def gen_aead_with_application_traffic_secret(seq_num, sender)
       write_key = @key_schedule.send("#{sender}_application_write_key")
       write_iv = @key_schedule.send("#{sender}_application_write_iv")
+
       Cryptograph::Aead.new(
         cipher_suite: @cipher_suite,
         write_key: write_key,
@@ -298,9 +302,30 @@ module TLS13
     end
 
     # @raise [TLS13::Error::TLSError]
-    def precess_new_session_ticket
+    def process_new_session_ticket
       terminate(:unexpected_message) if @endpoint == :server
       # TODO: @endpoint == :client
+    end
+
+    # @param certificate_list [Array of CertificateEntry]
+    # @param crt_file [String] path to ca.crt
+    #
+    # @return [Boolean]
+    def certified_certificate?(certificate_list, crt_file = nil)
+      store = OpenSSL::X509::Store.new
+      store.set_default_paths
+      store.add_file(crt_file) unless crt_file.nil?
+
+      cert_bin = certificate_list.first.cert_data
+      cert = OpenSSL::X509::Certificate.new(cert_bin)
+
+      chain = certificate_list[1..].map(&:cert_data).map do |c|
+        OpenSSL::X509::Certificate.new(c)
+      end
+      # TODO: parse authorityInfoAccess::CA Issuers
+
+      ctx = OpenSSL::X509::StoreContext.new(store, cert, chain)
+      ctx.verify
     end
   end
   # rubocop: enable Metrics/ClassLength
