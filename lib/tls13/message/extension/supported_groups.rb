@@ -20,12 +20,15 @@ module TLS13
         # ecdhe_private_use "\xfe\x00" ~ "\xfe\xff"
 
         class << self
+          # NOTE:
           # For secp256r1, secp384r1, and secp521r1
-          #       struct {
-          #           uint8 legacy_form = 4;
-          #           opaque X[coordinate_length];
-          #           opaque Y[coordinate_length];
-          #       } UncompressedPointRepresentation;
+          #
+          #     struct {
+          #         uint8 legacy_form = 4;
+          #         opaque X[coordinate_length];
+          #         opaque Y[coordinate_length];
+          #     } UncompressedPointRepresentation;
+          #
           # @param group [TLS13::Message::Extension::NamedGroup]
           #
           # @raise [TLS13::Error::TLSError]

@@ -41,7 +41,7 @@ module TLS13
       #
       # @raise [TLS13::Error::TLSError]
       #
-      # @return [TLS13::Message::Record
+      # @return [TLS13::Message::Record]
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, cipher)

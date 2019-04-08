@@ -337,12 +337,12 @@ module TLS13
     end
 
     # @param extensions [TLS13::Message::Extensions]
-    # @param msg_symbol [Symbol]
+    # @param transcript_index [Integer]
     #
     # @return [Boolean]
-    def offerd_ch_extensions?(extensions, msg_symbol = nil)
+    def offerd_ch_extensions?(extensions, transcript_index = nil)
       keys = extensions.keys - @transcript[CH].extensions.keys
-      keys -= [Message::ExtensionType::COOKIE] if msg_symbol == HRR
+      keys -= [Message::ExtensionType::COOKIE] if transcript_index == HRR
       keys.empty?
     end
   end

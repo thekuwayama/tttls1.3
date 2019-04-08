@@ -112,9 +112,10 @@ module TLS13
         class << self
           private
 
-          # struct {
-          #     KeyShareEntry client_shares<0..2^16-1>;
-          # } KeyShareClientHello;
+          # NOTE:
+          #     struct {
+          #         KeyShareEntry client_shares<0..2^16-1>;
+          #     } KeyShareClientHello;
           #
           # @param binary [String]
           #
@@ -146,9 +147,10 @@ module TLS13
             key_share_entry
           end
 
-          # struct {
-          #     KeyShareEntry server_share;
-          # } KeyShareServerHello;
+          # NOTE:
+          #     struct {
+          #         KeyShareEntry server_share;
+          #     } KeyShareServerHello;
           #
           # @param binary [String]
           #
@@ -168,9 +170,10 @@ module TLS13
             [KeyShareEntry.new(group: group, key_exchange: key_exchange)]
           end
 
-          # struct {
-          #     NamedGroup selected_group;
-          # } KeyShareHelloRetryRequest;
+          # NOTE:
+          #     struct {
+          #         NamedGroup selected_group;
+          #     } KeyShareHelloRetryRequest;
           #
           # @param binary [String]
           #
@@ -222,10 +225,6 @@ module TLS13
         def serialize
           binary = ''
           binary += @group
-          # struct {
-          #     NamedGroup selected_group;
-          # } KeyShareHelloRetryRequest;
-          #
           # KeyShareHelloRetryRequest doesn't have key_exchange.
           binary += @key_exchange.prefix_uint16_length \
             unless @key_exchange.empty?

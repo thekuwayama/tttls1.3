@@ -125,9 +125,8 @@ module TLS13
         messages = []
         record = recv_record
         case record.type
-        when Message::ContentType::HANDSHAKE
-          messages = record.messages
-        when Message::ContentType::APPLICATION_DATA
+        when Message::ContentType::HANDSHAKE,
+             Message::ContentType::APPLICATION_DATA
           messages = record.messages
         when Message::ContentType::CCS
           terminate(:unexpected_message) unless ccs_receivable?
@@ -137,8 +136,12 @@ module TLS13
         else
           terminate(:unexpected_message)
         end
+
         @message_queue += messages[1..]
-        return messages.first
+        message = messages.first
+        raise message.to_error if message.is_a?(Message::Alert)
+
+        return message
       end
     end
     # rubocop: enable Metrics/CyclomaticComplexity

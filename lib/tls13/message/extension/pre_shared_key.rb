@@ -5,12 +5,13 @@ module TLS13
   using Refinements
   module Message
     module Extension
-      # struct {
-      #     select (Handshake.msg_type) {
-      #         case client_hello: OfferedPsks;
-      #         case server_hello: uint16 selected_identity;
-      #     };
-      # } PreSharedKeyExtension;
+      # NOTE:
+      #     struct {
+      #         select (Handshake.msg_type) {
+      #             case client_hello: OfferedPsks;
+      #             case server_hello: uint16 selected_identity;
+      #         };
+      #     } PreSharedKeyExtension;
       class PreSharedKey
         attr_reader :extension_type
         attr_reader :msg_type
@@ -82,12 +83,13 @@ module TLS13
         end
       end
 
-      # opaque PskBinderEntry<32..255>;
+      # NOTE:
+      #     opaque PskBinderEntry<32..255>;
       #
-      # struct {
-      #     PskIdentity identities<7..2^16-1>;
-      #     PskBinderEntry binders<33..2^16-1>;
-      # } OfferedPsks;
+      #     struct {
+      #         PskIdentity identities<7..2^16-1>;
+      #         PskBinderEntry binders<33..2^16-1>;
+      #     } OfferedPsks;
       class OfferedPsks
         attr_reader :identities
         attr_reader :binders
@@ -170,10 +172,11 @@ module TLS13
         # rubocop: enable Metrics/PerceivedComplexity
       end
 
-      # struct {
-      #     opaque identity<1..2^16-1>;
-      #     uint32 obfuscated_ticket_age;
-      # } PskIdentity;
+      # NOTE:
+      #     struct {
+      #         opaque identity<1..2^16-1>;
+      #         uint32 obfuscated_ticket_age;
+      #     } PskIdentity;
       class PskIdentity
         attr_reader :identity
         attr_reader :obfuscated_ticket_age
