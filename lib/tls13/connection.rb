@@ -319,6 +319,7 @@ module TLS13
     # @param hostname [String]
     #
     # @return [Boolean]
+    # rubocop: disable Metrics/AbcSize
     def certified_certificate?(certificate_list, crt_file = nil, hostname = nil)
       store = OpenSSL::X509::Store.new
       store.set_default_paths
@@ -336,14 +337,17 @@ module TLS13
 
       # not support CN matching, only support SAN matching
       unless hostname.nil?
-        san = cert.extensions.find { |ex| ex.oid == 'subjectAltName' }&.value
+        san = cert.extensions.find { |ex| ex.oid == 'subjectAltName' }
         terminate(:bad_certificate) if san.nil?
-        san_match = san.gsub(/\s*DNS:/, '').gsub('.', '\.').gsub('*', '.*')
-                       .split(',').any? { |s| hostname.match(/#{s}/) }
+        ostr = OpenSSL::ASN1.decode(san.to_der).value.last
+        san_match = OpenSSL::ASN1.decode(ostr.value).map(&:value)
+                                 .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
+                                 .any? { |s| hostname.match(/#{s}/) }
         return san_match && ctx.verify
       end
       ctx.verify
     end
+    # rubocop: enable Metrics/AbcSize
   end
   # rubocop: enable Metrics/ClassLength
 end
