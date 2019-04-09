@@ -312,9 +312,10 @@ module TLS13
 
     # @param certificate_list [Array of CertificateEntry]
     # @param crt_file [String] path to ca.crt
+    # @param hostname [String]
     #
     # @return [Boolean]
-    def certified_certificate?(certificate_list, crt_file = nil)
+    def certified_certificate?(certificate_list, crt_file = nil, hostname = nil)
       store = OpenSSL::X509::Store.new
       store.set_default_paths
       store.add_file(crt_file) unless crt_file.nil?
@@ -328,6 +329,15 @@ module TLS13
       # TODO: parse authorityInfoAccess::CA Issuers
 
       ctx = OpenSSL::X509::StoreContext.new(store, cert, chain)
+
+      # not support CN matching, only support SAN matching
+      unless hostname.nil?
+        san = cert.extensions.find { |ex| ex.oid == 'subjectAltName' }&.value
+        terminate(:bad_certificate) if san.nil?
+        san_match = san.gsub(/\s*DNS:/, '').gsub('.', '\.').gsub('*', '.*')
+                       .split(',').any? { |s| hostname.match(/#{s}/) }
+        return san_match && ctx.verify
+      end
       ctx.verify
     end
   end

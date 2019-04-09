@@ -114,17 +114,18 @@ module TLS13
         when ClientState::WAIT_CERT_CR
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
-            @transcript[CT] = message
-            message.certificate_list.map(&:extensions).each do |ex|
+            @transcript[CT] = ct = message
+            ct.certificate_list.map(&:extensions).each do |ex|
               terminate(:unsupported_extension) unless offerd_ch_extensions?(ex)
             end
 
             terminate(:certificate_unknown) \
-              unless certified_certificate?(message.certificate_list)
+              unless certified_certificate?(ct.certificate_list, nil, @hostname)
 
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
             @transcript[CR] = message
+            # TODO: client authentication
             @state = ClientState::WAIT_CERT
           else
             terminate(:unexpected_message)
@@ -136,7 +137,7 @@ module TLS13
           end
 
           terminate(:certificate_unknown) \
-            unless certified_certificate?(ct.certificate_list)
+            unless certified_certificate?(ct.certificate_list, nil, @hostname)
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
