@@ -12,19 +12,23 @@ module TLS13
       attr_reader :type
       attr_reader :legacy_record_version
       attr_reader :messages
+      attr_reader :surplus_binary
       attr_reader :cipher
 
       # @param type [TLS13::Message::ContentType]
       # @param legacy_record_version [TLS13::Message::ProtocolVersion]
       # @param messages [Array of TLS13::Message::$Object]
+      # @param surplus_binary [String]
       # @param cipher [TLS13::Cryptograph::$Object]
       def initialize(type:,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
                      messages: [],
+                     surplus_binary: '',
                      cipher:)
         @type = type
         @legacy_record_version = legacy_record_version
-        @messages = messages || []
+        @messages = messages
+        @surplus_binary = surplus_binary
         @cipher = cipher
       end
 
@@ -32,7 +36,7 @@ module TLS13
       #
       # @return [String]
       def serialize(record_size_limit = DEFAULT_RECORD_SIZE_LIMIT)
-        tlsplaintext = @messages.map(&:serialize).join
+        tlsplaintext = @messages.map(&:serialize).join + @surplus_binary
         if messages_type == ContentType::APPLICATION_DATA
           max = cipher.tlsplaintext_length_limit(record_size_limit)
           fragments = tlsplaintext.scan(/.{1,#{max}}/m)
@@ -53,13 +57,15 @@ module TLS13
       # TODO: support record_size_limit
       # @param binary [String]
       # @param cipher [TLS13::Cryptograph::$Object]
+      # @param buffer [String]
       #
       # @raise [TLS13::Error::TLSError]
       #
-      # @return [TLS13::Message::Record]
+      # @return [TLS13::Message::Record, String]
+      # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
-      def self.deserialize(binary, cipher)
+      def self.deserialize(binary, cipher, buffer = '')
         raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 5
 
@@ -77,12 +83,16 @@ module TLS13
         if type == ContentType::APPLICATION_DATA
           fragment, inner_type = cipher.decrypt(fragment, binary.slice(0, 5))
         end
-        messages = deserialize_fragment(fragment, inner_type || type)
+        messages, surplus_binary = deserialize_fragment(buffer + fragment,
+                                                        inner_type || type)
+
         Record.new(type: type,
                    legacy_record_version: legacy_record_version,
                    messages: messages,
+                   surplus_binary: surplus_binary,
                    cipher: cipher)
       end
+      # rubocop: enable Metrics/AbcSize
       # rubocop: enable Metrics/CyclomaticComplexity
       # rubocop: enable Metrics/PerceivedComplexity
 
@@ -123,22 +133,26 @@ module TLS13
         #
         # @raise [TLS13::Error::TLSError]
         #
-        # @return [Array of TLS13::Message::$Object]
+        # @return [Array of TLS13::Message::$Object, String]
+        # @return [String]
         def deserialize_fragment(binary, type)
           raise Error::TLSError, :internal_error if binary.nil?
 
+          surplus_binary = ''
           case type
           when ContentType::HANDSHAKE
-            deserialize_handshake(binary)
+            messages, surplus_binary = deserialize_handshake(binary)
           when ContentType::CCS
-            [ChangeCipherSpec.deserialize(binary)]
+            messages = [ChangeCipherSpec.deserialize(binary)]
           when ContentType::APPLICATION_DATA
-            [ApplicationData.deserialize(binary)]
+            messages = [ApplicationData.deserialize(binary)]
           when ContentType::ALERT
-            [Alert.deserialize(binary)]
+            messages = [Alert.deserialize(binary)]
           else
             raise Error::TLSError, :unexpected_message
           end
+
+          [messages, surplus_binary]
         end
 
         # @param binary [String]
@@ -146,13 +160,20 @@ module TLS13
         # @raise [TLS13::Error::TLSError]
         #
         # @return [Array of TLS13::Message::$Object]
+        # @return [String]
         def deserialize_handshake(binary)
           raise Error::TLSError, :internal_error if binary.nil?
 
           handshakes = []
           i = 0
           while i < binary.length
-            raise Error::TLSError, :decode_error if i + 4 > binary.length
+            # Handshake.length is kind of uint24 and Record.length is kind of
+            # uint16, so Handshake can be longer than Record capacity.
+            if binary.length < 4 + i ||
+               binary.length < 4 + i + Convert.bin2i(binary.slice(i + 1, 3))
+              surplus_binary = binary[i..]
+              return [handshakes, surplus_binary]
+            end
 
             msg_len = Convert.bin2i(binary.slice(i + 1, 3))
             msg_bin = binary.slice(i, msg_len + 4)
@@ -160,9 +181,9 @@ module TLS13
             i += msg_len + 4
             handshakes << message
           end
-          raise Error::TLSError, :decode_error unless i == binary.length
 
-          handshakes
+          surplus_binary = binary[i..]
+          [handshakes, surplus_binary]
         end
 
         # @param binary [String]

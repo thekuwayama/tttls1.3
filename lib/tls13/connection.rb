@@ -16,6 +16,7 @@ module TLS13
       @write_seq_num = nil # TLS13::SequenceNumber
       @transcript = Transcript.new
       @message_queue = [] # Array of TLS13::Message::$Object
+      @binary_buffer = ''
       @cipher_suite = nil # TLS13::CipherSuite
       @notyet_application_secret = true
       @state = 0 # ClientState or ServerState
@@ -122,7 +123,6 @@ module TLS13
       return @message_queue.shift unless @message_queue.empty?
 
       loop do
-        messages = []
         record = recv_record
         case record.type
         when Message::ContentType::HANDSHAKE,
@@ -136,6 +136,7 @@ module TLS13
         else
           terminate(:unexpected_message)
         end
+        next if messages.empty?
 
         @message_queue += messages[1..]
         message = messages.first
@@ -150,11 +151,12 @@ module TLS13
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/PerceivedComplexity
     def recv_record
-      buffer = @socket.read(5)
-      record_len = Convert.bin2i(buffer.slice(3, 2))
-      buffer += @socket.read(record_len)
+      binary = @socket.read(5)
+      record_len = Convert.bin2i(binary.slice(3, 2))
+      binary += @socket.read(record_len)
+
       if @read_seq_num.nil? &&
-         buffer[0] == Message::ContentType::APPLICATION_DATA
+         binary[0] == Message::ContentType::APPLICATION_DATA
         @read_seq_num = SequenceNumber.new
         sender = (@endpoint == :client ? :server : :client)
         @read_cipher \
@@ -168,7 +170,9 @@ module TLS13
       end
 
       begin
-        record = Message::Record.deserialize(buffer, @read_cipher)
+        buffer = @binary_buffer
+        record = Message::Record.deserialize(binary, @read_cipher, buffer)
+        @binary_buffer = record.surplus_binary
       rescue Error::TLSError => e
         terminate(e.message)
       end
