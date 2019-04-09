@@ -19,6 +19,7 @@ module TLS13
       @cipher_suite = nil # TLS13::CipherSuite
       @notyet_application_secret = true
       @state = 0 # ClientState or ServerState
+      @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
     end
 
     # @raise [TLS13::Error::TLSError]
@@ -110,7 +111,7 @@ module TLS13
 
     # @param record [TLS13::Message::Record]
     def send_record(record)
-      @socket.write(record.serialize)
+      @socket.write(record.serialize(@send_record_size))
     end
 
     # @raise [TLS13::Error::TLSError

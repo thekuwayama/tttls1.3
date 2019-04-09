@@ -95,9 +95,9 @@ module TLS13
       #
       # @return [TLS13::Message::Extension::$Object]
       def [](key)
-        return nil if super_fetch(key).is_a?(Extension::UnknownExtension)
+        return nil if super_fetch(key, nil).is_a?(Extension::UnknownExtension)
 
-        super_fetch(key)
+        super_fetch(key, nil)
       end
 
       # @param key [TLS13::Message::ExtensionType]
@@ -105,7 +105,7 @@ module TLS13
       #
       # @return [TLS13::Message::Extension::$Object]
       def fetch(key, default = nil)
-        return nil if super_fetch(key).is_a?(Extension::UnknownExtension)
+        return nil if super_fetch(key, nil).is_a?(Extension::UnknownExtension)
 
         super_fetch(key, default)
       end

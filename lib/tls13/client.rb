@@ -106,6 +106,9 @@ module TLS13
           terminate(:unsupported_extension) \
             unless offerd_ch_extensions?(ee.extensions)
 
+          rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
+          @send_record_size = rsl.record_size_limit unless rsl.nil?
+
           # TODO: Using PSK
           @state = ClientState::WAIT_CERT_CR
         when ClientState::WAIT_CERT_CR

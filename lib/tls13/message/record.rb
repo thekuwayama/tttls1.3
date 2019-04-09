@@ -50,6 +50,7 @@ module TLS13
         binary
       end
 
+      # TODO: support record_size_limit
       # @param binary [String]
       # @param cipher [TLS13::Cryptograph::$Object]
       #
