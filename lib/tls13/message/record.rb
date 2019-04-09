@@ -32,6 +32,11 @@ module TLS13
         @cipher = cipher
       end
 
+      # NOTE:
+      # serialize joins messages.
+      # If serialize is received Server Parameters(EE, CT, CV),
+      # it returns one binary.
+      #
       # @param record_size_limit [Integer]
       #
       # @return [String]
@@ -54,10 +59,13 @@ module TLS13
         binary
       end
 
-      # TODO: support record_size_limit
+      # NOTE:
+      # If previous Record has surplus_binary,
+      # surplus_binary should is given to Record.deserialize as buffered.
+      #
       # @param binary [String]
       # @param cipher [TLS13::Cryptograph::$Object]
-      # @param buffer [String]
+      # @param buffered [String] surplus_binary
       #
       # @raise [TLS13::Error::TLSError]
       #
@@ -65,7 +73,7 @@ module TLS13
       # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
-      def self.deserialize(binary, cipher, buffer = '')
+      def self.deserialize(binary, cipher, buffered = '')
         raise Error::TLSError, :internal_error if binary.nil?
         raise Error::TLSError, :decode_error if binary.length < 5
 
@@ -83,7 +91,7 @@ module TLS13
         if type == ContentType::APPLICATION_DATA
           fragment, inner_type = cipher.decrypt(fragment, binary.slice(0, 5))
         end
-        messages, surplus_binary = deserialize_fragment(buffer + fragment,
+        messages, surplus_binary = deserialize_fragment(buffered + fragment,
                                                         inner_type || type)
 
         Record.new(type: type,
