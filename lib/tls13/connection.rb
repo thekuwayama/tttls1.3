@@ -111,7 +111,6 @@ module TLS13
     # @param record [TLS13::Message::Record]
     def send_record(record)
       @socket.write(record.serialize)
-      @write_seq_num&.succ
     end
 
     # @raise [TLS13::Error::TLSError
@@ -178,7 +177,7 @@ module TLS13
          record.messages.first.is_a?(Message::ChangeCipherSpec)
         terminate(:unexpected_message)
       end
-      @read_seq_num&.succ
+
       record
     end
     # rubocop: enable Metrics/CyclomaticComplexity

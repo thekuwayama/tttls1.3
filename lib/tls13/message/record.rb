@@ -4,6 +4,9 @@
 module TLS13
   using Refinements
   module Message
+    # https://tools.ietf.org/html/rfc8449#section-4
+    DEFAULT_RECORD_SIZE_LIMIT = 2**14 + 1
+
     # rubocop: disable Metrics/ClassLength
     class Record
       attr_reader :type
@@ -25,14 +28,25 @@ module TLS13
         @cipher = cipher
       end
 
+      # @param record_size_limit [Integer]
+      #
       # @return [String]
-      def serialize
+      def serialize(record_size_limit = DEFAULT_RECORD_SIZE_LIMIT)
+        tlsplaintext = @messages.map(&:serialize).join
+        if messages_type == ContentType::APPLICATION_DATA
+          max = cipher.tlsplaintext_length_limit(record_size_limit)
+          fragments = tlsplaintext.scan(/.{1,#{max}}/m)
+        else
+          fragments = [tlsplaintext]
+        end
+        fragments = [''] if fragments.empty?
+
         binary = ''
-        binary += @type
-        binary += @legacy_record_version
-        fragment = @cipher.encrypt(@messages.map(&:serialize).join,
-                                   messages_type)
-        binary += fragment.prefix_uint16_length
+        fragments.each do |s|
+          binary += @type + @legacy_record_version
+          binary += @cipher.encrypt(s, messages_type).prefix_uint16_length
+        end
+
         binary
       end
 

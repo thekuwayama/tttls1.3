@@ -44,6 +44,8 @@ module TLS13
         plaintext = content + type + "\x00" * @length_of_padding
         cipher.auth_data = additional_data(plaintext.length)
         encrypted_data = cipher.update(plaintext) + cipher.final
+        @sequence_number.succ
+
         encrypted_data + cipher.auth_tag
       end
 
@@ -66,7 +68,23 @@ module TLS13
         decipher.final
         zeros_len = scan_zeros(clear)
         postfix_len = 1 + zeros_len # type || zeros
+        @sequence_number.succ
+
         [clear[0...-postfix_len], clear[-postfix_len]]
+      end
+
+      # NOTE:
+      #     struct {
+      #         opaque content[TLSPlaintext.length];
+      #         ContentType type;
+      #        uint8 zeros[length_of_padding];
+      #     } TLSInnerPlaintext;
+      #
+      # @param record_size_limit [Integer]
+      #
+      # @return [Integer]
+      def tlsplaintext_length_limit(record_size_limit)
+        record_size_limit - 1 - @length_of_padding
       end
 
       private
