@@ -2,6 +2,9 @@
 # frozen_string_literal: true
 
 module TLS13
+  INITIAL = 0
+  EOF     = -1
+
   # rubocop: disable Metrics/ClassLength
   class Connection
     # @param socket [Socket]
@@ -16,7 +19,7 @@ module TLS13
       @write_seq_num = nil # TLS13::SequenceNumber
       @transcript = Transcript.new
       @message_queue = [] # Array of TLS13::Message::$Object
-      @binary_buffer = ''
+      @binary_buffer = '' # deposit Record.surplus_binary
       @cipher_suite = nil # TLS13::CipherSuite
       @notyet_application_secret = true
       @state = 0 # ClientState or ServerState
@@ -28,8 +31,9 @@ module TLS13
     # @return [String]
     def read
       # secure channel has not established yet
-      raise Error::ConfigError unless @endpoint == :client &&
-                                      @state == ClientState::CONNECTED
+      raise Error::ConfigError \
+        unless @endpoint == :client && @state == ClientState::CONNECTED
+      return '' if @state == EOF
 
       message = nil
       loop do
@@ -40,15 +44,21 @@ module TLS13
 
         process_new_session_ticket
       end
+      return '' if message.nil?
 
       message.fragment
+    end
+
+    # @return [Boolean]
+    def eof?
+      @state == EOF
     end
 
     # @param binary [String]
     def write(binary)
       # secure channel has not established yet
-      raise Error::ConfigError unless @endpoint == :client &&
-                                      @state == ClientState::CONNECTED
+      raise Error::ConfigError \
+        unless @endpoint == :client && @state == ClientState::CONNECTED
 
       ap = Message::ApplicationData.new(binary)
       send_application_data(ap)
@@ -119,33 +129,49 @@ module TLS13
     #
     # @return [TLS13::Message::$Object]
     # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/MethodLength
+    # rubocop: disable Metrics/PerceivedComplexity
     def recv_message
       return @message_queue.shift unless @message_queue.empty?
 
+      messages = nil
       loop do
         record = recv_record
         case record.type
         when Message::ContentType::HANDSHAKE,
              Message::ContentType::APPLICATION_DATA
           messages = record.messages
+          break unless messages.empty?
         when Message::ContentType::CCS
           terminate(:unexpected_message) unless ccs_receivable?
           next
         when Message::ContentType::ALERT
-          raise record.messages.first.to_error
+          alert = record.messages.first
+          if alert.description == Message::ALERT_DESCRIPTION[:close_notify]
+            @state = EOF
+            return nil
+          end
+          raise alert.to_error
         else
           terminate(:unexpected_message)
         end
-        next if messages.empty?
-
-        @message_queue += messages[1..]
-        message = messages.first
-        raise message.to_error if message.is_a?(Message::Alert)
-
-        return message
       end
+
+      @message_queue += messages[1..]
+      message = messages.first
+      if message.is_a?(Message::Alert) &&
+         message.description == Message::ALERT_DESCRIPTION[:close_notify]
+        @state = EOF
+        return nil
+      elsif message.is_a?(Message::Alert)
+        raise message.to_error
+      end
+
+      message
     end
     # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/MethodLength
+    # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [TLS13::Message::Record]
     # rubocop: disable Metrics/CyclomaticComplexity

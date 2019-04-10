@@ -3,7 +3,7 @@
 
 module TLS13
   module ClientState
-    # initial value is 0
+    # initial value is 0, eof value is -1
     START         = 1
     WAIT_SH       = 2
     WAIT_EE       = 3
