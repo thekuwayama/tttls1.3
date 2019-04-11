@@ -18,10 +18,11 @@ module TLS13
           @cipher = OpenSSL::Cipher::AES128.new(:GCM)
         when CipherSuite::TLS_AES_256_GCM_SHA384
           @cipher = OpenSSL::Cipher::AES256.new(:GCM)
+        when CipherSuite::TLS_CHACHA20_POLY1305_SHA256
+          @cipher = OpenSSL::Cipher.new('chacha20-poly1305')
         else
           # Note:
           # not supported
-          # CipherSuite::TLS_CHACHA20_POLY1305_SHA256
           # CipherSuite::TLS_AES_128_CCM_SHA256
           # CipherSuite::TLS_AES_128_CCM_8_SHA256
           raise Error::TLSError, :internal_error
