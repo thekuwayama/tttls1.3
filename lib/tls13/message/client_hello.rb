@@ -22,7 +22,7 @@ module TLS13
       # rubocop: disable Metrics/ParameterLists
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
-                     legacy_session_id: Array.new(32, 0).map(&:chr).join,
+                     legacy_session_id: OpenSSL::Random.random_bytes(32),
                      cipher_suites: CipherSuites.new,
                      legacy_compression_methods: ["\x00"],
                      extensions: Extensions.new)
