@@ -8,10 +8,7 @@ RSpec.describe SupportedGroups do
   context 'valid supported_groups' do
     let(:named_group_list) do
       [NamedGroup::SECP256R1,
-       NamedGroup::SECP384R1,
-       NamedGroup::SECP521R1,
-       NamedGroup::X25519,
-       NamedGroup::X448]
+       NamedGroup::SECP384R1]
     end
 
     let(:extension) do
@@ -25,8 +22,8 @@ RSpec.describe SupportedGroups do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + 12.to_uint16 \
-                                        + 10.to_uint16 \
+                                        + 6.to_uint16 \
+                                        + 4.to_uint16 \
                                         + named_group_list.join
     end
   end
@@ -43,8 +40,8 @@ RSpec.describe SupportedGroups do
 
     it 'should be serialized' do
       expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
+                                        + 8.to_uint16 \
                                         + 6.to_uint16 \
-                                        + 4.to_uint16 \
                                         + DEFAULT_NAMED_GROUP_LIST.join
     end
   end

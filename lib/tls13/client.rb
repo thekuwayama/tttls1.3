@@ -177,13 +177,24 @@ module TLS13
       )
       # signature_algorithms
       exs << Message::Extension::SignatureAlgorithms.new(
-        [Message::SignatureScheme::RSA_PSS_RSAE_SHA256,
-         Message::SignatureScheme::RSA_PSS_RSAE_SHA384]
+        [
+          Message::SignatureScheme::ECDSA_SECP256R1_SHA256,
+          Message::SignatureScheme::ECDSA_SECP384R1_SHA384,
+          Message::SignatureScheme::ECDSA_SECP521R1_SHA512,
+          Message::SignatureScheme::RSA_PSS_PSS_SHA256,
+          Message::SignatureScheme::RSA_PSS_PSS_SHA384,
+          Message::SignatureScheme::RSA_PSS_PSS_SHA512,
+          Message::SignatureScheme::RSA_PSS_RSAE_SHA256,
+          Message::SignatureScheme::RSA_PSS_RSAE_SHA384,
+          Message::SignatureScheme::RSA_PSS_RSAE_SHA512,
+          Message::SignatureScheme::RSA_PKCS1_SHA256,
+          Message::SignatureScheme::RSA_PKCS1_SHA384,
+          Message::SignatureScheme::RSA_PKCS1_SHA512
+        ]
       )
       # supported_groups
-      groups = [Message::Extension::NamedGroup::SECP256R1,
-                Message::Extension::NamedGroup::SECP384R1]
-      exs << Message::Extension::SupportedGroups.new(groups)
+      groups = Message::Extension::DEFAULT_NAMED_GROUP_LIST
+      exs << Message::Extension::SupportedGroups.new
       # key_share
       key_share, priv_keys \
                  = Message::Extension::KeyShare.gen_ch_key_share(groups)
