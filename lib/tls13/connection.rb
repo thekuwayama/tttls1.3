@@ -355,15 +355,15 @@ module TLS13
     end
 
     # @param certificate_list [Array of CertificateEntry]
-    # @param crt_file [String] path to ca.crt
+    # @param ca_file [String] path to ca.crt
     # @param hostname [String]
     #
     # @return [Boolean]
     # rubocop: disable Metrics/AbcSize
-    def certified_certificate?(certificate_list, crt_file = nil, hostname = nil)
+    def certified_certificate?(certificate_list, ca_file = nil, hostname = nil)
       store = OpenSSL::X509::Store.new
       store.set_default_paths
-      store.add_file(crt_file) unless crt_file.nil?
+      store.add_file(ca_file) unless ca_file.nil?
 
       cert_bin = certificate_list.first.cert_data
       cert = OpenSSL::X509::Certificate.new(cert_bin)
