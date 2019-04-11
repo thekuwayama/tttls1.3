@@ -6,6 +6,7 @@ hostname, port = (ARGV[0] || 'localhost:4433').split(':')
 socket = TCPSocket.new(hostname, port)
 client = TLS13::Client.new(socket)
 client.hostname = hostname
+client.crt_file = __dir__ + '/../tmp/ca.crt'
 client.connect
 http_get = <<~BIN
   GET / HTTP/1.1\r

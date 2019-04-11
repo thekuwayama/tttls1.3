@@ -78,7 +78,7 @@ file SERVER_CRT => [TMP_DIR, CA_CRT, SERVER_KEY] do
 
   puts "generate #{SERVER_CRT}..."
   sub = OpenSSL::X509::Name.new
-  sub.add_entry('CN', 'test-server')
+  sub.add_entry('CN', 'localhost')
 
   server_crt = OpenSSL::X509::Certificate.new
   server_crt.not_before = Time.now
@@ -107,7 +107,7 @@ file SERVER_CRT => [TMP_DIR, CA_CRT, SERVER_KEY] do
   server_crt.add_extension(
     factory.create_extension(
       'subjectAltName',
-      'DNS:test-server'
+      'DNS:localhost'
     )
   )
 

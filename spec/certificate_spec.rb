@@ -19,16 +19,16 @@ RSpec.describe Certificate do
       expect(message.certificate_request_context).to be_empty
 
       certificate_entry = message.certificate_list.first
-      expect(certificate_entry.cert_data.subject.to_s).to eq '/CN=test-server'
+      expect(certificate_entry.cert_data.subject.to_s).to eq '/CN=localhost'
       expect(certificate_entry.extensions).to be_empty
     end
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CERTIFICATE \
-                                      + 994.to_uint24 \
-                                      + 0.to_uint8 \
                                       + 990.to_uint24 \
-                                      + 985.to_uint24 \
+                                      + 0.to_uint8 \
+                                      + 986.to_uint24 \
+                                      + 981.to_uint24 \
                                       + certificate.to_der \
                                       + 0.to_uint16
     end

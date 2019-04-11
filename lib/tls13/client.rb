@@ -17,6 +17,7 @@ module TLS13
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
     attr_accessor :hostname
+    attr_accessor :crt_file
 
     def initialize(socket)
       super(socket)
@@ -120,7 +121,8 @@ module TLS13
             end
 
             terminate(:certificate_unknown) \
-              unless certified_certificate?(ct.certificate_list, nil, @hostname)
+              unless certified_certificate?(ct.certificate_list,
+                                            @crt_file, @hostname)
 
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
@@ -137,7 +139,8 @@ module TLS13
           end
 
           terminate(:certificate_unknown) \
-            unless certified_certificate?(ct.certificate_list, nil, @hostname)
+            unless certified_certificate?(ct.certificate_list,
+                                          @crt_file, @hostname)
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
