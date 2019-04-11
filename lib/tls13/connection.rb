@@ -215,7 +215,7 @@ module TLS13
     # rubocop: enable Metrics/PerceivedComplexity
 
     # @param certificate_pem [String]
-    # @param signature_scheme [TLS13::Message::SignatureScheme]
+    # @param signature_scheme [TLS13::SignatureScheme]
     # @param signature [String]
     # @param context [String]
     # @param message_range [Range]
@@ -228,26 +228,26 @@ module TLS13
       digest = CipherSuite.digest(@cipher_suite)
       hash = @transcript.hash(digest, message_range)
       case signature_scheme
-      when Message::SignatureScheme::RSA_PKCS1_SHA256,
-           Message::SignatureScheme::ECDSA_SECP256R1_SHA256,
-           Message::SignatureScheme::RSA_PSS_RSAE_SHA256,
-           Message::SignatureScheme::RSA_PSS_PSS_SHA256
+      when SignatureScheme::RSA_PKCS1_SHA256,
+           SignatureScheme::ECDSA_SECP256R1_SHA256,
+           SignatureScheme::RSA_PSS_RSAE_SHA256,
+           SignatureScheme::RSA_PSS_PSS_SHA256
         content = "\x20" * 64 + context + "\x00" + hash
         public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA256', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA256')
-      when Message::SignatureScheme::RSA_PKCS1_SHA384,
-           Message::SignatureScheme::ECDSA_SECP384R1_SHA384,
-           Message::SignatureScheme::RSA_PSS_RSAE_SHA384,
-           Message::SignatureScheme::RSA_PSS_PSS_SHA384
+      when SignatureScheme::RSA_PKCS1_SHA384,
+           SignatureScheme::ECDSA_SECP384R1_SHA384,
+           SignatureScheme::RSA_PSS_RSAE_SHA384,
+           SignatureScheme::RSA_PSS_PSS_SHA384
         content = "\x20" * 64 + context + "\x00" + hash
         public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA384', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA384')
-      when Message::SignatureScheme::RSA_PKCS1_SHA512,
-           Message::SignatureScheme::ECDSA_SECP521R1_SHA512,
-           Message::SignatureScheme::RSA_PSS_RSAE_SHA512,
-           Message::SignatureScheme::RSA_PSS_PSS_SHA512
+      when SignatureScheme::RSA_PKCS1_SHA512,
+           SignatureScheme::ECDSA_SECP521R1_SHA512,
+           SignatureScheme::RSA_PSS_RSAE_SHA512,
+           SignatureScheme::RSA_PSS_PSS_SHA512
         content = "\x20" * 64 + context + "\x00" + hash
         public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA512', signature, content, salt_length: :auto,

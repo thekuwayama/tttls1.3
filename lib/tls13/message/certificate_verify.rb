@@ -4,39 +4,12 @@
 module TLS13
   using Refinements
   module Message
-    module SignatureScheme
-      # RSASSA-PKCS1-v1_5 algorithms
-      RSA_PKCS1_SHA256       = "\x04\x01"
-      RSA_PKCS1_SHA384       = "\x05\x01"
-      RSA_PKCS1_SHA512       = "\x06\x01"
-      # ECDSA algorithms
-      ECDSA_SECP256R1_SHA256 = "\x04\x03"
-      ECDSA_SECP384R1_SHA384 = "\x05\x03"
-      ECDSA_SECP521R1_SHA512 = "\x06\x03"
-      # RSASSA-PSS algorithms with public key OID rsaEncryption
-      RSA_PSS_RSAE_SHA256    = "\x08\x04"
-      RSA_PSS_RSAE_SHA384    = "\x08\x05"
-      RSA_PSS_RSAE_SHA512    = "\x08\x06"
-      # EdDSA algorithms
-      ED25519                = "\x08\x07"
-      ED448                  = "\x08\x08"
-      # RSASSA-PSS algorithms with public key OID RSASSA-PSS
-      RSA_PSS_PSS_SHA256     = "\x08\x09"
-      RSA_PSS_PSS_SHA384     = "\x08\x0a"
-      RSA_PSS_PSS_SHA512     = "\x08\x0b"
-      # Legacy algorithms
-      RSA_PKCS1_SHA1         = "\x02\x01"
-      ECDSA_SHA1             = "\x02\x03"
-      # Reserved Code Points
-      # private_use "\xfe\x00" ~ "\xff\xff"
-    end
-
     class CertificateVerify
       attr_reader :msg_type
       attr_reader :signature_scheme
       attr_reader :signature
 
-      # @param signature_scheme [TLS13::Message::SignatureScheme]
+      # @param signature_scheme [TLS13::SignatureScheme]
       # @param signature [String]
       #
       # @raise [TLS13::Error::TLSError]

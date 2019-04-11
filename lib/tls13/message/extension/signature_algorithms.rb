@@ -6,11 +6,28 @@ module TLS13
   module Message
     module Extension
       class SignatureAlgorithms
+        DEFAULT_SIGNATURE_ALGORITHMS = [
+          SignatureScheme::ECDSA_SECP256R1_SHA256,
+          SignatureScheme::ECDSA_SECP384R1_SHA384,
+          SignatureScheme::ECDSA_SECP521R1_SHA512,
+          SignatureScheme::RSA_PSS_PSS_SHA256,
+          SignatureScheme::RSA_PSS_PSS_SHA384,
+          SignatureScheme::RSA_PSS_PSS_SHA512,
+          SignatureScheme::RSA_PSS_RSAE_SHA256,
+          SignatureScheme::RSA_PSS_RSAE_SHA384,
+          SignatureScheme::RSA_PSS_RSAE_SHA512,
+          SignatureScheme::RSA_PKCS1_SHA256,
+          SignatureScheme::RSA_PKCS1_SHA384,
+          SignatureScheme::RSA_PKCS1_SHA512
+        ].freeze
+
         attr_accessor :extension_type # for signature_algorithms_cert getter
         attr_reader   :supported_signature_algorithms
 
         # @param supported_signature_algorithms [Array of SignatureScheme]
-        def initialize(supported_signature_algorithms)
+        def initialize(
+              supported_signature_algorithms = DEFAULT_SIGNATURE_ALGORITHMS
+            )
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS
           @supported_signature_algorithms = supported_signature_algorithms || []
           raise Error::TLSError, :internal_error \

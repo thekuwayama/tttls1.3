@@ -9,6 +9,7 @@ require 'tls13'
 include TLS13
 include TLS13::Error
 include TLS13::CipherSuite
+include TLS13::SignatureScheme
 include TLS13::Cryptograph
 include TLS13::Message
 include TLS13::Message::Extension

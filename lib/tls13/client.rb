@@ -176,22 +176,7 @@ module TLS13
         msg_type: Message::HandshakeType::CLIENT_HELLO
       )
       # signature_algorithms
-      exs << Message::Extension::SignatureAlgorithms.new(
-        [
-          Message::SignatureScheme::ECDSA_SECP256R1_SHA256,
-          Message::SignatureScheme::ECDSA_SECP384R1_SHA384,
-          Message::SignatureScheme::ECDSA_SECP521R1_SHA512,
-          Message::SignatureScheme::RSA_PSS_PSS_SHA256,
-          Message::SignatureScheme::RSA_PSS_PSS_SHA384,
-          Message::SignatureScheme::RSA_PSS_PSS_SHA512,
-          Message::SignatureScheme::RSA_PSS_RSAE_SHA256,
-          Message::SignatureScheme::RSA_PSS_RSAE_SHA384,
-          Message::SignatureScheme::RSA_PSS_RSAE_SHA512,
-          Message::SignatureScheme::RSA_PKCS1_SHA256,
-          Message::SignatureScheme::RSA_PKCS1_SHA384,
-          Message::SignatureScheme::RSA_PKCS1_SHA512
-        ]
-      )
+      exs << Message::Extension::SignatureAlgorithms.new
       # supported_groups
       groups = Message::Extension::DEFAULT_NAMED_GROUP_LIST
       exs << Message::Extension::SupportedGroups.new
