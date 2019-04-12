@@ -103,7 +103,7 @@ module TLS13
         # @param named_group_list [Array of NamedGroup]
         #
         # @raise [TLS13::Error::TLSError]
-        def initialize(named_group_list = DEFAULT_NAMED_GROUP_LIST)
+        def initialize(named_group_list)
           @extension_type = ExtensionType::SUPPORTED_GROUPS
           @named_group_list = named_group_list || []
           raise Error::TLSError, :internal_error \

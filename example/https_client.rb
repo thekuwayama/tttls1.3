@@ -4,9 +4,8 @@ require_relative 'helper'
 
 hostname, port = (ARGV[0] || 'localhost:4433').split(':')
 socket = TCPSocket.new(hostname, port)
-client = TLS13::Client.new(socket)
-client.hostname = hostname
-client.ca_file = __dir__ + '/../tmp/ca.crt'
+settings = { ca_file: __dir__ + '/../tmp/ca.crt' }
+client = TLS13::Client.new(socket, hostname, settings)
 client.connect
 http_get = <<~BIN
   GET / HTTP/1.1\r

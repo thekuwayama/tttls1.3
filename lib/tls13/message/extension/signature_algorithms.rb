@@ -25,9 +25,7 @@ module TLS13
         attr_reader   :supported_signature_algorithms
 
         # @param supported_signature_algorithms [Array of SignatureScheme]
-        def initialize(
-              supported_signature_algorithms = DEFAULT_SIGNATURE_ALGORITHMS
-            )
+        def initialize(supported_signature_algorithms)
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS
           @supported_signature_algorithms = supported_signature_algorithms || []
           raise Error::TLSError, :internal_error \

@@ -5,20 +5,6 @@ require 'spec_helper'
 using Refinements
 
 RSpec.describe CipherSuites do
-  context 'default cipher suites' do
-    let(:cs) do
-      CipherSuites.new
-    end
-
-    it 'should be generated' do
-      expect(cs).to eq DEFAULT_CIPHER_SUITES
-    end
-
-    it 'should be serialized' do
-      expect(cs.serialize).to eq DEFAULT_CIPHER_SUITES.join.prefix_uint16_length
-    end
-  end
-
   context 'valid cipher suites binary' do
     let(:cs) do
       CipherSuites.deserialize(TESTBINARY_CIPHER_SUITES)

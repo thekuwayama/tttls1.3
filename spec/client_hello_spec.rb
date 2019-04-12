@@ -14,9 +14,16 @@ RSpec.describe ClientHello do
       Array.new(32, 0).map(&:chr).join
     end
 
+    let(:cipher_suites) do
+      CipherSuites.new([TLS_AES_256_GCM_SHA384,
+                        TLS_CHACHA20_POLY1305_SHA256,
+                        TLS_AES_128_GCM_SHA256])
+    end
+
     let(:message) do
       ClientHello.new(random: random,
-                      legacy_session_id: legacy_session_id)
+                      legacy_session_id: legacy_session_id,
+                      cipher_suites: cipher_suites)
     end
 
     it 'should be generated' do
@@ -24,7 +31,9 @@ RSpec.describe ClientHello do
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.random).to eq random
       expect(message.legacy_session_id).to eq legacy_session_id
-      expect(message.cipher_suites).to eq DEFAULT_CIPHER_SUITES
+      expect(message.cipher_suites).to eq [TLS_AES_256_GCM_SHA384,
+                                           TLS_CHACHA20_POLY1305_SHA256,
+                                           TLS_AES_128_GCM_SHA256]
       expect(message.legacy_compression_methods).to eq ["\x00"]
       expect(message.extensions).to be_empty
     end
@@ -36,7 +45,7 @@ RSpec.describe ClientHello do
                                       + random \
                                       + legacy_session_id.length.to_uint8 \
                                       + legacy_session_id \
-                                      + CipherSuites.new.serialize \
+                                      + cipher_suites.serialize \
                                       + "\x01\x00" \
                                       + Extensions.new.serialize
     end

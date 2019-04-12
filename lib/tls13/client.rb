@@ -14,15 +14,47 @@ module TLS13
     CONNECTED     = 8
   end
 
+  DEFAULT_CH_CIPHER_SUITES = [
+    CipherSuite::TLS_AES_256_GCM_SHA384,
+    CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
+    CipherSuite::TLS_AES_128_GCM_SHA256
+  ].freeze
+
+  DEFAULT_CH_SIGNATURE_ALGORITHMS = [
+    SignatureScheme::ECDSA_SECP256R1_SHA256,
+    SignatureScheme::ECDSA_SECP384R1_SHA384,
+    SignatureScheme::ECDSA_SECP521R1_SHA512,
+    SignatureScheme::RSA_PSS_PSS_SHA256,
+    SignatureScheme::RSA_PSS_PSS_SHA384,
+    SignatureScheme::RSA_PSS_PSS_SHA512,
+    SignatureScheme::RSA_PSS_RSAE_SHA256,
+    SignatureScheme::RSA_PSS_RSAE_SHA384,
+    SignatureScheme::RSA_PSS_RSAE_SHA512,
+    SignatureScheme::RSA_PKCS1_SHA256,
+    SignatureScheme::RSA_PKCS1_SHA384,
+    SignatureScheme::RSA_PKCS1_SHA512
+  ].freeze
+
+  DEFAULT_CH_NAMED_GROUP_LIST = [
+    Message::Extension::NamedGroup::SECP256R1,
+    Message::Extension::NamedGroup::SECP384R1,
+    Message::Extension::NamedGroup::SECP521R1
+  ].freeze
+
+  DEFAULT_CLIENT_SETTINGS = {
+    ca_file: nil,
+    cipher_suites: DEFAULT_CH_CIPHER_SUITES,
+    signature_algorithms: DEFAULT_CH_SIGNATURE_ALGORITHMS,
+    supported_groups: DEFAULT_CH_NAMED_GROUP_LIST
+  }.freeze
+
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
-    attr_accessor :hostname
-    attr_accessor :ca_file
-
-    def initialize(socket)
+    def initialize(socket, hostname, **settings)
       super(socket)
       @endpoint = :client
-      @hostname = ''
+      @hostname = hostname
+      @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
     end
 
     # NOTE:
@@ -122,7 +154,7 @@ module TLS13
 
             terminate(:certificate_unknown) \
               unless certified_certificate?(ct.certificate_list,
-                                            @ca_file, @hostname)
+                                            @settings[:ca_file], @hostname)
 
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
@@ -140,7 +172,7 @@ module TLS13
 
           terminate(:certificate_unknown) \
             unless certified_certificate?(ct.certificate_list,
-                                          @ca_file, @hostname)
+                                          @settings[:ca_file], @hostname)
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
@@ -179,10 +211,12 @@ module TLS13
         msg_type: Message::HandshakeType::CLIENT_HELLO
       )
       # signature_algorithms
-      exs << Message::Extension::SignatureAlgorithms.new
+      exs << Message::Extension::SignatureAlgorithms.new(
+        @settings[:signature_algorithms]
+      )
       # supported_groups
-      groups = Message::Extension::DEFAULT_NAMED_GROUP_LIST
-      exs << Message::Extension::SupportedGroups.new
+      groups = @settings[:supported_groups]
+      exs << Message::Extension::SupportedGroups.new(groups)
       # key_share
       key_share, priv_keys \
                  = Message::Extension::KeyShare.gen_ch_key_share(groups)
@@ -198,7 +232,7 @@ module TLS13
     # @return [TLS13::Message::ClientHello]
     def send_client_hello
       ch = Message::ClientHello.new(
-        cipher_suites: CipherSuites.new,
+        cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
         extensions: gen_extensions
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])

@@ -28,24 +28,6 @@ RSpec.describe SupportedGroups do
     end
   end
 
-  context 'default supported_groups' do
-    let(:extension) do
-      SupportedGroups.new
-    end
-
-    it 'should be generated' do
-      expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
-      expect(extension.named_group_list).to eq DEFAULT_NAMED_GROUP_LIST
-    end
-
-    it 'should be serialized' do
-      expect(extension.serialize).to eq ExtensionType::SUPPORTED_GROUPS \
-                                        + 8.to_uint16 \
-                                        + 6.to_uint16 \
-                                        + DEFAULT_NAMED_GROUP_LIST.join
-    end
-  end
-
   context 'invalid supported_groups, empty,' do
     let(:extension) do
       SupportedGroups.new([])

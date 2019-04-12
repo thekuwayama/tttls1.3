@@ -11,7 +11,13 @@ RSpec.describe EncryptedExtensions do
     end
 
     let(:supported_groups) do
-      SupportedGroups.new
+      SupportedGroups.new(
+        [
+          NamedGroup::SECP256R1,
+          NamedGroup::SECP384R1,
+          NamedGroup::SECP521R1
+        ]
+      )
     end
 
     let(:extensions) do

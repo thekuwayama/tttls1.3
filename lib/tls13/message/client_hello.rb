@@ -23,7 +23,7 @@ module TLS13
       def initialize(legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
                      legacy_session_id: OpenSSL::Random.random_bytes(32),
-                     cipher_suites: CipherSuites.new,
+                     cipher_suites:,
                      legacy_compression_methods: ["\x00"],
                      extensions: Extensions.new)
         @msg_type = HandshakeType::CLIENT_HELLO

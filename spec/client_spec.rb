@@ -8,7 +8,7 @@ RSpec.describe Client do
   context 'client' do
     let(:record) do
       mock_socket = SimpleStream.new
-      client = Client.new(mock_socket)
+      client = Client.new(mock_socket, 'localhost')
       client.send(:send_client_hello)
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
@@ -19,7 +19,7 @@ RSpec.describe Client do
       message = record.messages.first
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
-      expect(message.cipher_suites).to eq DEFAULT_CIPHER_SUITES
+      expect(message.cipher_suites).to eq DEFAULT_CH_CIPHER_SUITES
       expect(message.legacy_compression_methods).to eq ["\x00"]
     end
   end
@@ -32,7 +32,7 @@ RSpec.describe Client do
                         + ProtocolVersion::TLS_1_2 \
                         + msg_len.to_uint16 \
                         + TESTBINARY_SERVER_HELLO)
-      client = Client.new(mock_socket)
+      client = Client.new(mock_socket, 'localhost')
       client.send(:recv_server_hello)
     end
 
@@ -48,7 +48,7 @@ RSpec.describe Client do
     let(:client) do
       mock_socket = SimpleStream.new
       mock_socket.write(TESTBINARY_SERVER_PARAMETERS_RECORD)
-      client = Client.new(mock_socket)
+      client = Client.new(mock_socket, 'localhost')
       client.instance_variable_set(:@cipher_suite,
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
       read_seq_num = SequenceNumber.new
@@ -93,7 +93,7 @@ RSpec.describe Client do
   context 'client' do
     let(:record) do
       mock_socket = SimpleStream.new
-      client = Client.new(mock_socket)
+      client = Client.new(mock_socket, 'localhost')
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -140,7 +140,7 @@ RSpec.describe Client do
 
   context 'client' do
     let(:client) do
-      client = Client.new(nil)
+      client = Client.new(nil, 'localhost')
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -179,7 +179,7 @@ RSpec.describe Client do
 
   context 'client' do
     let(:client) do
-      client = Client.new(nil)
+      client = Client.new(nil, 'localhost')
       transcript = {
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
         SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
@@ -211,7 +211,7 @@ RSpec.describe Client do
           'downgrade protection value(TLS 1.2),' do
     let(:client) do
       mock_socket = SimpleStream.new
-      client = Client.new(mock_socket)
+      client = Client.new(mock_socket, 'localhost')
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       random = OpenSSL::Random.random_bytes(24) + \
                Client::DOWNGRADE_PROTECTION_TLS_1_2
@@ -233,7 +233,7 @@ RSpec.describe Client do
           'downgrade protection value(prior to TLS 1.2),' do
     let(:client) do
       mock_socket = SimpleStream.new
-      client = Client.new(mock_socket)
+      client = Client.new(mock_socket, 'localhost')
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       random = OpenSSL::Random.random_bytes(24) + \
                Client::DOWNGRADE_PROTECTION_TLS_1_1
@@ -255,7 +255,7 @@ RSpec.describe Client do
           'including "\x03\x04",' do
     let(:client) do
       mock_socket = SimpleStream.new
-      client = Client.new(mock_socket)
+      client = Client.new(mock_socket, 'localhost')
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       extensions = sh.instance_variable_get(:@extensions)
       extensions[ExtensionType::SUPPORTED_VERSIONS] = nil
@@ -282,7 +282,7 @@ RSpec.describe Client do
     end
 
     let(:client) do
-      Client.new(nil)
+      Client.new(nil, 'localhost')
     end
 
     it 'should not certify certificate' do

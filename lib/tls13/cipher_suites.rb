@@ -62,10 +62,6 @@ module TLS13
     end
   end
 
-  DEFAULT_CIPHER_SUITES = [CipherSuite::TLS_AES_256_GCM_SHA384,
-                           CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
-                           CipherSuite::TLS_AES_128_GCM_SHA256].freeze
-
   class CipherSuites < Array
     # @param cipher_suites [Array of CipherSuite]
     #
@@ -75,7 +71,7 @@ module TLS13
     #     CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
     #     CipherSuite::TLS_AES_128_GCM_SHA256
     #   ])
-    def initialize(cipher_suites = DEFAULT_CIPHER_SUITES)
+    def initialize(cipher_suites)
       super(cipher_suites)
     end
 
