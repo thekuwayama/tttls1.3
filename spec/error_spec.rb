@@ -3,9 +3,9 @@
 
 require 'spec_helper'
 
-RSpec.describe TLSError do
+RSpec.describe ErrorAlerts do
   let(:error) do
-    TLSError.new('unexpected_message')
+    ErrorAlerts.new('unexpected_message')
   end
 
   let(:alert) do

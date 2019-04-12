@@ -31,13 +31,13 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [TLS13::Error::TLSError]
+      # @raise [TLS13::Error::ErrorAlerts]
       #
       # @return [TLS13::Message::Certificate]
       def self.deserialize(binary)
-        raise Error::TLSError, :internal_error if binary.nil?
-        raise Error::TLSError, :decode_error if binary.length < 5
-        raise Error::TLSError, :internal_error \
+        raise Error::ErrorAlerts, :internal_error if binary.nil?
+        raise Error::ErrorAlerts, :decode_error if binary.length < 5
+        raise Error::ErrorAlerts, :internal_error \
           unless binary[0] == HandshakeType::CERTIFICATE
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
@@ -49,8 +49,8 @@ module TLS13
         cl_bin = binary.slice(i, cl_len)
         i += cl_len
         certificate_list = deserialize_certificate_list(cl_bin)
-        raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
-                                                    i == binary.length
+        raise Error::ErrorAlerts, :decode_error unless i == msg_len + 4 &&
+                                                       i == binary.length
 
         Certificate.new(
           certificate_request_context: certificate_request_context,
@@ -61,24 +61,24 @@ module TLS13
       class << self
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [Array of CertificateEntry]
         # rubocop: disable Metrics/AbcSize
         def deserialize_certificate_list(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           i = 0
           certificate_list = []
           while i < binary.length
-            raise Error::TLSError, :decode_error if i + 3 > binary.length
+            raise Error::ErrorAlerts, :decode_error if i + 3 > binary.length
 
             cd_len = Convert.bin2i(binary.slice(i, 3))
             i += 3
             cd_bin = binary.slice(i, cd_len)
             cert_data = OpenSSL::X509::Certificate.new(cd_bin)
             i += cd_len
-            raise Error::TLSError, :decode_error if i + 2 > binary.length
+            raise Error::ErrorAlerts, :decode_error if i + 2 > binary.length
 
             exs_len = Convert.bin2i(binary.slice(i, 2))
             i += 2
@@ -88,7 +88,7 @@ module TLS13
             i += exs_len
             certificate_list << CertificateEntry.new(cert_data, extensions)
           end
-          raise Error::TLSError, :decode_error unless i == binary.length
+          raise Error::ErrorAlerts, :decode_error unless i == binary.length
 
           certificate_list
         end

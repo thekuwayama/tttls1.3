@@ -9,9 +9,10 @@ module TLS13
     # Raised if configure is invalid.
     class ConfigError < Error; end
 
-    # Raised on received Alert message or invalid message.
+    # Raised on received Error Alerts message or invalid message.
+    # https://tools.ietf.org/html/rfc8446#section-6.2
     # Terminated the connection, so you *cannot* recover from this exception.
-    class TLSError < Error
+    class ErrorAlerts < Error
       # @return [TLS13::Message::Alert]
       def to_alert
         Message::Alert.new(description: ALERT_DESCRIPTION[message.to_sym])

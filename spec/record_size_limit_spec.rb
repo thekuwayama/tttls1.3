@@ -28,7 +28,7 @@ RSpec.describe RecordSizeLimit do
     end
 
     it 'should not generated' do
-      expect { extension }.to raise_error(TLSError)
+      expect { extension }.to raise_error(ErrorAlerts)
     end
   end
 
@@ -55,7 +55,7 @@ RSpec.describe RecordSizeLimit do
     end
 
     it 'should not generate object' do
-      expect { extension }.to raise_error(TLSError)
+      expect { extension }.to raise_error(ErrorAlerts)
     end
   end
 end

@@ -182,11 +182,11 @@ module TLS13
     # @param info [String]
     # @param length [Integer]
     #
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @param [String]
     def hkdf_expand(secret, info, length)
-      raise Error::TLSError, :internal_error if length > 255 * @hash_len
+      raise Error::ErrorAlerts, :internal_error if length > 255 * @hash_len
 
       n = (length.to_f / @hash_len).ceil
       okm = ''

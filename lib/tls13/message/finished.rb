@@ -23,18 +23,18 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [TLS13::Error::TLSError]
+      # @raise [TLS13::Error::ErrorAlerts]
       #
       # @return [TLS13::Message::Finished]
       def self.deserialize(binary)
-        raise Error::TLSError, :internal_error if binary.nil?
-        raise Error::TLSError, :decode_error if binary.length < 4
-        raise Error::TLSError, :internal_error \
+        raise Error::ErrorAlerts, :internal_error if binary.nil?
+        raise Error::ErrorAlerts, :decode_error if binary.length < 4
+        raise Error::ErrorAlerts, :internal_error \
           unless binary[0] == HandshakeType::FINISHED
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
         verify_data = binary.slice(4, msg_len)
-        raise Error::TLSError, :decode_error \
+        raise Error::ErrorAlerts, :decode_error \
           unless msg_len + 4 == binary.length
 
         Finished.new(verify_data)

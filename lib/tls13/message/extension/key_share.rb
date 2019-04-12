@@ -14,14 +14,14 @@ module TLS13
         # @param msg_type [TLS13::Message::ContentType]
         # @param key_share_entry [Array of KeyShareEntry]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         # rubocop: disable Metrics/CyclomaticComplexity
         # rubocop: disable Metrics/PerceivedComplexity
         def initialize(msg_type:, key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
           @key_share_entry = key_share_entry || []
-          raise Error::TLSError, :internal_error \
+          raise Error::ErrorAlerts, :internal_error \
             unless (@msg_type == HandshakeType::CLIENT_HELLO &&
                     @key_share_entry.length >= 0 &&
                     @key_share_entry.all?(&:valid_key_share_client_hello?)) ||
@@ -35,7 +35,7 @@ module TLS13
         # rubocop: enable Metrics/CyclomaticComplexity
         # rubocop: enable Metrics/PerceivedComplexity
 
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [String]
         def serialize
@@ -45,7 +45,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
             binary = @key_share_entry.first.serialize
           else
-            raise Error::TLSError, :internal_error
+            raise Error::ErrorAlerts, :internal_error
           end
           @extension_type + binary.prefix_uint16_length
         end
@@ -53,12 +53,12 @@ module TLS13
         # @param binary [String]
         # @param msg_type [TLS13::Message::HandshakeType]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extensions::KeyShare, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize(binary, msg_type)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           case msg_type
           when HandshakeType::CLIENT_HELLO
@@ -74,7 +74,7 @@ module TLS13
             return nil \
               unless key_share_entry.first.valid_key_share_hello_retry_request?
           else
-            raise Error::TLSError, :internal_error
+            raise Error::ErrorAlerts, :internal_error
           end
           return nil if key_share_entry.nil?
 
@@ -119,11 +119,11 @@ module TLS13
           #
           # @param binary [String]
           #
-          # @raise [TLS13::Error::TLSError]
+          # @raise [TLS13::Error::ErrorAlerts]
           #
           # @return [Array of KeyShareEntry, nil]
           def deserialize_keyshare_ch(binary)
-            raise Error::TLSError, :internal_error if binary.nil?
+            raise Error::ErrorAlerts, :internal_error if binary.nil?
 
             return nil if binary.length < 2
 
@@ -154,11 +154,11 @@ module TLS13
           #
           # @param binary [String]
           #
-          # @raise [TLS13::Error::TLSError]
+          # @raise [TLS13::Error::ErrorAlerts]
           #
           # @return [Array of KeyShareEntry, nil]
           def deserialize_keyshare_sh(binary)
-            raise Error::TLSError, :internal_error if binary.nil?
+            raise Error::ErrorAlerts, :internal_error if binary.nil?
 
             return nil if binary.length < 4
 
@@ -177,11 +177,11 @@ module TLS13
           #
           # @param binary [String]
           #
-          # @raise [TLS13::Error::TLSError]
+          # @raise [TLS13::Error::ErrorAlerts]
           #
           # @return [Array of KeyShareEntry, nil]
           def deserialize_keyshare_hrr(binary)
-            raise Error::TLSError, :internal_error if binary.nil?
+            raise Error::ErrorAlerts, :internal_error if binary.nil?
 
             return nil unless binary.length == 2
 
@@ -199,11 +199,11 @@ module TLS13
         # @param group [TLS13::Message::Extension::NamedGroup]
         # @param key_exchange [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         def initialize(group:, key_exchange: nil)
           @group = group || ''
           @key_exchange = key_exchange || ''
-          raise Error::TLSError, :internal_error unless @group.length == 2
+          raise Error::ErrorAlerts, :internal_error unless @group.length == 2
         end
 
         # @return [Boolean]

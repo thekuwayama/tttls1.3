@@ -28,7 +28,7 @@ module TLS13
         def initialize(supported_signature_algorithms)
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS
           @supported_signature_algorithms = supported_signature_algorithms || []
-          raise Error::TLSError, :internal_error \
+          raise Error::ErrorAlerts, :internal_error \
             if @supported_signature_algorithms.empty? ||
                @supported_signature_algorithms.length * 2 > 2**16 - 3
         end
@@ -42,11 +42,11 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extensions::SignatureAlgorithms, nil]
         def self.deserialize(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.length < 2
 

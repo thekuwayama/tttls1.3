@@ -13,7 +13,7 @@ module TLS13
         # @param msg_type [TLS13::Message::ContentType]
         # @param versions [Array of ProtocolVersion]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         # rubocop: disable Metrics/CyclomaticComplexity
         def initialize(msg_type:, versions: DEFAULT_VERSIONS)
           @extension_type = ExtensionType::SUPPORTED_VERSIONS
@@ -21,12 +21,13 @@ module TLS13
           @versions = versions || []
           case @msg_type
           when HandshakeType::CLIENT_HELLO
-            raise Error::TLSError, :internal_error \
+            raise Error::ErrorAlerts, :internal_error \
               if @versions.empty? || @versions.length > 127
           when HandshakeType::SERVER_HELLO, HandshakeType::HELLO_RETRY_REQUEST
-            raise Error::TLSError, :internal_error unless @versions.length == 1
+            raise Error::ErrorAlerts, :internal_error \
+              unless @versions.length == 1
           else
-            raise Error::TLSError, :internal_error
+            raise Error::ErrorAlerts, :internal_error
           end
         end
         # rubocop: enable Metrics/CyclomaticComplexity
@@ -44,11 +45,11 @@ module TLS13
         # @param binary [String]
         # @param msg_type [TLS13::Message::HandshakeType]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extensions::SupportedVersions, nil]
         def self.deserialize(binary, msg_type)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           versions = []
           case msg_type
@@ -68,12 +69,12 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [Array of String, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize_versions(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.empty?
 

@@ -11,11 +11,12 @@ module TLS13
 
         # @param cookie [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         def initialize(cookie)
           @extension_type = ExtensionType::COOKIE
           @cookie = cookie || ''
-          raise Error::TLSError, :internal_error if @cookie.length > 2**16 - 3
+          raise Error::ErrorAlerts, :internal_error \
+            if @cookie.length > 2**16 - 3
         end
 
         # @return [String]
@@ -25,11 +26,11 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extensions::Cookie, nil]
         def self.deserialize(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.length < 2
 

@@ -58,7 +58,7 @@ RSpec.describe NewSessionTicket do
     end
 
     it 'should not be generated' do
-      expect { message }.to raise_error(TLSError)
+      expect { message }.to raise_error(ErrorAlerts)
     end
   end
 

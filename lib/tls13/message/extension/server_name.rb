@@ -22,14 +22,14 @@ module TLS13
 
         # @param server_name [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @example
         #   ServerName.new('example.com')
         def initialize(server_name)
           @extension_type = ExtensionType::SERVER_NAME
           @server_name = server_name || ''
-          raise Error::TLSError, :internal_error \
+          raise Error::ErrorAlerts, :internal_error \
             if @server_name.length > 2**16 - 5
         end
 
@@ -50,11 +50,11 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extension::ServerName, nil]
         def self.deserialize(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.length == 1
           return ServerName.new('') if binary.empty?
@@ -67,11 +67,11 @@ module TLS13
 
           # @param binary [String]
           #
-          # @raise [TLS13::Error::TLSError]
+          # @raise [TLS13::Error::ErrorAlerts]
           #
           # @return [TLS13::Message::Extension::ServerName, nil]
           def deserialize_host_name(binary)
-            raise Error::TLSError, :internal_error if binary.nil?
+            raise Error::ErrorAlerts, :internal_error if binary.nil?
 
             return nil unless binary.length > 5 &&
                               binary[2] == NameType::HOST_NAME

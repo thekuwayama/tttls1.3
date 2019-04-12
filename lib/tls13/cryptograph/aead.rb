@@ -25,7 +25,7 @@ module TLS13
           # not supported
           # CipherSuite::TLS_AES_128_CCM_SHA256
           # CipherSuite::TLS_AES_128_CCM_8_SHA256
-          raise Error::TLSError, :internal_error
+          raise Error::ErrorAlerts, :internal_error
         end
         @write_key = write_key
         @write_iv = write_iv

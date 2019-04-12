@@ -16,7 +16,7 @@ RSpec.describe Alert do
     end
 
     it 'should return error' do
-      expect(message.to_error).to be_a_kind_of(TLSError)
+      expect(message.to_error).to be_a_kind_of(ErrorAlerts)
       expect(message.to_error.message).to eq 'unexpected_message'
     end
   end
@@ -32,7 +32,7 @@ RSpec.describe Alert do
     end
 
     it 'should return error' do
-      expect(message.to_error).to be_a_kind_of(TLSError)
+      expect(message.to_error).to be_a_kind_of(ErrorAlerts)
       expect(message.to_error.message).to eq 'unexpected_message'
     end
   end

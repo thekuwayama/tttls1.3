@@ -26,7 +26,7 @@ module TLS13
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
     end
 
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [String]
     def read
@@ -125,12 +125,10 @@ module TLS13
       @socket.write(record.serialize(@send_record_size))
     end
 
-    # @raise [TLS13::Error::TLSError
+    # @raise [TLS13::Error::ErrorAlerts
     #
     # @return [TLS13::Message::$Object]
     # rubocop: disable Metrics/CyclomaticComplexity
-    # rubocop: disable Metrics/MethodLength
-    # rubocop: disable Metrics/PerceivedComplexity
     def recv_message
       return @message_queue.shift unless @message_queue.empty?
 
@@ -146,12 +144,8 @@ module TLS13
           terminate(:unexpected_message) unless ccs_receivable?
           next
         when Message::ContentType::ALERT
-          alert = record.messages.first
-          if alert.description == Message::ALERT_DESCRIPTION[:close_notify]
-            @state = EOF
-            return nil
-          end
-          raise alert.to_error
+          handle_received_alert(record.messages.first)
+          return nil
         else
           terminate(:unexpected_message)
         end
@@ -159,19 +153,14 @@ module TLS13
 
       @message_queue += messages[1..]
       message = messages.first
-      if message.is_a?(Message::Alert) &&
-         message.description == Message::ALERT_DESCRIPTION[:close_notify]
-        @state = EOF
+      if message.is_a?(Message::Alert)
+        handle_received_alert(message)
         return nil
-      elsif message.is_a?(Message::Alert)
-        raise message.to_error
       end
 
       message
     end
     # rubocop: enable Metrics/CyclomaticComplexity
-    # rubocop: enable Metrics/MethodLength
-    # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [TLS13::Message::Record]
     # rubocop: disable Metrics/CyclomaticComplexity
@@ -199,7 +188,7 @@ module TLS13
         buffer = @binary_buffer
         record = Message::Record.deserialize(binary, @read_cipher, buffer)
         @binary_buffer = record.surplus_binary
-      rescue Error::TLSError => e
+      rescue Error::ErrorAlerts => e
         terminate(e.message)
       end
 
@@ -342,13 +331,22 @@ module TLS13
 
     # @param symbol [Symbol] key of ALERT_DESCRIPTION
     #
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     def terminate(symbol)
       send_alert(symbol)
-      raise Error::TLSError, symbol
+      raise Error::ErrorAlerts, symbol
     end
 
-    # @raise [TLS13::Error::TLSError]
+    def handle_received_alert(alert)
+      unless alert.description == Message::ALERT_DESCRIPTION[:close_notify] ||
+             alert.description == Message::ALERT_DESCRIPTION[:user_canceled]
+        raise alert.to_error
+      end
+
+      @state = EOF
+    end
+
+    # @raise [TLS13::Error::ErrorAlerts]
     def process_new_session_ticket
       terminate(:unexpected_message) if @endpoint == :server
       # TODO: @endpoint == :client

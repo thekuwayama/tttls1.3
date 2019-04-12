@@ -11,11 +11,11 @@ module TLS13
 
         # @param record_size_limit [Integer]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         def initialize(record_size_limit)
           @extension_type = ExtensionType::RECORD_SIZE_LIMIT
           @record_size_limit = record_size_limit
-          raise Error::TLSError, :internal_error if @record_size_limit < 64
+          raise Error::ErrorAlerts, :internal_error if @record_size_limit < 64
         end
 
         # @return [String]
@@ -27,16 +27,16 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extensions::RecordSizeLimit, nil]
         def self.deserialize(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.length != 2
 
           record_size_limit = Convert.bin2i(binary)
-          raise Error::TLSError, :illegal_parameter if record_size_limit < 64
+          raise Error::ErrorAlerts, :illegal_parameter if record_size_limit < 64
 
           RecordSizeLimit.new(record_size_limit)
         end

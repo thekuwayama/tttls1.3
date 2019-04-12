@@ -20,13 +20,14 @@ module TLS13
       # @param ticket [String]
       # @param extensions [TLS13::Message::Extensions]
       #
-      # @raise [TLS13::Error::TLSError]
+      # @raise [TLS13::Error::ErrorAlerts]
       def initialize(ticket_lifetime:, ticket_age_add:,
                      ticket_nonce:, ticket:, extensions: Extensions.new)
         @msg_type = HandshakeType::NEW_SESSION_TICKET
         @ticket_lifetime = ticket_lifetime
         @ticket_age_add = ticket_age_add
-        raise Error::TLSError, :internal_error unless ticket_age_add.length == 4
+        raise Error::ErrorAlerts, :internal_error \
+          unless ticket_age_add.length == 4
 
         @ticket_nonce = ticket_nonce
         @ticket = ticket
@@ -47,14 +48,14 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [TLS13::Error::TLSError]
+      # @raise [TLS13::Error::ErrorAlerts]
       #
       # @return [TLS13::Message::NewSessionTicket]
       # rubocop: disable Metrics/AbcSize
       def self.deserialize(binary)
-        raise Error::TLSError, :internal_error if binary.nil?
-        raise Error::TLSError, :decode_error if binary.length < 13
-        raise Error::TLSError, :internal_error \
+        raise Error::ErrorAlerts, :internal_error if binary.nil?
+        raise Error::ErrorAlerts, :decode_error if binary.length < 13
+        raise Error::ErrorAlerts, :internal_error \
           unless binary[0] == HandshakeType::NEW_SESSION_TICKET
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
@@ -73,8 +74,8 @@ module TLS13
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::NEW_SESSION_TICKET)
         i += exs_len
-        raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
-                                                    i == binary.length
+        raise Error::ErrorAlerts, :decode_error unless i == msg_len + 4 &&
+                                                       i == binary.length
 
         NewSessionTicket.new(ticket_lifetime: ticket_lifetime,
                              ticket_age_add: ticket_age_add,

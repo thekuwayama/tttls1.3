@@ -51,15 +51,15 @@ module TLS13
 
       # @param binary [String]
       #
-      # @raise [TLS13::Error::TLSError]
+      # @raise [TLS13::Error::ErrorAlerts]
       #
       # @return [TLS13::Message::ClientHello]
       # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/MethodLength
       def self.deserialize(binary)
-        raise Error::TLSError, :internal_error if binary.nil?
-        raise Error::TLSError, :decode_error if binary.length < 39
-        raise Error::TLSError, :internal_error \
+        raise Error::ErrorAlerts, :internal_error if binary.nil?
+        raise Error::ErrorAlerts, :decode_error if binary.length < 39
+        raise Error::ErrorAlerts, :internal_error \
           unless binary[0] == HandshakeType::CLIENT_HELLO
 
         msg_len = Convert.bin2i(binary.slice(1, 3))
@@ -83,8 +83,8 @@ module TLS13
         extensions = Extensions.deserialize(exs_bin,
                                             HandshakeType::CLIENT_HELLO)
         i += exs_len
-        raise Error::TLSError, :decode_error unless i == msg_len + 4 &&
-                                                    i == binary.length
+        raise Error::ErrorAlerts, :decode_error unless i == msg_len + 4 &&
+                                                       i == binary.length
 
         ClientHello.new(legacy_version: legacy_version,
                         random: random,

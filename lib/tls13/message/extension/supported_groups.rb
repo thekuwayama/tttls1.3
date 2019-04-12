@@ -31,7 +31,7 @@ module TLS13
           #
           # @param group [TLS13::Message::Extension::NamedGroup]
           #
-          # @raise [TLS13::Error::TLSError]
+          # @raise [TLS13::Error::ErrorAlerts]
           #
           # @return [Integer]
           def key_exchange_len(group)
@@ -57,7 +57,7 @@ module TLS13
             # when FFDHE8192
             #   1024
             else
-              raise Error::TLSError, :internal_error
+              raise Error::ErrorAlerts, :internal_error
             end
           end
 
@@ -72,7 +72,7 @@ module TLS13
           #
           # @param groups [Array of TLS13::Message::Extension::NamedGroup]
           #
-          # @raise [TLS13::Error::TLSError]
+          # @raise [TLS13::Error::ErrorAlerts]
           #
           # @return [String] EC_builtin_curves
           def curve_name(group)
@@ -86,7 +86,7 @@ module TLS13
             else
               # NOTE:
               # not supported other NamedGroup
-              raise Error::TLSError, :internal_error
+              raise Error::ErrorAlerts, :internal_error
             end
           end
         end
@@ -102,11 +102,11 @@ module TLS13
 
         # @param named_group_list [Array of NamedGroup]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         def initialize(named_group_list)
           @extension_type = ExtensionType::SUPPORTED_GROUPS
           @named_group_list = named_group_list || []
-          raise Error::TLSError, :internal_error \
+          raise Error::ErrorAlerts, :internal_error \
             if @named_group_list.empty? || @named_group_list.length >= 2**15 - 1
         end
 
@@ -119,12 +119,12 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extension::SupportedGroups, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.length < 2
 

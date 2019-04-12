@@ -55,7 +55,7 @@ RSpec.describe Cookie do
     end
 
     it 'should not be generated' do
-      expect { extension }.to raise_error(TLSError)
+      expect { extension }.to raise_error(ErrorAlerts)
     end
   end
 

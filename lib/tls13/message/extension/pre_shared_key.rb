@@ -22,7 +22,7 @@ module TLS13
         # @param offered_psks [TLS13::Message::Extension::OfferedPsks]
         # @param selected_identity [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         def initialize(msg_type:, offered_psks: nil, selected_identity: '')
           @extension_type = ExtensionType::PRE_SHARED_KEY
           @msg_type = msg_type
@@ -34,11 +34,11 @@ module TLS13
             @selected_identity = selected_identity || ''
             # TODO: argument check
           else
-            raise Error::TLSError, :internal_error
+            raise Error::ErrorAlerts, :internal_error
           end
         end
 
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [String]
         def serialize
@@ -49,7 +49,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO
             binary += @selected_identity
           else
-            raise Error::TLSError, :internal_error
+            raise Error::ErrorAlerts, :internal_error
           end
 
           @extension_type + binary.prefix_uint16_length
@@ -58,11 +58,11 @@ module TLS13
         # @param binary [String]
         # @param msg_type [TLS13::Message::ContentType]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extensions::PreSharedKey, nil]
         def self.deserialize(binary, msg_type)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           case msg_type
           when HandshakeType::CLIENT_HELLO
@@ -78,7 +78,7 @@ module TLS13
             PreSharedKey.new(msg_type: HandshakeType::SERVER_HELLO,
                              selected_identity: selected_identity)
           else
-            raise Error::TLSError, :internal_error
+            raise Error::ErrorAlerts, :internal_error
           end
         end
       end
@@ -97,12 +97,12 @@ module TLS13
         # @param identities [Array of PskIdentity]
         # @param binders [Array of String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         def initialize(identities: [], binders: [])
           @identities = identities || []
           @binders = binders || []
-          raise Error::TLSError, :internal_error if @identities.empty? ||
-                                                    @binders.empty?
+          raise Error::ErrorAlerts, :internal_error \
+            if @identities.empty? || @binders.empty?
         end
 
         # @return [String]
@@ -124,7 +124,7 @@ module TLS13
         # rubocop: disable Metrics/MethodLength
         # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.length < 2
 
@@ -184,11 +184,11 @@ module TLS13
         # @param identity [String]
         # @param obfuscated_ticket_age [Integer]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         def initialize(identity: '', obfuscated_ticket_age: 0)
           @identity = identity || ''
           @obfuscated_ticket_age = obfuscated_ticket_age
-          raise Error::TLSError, :internal_error \
+          raise Error::ErrorAlerts, :internal_error \
             if @identity.empty? || @obfuscated_ticket_age.negative?
         end
 

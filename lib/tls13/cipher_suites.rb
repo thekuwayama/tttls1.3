@@ -20,7 +20,7 @@ module TLS13
         when TLS_AES_256_GCM_SHA384
           'SHA384'
         else
-          raise Error::TLSError, :internal_error
+          raise Error::ErrorAlerts, :internal_error
         end
       end
 
@@ -33,7 +33,7 @@ module TLS13
         when TLS_AES_256_GCM_SHA384
           48
         else
-          raise Error::TLSError, :internal_error
+          raise Error::ErrorAlerts, :internal_error
         end
       end
 
@@ -45,7 +45,7 @@ module TLS13
         when TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256
           32
         else
-          raise Error::TLSError, :internal_error
+          raise Error::ErrorAlerts, :internal_error
         end
       end
 
@@ -56,7 +56,7 @@ module TLS13
              TLS_AES_128_CCM_8_SHA256
           12
         else
-          raise Error::TLSError, :internal_error
+          raise Error::ErrorAlerts, :internal_error
         end
       end
     end
@@ -82,21 +82,21 @@ module TLS13
 
     # @param binary [String]
     #
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [TLS13::CipherSuites]
     def self.deserialize(binary)
-      raise Error::TLSError, :internal_error if binary.nil?
+      raise Error::ErrorAlerts, :internal_error if binary.nil?
 
       cipher_suites = []
       i = 0
       while i < binary.length
-        raise Error::TLSError, :decode_error if i + 2 > binary.length
+        raise Error::ErrorAlerts, :decode_error if i + 2 > binary.length
 
         cipher_suites << binary.slice(i, 2)
         i += 2
       end
-      raise Error::TLSError, :decode_error unless i == binary.length
+      raise Error::ErrorAlerts, :decode_error unless i == binary.length
 
       CipherSuites.new(cipher_suites)
     end

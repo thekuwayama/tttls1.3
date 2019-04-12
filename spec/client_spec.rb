@@ -225,7 +225,7 @@ RSpec.describe Client do
     end
 
     it 'should check downgrade protection value' do
-      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(TLSError)
+      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(ErrorAlerts)
     end
   end
 
@@ -247,7 +247,7 @@ RSpec.describe Client do
     end
 
     it 'should check downgrade protection value' do
-      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(TLSError)
+      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(ErrorAlerts)
     end
   end
 

@@ -43,12 +43,12 @@ module TLS13
 
         # @param binary [String]
         #
-        # @raise [TLS13::Error::TLSError]
+        # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [TLS13::Message::Extension::StatusRequest, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize(binary)
-          raise Error::TLSError, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
           return nil if binary.length < 5 ||
                         binary[0] != CertificateStatusType::OCSP
 
@@ -78,11 +78,11 @@ module TLS13
 
           # @param binary [String]
           #
-          # @raise [TLS13::Error::TLSError]
+          # @raise [TLS13::Error::ErrorAlerts]
           #
           # @return [Array of String, nil] received unparsable binary, nil
           def deserialize_request_ids(binary)
-            raise Error::TLSError, :internal_error if binary.nil?
+            raise Error::ErrorAlerts, :internal_error if binary.nil?
 
             i = 0
             request_ids = []

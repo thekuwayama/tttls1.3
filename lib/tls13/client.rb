@@ -239,7 +239,7 @@ module TLS13
       @transcript[CH] = ch
     end
 
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [TLS13::Message::ServerHello]
     def recv_server_hello
@@ -249,7 +249,7 @@ module TLS13
       @transcript[SH] = sh
     end
 
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [TLS13::Message::EncryptedExtensions]
     def recv_encrypted_extensions
@@ -260,7 +260,7 @@ module TLS13
       @transcript[EE] = ee
     end
 
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [TLS13::Message::Certificate]
     def recv_certificate
@@ -270,7 +270,7 @@ module TLS13
       @transcript[CT] = ct
     end
 
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [TLS13::Message::CertificateVerify]
     def recv_certificate_verify
@@ -280,7 +280,7 @@ module TLS13
       @transcript[CV] = cv
     end
 
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [TLS13::Message::Finished]
     def recv_finished
@@ -338,7 +338,7 @@ module TLS13
     #     1. supported_versions == ["\x03\x04"]
     #     2. legacy_versions == ["\x03\x03"]
     #
-    # @raise [TLS13::Error::TLSError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [Boolean]
     def negotiated_tls_1_3?

@@ -53,7 +53,7 @@ RSpec.describe Record do
     end
 
     it 'should not generate object' do
-      expect { record }.to raise_error(TLSError)
+      expect { record }.to raise_error(ErrorAlerts)
     end
   end
 
@@ -63,7 +63,7 @@ RSpec.describe Record do
     end
 
     it 'should not generate object' do
-      expect { record }.to raise_error(TLSError)
+      expect { record }.to raise_error(ErrorAlerts)
     end
   end
 
