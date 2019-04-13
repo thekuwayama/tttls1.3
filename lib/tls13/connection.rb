@@ -212,39 +212,41 @@ module TLS13
     # @raise [RuntimeError]
     #
     # @return [Boolean]
+    # rubocop: disable Metrics/CyclomaticComplexity
     def do_verify_certificate_verify(certificate_pem:, signature_scheme:,
                                      signature:, context:, message_range:)
       digest = CipherSuite.digest(@cipher_suite)
       hash = @transcript.hash(digest, message_range)
+      content = "\x20" * 64 + context + "\x00" + hash
+      public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
+
       case signature_scheme
-      when SignatureScheme::RSA_PKCS1_SHA256,
-           SignatureScheme::ECDSA_SECP256R1_SHA256,
-           SignatureScheme::RSA_PSS_RSAE_SHA256,
+      when SignatureScheme::RSA_PSS_RSAE_SHA256,
            SignatureScheme::RSA_PSS_PSS_SHA256
-        content = "\x20" * 64 + context + "\x00" + hash
-        public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA256', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA256')
-      when SignatureScheme::RSA_PKCS1_SHA384,
-           SignatureScheme::ECDSA_SECP384R1_SHA384,
-           SignatureScheme::RSA_PSS_RSAE_SHA384,
+      when SignatureScheme::RSA_PSS_RSAE_SHA384,
            SignatureScheme::RSA_PSS_PSS_SHA384
-        content = "\x20" * 64 + context + "\x00" + hash
-        public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA384', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA384')
-      when SignatureScheme::RSA_PKCS1_SHA512,
-           SignatureScheme::ECDSA_SECP521R1_SHA512,
-           SignatureScheme::RSA_PSS_RSAE_SHA512,
+      when SignatureScheme::RSA_PSS_RSAE_SHA512,
            SignatureScheme::RSA_PSS_PSS_SHA512
-        content = "\x20" * 64 + context + "\x00" + hash
-        public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
         public_key.verify_pss('SHA512', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA512')
+      when SignatureScheme::RSA_PKCS1_SHA256,
+           SignatureScheme::ECDSA_SECP256R1_SHA256
+        public_key.verify('SHA256', signature, content)
+      when SignatureScheme::RSA_PKCS1_SHA384,
+           SignatureScheme::ECDSA_SECP384R1_SHA384
+        public_key.verify('SHA384', signature, content)
+      when SignatureScheme::RSA_PKCS1_SHA512,
+           SignatureScheme::ECDSA_SECP521R1_SHA512
+        public_key.verify('SHA512', signature, content)
       else # TODO: ED25519, ED448
         terminate(:internal_error)
       end
     end
+    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param digest [String] name of digest algorithm
     # @param finished_key [String]
