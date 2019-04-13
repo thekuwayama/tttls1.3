@@ -105,6 +105,15 @@ module TLS13
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           sh = recv_server_hello
+          terminate(:illegal_parameter) unless offered_legacy_version?
+          terminate(:illegal_parameter) unless echoed_legacy_session_id?
+          terminate(:illegal_parameter) unless offered_cipher_suite?
+          terminate(:illegal_parameter) unless valid_compression_method?
+          terminate(:unsupported_extension) \
+            unless offered_ch_extensions?(sh.extensions)
+          # only TLS 1.3
+          terminate(:protocol_version) unless negotiated_tls_1_3?
+
           if sh.hrr?
             @transcript[CH1] = @transcript.delete(CH)
             @transcript[HRR] = @transcript.delete(SH)
@@ -112,16 +121,8 @@ module TLS13
             @state = ClientState::START
             next
           end
-          # only TLS 1.3
-          terminate(:protocol_version) unless negotiated_tls_1_3?
-          terminate(:illegal_parameter) unless echoed_legacy_session_id?
-          terminate(:illegal_parameter) unless offerd_cipher_suite?
 
           @cipher_suite = sh.cipher_suite
-          terminate(:illegal_parameter) unless valid_compression_method?
-          terminate(:unsupported_extension) \
-            unless offerd_ch_extensions?(sh.extensions)
-
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           key_exchange = kse.key_exchange
@@ -137,7 +138,7 @@ module TLS13
           ee = recv_encrypted_extensions
           terminate(:illegal_parameter) if ee.any_forbidden_extensions?
           terminate(:unsupported_extension) \
-            unless offerd_ch_extensions?(ee.extensions)
+            unless offered_ch_extensions?(ee.extensions)
 
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
           @send_record_size = rsl.record_size_limit unless rsl.nil?
@@ -148,9 +149,9 @@ module TLS13
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             @transcript[CT] = ct = message
-            ct.certificate_list.map(&:extensions).each do |ex|
-              terminate(:unsupported_extension) unless offerd_ch_extensions?(ex)
-            end
+            terminate(:unsupported_extension) \
+              unless ct.certificate_list.map(&:extensions)
+                       .all? { |ex| offered_ch_extensions?(ex) }
 
             terminate(:certificate_unknown) \
               unless certified_certificate?(ct.certificate_list,
@@ -167,7 +168,7 @@ module TLS13
         when ClientState::WAIT_CERT
           ct = recv_certificate
           ct.certificate_list.map(&:extensions).each do |ex|
-            terminate(:unsupported_extension) unless offerd_ch_extensions?(ex)
+            terminate(:unsupported_extension) unless offered_ch_extensions?(ex)
           end
 
           terminate(:certificate_unknown) \
@@ -358,13 +359,19 @@ module TLS13
     end
 
     # @return [Boolean]
+    def offered_legacy_version?
+      @transcript[CH].legacy_version ==
+        @transcript[SH].legacy_version
+    end
+
+    # @return [Boolean]
     def echoed_legacy_session_id?
       @transcript[CH].legacy_session_id ==
         @transcript[SH].legacy_session_id_echo
     end
 
     # @return [Boolean]
-    def offerd_cipher_suite?
+    def offered_cipher_suite?
       @transcript[CH].cipher_suites.include?(@transcript[SH].cipher_suite)
     end
 
@@ -377,7 +384,7 @@ module TLS13
     # @param transcript_index [Integer]
     #
     # @return [Boolean]
-    def offerd_ch_extensions?(extensions, transcript_index = nil)
+    def offered_ch_extensions?(extensions, transcript_index = nil)
       keys = extensions.keys - @transcript[CH].extensions.keys
       keys -= [Message::ExtensionType::COOKIE] if transcript_index == HRR
       keys.empty?
