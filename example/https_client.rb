@@ -22,11 +22,13 @@ buffer += client.read until buffer.include?("\r\n\r\n")
 print header = buffer.split("\r\n\r\n").first
 # header; Content-Length
 cl_line = header.split("\r\n").find { |s| s.match(/Content-Length:/i) }
-cl = cl_line.split(':').last.to_i
 
 # body
-print buffer = buffer.split("\r\n\r\n")[1..].join
-while buffer.length < cl
-  print s = client.read
-  buffer += s
+unless cl_line.nil?
+  cl = cl_line.split(':').last.to_i
+  print buffer = buffer.split("\r\n\r\n")[1..].join
+  while buffer.length < cl
+    print s = client.read
+    buffer += s
+  end
 end
