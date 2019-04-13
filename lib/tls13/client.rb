@@ -127,8 +127,10 @@ module TLS13
             next
           end
 
-          terminate(:illegal_parameter) \
-            if @transcript.key?(HRR) && neq_hrr_cipher_suite?
+          if @transcript.key?(HRR) && (neq_hrr_cipher_suite? ||
+                                       neq_hrr_supported_versions?)
+            terminate(:illegal_parameter)
+          end
 
           @cipher_suite = sh.cipher_suite
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
@@ -406,6 +408,12 @@ module TLS13
     # @return [Boolean]
     def neq_hrr_cipher_suite?
       @transcript[HRR].cipher_suite != @transcript[SH].cipher_suite
+    end
+
+    # @return [Boolean]
+    def neq_hrr_supported_versions?
+      @transcript[HRR].extensions[Message::ExtensionType::SUPPORTED_VERSIONS] \
+      != @transcript[SH].extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
     end
   end
   # rubocop: enable Metrics/ClassLength
