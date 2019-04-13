@@ -50,6 +50,9 @@ module TLS13
 
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
+    # @param socket [Socket]
+    # @param hostname [String]
+    # @param settings [Hash]
     def initialize(socket, hostname, **settings)
       super(socket)
       @endpoint = :client
@@ -115,6 +118,8 @@ module TLS13
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
           if sh.hrr?
+            terminate(:unexpected_message) if received_2nd_hrr?
+
             @transcript[CH1] = @transcript.delete(CH)
             @transcript[HRR] = @transcript.delete(SH)
             # TODO: processing HRR
@@ -388,6 +393,11 @@ module TLS13
       keys = extensions.keys - @transcript[CH].extensions.keys
       keys -= [Message::ExtensionType::COOKIE] if transcript_index == HRR
       keys.empty?
+    end
+
+    # @return [Boolean]
+    def received_2nd_hrr?
+      @transcript.key?(HRR)
     end
   end
   # rubocop: enable Metrics/ClassLength
