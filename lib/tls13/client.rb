@@ -122,6 +122,8 @@ module TLS13
 
             @transcript[CH1] = @transcript.delete(CH)
             @transcript[HRR] = @transcript.delete(SH)
+            terminate(:illegal_parameter) unless valid_hrr_key_share?
+
             @state = ClientState::START
             next
           end
@@ -423,6 +425,22 @@ module TLS13
     def neq_hrr_supported_versions?
       @transcript[HRR].extensions[Message::ExtensionType::SUPPORTED_VERSIONS] \
       != @transcript[SH].extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
+    end
+
+    # @return [Boolean]
+    def valid_hrr_key_share?
+      # TODO: pre_shared_key
+      group = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
+                              .key_share_entry.first.group
+      ngl = @transcript[CH1].extensions[Message::ExtensionType::SUPPORTED_GROUPS]
+                            .named_group_list
+      return false unless ngl.include?(group)
+
+      kse = @transcript[CH1].extensions[Message::ExtensionType::KEY_SHARE]
+                            .key_share_entry
+      return false if !kse.empty? && kse.map(&:group).include?(group)
+
+      true
     end
   end
   # rubocop: enable Metrics/ClassLength
