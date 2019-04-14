@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 RSpec.describe KeySchedule do
-  context 'key_schedule' do
+  context 'key_schedule, Simple 1-RTT Handshake,' do
     let(:key_schedule) do
       transcript = Transcript.new
       transcript.merge!(
@@ -72,6 +72,65 @@ RSpec.describe KeySchedule do
         .to eq TESTBINARY_CLIENT_APPLICATION_WRITE_KEY
       expect(key_schedule.client_application_write_iv)
         .to eq TESTBINARY_CLIENT_APPLICATION_WRITE_IV
+    end
+  end
+
+  context 'key_schedule, HelloRetryRequest,' do
+    let(:key_schedule) do
+      transcript = Transcript.new
+      transcript.merge!(
+        CH1 => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO1),
+        HRR => ServerHello.deserialize(TESTBINARY_HRR_HELLO_RETRY_REQUEST),
+        CH => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO),
+        SH => ServerHello.deserialize(TESTBINARY_HRR_SERVER_HELLO),
+        EE =>
+        EncryptedExtensions.deserialize(TESTBINARY_HRR_ENCRYPTED_EXTENSIONS),
+        CT => Certificate.deserialize(TESTBINARY_HRR_CERTIFICATE),
+        CV => CertificateVerify.deserialize(TESTBINARY_HRR_CERTIFICATE_VERIFY),
+        SF => Finished.deserialize(TESTBINARY_HRR_SERVER_FINISHED),
+        CF => Finished.deserialize(TESTBINARY_HRR_CLIENT_FINISHED)
+      )
+      KeySchedule.new(shared_secret: TESTBINARY_HRR_SHARED_SECRET,
+                      cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+                      transcript: transcript)
+    end
+
+    it 'should generate server finished_key' do
+      expect(key_schedule.server_finished_key)
+        .to eq TESTBINARY_HRR_SERVER_FINISHED_KEY
+    end
+
+    it 'should generate server parameters write_key, iv' do
+      expect(key_schedule.server_handshake_write_key)
+        .to eq TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_KEY
+      expect(key_schedule.server_handshake_write_iv)
+        .to eq TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_IV
+    end
+
+    it 'should generate client finished_key' do
+      expect(key_schedule.client_finished_key)
+        .to eq TESTBINARY_HRR_CLIENT_FINISHED_KEY
+    end
+
+    it 'should generate client finished write_key, iv' do
+      expect(key_schedule.client_handshake_write_key)
+        .to eq TESTBINARY_HRR_CLIENT_FINISHED_WRITE_KEY
+      expect(key_schedule.client_handshake_write_iv)
+        .to eq TESTBINARY_HRR_CLIENT_FINISHED_WRITE_IV
+    end
+
+    it 'should generete server application write_key, iv' do
+      expect(key_schedule.server_application_write_key)
+        .to eq TESTBINARY_HRR_SERVER_APPLICATION_WRITE_KEY
+      expect(key_schedule.server_application_write_iv)
+        .to eq TESTBINARY_HRR_SERVER_APPLICATION_WRITE_IV
+    end
+
+    it 'should generete client application write_key, iv' do
+      expect(key_schedule.client_application_write_key)
+        .to eq TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_KEY
+      expect(key_schedule.client_application_write_iv)
+        .to eq TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_IV
     end
   end
 end

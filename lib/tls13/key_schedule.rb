@@ -51,7 +51,7 @@ module TLS13
 
     # @return [String]
     def client_handshake_traffic_secret
-      hash = @transcript.hash(@digest, CH..SH)
+      hash = @transcript.hash(@digest, SH)
       derive_secret(handshake_secret, 'c hs traffic', hash)
     end
 
@@ -75,7 +75,7 @@ module TLS13
 
     # @return [String]
     def server_handshake_traffic_secret
-      hash = @transcript.hash(@digest, CH..SH)
+      hash = @transcript.hash(@digest, SH)
       derive_secret(handshake_secret, 's hs traffic', hash)
     end
 
@@ -111,7 +111,7 @@ module TLS13
 
     # @return [String]
     def client_application_traffic_secret
-      hash = @transcript.hash(@digest, CH..SF)
+      hash = @transcript.hash(@digest, SF)
       derive_secret(master_secret, 'c ap traffic', hash)
     end
 
@@ -129,7 +129,7 @@ module TLS13
 
     # @return [String]
     def server_application_traffic_secret
-      hash = @transcript.hash(@digest, CH..SF)
+      hash = @transcript.hash(@digest, SF)
       derive_secret(master_secret, 's ap traffic', hash)
     end
 
@@ -147,13 +147,13 @@ module TLS13
 
     # @return [String]
     def exporter_master_secret
-      hash = @transcript.hash(@digest, CH..SF)
+      hash = @transcript.hash(@digest, SF)
       derive_secret(master_secret, 'exp master', hash)
     end
 
     # @return [String]
     def resumption_master_secret
-      hash = @transcript.hash(@digest, CH..CF)
+      hash = @transcript.hash(@digest, CF)
       derive_secret(master_secret, 'res master', hash)
     end
 

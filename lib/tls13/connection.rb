@@ -207,16 +207,17 @@ module TLS13
     # @param signature_scheme [TLS13::SignatureScheme]
     # @param signature [String]
     # @param context [String]
-    # @param message_range [Range]
+    # @param handshake_context_end [Integer]
     #
     # @raise [RuntimeError]
     #
     # @return [Boolean]
     # rubocop: disable Metrics/CyclomaticComplexity
     def do_verify_certificate_verify(certificate_pem:, signature_scheme:,
-                                     signature:, context:, message_range:)
+                                     signature:, context:,
+                                     handshake_context_end:)
       digest = CipherSuite.digest(@cipher_suite)
-      hash = @transcript.hash(digest, message_range)
+      hash = @transcript.hash(digest, handshake_context_end)
       content = "\x20" * 64 + context + "\x00" + hash
       public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
 
@@ -250,24 +251,27 @@ module TLS13
 
     # @param digest [String] name of digest algorithm
     # @param finished_key [String]
-    # @param message_range [Range]
+    # @param handshake_context_end [Integer]
     #
     # @return [String]
-    def do_sign_finished(digest:, finished_key:, message_range:)
-      hash = @transcript.hash(digest, message_range)
+    def do_sign_finished(digest:, finished_key:, handshake_context_end:)
+      hash = @transcript.hash(digest, handshake_context_end)
       OpenSSL::HMAC.digest(digest, finished_key, hash)
     end
 
     # @param digest [String] name of digest algorithm
     # @param finished_key [String]
-    # @param message_range [Range]
+    # @param handshake_context_end [Range]
     # @param signature [String]
     #
     # @return [Boolean]
-    def do_verify_finished(digest:, finished_key:, message_range:, signature:)
-      do_sign_finished(digest: digest,
-                       finished_key: finished_key,
-                       message_range: message_range) == signature
+    def do_verify_finished(digest:, finished_key:, handshake_context_end:,
+                           signature:)
+      do_sign_finished(
+        digest: digest,
+        finished_key: finished_key,
+        handshake_context_end: handshake_context_end
+      ) == signature
     end
 
     # @param key_exchange [String]

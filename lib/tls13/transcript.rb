@@ -24,12 +24,12 @@ module TLS13
     end
 
     # @param digest [String] name of digest algorithm
-    # @param range [Range]
+    # @param end_index [Integer]
     #
     # @return [String]
-    def hash(digest, range)
+    def hash(digest, end_index)
       prefix = ''
-      if range.include?(HRR)
+      if key?(HRR)
         # as an exception to the general rule
         prefix = Message::HandshakeType::MESSAGE_HASH \
                  + "\x00\x00" \
@@ -37,7 +37,7 @@ module TLS13
                  + OpenSSL::Digest.digest(digest, self[CH1].serialize)
       end
 
-      messages = range.to_a.reject { |m| m == CH1 }.map do |m|
+      messages = (0..end_index).to_a.reject { |m| m == CH1 }.map do |m|
         key?(m) ? self[m].serialize : ''
       end
       s = prefix + messages.join

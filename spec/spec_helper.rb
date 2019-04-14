@@ -488,6 +488,127 @@ TESTBINARY_HRR_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   09 3a 6c ad 7d 00 2b 00     02 03 04
 BIN
 
+TESTBINARY_HRR_ENCRYPTED_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
+  08 00 00 18 00 16 00 0a     00 08 00 06 00 17 00 18
+  00 1d 00 1c 00 02 40 01     00 00 00 00
+BIN
+
+TESTBINARY_HRR_CERTIFICATE = <<BIN.split.map(&:hex).map(&:chr).join
+  0b 00 01 b9 00 00 01 b5     00 01 b0 30 82 01 ac 30
+  82 01 15 a0 03 02 01 02     02 01 02 30 0d 06 09 2a
+  86 48 86 f7 0d 01 01 0b     05 00 30 0e 31 0c 30 0a
+  06 03 55 04 03 13 03 72     73 61 30 1e 17 0d 31 36
+  30 37 33 30 30 31 32 33     35 39 5a 17 0d 32 36 30
+  37 33 30 30 31 32 33 35     39 5a 30 0e 31 0c 30 0a
+  06 03 55 04 03 13 03 72     73 61 30 81 9f 30 0d 06
+  09 2a 86 48 86 f7 0d 01     01 01 05 00 03 81 8d 00
+  30 81 89 02 81 81 00 b4     bb 49 8f 82 79 30 3d 98
+  08 36 39 9b 36 c6 98 8c     0c 68 de 55 e1 bd b8 26
+  d3 90 1a 24 61 ea fd 2d     e4 9a 91 d0 15 ab bc 9a
+  95 13 7a ce 6c 1a f1 9e     aa 6a f9 8c 7c ed 43 12
+  09 98 e1 87 a8 0e e0 cc     b0 52 4b 1b 01 8c 3e 0b
+  63 26 4d 44 9a 6d 38 e2     2a 5f da 43 08 46 74 80
+  30 53 0e f0 46 1c 8c a9     d9 ef bf ae 8e a6 d1 d0
+  3e 2b d1 93 ef f0 ab 9a     80 02 c4 74 28 a6 d3 5a
+  8d 88 d7 9f 7f 1e 3f 02     03 01 00 01 a3 1a 30 18
+  30 09 06 03 55 1d 13 04     02 30 00 30 0b 06 03 55
+  1d 0f 04 04 03 02 05 a0     30 0d 06 09 2a 86 48 86
+  f7 0d 01 01 0b 05 00 03     81 81 00 85 aa d2 a0 e5
+  b9 27 6b 90 8c 65 f7 3a     72 67 17 06 18 a5 4c 5f
+  8a 7b 33 7d 2d f7 a5 94     36 54 17 f2 ea e8 f8 a5
+  8c 8f 81 72 f9 31 9c f3     6b 7f d6 c5 5b 80 f2 1a
+  03 01 51 56 72 60 96 fd     33 5e 5e 67 f2 db f1 02
+  70 2e 60 8c ca e6 be c1     fc 63 a4 2a 99 be 5c 3e
+  b7 10 7c 3c 54 e9 b9 eb     2b d5 20 3b 1c 3b 84 e0
+  a8 b2 f7 59 40 9b a3 ea     c9 d9 1d 40 2d cc 0c c8
+  f8 96 12 29 ac 91 87 b4     2b 4d e1 00 00
+BIN
+
+TESTBINARY_HRR_CERTIFICATE_VERIFY = <<BIN.split.map(&:hex).map(&:chr).join
+  0f 00 00 84 08 04 00 80     33 ab 13 d4 46 27 07 23
+  1b 5d ca e6 c8 19 0b 63     d1 da bc 74 f2 8c 39 53
+  70 da 0b 07 e5 b8 30 66     d0 24 6a 31 ac d9 5d f4
+  75 bf d7 99 a4 a7 0d 33     ad 93 d3 a3 17 a9 b2 c0
+  d2 37 a5 68 5b 21 9e 77     41 12 e3 91 a2 47 60 7d
+  1a ef f1 bb d0 a3 9f 38     2e e1 a5 fe 88 ae 99 ec
+  59 22 8e 64 97 e4 5d 48     ce 27 5a 6d 5e f4 0d 16
+  9f b6 f9 d3 3b 05 2e d3     dc dd 6b 5a 48 ba af ff
+  bc b2 90 12 84 15 bd 38
+BIN
+
+TESTBINARY_HRR_SERVER_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
+  14 00 00 20 88 63 e6 bf     b0 42 0a 92 7f a2 7f 34
+  33 6a 70 ae 42 6e 96 8e     3e b8 84 94 5b 96 85 6d
+  ba 39 76 d1
+BIN
+
+TESTBINARY_HRR_CLIENT_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
+  14 00 00 20 23 f5 2f db     07 09 a5 5b d7 f7 9b 99
+  1f 25 48 40 87 bc fd 4d     43 80 b1 23 26 a5 2a 28
+  b2 e3 68 e1
+BIN
+
+TESTBINARY_HRR_SHARED_SECRET = <<BIN.split.map(&:hex).map(&:chr).join
+  c1 42 ce 13 ca 11 b5 c2     23 36 52 e6 3a d3 d9 78
+  44 f1 62 1f bf b9 de 69     d5 47 dc 8f ed ea be b4
+BIN
+
+TESTBINARY_HRR_SERVER_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  e7 f8 bb 3e a4 b6 c3 0c     47 10 b3 d0 9c 33 13 65
+  81 17 e7 0b 09 7e 85 03     68 e2 51 0c a5 63 1f 74
+BIN
+
+TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_KEY = <<BIN
+  46 46 bf ac 17 12 c4 26     cd 78 d8 a2 4a 8a 6f 6b
+BIN
+TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_KEY \
+= TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_KEY.split.map(&:hex).map(&:chr).join
+
+TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_IV = <<BIN
+  c7 d3 95 c0 8d 62 f2 97     d1 37 68 ea
+BIN
+TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_IV \
+= TESTBINARY_HRR_SERVER_PARAMETERS_WRITE_IV.split.map(&:hex).map(&:chr).join
+
+TESTBINARY_HRR_CLIENT_FINISHED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  81 be 41 31 fb b9 b6 f4     47 14 50 84 6f 74 fd 1e
+  68 c5 22 4b a7 c2 a8 67     7f 5c 53 ad 22 6f dc 13
+BIN
+
+TESTBINARY_HRR_CLIENT_FINISHED_WRITE_KEY = <<BIN
+  2f 1f 91 86 63 d5 90 e7     42 11 49 a2 9d 94 b0 b6
+BIN
+TESTBINARY_HRR_CLIENT_FINISHED_WRITE_KEY \
+= TESTBINARY_HRR_CLIENT_FINISHED_WRITE_KEY.split.map(&:hex).map(&:chr).join
+
+TESTBINARY_HRR_CLIENT_FINISHED_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
+  41 4d 54 85 23 5e 1a 68     87 93 bd 74
+BIN
+
+TESTBINARY_HRR_SERVER_APPLICATION_WRITE_KEY = <<BIN
+  f2 7a 5d 97 bd 25 55 0c     48 23 b0 f3 e5 d2 93 88
+BIN
+TESTBINARY_HRR_SERVER_APPLICATION_WRITE_KEY \
+= TESTBINARY_HRR_SERVER_APPLICATION_WRITE_KEY.split.map(&:hex).map(&:chr).join
+
+TESTBINARY_HRR_SERVER_APPLICATION_WRITE_IV = <<BIN
+  0d d6 31 f7 b7 1c bb c7     97 c3 5f e7
+BIN
+TESTBINARY_HRR_SERVER_APPLICATION_WRITE_IV \
+= TESTBINARY_HRR_SERVER_APPLICATION_WRITE_IV.split.map(&:hex).map(&:chr).join
+
+TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_KEY = <<BIN
+  a7 eb 2a 05 25 eb 43 31     d5 8f cb f9 f7 ca 2e 9c
+BIN
+TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_KEY \
+= TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_KEY.split.map(&:hex).map(&:chr).join
+
+TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_IV = <<BIN
+  86 e8 be 22 7c 1b d2 b3     e3 9c b4 44
+BIN
+TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_IV \
+= TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_IV.split.map(&:hex).map(&:chr).join
+
 TESTBINARY_HRR_CH1_SH_TRANSCRIPT_HASH = <<BIN.split.map(&:hex).map(&:chr).join
   8a a8 e8 28 ec 2f 8a 88     4f ec 95 a3 13 9d e0 1c
   15 a3 da a7 ff 5b fc 3f     4b fc c2 1b 43 8d 7b f8

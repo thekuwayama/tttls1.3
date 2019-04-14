@@ -38,7 +38,7 @@ RSpec.describe Connection do
                              signature_scheme: signature_scheme,
                              signature: signature,
                              context: 'TLS 1.3, server CertificateVerify',
-                             message_range: CH..CT))
+                             handshake_context_end: CT))
         .to be true
     end
   end
@@ -68,7 +68,7 @@ RSpec.describe Connection do
       expect(connection.send(:do_verify_finished,
                              digest: 'SHA256',
                              finished_key: TESTBINARY_SERVER_FINISHED_KEY,
-                             message_range: CH..CV,
+                             handshake_context_end: CV,
                              signature: server_finished.verify_data))
         .to be true
     end
@@ -100,7 +100,7 @@ RSpec.describe Connection do
       expect(connection.send(:do_sign_finished,
                              digest: 'SHA256',
                              finished_key: TESTBINARY_CLIENT_FINISHED_KEY,
-                             message_range: CH..EOED))
+                             handshake_context_end: EOED))
         .to eq client_finished.verify_data
     end
   end

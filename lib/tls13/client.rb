@@ -339,7 +339,7 @@ module TLS13
                                    signature_scheme: signature_scheme,
                                    signature: signature,
                                    context: context,
-                                   message_range: CH..CT)
+                                   handshake_context_end: CT)
     end
 
     # @return [String]
@@ -348,7 +348,7 @@ module TLS13
       finished_key = @key_schedule.client_finished_key
       do_sign_finished(digest: digest,
                        finished_key: finished_key,
-                       message_range: CH..EOED)
+                       handshake_context_end: EOED)
     end
 
     # @return [Boolean]
@@ -358,7 +358,7 @@ module TLS13
       signature = @transcript[SF].verify_data
       do_verify_finished(digest: digest,
                          finished_key: finished_key,
-                         message_range: CH..CV,
+                         handshake_context_end: CV,
                          signature: signature)
     end
 
