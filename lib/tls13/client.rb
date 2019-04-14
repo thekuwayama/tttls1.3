@@ -131,11 +131,13 @@ module TLS13
           terminate(:unsupported_extension) \
             unless offered_ch_extensions?(sh.extensions)
           terminate(:illegal_parameter) \
-            if @transcript.key?(HRR) && neq_hrr_cipher_suite?(sh.cipher_suite)
+            if @transcript.include?(HRR) &&
+               neq_hrr_cipher_suite?(sh.cipher_suite)
           versions \
           = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS].versions
           terminate(:illegal_parameter) \
-            if @transcript.key?(HRR) && neq_hrr_supported_versions?(versions)
+            if @transcript.include?(HRR) &&
+               neq_hrr_supported_versions?(versions)
 
           @cipher_suite = sh.cipher_suite
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
@@ -234,7 +236,7 @@ module TLS13
       groups = @settings[:supported_groups]
       exs << Message::Extension::SupportedGroups.new(groups)
       # key_share
-      if @transcript.key?(HRR)
+      if @transcript.include?(HRR)
         groups = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
                                  .key_share_entry.map(&:group)
       end
@@ -252,7 +254,7 @@ module TLS13
       # extension in the new ClientHello.
       #
       # https://tools.ietf.org/html/rfc8446#section-4.2.2
-      if @transcript.key?(HRR)
+      if @transcript.include?(HRR)
         exs << @transcript[HRR].extensions[Message::ExtensionType::COOKIE]
       end
 
@@ -426,7 +428,7 @@ module TLS13
 
     # @return [Boolean]
     def received_2nd_hrr?
-      @transcript.key?(HRR)
+      @transcript.include?(HRR)
     end
 
     # @param cipher_suite [TLS13::CipherSuite]

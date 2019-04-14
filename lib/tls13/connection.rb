@@ -176,7 +176,7 @@ module TLS13
         sender = (@endpoint == :client ? :server : :client)
         @read_cipher \
         = gen_aead_with_handshake_traffic_secret(@read_seq_num, sender)
-      elsif @transcript.key?(SF) && @notyet_application_secret
+      elsif @transcript.include?(SF) && @notyet_application_secret
         @read_seq_num = SequenceNumber.new
         sender = (@endpoint == :client ? :server : :client)
         @read_cipher \
@@ -328,9 +328,9 @@ module TLS13
     # Received ccs before the first ClientHello message or after the peer's
     # Finished message, peer MUST abort.
     def ccs_receivable?
-      return false unless @transcript.key?(CH)
-      return false if @endpoint == :client && @transcript.key?(SF)
-      return false if @endpoint == :server && @transcript.key?(CF)
+      return false unless @transcript.include?(CH)
+      return false if @endpoint == :client && @transcript.include?(SF)
+      return false if @endpoint == :server && @transcript.include?(CF)
 
       true
     end
