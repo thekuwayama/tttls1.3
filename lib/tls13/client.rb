@@ -108,12 +108,10 @@ module TLS13
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           sh = recv_server_hello
-          terminate(:illegal_parameter) unless offered_legacy_version?
-          terminate(:illegal_parameter) unless echoed_legacy_session_id?
-          terminate(:illegal_parameter) unless offered_cipher_suite?
-          terminate(:illegal_parameter) unless valid_compression_method?
-          terminate(:unsupported_extension) \
-            unless offered_ch_extensions?(sh.extensions)
+          terminate(:illegal_parameter) unless valid_sh_legacy_version?
+          terminate(:illegal_parameter) unless valid_sh_legacy_session_id_echo?
+          terminate(:illegal_parameter) unless valid_sh_cipher_suite?
+          terminate(:illegal_parameter) unless valid_sh_compression_method?
           # only TLS 1.3
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
@@ -122,16 +120,22 @@ module TLS13
 
             @transcript[CH1] = @transcript.delete(CH)
             @transcript[HRR] = @transcript.delete(SH)
+            terminate(:unsupported_extension) \
+              unless offered_ch_extensions?(sh.extensions, HRR)
             terminate(:illegal_parameter) unless valid_hrr_key_share?
 
             @state = ClientState::START
             next
           end
 
-          if @transcript.key?(HRR) && (neq_hrr_cipher_suite? ||
-                                       neq_hrr_supported_versions?)
-            terminate(:illegal_parameter)
-          end
+          terminate(:unsupported_extension) \
+            unless offered_ch_extensions?(sh.extensions)
+          terminate(:illegal_parameter) \
+            if @transcript.key?(HRR) && neq_hrr_cipher_suite?(sh.cipher_suite)
+          versions \
+          = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS].versions
+          terminate(:illegal_parameter) \
+            if @transcript.key?(HRR) && neq_hrr_supported_versions?(versions)
 
           @cipher_suite = sh.cipher_suite
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
@@ -230,6 +234,10 @@ module TLS13
       groups = @settings[:supported_groups]
       exs << Message::Extension::SupportedGroups.new(groups)
       # key_share
+      if @transcript.key?(HRR)
+        groups = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
+                                 .key_share_entry.map(&:group)
+      end
       key_share, priv_keys \
                  = Message::Extension::KeyShare.gen_ch_key_share(groups)
       exs << key_share
@@ -380,24 +388,24 @@ module TLS13
     end
 
     # @return [Boolean]
-    def offered_legacy_version?
+    def valid_sh_legacy_version?
       @transcript[CH].legacy_version ==
         @transcript[SH].legacy_version
     end
 
     # @return [Boolean]
-    def echoed_legacy_session_id?
+    def valid_sh_legacy_session_id_echo?
       @transcript[CH].legacy_session_id ==
         @transcript[SH].legacy_session_id_echo
     end
 
     # @return [Boolean]
-    def offered_cipher_suite?
+    def valid_sh_cipher_suite?
       @transcript[CH].cipher_suites.include?(@transcript[SH].cipher_suite)
     end
 
     # @return [Boolean]
-    def valid_compression_method?
+    def valid_sh_compression_method?
       @transcript[SH].legacy_compression_method == "\x00"
     end
 
@@ -406,8 +414,13 @@ module TLS13
     #
     # @return [Boolean]
     def offered_ch_extensions?(extensions, transcript_index = nil)
-      keys = extensions.keys - @transcript[CH].extensions.keys
-      keys -= [Message::ExtensionType::COOKIE] if transcript_index == HRR
+      keys = extensions.keys
+      if transcript_index == HRR
+        keys -= @transcript[CH1].extensions.keys
+        keys -= [Message::ExtensionType::COOKIE]
+      else
+        keys -= @transcript[CH].extensions.keys
+      end
       keys.empty?
     end
 
@@ -416,28 +429,32 @@ module TLS13
       @transcript.key?(HRR)
     end
 
+    # @param cipher_suite [TLS13::CipherSuite]
+    #
     # @return [Boolean]
-    def neq_hrr_cipher_suite?
-      @transcript[HRR].cipher_suite != @transcript[SH].cipher_suite
+    def neq_hrr_cipher_suite?(cipher_suite)
+      cipher_suite != @transcript[HRR].cipher_suite
     end
 
+    # @param versions [Array of TLS13::Message::ProtocolVersion]
+    #
     # @return [Boolean]
-    def neq_hrr_supported_versions?
-      @transcript[HRR].extensions[Message::ExtensionType::SUPPORTED_VERSIONS] \
-      != @transcript[SH].extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
+    def neq_hrr_supported_versions?(versions)
+      hrr = @transcript[HRR]
+      versions != hrr.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
+                     .versions
     end
 
     # @return [Boolean]
     def valid_hrr_key_share?
       # TODO: pre_shared_key
+      ch1_exs = @transcript[CH1].extensions
+      ngl = ch1_exs[Message::ExtensionType::SUPPORTED_GROUPS].named_group_list
       group = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
                               .key_share_entry.first.group
-      ngl = @transcript[CH1].extensions[Message::ExtensionType::SUPPORTED_GROUPS]
-                            .named_group_list
       return false unless ngl.include?(group)
 
-      kse = @transcript[CH1].extensions[Message::ExtensionType::KEY_SHARE]
-                            .key_share_entry
+      kse = ch1_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
       return false if !kse.empty? && kse.map(&:group).include?(group)
 
       true

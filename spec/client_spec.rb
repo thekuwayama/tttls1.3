@@ -190,21 +190,21 @@ RSpec.describe Client do
 
     it 'should check that ServerHello.legacy_version matches ' \
        'ClientHello.legacy_version' do
-      expect(client.send(:offered_legacy_version?)).to be true
+      expect(client.send(:valid_sh_legacy_version?)).to be true
     end
 
     it 'should check that ServerHello.legacy_session_id_echo matches ' \
        'ClientHello.legacy_session_id' do
-      expect(client.send(:echoed_legacy_session_id?)).to be true
+      expect(client.send(:valid_sh_legacy_session_id_echo?)).to be true
     end
 
     it 'should check that ServerHello.cipher_suite is included in' \
        'ClientHello.cipher_suites' do
-      expect(client.send(:offered_cipher_suite?)).to be true
+      expect(client.send(:valid_sh_cipher_suite?)).to be true
     end
 
     it 'should check that ServerHello.compression_method is valid value' do
-      expect(client.send(:valid_compression_method?)).to be true
+      expect(client.send(:valid_sh_compression_method?)).to be true
     end
 
     it 'should check that negotiated protocol_version is TLS 1.3' do
