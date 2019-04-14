@@ -122,7 +122,6 @@ module TLS13
 
             @transcript[CH1] = @transcript.delete(CH)
             @transcript[HRR] = @transcript.delete(SH)
-            # TODO: processing HRR
             @state = ClientState::START
             next
           end
@@ -236,6 +235,16 @@ module TLS13
       # server_name
       exs << Message::Extension::ServerName.new(@hostname) \
         unless @hostname.nil? || @hostname.empty?
+      # cookie
+      #
+      # When sending the new ClientHello, the client MUST copy the contents of
+      # the extension received in the HelloRetryRequest into a "cookie"
+      # extension in the new ClientHello.
+      #
+      # https://tools.ietf.org/html/rfc8446#section-4.2.2
+      if @transcript.key?(HRR)
+        exs << @transcript[HRR].extensions[Message::ExtensionType::COOKIE]
+      end
 
       Message::Extensions.new(exs)
     end
