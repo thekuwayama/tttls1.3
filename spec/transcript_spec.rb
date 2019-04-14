@@ -31,13 +31,21 @@ RSpec.describe Transcript do
         CH1 => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO1),
         HRR => ServerHello.deserialize(TESTBINARY_HRR_HELLO_RETRY_REQUEST),
         CH => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_HRR_SERVER_HELLO)
+        SH => ServerHello.deserialize(TESTBINARY_HRR_SERVER_HELLO),
+        EE =>
+        EncryptedExtensions.deserialize(TESTBINARY_HRR_ENCRYPTED_EXTENSIONS),
+        CT => Certificate.deserialize(TESTBINARY_HRR_CERTIFICATE),
+        CV => CertificateVerify.deserialize(TESTBINARY_HRR_CERTIFICATE_VERIFY),
+        SF => Finished.deserialize(TESTBINARY_HRR_SERVER_FINISHED),
+        CF => Finished.deserialize(TESTBINARY_HRR_CLIENT_FINISHED)
       )
     end
 
     it 'should return valid transcript-hash' do
       expect(transcript.hash('SHA256', SH))
         .to eq TESTBINARY_HRR_CH1_SH_TRANSCRIPT_HASH
+      expect(transcript.hash('SHA256', CF))
+        .to eq TESTBINARY_HRR_CH1_CF_TRANSCRIPT_HASH
     end
   end
 end

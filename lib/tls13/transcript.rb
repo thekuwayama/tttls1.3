@@ -28,20 +28,21 @@ module TLS13
     #
     # @return [String]
     def hash(digest, end_index)
-      prefix = ''
-      if key?(HRR)
+      exc_prefix = ''
+      if include?(HRR)
         # as an exception to the general rule
-        prefix = Message::HandshakeType::MESSAGE_HASH \
-                 + "\x00\x00" \
-                 + OpenSSL::Digest.new(digest).digest_length.to_uint8 \
-                 + OpenSSL::Digest.digest(digest, self[CH1].serialize)
+        exc_prefix = Message::HandshakeType::MESSAGE_HASH \
+                     + "\x00\x00" \
+                     + OpenSSL::Digest.new(digest).digest_length.to_uint8 \
+                     + OpenSSL::Digest.digest(digest, self[CH1].serialize) \
+                     + self[HRR].serialize
       end
 
-      messages = (0..end_index).to_a.reject { |m| m == CH1 }.map do |m|
-        key?(m) ? self[m].serialize : ''
+      messages = (CH..end_index).to_a.map do |m|
+        include?(m) ? self[m].serialize : ''
       end
-      s = prefix + messages.join
-      OpenSSL::Digest.digest(digest, s)
+      messages = exc_prefix + messages.join
+      OpenSSL::Digest.digest(digest, messages)
     end
   end
 end

@@ -55,7 +55,7 @@ module TLS13
           binary += ex.serialize
         end
         binary += super_fetch(ExtensionType::PRE_SHARED_KEY).serialize \
-          if key?(ExtensionType::PRE_SHARED_KEY)
+          if include?(ExtensionType::PRE_SHARED_KEY)
         binary.prefix_uint16_length
       end
 

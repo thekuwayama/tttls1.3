@@ -261,7 +261,7 @@ module TLS13
 
     # @param digest [String] name of digest algorithm
     # @param finished_key [String]
-    # @param handshake_context_end [Range]
+    # @param handshake_context_end [Integer]
     # @param signature [String]
     #
     # @return [Boolean]
