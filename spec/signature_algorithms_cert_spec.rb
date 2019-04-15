@@ -15,8 +15,7 @@ RSpec.describe SignatureAlgorithmsCert do
         SignatureScheme::RSA_PSS_RSAE_SHA384,
         SignatureScheme::RSA_PKCS1_SHA384,
         SignatureScheme::RSA_PSS_RSAE_SHA512,
-        SignatureScheme::RSA_PKCS1_SHA512,
-        SignatureScheme::RSA_PKCS1_SHA1
+        SignatureScheme::RSA_PKCS1_SHA512
       ]
     end
 
@@ -34,8 +33,8 @@ RSpec.describe SignatureAlgorithmsCert do
     it 'should be serialized' do
       expect(extension.serialize)
         .to eq ExtensionType::SIGNATURE_ALGORITHMS_CERT \
-               + 20.to_uint16 \
                + 18.to_uint16 \
+               + 16.to_uint16 \
                + supported_signature_algorithms.join
     end
   end
@@ -54,8 +53,7 @@ RSpec.describe SignatureAlgorithmsCert do
         SignatureScheme::RSA_PSS_RSAE_SHA384,
         SignatureScheme::RSA_PKCS1_SHA384,
         SignatureScheme::RSA_PSS_RSAE_SHA512,
-        SignatureScheme::RSA_PKCS1_SHA512,
-        SignatureScheme::RSA_PKCS1_SHA1
+        SignatureScheme::RSA_PKCS1_SHA512
       ]
     end
 

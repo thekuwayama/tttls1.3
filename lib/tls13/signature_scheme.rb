@@ -23,8 +23,8 @@ module TLS13
     RSA_PSS_PSS_SHA384     = "\x08\x0a"
     RSA_PSS_PSS_SHA512     = "\x08\x0b"
     # Legacy algorithms
-    RSA_PKCS1_SHA1         = "\x02\x01"
-    ECDSA_SHA1             = "\x02\x03"
+    # RSA_PKCS1_SHA1         = "\x02\x01" # UNSUPPORTED
+    # ECDSA_SHA1             = "\x02\x03" # UNSUPPORTED
     # Reserved Code Points
     # private_use "\xfe\x00" ~ "\xff\xff"
   end
