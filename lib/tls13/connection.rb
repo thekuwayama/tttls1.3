@@ -163,6 +163,7 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::Record]
+    # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/PerceivedComplexity
     def recv_record
@@ -189,7 +190,7 @@ module TLS13
         record = Message::Record.deserialize(binary, @read_cipher, buffer)
         @binary_buffer = record.surplus_binary
       rescue Error::ErrorAlerts => e
-        terminate(e.message)
+        terminate(e.message.to_sym)
       end
 
       # Received a protected ccs, peer MUST abort the handshake.
@@ -200,6 +201,7 @@ module TLS13
 
       record
     end
+    # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/PerceivedComplexity
 

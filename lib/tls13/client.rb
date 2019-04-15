@@ -222,6 +222,7 @@ module TLS13
     DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
 
     # @return [TLS13::Message::Extensions]
+    # rubocop: disable Metrics/AbcSize
     def gen_extensions
       exs = []
       # supported_versions: only TLS 1.3
@@ -249,17 +250,20 @@ module TLS13
         unless @hostname.nil? || @hostname.empty?
       # cookie
       #
-      # When sending the new ClientHello, the client MUST copy the contents of
-      # the extension received in the HelloRetryRequest into a "cookie"
-      # extension in the new ClientHello.
+      # When sending a HelloRetryRequest, the server MAY provide a "cookie"
+      # extension to the client... When sending the new ClientHello, the client
+      # MUST copy the contents of the extension received in the
+      # HelloRetryRequest into a "cookie" extension in the new ClientHello.
       #
       # https://tools.ietf.org/html/rfc8446#section-4.2.2
-      if @transcript.include?(HRR)
+      if @transcript.include?(HRR) &&
+         @transcript[HRR].extensions.include?(Message::ExtensionType::COOKIE)
         exs << @transcript[HRR].extensions[Message::ExtensionType::COOKIE]
       end
 
       Message::Extensions.new(exs)
     end
+    # rubocop: enable Metrics/AbcSize
 
     # @return [TLS13::Message::ClientHello]
     def send_client_hello
