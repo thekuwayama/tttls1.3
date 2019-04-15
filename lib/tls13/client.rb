@@ -226,6 +226,11 @@ module TLS13
 
     # @return [Boolean]
     def valid_settings?
+      cs = CipherSuite
+      defined_cipher_suites = cs.constants.map { |c| cs.const_get(c) }
+      return false \
+        unless (@settings[:cipher_suites] - defined_cipher_suites).empty?
+
       sg = @settings[:supported_groups]
       ng = Message::Extension::NamedGroup
       defined_named_groups = ng.constants.map { |c| ng.const_get(c) }
