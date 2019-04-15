@@ -45,7 +45,8 @@ module TLS13
     ca_file: nil,
     cipher_suites: DEFAULT_CH_CIPHER_SUITES,
     signature_algorithms: DEFAULT_CH_SIGNATURE_ALGORITHMS,
-    supported_groups: DEFAULT_CH_NAMED_GROUP_LIST
+    supported_groups: DEFAULT_CH_NAMED_GROUP_LIST,
+    key_share_groups: nil
   }.freeze
 
   # rubocop: disable Metrics/ClassLength
@@ -223,6 +224,7 @@ module TLS13
 
     # @return [TLS13::Message::Extensions]
     # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
     def gen_extensions
       exs = []
       # supported_versions: only TLS 1.3
@@ -237,12 +239,13 @@ module TLS13
       groups = @settings[:supported_groups]
       exs << Message::Extension::SupportedGroups.new(groups)
       # key_share
+      ksg = @settings[:key_share_groups] || groups
       if @transcript.include?(HRR)
-        groups = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
-                                 .key_share_entry.map(&:group)
+        ksg = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
+                              .key_share_entry.map(&:group)
       end
       key_share, priv_keys \
-                 = Message::Extension::KeyShare.gen_ch_key_share(groups)
+                 = Message::Extension::KeyShare.gen_ch_key_share(ksg)
       exs << key_share
       @priv_keys = priv_keys.merge(@priv_keys)
       # server_name
@@ -264,6 +267,7 @@ module TLS13
       Message::Extensions.new(exs)
     end
     # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::ClientHello]
     def send_client_hello
