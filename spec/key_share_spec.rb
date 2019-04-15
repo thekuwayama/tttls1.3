@@ -6,8 +6,8 @@ using Refinements
 
 RSpec.describe KeyShare do
   context 'valid key_share, KeyShareClientHello,' do
-    let(:public_key_x25519) do
-      OpenSSL::Random.random_bytes(32)
+    let(:public_key_secp384r1) do
+      "\x04" + OpenSSL::Random.random_bytes(96)
     end
 
     let(:public_key_secp256r1) do
@@ -19,8 +19,8 @@ RSpec.describe KeyShare do
         msg_type: HandshakeType::CLIENT_HELLO,
         key_share_entry: [
           KeyShareEntry.new(
-            group: NamedGroup::X25519,
-            key_exchange: public_key_x25519
+            group: NamedGroup::SECP384R1,
+            key_exchange: public_key_secp384r1
           ),
           KeyShareEntry.new(
             group: NamedGroup::SECP256R1,
@@ -33,23 +33,25 @@ RSpec.describe KeyShare do
     it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
-      expect(extension.key_share_entry[0].key_exchange).to eq public_key_x25519
+      expect(extension.key_share_entry[0].group).to eq NamedGroup::SECP384R1
+      expect(extension.key_share_entry[0].key_exchange)
+        .to eq public_key_secp384r1
       expect(extension.key_share_entry[1].group).to eq NamedGroup::SECP256R1
       expect(extension.key_share_entry[1].key_exchange)
         .to eq public_key_secp256r1
     end
 
     it 'should be serialized' do
-      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + 107.to_uint16 \
-                                        + 105.to_uint16 \
-                                        + NamedGroup::X25519 \
-                                        + 32.to_uint16 \
-                                        + public_key_x25519 \
-                                        + NamedGroup::SECP256R1 \
-                                        + 65.to_uint16 \
-                                        + public_key_secp256r1
+      expect(extension.serialize)
+        .to eq ExtensionType::KEY_SHARE \
+               + 172.to_uint16 \
+               + 170.to_uint16 \
+               + NamedGroup::SECP384R1 \
+               + NamedGroup.key_exchange_len(NamedGroup::SECP384R1).to_uint16 \
+               + public_key_secp384r1 \
+               + NamedGroup::SECP256R1 \
+               + NamedGroup.key_exchange_len(NamedGroup::SECP256R1).to_uint16 \
+               + public_key_secp256r1
     end
   end
 
@@ -75,8 +77,8 @@ RSpec.describe KeyShare do
   end
 
   context 'valid key_share, KeyShareServerHello,' do
-    let(:public_key_x25519) do
-      OpenSSL::Random.random_bytes(32)
+    let(:public_key_secp256r1) do
+      "\x04" + OpenSSL::Random.random_bytes(64)
     end
 
     let(:extension) do
@@ -84,8 +86,8 @@ RSpec.describe KeyShare do
         msg_type: HandshakeType::SERVER_HELLO,
         key_share_entry: [
           KeyShareEntry.new(
-            group: NamedGroup::X25519,
-            key_exchange: public_key_x25519
+            group: NamedGroup::SECP256R1,
+            key_exchange: public_key_secp256r1
           )
         ]
       )
@@ -94,15 +96,17 @@ RSpec.describe KeyShare do
     it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::SERVER_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
-      expect(extension.key_share_entry[0].key_exchange).to eq public_key_x25519
+      expect(extension.key_share_entry[0].group).to eq NamedGroup::SECP256R1
+      expect(extension.key_share_entry[0].key_exchange)
+        .to eq public_key_secp256r1
     end
 
     it 'should be serialized' do
-      expect(extension.serialize).to eq ExtensionType::KEY_SHARE \
-                                        + 36.to_uint16 \
-                                        + NamedGroup::X25519 \
-                                        + public_key_x25519.prefix_uint16_length
+      expect(extension.serialize)
+        .to eq ExtensionType::KEY_SHARE \
+               + 69.to_uint16 \
+               + NamedGroup::SECP256R1 \
+               + public_key_secp256r1.prefix_uint16_length
     end
   end
 
@@ -112,7 +116,7 @@ RSpec.describe KeyShare do
         msg_type: HandshakeType::HELLO_RETRY_REQUEST,
         key_share_entry: [
           KeyShareEntry.new(
-            group: NamedGroup::X25519,
+            group: NamedGroup::SECP256R1,
             key_exchange: nil
           )
         ]
@@ -122,14 +126,14 @@ RSpec.describe KeyShare do
     it 'should be generated' do
       expect(extension.msg_type).to eq HandshakeType::HELLO_RETRY_REQUEST
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
+      expect(extension.key_share_entry[0].group).to eq NamedGroup::SECP256R1
       expect(extension.key_share_entry[0].key_exchange).to be_empty
     end
 
     it 'should be serialized' do
       expect(extension.serialize)
         .to eq ExtensionType::KEY_SHARE \
-               + NamedGroup::X25519.prefix_uint16_length
+               + NamedGroup::SECP256R1.prefix_uint16_length
     end
   end
 
@@ -141,8 +145,9 @@ RSpec.describe KeyShare do
     it 'should generate valid object' do
       expect(extension.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
-      expect(extension.key_share_entry[0].key_exchange.length).to eq 32
+      expect(extension.key_share_entry[0].group).to eq NamedGroup::SECP256R1
+      expect(extension.key_share_entry[0].key_exchange.length)
+        .to eq NamedGroup.key_exchange_len(NamedGroup::SECP256R1)
     end
 
     it 'should generate serializable object' do
@@ -160,8 +165,9 @@ RSpec.describe KeyShare do
     it 'should generate valid object' do
       expect(extension.msg_type).to eq HandshakeType::SERVER_HELLO
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
-      expect(extension.key_share_entry[0].key_exchange.length).to eq 32
+      expect(extension.key_share_entry[0].group).to eq NamedGroup::SECP256R1
+      expect(extension.key_share_entry[0].key_exchange.length)
+        .to eq NamedGroup.key_exchange_len(NamedGroup::SECP256R1)
     end
 
     it 'should generate serializable object' do
@@ -180,7 +186,7 @@ RSpec.describe KeyShare do
     it 'should generate valid object' do
       expect(extension.msg_type).to eq HandshakeType::HELLO_RETRY_REQUEST
       expect(extension.extension_type).to eq ExtensionType::KEY_SHARE
-      expect(extension.key_share_entry[0].group).to eq NamedGroup::X25519
+      expect(extension.key_share_entry[0].group).to eq NamedGroup::SECP256R1
       expect(extension.key_share_entry[0].key_exchange).to be_empty
     end
 

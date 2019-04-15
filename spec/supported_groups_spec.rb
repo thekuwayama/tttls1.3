@@ -57,8 +57,7 @@ RSpec.describe SupportedGroups do
       expect(extension.extension_type).to eq ExtensionType::SUPPORTED_GROUPS
       expect(extension.named_group_list).to eq [NamedGroup::SECP256R1,
                                                 NamedGroup::SECP384R1,
-                                                NamedGroup::SECP521R1,
-                                                NamedGroup::X25519]
+                                                NamedGroup::SECP521R1]
     end
 
     it 'should generate serializable object' do

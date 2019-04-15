@@ -9,13 +9,13 @@ module TLS13
         SECP256R1 = "\x00\x17"
         SECP384R1 = "\x00\x18"
         SECP521R1 = "\x00\x19"
-        X25519    = "\x00\x1d"
-        X448      = "\x00\x1e"
-        FFDHE2048 = "\x01\x00"
-        FFDHE3072 = "\x01\x01"
-        FFDHE4096 = "\x01\x02"
-        FFDHE6144 = "\x01\x03"
-        FFDHE8192 = "\x01\x04"
+        # X25519    = "\x00\x1d" # UNSUPPORTED
+        # X448      = "\x00\x1e" # UNSUPPORTED
+        # FFDHE2048 = "\x01\x00" # UNSUPPORTED
+        # FFDHE3072 = "\x01\x01" # UNSUPPORTED
+        # FFDHE4096 = "\x01\x02" # UNSUPPORTED
+        # FFDHE6144 = "\x01\x03" # UNSUPPORTED
+        # FFDHE8192 = "\x01\x04" # UNSUPPORTED
         # ffdhe_private_use "\x01\xfc" ~ "\x01\xff"
         # ecdhe_private_use "\xfe\x00" ~ "\xfe\xff"
 
