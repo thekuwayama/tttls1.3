@@ -64,6 +64,13 @@ module TLS13
       send_application_data(ap)
     end
 
+    def close
+      send_alert(:close_notify)
+      @state = EOF
+
+      nil
+    end
+
     private
 
     # @param type [TLS13::Message::ContentType]

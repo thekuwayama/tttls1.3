@@ -32,3 +32,5 @@ unless cl_line.nil?
     buffer += s
   end
 end
+
+client.close
