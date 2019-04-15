@@ -225,11 +225,18 @@ module TLS13
     DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
 
     # @return [Boolean]
+    # rubocop: disable Metrics/CyclomaticComplexity
     def valid_settings?
       cs = CipherSuite
       defined_cipher_suites = cs.constants.map { |c| cs.const_get(c) }
       return false \
         unless (@settings[:cipher_suites] - defined_cipher_suites).empty?
+
+      sa = @settings[:signature_algorithms]
+      ss = SignatureScheme
+      defined_signature_schemes = ss.constants.map { |c| ss.const_get(c) }
+      return false \
+        unless (sa - defined_signature_schemes).empty?
 
       sg = @settings[:supported_groups]
       ng = Message::Extension::NamedGroup
@@ -243,6 +250,7 @@ module TLS13
 
       true
     end
+    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::Extensions]
     def gen_extensions
