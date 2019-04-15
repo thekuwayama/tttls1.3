@@ -170,7 +170,6 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::Record]
-    # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/PerceivedComplexity
     def recv_record
@@ -208,7 +207,6 @@ module TLS13
 
       record
     end
-    # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/PerceivedComplexity
 

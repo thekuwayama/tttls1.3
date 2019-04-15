@@ -66,7 +66,6 @@ module TLS13
         # @raise [TLS13::Error::ErrorAlerts]
         #
         # @return [Array of CertificateEntry]
-        # rubocop: disable Metrics/AbcSize
         def deserialize_certificate_list(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -94,7 +93,6 @@ module TLS13
 
           certificate_list
         end
-        # rubocop: enable Metrics/AbcSize
       end
     end
 

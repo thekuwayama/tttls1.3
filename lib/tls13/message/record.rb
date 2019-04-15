@@ -70,7 +70,6 @@ module TLS13
       # @raise [TLS13::Error::ErrorAlerts]
       #
       # @return [TLS13::Message::Record, String]
-      # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, cipher, buffered = '')
@@ -100,7 +99,6 @@ module TLS13
                    surplus_binary: surplus_binary,
                    cipher: cipher)
       end
-      # rubocop: enable Metrics/AbcSize
       # rubocop: enable Metrics/CyclomaticComplexity
       # rubocop: enable Metrics/PerceivedComplexity
 
