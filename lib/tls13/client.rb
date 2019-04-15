@@ -125,7 +125,8 @@ module TLS13
               unless offered_ch_extensions?(sh.extensions, HRR)
             terminate(:illegal_parameter) unless valid_hrr_key_share?
 
-            @state = ClientState::START
+            send_new_client_hello
+            @state = ClientState::WAIT_SH
             next
           end
 
@@ -223,8 +224,6 @@ module TLS13
     DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
 
     # @return [TLS13::Message::Extensions]
-    # rubocop: disable Metrics/AbcSize
-    # rubocop: disable Metrics/CyclomaticComplexity
     def gen_extensions
       exs = []
       # supported_versions: only TLS 1.3
@@ -240,10 +239,6 @@ module TLS13
       exs << Message::Extension::SupportedGroups.new(groups)
       # key_share
       ksg = @settings[:key_share_groups] || groups
-      if @transcript.include?(HRR)
-        ksg = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
-                              .key_share_entry.map(&:group)
-      end
       key_share, priv_keys \
                  = Message::Extension::KeyShare.gen_ch_key_share(ksg)
       exs << key_share
@@ -251,6 +246,35 @@ module TLS13
       # server_name
       exs << Message::Extension::ServerName.new(@hostname) \
         unless @hostname.nil? || @hostname.empty?
+
+      Message::Extensions.new(exs)
+    end
+
+    # @return [TLS13::Message::ClientHello]
+    def send_client_hello
+      ch = Message::ClientHello.new(
+        cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
+        extensions: gen_extensions
+      )
+      send_handshakes(Message::ContentType::HANDSHAKE, [ch])
+      @transcript[CH] = ch
+    end
+
+    # NOTE:
+    # https://tools.ietf.org/html/rfc8446#section-4.1.2
+    # @return [TLS13::Message::ClientHello]
+    def send_new_client_hello
+      hrr_exs = @transcript[HRR].extensions
+      new_exs = []
+      # key_share
+      if hrr_exs.include?(Message::ExtensionType::KEY_SHARE)
+        group = hrr_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
+                                                          .first.group
+        key_share, priv_keys \
+                   = Message::Extension::KeyShare.gen_ch_key_share([group])
+        new_exs << key_share
+        @priv_keys = priv_keys.merge(@priv_keys)
+      end
       # cookie
       #
       # When sending a HelloRetryRequest, the server MAY provide a "cookie"
@@ -259,21 +283,18 @@ module TLS13
       # HelloRetryRequest into a "cookie" extension in the new ClientHello.
       #
       # https://tools.ietf.org/html/rfc8446#section-4.2.2
-      if @transcript.include?(HRR) &&
-         @transcript[HRR].extensions.include?(Message::ExtensionType::COOKIE)
-        exs << @transcript[HRR].extensions[Message::ExtensionType::COOKIE]
+      if hrr_exs.include?(Message::ExtensionType::COOKIE)
+        new_exs << hrr_exs[Message::ExtensionType::COOKIE]
       end
 
-      Message::Extensions.new(exs)
-    end
-    # rubocop: enable Metrics/AbcSize
-    # rubocop: enable Metrics/CyclomaticComplexity
-
-    # @return [TLS13::Message::ClientHello]
-    def send_client_hello
+      ch1 = @transcript[CH1]
       ch = Message::ClientHello.new(
-        cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
-        extensions: gen_extensions
+        legacy_version: ch1.legacy_version,
+        random: ch1.random,
+        legacy_session_id: ch1.legacy_session_id,
+        cipher_suites: ch1.cipher_suites,
+        legacy_compression_methods: ch1.legacy_compression_methods,
+        extensions: ch1.extensions.merge(Message::Extensions.new(new_exs))
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch
