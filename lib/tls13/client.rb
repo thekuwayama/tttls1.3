@@ -59,6 +59,7 @@ module TLS13
       @endpoint = :client
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
+      raise Error::ConfigError unless valid_settings?
     end
 
     # NOTE:
@@ -186,9 +187,9 @@ module TLS13
           end
         when ClientState::WAIT_CERT
           ct = recv_certificate
-          ct.certificate_list.map(&:extensions).each do |ex|
-            terminate(:unsupported_extension) unless offered_ch_extensions?(ex)
-          end
+          terminate(:unsupported_extension) \
+            unless ct.certificate_list.map(&:extensions)
+                     .all? { |ex| offered_ch_extensions?(ex) }
 
           terminate(:certificate_unknown) \
             unless certified_certificate?(ct.certificate_list,
@@ -222,6 +223,21 @@ module TLS13
 
     DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
     DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
+
+    # @return [Boolean]
+    def valid_settings?
+      sg = @settings[:supported_groups]
+      ng = Message::Extension::NamedGroup
+      defined_named_groups = ng.constants.map { |c| ng.const_get(c) }
+      return false \
+        unless (sg - defined_named_groups).empty?
+
+      ksg = @settings[:key_share_groups]
+      return false unless ksg.nil? || ((ksg - sg).empty? &&
+                                       sg.select { |g| ksg.include?(g) } == ksg)
+
+      true
+    end
 
     # @return [TLS13::Message::Extensions]
     def gen_extensions
