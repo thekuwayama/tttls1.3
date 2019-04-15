@@ -106,6 +106,10 @@ TESTBINARY_PRE_SHARED_KEY = <<BIN.split.map(&:hex).map(&:chr).join
   e9 18 b6 7e c0 02 c3 bc     07 dd 09
 BIN
 
+TESTBINARY_ALPN = <<BIN.split.map(&:hex).map(&:chr).join
+  00 0c 02 68 32 08 68 74      74 70 2f 31 2e 31
+BIN
+
 # https://tools.ietf.org/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
