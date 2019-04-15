@@ -5,6 +5,10 @@ module TLS13
   using Refinements
   # rubocop: disable Metrics/ClassLength
   class KeySchedule
+    # @param psk [String]
+    # @param shared_secret [String]
+    # @param cipher_suite [TLS13::CipherSuite]
+    # @param transcript [TLS13::Transcript]
     def initialize(psk: nil, shared_secret:, cipher_suite:, transcript:)
       @digest = CipherSuite.digest(cipher_suite)
       @hash_len = CipherSuite.hash_len(cipher_suite)
@@ -12,7 +16,6 @@ module TLS13
       @iv_len = CipherSuite.iv_len(cipher_suite)
       @psk = psk || "\x00" * @hash_len
       @shared_secret = shared_secret
-      # TODO: check shared_secret.length
       @transcript = transcript
     end
 

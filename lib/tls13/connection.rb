@@ -42,7 +42,7 @@ module TLS13
         # message, it MAY send a NewSessionTicket message.
         break unless message.is_a?(Message::NewSessionTicket)
 
-        process_new_session_ticket
+        process_new_session_ticket(message)
       end
       return '' if message.nil?
 
@@ -361,8 +361,10 @@ module TLS13
       @state = EOF
     end
 
+    # @param nst [TLS13::Message::NewSessionTicket]
+    #
     # @raise [TLS13::Error::ErrorAlerts]
-    def process_new_session_ticket
+    def process_new_session_ticket(_nst)
       terminate(:unexpected_message) if @endpoint == :server
       # TODO: @endpoint == :client
     end

@@ -92,10 +92,6 @@ module TLS13
         end
       end
 
-      DEFAULT_NAMED_GROUP_LIST = [NamedGroup::SECP256R1,
-                                  NamedGroup::SECP384R1,
-                                  NamedGroup::SECP521R1].freeze
-
       class SupportedGroups
         attr_reader :extension_type
         attr_reader :named_group_list

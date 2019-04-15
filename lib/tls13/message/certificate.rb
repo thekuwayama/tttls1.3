@@ -59,6 +59,8 @@ module TLS13
       end
 
       class << self
+        private
+
         # @param binary [String]
         #
         # @raise [TLS13::Error::ErrorAlerts]
