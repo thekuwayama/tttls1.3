@@ -110,6 +110,12 @@ TESTBINARY_ALPN = <<BIN.split.map(&:hex).map(&:chr).join
   00 0c 02 68 32 08 68 74      74 70 2f 31 2e 31
 BIN
 
+TESTBINARY_EARLY_DATA_INDICATION_NST = <<BIN.split.map(&:hex).map(&:chr).join
+  00 00 04 00
+BIN
+
+TESTBINARY_EARLY_DATA_INDICATION_CH = ''
+
 # https://tools.ietf.org/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
