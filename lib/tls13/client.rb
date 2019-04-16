@@ -291,17 +291,18 @@ module TLS13
 
     # NOTE:
     # https://tools.ietf.org/html/rfc8446#section-4.1.2
+    #
     # @return [TLS13::Message::ClientHello]
     def send_new_client_hello
       hrr_exs = @transcript[HRR].extensions
-      new_exs = []
+      arr = []
       # key_share
       if hrr_exs.include?(Message::ExtensionType::KEY_SHARE)
         group = hrr_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
                                                           .first.group
         key_share, priv_keys \
                    = Message::Extension::KeyShare.gen_ch_key_share([group])
-        new_exs << key_share
+        arr << key_share
         @priv_keys = priv_keys.merge(@priv_keys)
       end
       # cookie
@@ -313,17 +314,19 @@ module TLS13
       #
       # https://tools.ietf.org/html/rfc8446#section-4.2.2
       if hrr_exs.include?(Message::ExtensionType::COOKIE)
-        new_exs << hrr_exs[Message::ExtensionType::COOKIE]
+        arr << hrr_exs[Message::ExtensionType::COOKIE]
       end
-
+      # early_data
       ch1 = @transcript[CH1]
+      new_exs = ch1.extensions.merge(Message::Extensions.new(arr))
+      new_exs.delete(Message::ExtensionType::EARLY_DATA)
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
         legacy_session_id: ch1.legacy_session_id,
         cipher_suites: ch1.cipher_suites,
         legacy_compression_methods: ch1.legacy_compression_methods,
-        extensions: ch1.extensions.merge(Message::Extensions.new(new_exs))
+        extensions: new_exs
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch
