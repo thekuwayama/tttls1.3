@@ -145,6 +145,8 @@ module TLS13
             Extension::Alpn..deserialize(binary)
           when ExtensionType::RECORD_SIZE_LIMIT
             Extension::RecordSizeLimit.deserialize(binary)
+          when ExtensionType::PRE_SHARED_KEY
+            Extension::PreSharedKey.deserialize(binary, msg_type)
           when ExtensionType::EARLY_DATA
             Extension::EarlyDataIndication.deserialize(binary, msg_type)
           when ExtensionType::SUPPORTED_VERSIONS
