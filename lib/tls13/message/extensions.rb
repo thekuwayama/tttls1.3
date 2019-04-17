@@ -65,6 +65,7 @@ module TLS13
       # @raise [TLS13::Error::ErrorAlerts]
       #
       # @return [TLS13::Message::Extensions]
+      # rubocop: disable Metrics/CyclomaticComplexity
       def self.deserialize(binary, msg_type)
         raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -77,6 +78,9 @@ module TLS13
           i += 2
           ex_len = Convert.bin2i(binary.slice(i, 2))
           i += 2
+
+          raise Error::ErrorAlerts, :decode_error if i + ex_len > binary.length
+
           ex_bin = binary.slice(i, ex_len)
           ex = deserialize_extension(ex_bin, extension_type, msg_type)
           if ex.nil?
@@ -90,6 +94,7 @@ module TLS13
 
         Extensions.new(extensions)
       end
+      # rubocop: enable Metrics/CyclomaticComplexity
 
       # @param key [TLS13::Message::ExtensionType]
       #
@@ -140,6 +145,8 @@ module TLS13
             Extension::Alpn..deserialize(binary)
           when ExtensionType::RECORD_SIZE_LIMIT
             Extension::RecordSizeLimit.deserialize(binary)
+          when ExtensionType::EARLY_DATA
+            Extension::EarlyDataIndication.deserialize(binary, msg_type)
           when ExtensionType::SUPPORTED_VERSIONS
             Extension::SupportedVersions.deserialize(binary, msg_type)
           when ExtensionType::COOKIE
