@@ -129,7 +129,7 @@ RSpec.describe PreSharedKey do
     end
   end
 
-  context 'valid pre_shared_key binary' do
+  context 'valid pre_shared_key binary, ClientHello,' do
     let(:extension) do
       PreSharedKey.deserialize(TESTBINARY_PRE_SHARED_KEY_CH,
                                HandshakeType::CLIENT_HELLO)
@@ -144,6 +144,24 @@ RSpec.describe PreSharedKey do
       expect(extension.serialize)
         .to eq ExtensionType::PRE_SHARED_KEY \
                + TESTBINARY_PRE_SHARED_KEY_CH.prefix_uint16_length
+    end
+  end
+
+  context 'valid pre_shared_key binary, ServerHello,' do
+    let(:extension) do
+      PreSharedKey.deserialize(TESTBINARY_PRE_SHARED_KEY_SH,
+                               HandshakeType::SERVER_HELLO)
+    end
+
+    it 'should generate valid object' do
+      expect(extension.msg_type).to eq HandshakeType::SERVER_HELLO
+      expect(extension.extension_type).to eq ExtensionType::PRE_SHARED_KEY
+    end
+
+    it 'should generate valid serializable object' do
+      expect(extension.serialize)
+        .to eq ExtensionType::PRE_SHARED_KEY \
+               + TESTBINARY_PRE_SHARED_KEY_SH.prefix_uint16_length
     end
   end
 end

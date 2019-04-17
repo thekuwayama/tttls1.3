@@ -29,10 +29,10 @@ module TLS13
           case @msg_type
           when HandshakeType::CLIENT_HELLO
             @offered_psks = offered_psks
-            # TODO: argument check
           when HandshakeType::SERVER_HELLO
             @selected_identity = selected_identity || ''
-            # TODO: argument check
+            raise Error::ErrorAlerts, :internal_error \
+              unless @selected_identity.length == 2
           else
             raise Error::ErrorAlerts, :internal_error
           end
@@ -74,7 +74,7 @@ module TLS13
           when HandshakeType::SERVER_HELLO
             return nil unless binary.length == 2
 
-            selected_identity = binary.slice(0, 2)
+            selected_identity = binary
             PreSharedKey.new(msg_type: HandshakeType::SERVER_HELLO,
                              selected_identity: selected_identity)
           else

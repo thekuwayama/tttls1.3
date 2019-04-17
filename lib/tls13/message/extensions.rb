@@ -45,17 +45,20 @@ module TLS13
 
       alias super_fetch fetch
 
+      # NOTE:
+      # "pre_shared_key" MUST be the last extension in the ClientHello
+      #
       # @return [String]
       def serialize
-        binary = ''
-        exs_except_psk = values.reject do |ex|
-          ex.extension_type == ExtensionType::PRE_SHARED_KEY
+        except_ch_psk = values.reject do |ex|
+          ex.extension_type == ExtensionType::PRE_SHARED_KEY &&
+            ex.msg_type == HandshakeType::CLIENT_HELLO
         end
-        exs_except_psk.each do |ex|
-          binary += ex.serialize
-        end
-        binary += super_fetch(ExtensionType::PRE_SHARED_KEY).serialize \
-          if include?(ExtensionType::PRE_SHARED_KEY)
+        binary = except_ch_psk.map(&:serialize).join
+
+        psk = super_fetch(ExtensionType::PRE_SHARED_KEY, nil)
+        binary += psk.serialize if psk&.msg_type == HandshakeType::CLIENT_HELLO
+
         binary.prefix_uint16_length
       end
 

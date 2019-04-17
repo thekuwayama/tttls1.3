@@ -115,6 +115,10 @@ TESTBINARY_PRE_SHARED_KEY_CH = <<BIN.split.map(&:hex).map(&:chr).join
   01 41 c5 92 4d 57 bb 6f     a3 1b 9e 5f 9d
 BIN
 
+TESTBINARY_PRE_SHARED_KEY_SH = <<BIN.split.map(&:hex).map(&:chr).join
+  00 00
+BIN
+
 TESTBINARY_ALPN = <<BIN.split.map(&:hex).map(&:chr).join
   00 0c 02 68 32 08 68 74      74 70 2f 31 2e 31
 BIN
@@ -469,6 +473,15 @@ TESTBINARY_0_RTT_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   43 69 40 93 93 4a e4 d3     57 fa d6 aa cb 00 21 20
   3a dd 4f b2 d8 fd f8 22     a0 ca 3c f7 67 8e f5 e8
   8d ae 99 01 41 c5 92 4d     57 bb 6f a3 1b 9e 5f 9d
+BIN
+
+TESTBINARY_0_RTT_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
+  02 00 00 5c 03 03 3c cf     d2 de c8 90 22 27 63 47
+  2a e8 13 67 77 c9 d7 35     87 77 bb 66 e9 1e a5 12
+  24 95 f5 59 ea 2d 00 13     01 00 00 34 00 29 00 02
+  00 00 00 33 00 24 00 1d     00 20 12 17 61 ee 42 c3
+  33 e1 b9 e7 7b 60 dd 57     c2 05 3c d9 45 12 ab 47
+  f1 15 e8 6e ff 50 94 2c     ea 31 00 2b 00 02 03 04
 BIN
 
 # https://tools.ietf.org/html/rfc8448#section-5
