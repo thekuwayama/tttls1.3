@@ -125,7 +125,6 @@ module TLS13
         # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
-
           return nil if binary.length < 2
 
           pksids_len = Convert.bin2i(binary.slice(0, 2))
@@ -140,6 +139,7 @@ module TLS13
             i += 2
             identity = binary.slice(i, id_len)
             i += id_len
+
             return nil if i + 4 > binary.length
 
             obfuscated_ticket_age = Convert.bin2i(binary.slice(i, 4))

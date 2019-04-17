@@ -65,4 +65,19 @@ RSpec.describe ClientHello do
       expect(message.serialize).to eq TESTBINARY_CLIENT_HELLO
     end
   end
+
+  context 'valid client_hello binary, 0-RTT,' do
+    let(:message) do
+      ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO)
+    end
+
+    it 'should generate valid object' do
+      expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
+      expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
+    end
+
+    it 'should generate valid serializable object' do
+      expect(message.serialize).to eq TESTBINARY_0_RTT_CLIENT_HELLO
+    end
+  end
 end

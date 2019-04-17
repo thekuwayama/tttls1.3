@@ -82,7 +82,7 @@ RSpec.describe Extensions do
 
   context 'extensions that include pre_shared_key' do
     let(:pre_shared_key) do
-      PreSharedKey.deserialize(TESTBINARY_PRE_SHARED_KEY,
+      PreSharedKey.deserialize(TESTBINARY_PRE_SHARED_KEY_CH,
                                HandshakeType::CLIENT_HELLO)
     end
 
@@ -107,7 +107,7 @@ RSpec.describe Extensions do
     end
 
     it 'should be serialized end with pre_shared_key' do
-      expect(extensions.serialize).to end_with TESTBINARY_PRE_SHARED_KEY
+      expect(extensions.serialize).to end_with TESTBINARY_PRE_SHARED_KEY_CH
     end
   end
 
