@@ -484,6 +484,11 @@ TESTBINARY_0_RTT_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   f1 15 e8 6e ff 50 94 2c     ea 31 00 2b 00 02 03 04
 BIN
 
+TESTBINARY_0_RTT_PSK = <<BIN.split.map(&:hex).map(&:chr).join
+  4e cd 0e b6 ec 3b 4d 87     f5 d6 02 8f 92 2c a4 c5
+  85 1a 27 7f d4 13 11 c9     e6 2d 2c 94 92 e1 c4 f3
+BIN
+
 # https://tools.ietf.org/html/rfc8448#section-5
 # 5.  HelloRetryRequest
 

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module TLS13
+  using Refinements
   module ClientState
     # initial value is 0, eof value is -1
     START         = 1
@@ -252,6 +253,19 @@ module TLS13
       true
     end
     # rubocop: enable Metrics/CyclomaticComplexity
+
+    # @param resumption_master_secret [String]
+    # @param ticket_nonce [String]
+    # @param digest [String]
+    #
+    # @return [String]
+    def gen_psk_from_nst(resumption_master_secret, ticket_nonce, digest)
+      hash_len = OpenSSL::Digest.new(digest).digest_length
+      binary = hash_len.to_uint16
+      binary += 'tls13 resumption'.prefix_uint8_length
+      binary += ticket_nonce.prefix_uint8_length
+      OpenSSL::HMAC.digest(digest, resumption_master_secret, binary + 1.chr)
+    end
 
     # @return [TLS13::Message::Extensions]
     def gen_extensions

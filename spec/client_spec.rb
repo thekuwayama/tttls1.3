@@ -300,4 +300,20 @@ RSpec.describe Client do
                          __dir__ + '/../tmp/ca.crt')).to be true
     end
   end
+
+  context 'client using PSK' do
+    let(:client) do
+      Client.new(nil, 'localhost')
+    end
+
+    let(:ticket_nonce) do
+      nst = NewSessionTicket.deserialize(TESTBINARY_NEW_SESSION_TICKET)
+      nst.ticket_nonce
+    end
+
+    it 'should generate PSK from NewSessionTicket of previous handshake' do
+      expect(client.send(:gen_psk_from_nst, TESTBINARY_RES_MASTER, ticket_nonce,
+                         'SHA256')).to eq TESTBINARY_0_RTT_PSK
+    end
+  end
 end
