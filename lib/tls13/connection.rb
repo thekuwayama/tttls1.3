@@ -118,8 +118,11 @@ module TLS13
       message = Message::Alert.new(
         description: Message::ALERT_DESCRIPTION[symbol]
       )
+      type = Message::ContentType::ALERT
+      type = Message::ContentType::APPLICATION_DATA \
+        if @write_cipher.is_a?(Cryptograph::Aead)
       alert_record = Message::Record.new(
-        type: Message::ContentType::ALERT,
+        type: type,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
         cipher: @write_cipher
