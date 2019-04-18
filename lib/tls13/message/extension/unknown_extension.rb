@@ -5,6 +5,9 @@ module TLS13
   using Refinements
   module Message
     module Extension
+      # NOTE:
+      # Client/Server MUST ignore unrecognized extensions,
+      # but transcript MUST include unrecognized extensions.
       class UnknownExtension
         attr_accessor :extension_type
         attr_accessor :extension_data
