@@ -11,8 +11,7 @@ module TLS13
       attr_reader :ticket_nonce
       attr_reader :ticket
       attr_reader :extensions
-
-      SEVEN_DAYS = 60 * 60 * 24 * 7
+      attr_reader :timestamp
 
       # @param ticket_lifetime [Integer]
       # @param ticket_age_add [String]
@@ -32,6 +31,7 @@ module TLS13
         @ticket_nonce = ticket_nonce
         @ticket = ticket
         @extensions = extensions || Extensions.new
+        @timestamp = Time.now.to_i
       end
 
       # @return [String]
