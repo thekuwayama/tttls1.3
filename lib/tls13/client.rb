@@ -46,7 +46,8 @@ module TLS13
     cipher_suites: DEFAULT_CH_CIPHER_SUITES,
     signature_algorithms: DEFAULT_CH_SIGNATURE_ALGORITHMS,
     supported_groups: DEFAULT_CH_NAMED_GROUP_LIST,
-    key_share_groups: nil
+    key_share_groups: nil,
+    process_new_session_ticket: nil
   }.freeze
 
   # rubocop: disable Metrics/ClassLength
@@ -259,10 +260,12 @@ module TLS13
       exs << Message::Extension::SupportedVersions.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO
       )
+
       # signature_algorithms
       exs << Message::Extension::SignatureAlgorithms.new(
         @settings[:signature_algorithms]
       )
+
       # supported_groups
       groups = @settings[:supported_groups]
       exs << Message::Extension::SupportedGroups.new(groups)
@@ -272,6 +275,7 @@ module TLS13
                  = Message::Extension::KeyShare.gen_ch_key_share(ksg)
       exs << key_share
       @priv_keys = priv_keys.merge(@priv_keys)
+
       # server_name
       exs << Message::Extension::ServerName.new(@hostname) \
         unless @hostname.nil? || @hostname.empty?
@@ -285,6 +289,7 @@ module TLS13
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
         extensions: gen_extensions
       )
+
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch
     end
@@ -296,6 +301,7 @@ module TLS13
     def send_new_client_hello
       hrr_exs = @transcript[HRR].extensions
       arr = []
+
       # key_share
       if hrr_exs.include?(Message::ExtensionType::KEY_SHARE)
         group = hrr_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
@@ -305,6 +311,7 @@ module TLS13
         arr << key_share
         @priv_keys = priv_keys.merge(@priv_keys)
       end
+
       # cookie
       #
       # When sending a HelloRetryRequest, the server MAY provide a "cookie"
@@ -316,6 +323,7 @@ module TLS13
       if hrr_exs.include?(Message::ExtensionType::COOKIE)
         arr << hrr_exs[Message::ExtensionType::COOKIE]
       end
+
       # early_data
       ch1 = @transcript[CH1]
       new_exs = ch1.extensions.merge(Message::Extensions.new(arr))
@@ -387,6 +395,7 @@ module TLS13
     def send_finished
       cf = Message::Finished.new(sign_finished)
       send_handshakes(Message::ContentType::APPLICATION_DATA, [cf])
+
       @transcript[CF] = cf
     end
 
@@ -521,6 +530,17 @@ module TLS13
       return false if !kse.empty? && kse.map(&:group).include?(group)
 
       true
+    end
+
+    # @param nst [TLS13::Message::NewSessionTicket]
+    #
+    # @raise [TLS13::Error::ErrorAlerts]
+    def process_new_session_ticket(nst)
+      super(nst)
+
+      rms = @key_schedule.resumption_master_secret
+      psk_digest = CipherSuite.digest(@cipher_suite)
+      @settings[:process_new_session_ticket]&.call(nst, rms, psk_digest)
     end
   end
   # rubocop: enable Metrics/ClassLength

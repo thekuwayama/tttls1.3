@@ -359,12 +359,11 @@ module TLS13
       @state = EOF
     end
 
-    # @param nst [TLS13::Message::NewSessionTicket]
+    # @param _nst [TLS13::Message::NewSessionTicket]
     #
     # @raise [TLS13::Error::ErrorAlerts]
     def process_new_session_ticket(_nst)
       terminate(:unexpected_message) if @endpoint == :server
-      # TODO: @endpoint == :client
     end
 
     # @param certificate_list [Array of CertificateEntry]
