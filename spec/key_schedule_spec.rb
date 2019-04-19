@@ -75,6 +75,39 @@ RSpec.describe KeySchedule do
     end
   end
 
+  context 'key_schedule, Resumed 0-RTT Handshake,' do
+    let(:key_schedule) do
+      transcript = Transcript.new
+      transcript.merge!(
+        CH => ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO),
+        SH => ServerHello.deserialize(TESTBINARY_0_RTT_SERVER_HELLO),
+        EE =>
+        EncryptedExtensions.deserialize(TESTBINARY_0_RTT_ENCRYPTED_EXTENSIONS),
+        SF => Finished.deserialize(TESTBINARY_0_RTT_SERVER_FINISHED),
+        EOED => EndOfEarlyData.deserialize(TESTBINARY_0_RTT_END_OF_EARLY_DATA),
+        CF => Finished.deserialize(TESTBINARY_0_RTT_CLIENT_FINISHED)
+      )
+      KeySchedule.new(psk: TESTBINARY_0_RTT_PSK,
+                      shared_secret: TESTBINARY_0_RTT_SHARED_SECRET,
+                      cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+                      transcript: transcript)
+    end
+
+    it 'should generate server parameters write_key, iv' do
+      expect(key_schedule.server_handshake_write_key)
+        .to eq TESTBINARY_0_RTT_SERVER_PARAMETERS_WRITE_KEY
+      expect(key_schedule.server_handshake_write_iv)
+        .to eq TESTBINARY_0_RTT_SERVER_PARAMETERS_WRITE_IV
+    end
+
+    it 'should generete client application write_key, iv' do
+      expect(key_schedule.client_application_write_key)
+        .to eq TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_KEY
+      expect(key_schedule.client_application_write_iv)
+        .to eq TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_IV
+    end
+  end
+
   context 'key_schedule, HelloRetryRequest,' do
     let(:key_schedule) do
       transcript = Transcript.new

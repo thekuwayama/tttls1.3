@@ -484,10 +484,61 @@ TESTBINARY_0_RTT_SERVER_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   f1 15 e8 6e ff 50 94 2c     ea 31 00 2b 00 02 03 04
 BIN
 
+TESTBINARY_0_RTT_ENCRYPTED_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
+  08 00 00 28 00 26 00 0a     00 14 00 12 00 1d 00 17
+  00 18 00 19 01 00 01 01     01 02 01 03 01 04 00 1c
+  00 02 40 01 00 00 00 00     00 2a 00 00
+BIN
+
+TESTBINARY_0_RTT_SERVER_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
+  14 00 00 20 48 d3 e0 e1     b3 d9 07 c6 ac ff 14 5e
+  16 09 03 88 c7 7b 05 c0     50 b6 34 ab 1a 88 bb d0
+  dd 1a 34 b2
+BIN
+
+TESTBINARY_0_RTT_END_OF_EARLY_DATA = <<BIN.split.map(&:hex).map(&:chr).join
+  05 00 00 00
+BIN
+
+TESTBINARY_0_RTT_CLIENT_FINISHED = <<BIN.split.map(&:hex).map(&:chr).join
+  14 00 00 20 72 30 a9 c9     52 c2 5c d6 13 8f c5 e6
+  62 83 08 c4 1c 53 35 dd     81 b9 f9 6b ce a5 0f d3
+  2b da 41 6d
+BIN
+
 TESTBINARY_0_RTT_PSK = <<BIN.split.map(&:hex).map(&:chr).join
   4e cd 0e b6 ec 3b 4d 87     f5 d6 02 8f 92 2c a4 c5
   85 1a 27 7f d4 13 11 c9     e6 2d 2c 94 92 e1 c4 f3
 BIN
+
+TESTBINARY_0_RTT_SHARED_SECRET = <<BIN.split.map(&:hex).map(&:chr).join
+  f4 41 94 75 6f f9 ec 9d     25 18 06 35 d6 6e a6 82
+  4c 6a b3 bf 17 99 77 be     37 f7 23 57 0e 7c cb 2e
+BIN
+
+testbinary = <<BIN
+  27 c6 bd c0 a3 dc ea 39     a4 73 26 d7 9b c9 e4 ee
+BIN
+TESTBINARY_0_RTT_SERVER_PARAMETERS_WRITE_KEY \
+= testbinary.split.map(&:hex).map(&:chr).join
+
+testbinary = <<BIN
+  95 69 ec dd 4d 05 36 70     5e 9e f7 25
+BIN
+TESTBINARY_0_RTT_SERVER_PARAMETERS_WRITE_IV \
+= testbinary.split.map(&:hex).map(&:chr).join
+
+testbinary = <<BIN
+  3c f1 22 f3 01 c6 35 8c     a7 98 95 53 25 0e fd 72
+BIN
+TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_KEY \
+= testbinary.split.map(&:hex).map(&:chr).join
+
+testbinary = <<BIN
+  ab 1a ec 26 aa 78 b8 fc     11 76 b9 ac
+BIN
+TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_IV \
+= testbinary.split.map(&:hex).map(&:chr).join
 
 # https://tools.ietf.org/html/rfc8448#section-5
 # 5.  HelloRetryRequest
