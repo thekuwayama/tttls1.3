@@ -217,6 +217,8 @@ module TLS13
             Finished.deserialize(binary)
           when HandshakeType::NEW_SESSION_TICKET
             NewSessionTicket.deserialize(binary)
+          when HandshakeType::END_OF_EARLY_DATA
+            EndOfEarlyData.deserialize(binary)
           else
             raise Error::ErrorAlerts, :unexpected_message
           end
