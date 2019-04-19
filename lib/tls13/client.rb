@@ -64,6 +64,7 @@ module TLS13
     # @param settings [Hash]
     def initialize(socket, hostname, **settings)
       super(socket)
+
       @endpoint = :client
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
@@ -155,19 +156,23 @@ module TLS13
             if @transcript.include?(HRR) &&
                neq_hrr_supported_versions?(versions)
 
-          @cipher_suite = sh.cipher_suite
+          if sh.extensions.include?(Message::ExtensionType::PRE_SHARED_KEY)
+            @state = ClientState::WAIT_FINISHED
+          else
+            @psk = nil
+            @state = ClientState::WAIT_EE
+          end
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           key_exchange = kse.key_exchange
           group = kse.group
           priv_key = @priv_keys[group]
           shared_key = gen_shared_secret(key_exchange, priv_key, group)
+          @cipher_suite = sh.cipher_suite
           @key_schedule = KeySchedule.new(psk: @psk,
                                           shared_secret: shared_key,
                                           cipher_suite: @cipher_suite,
                                           transcript: @transcript)
-
-          @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           ee = recv_encrypted_extensions
           terminate(:illegal_parameter) if ee.any_forbidden_extensions?

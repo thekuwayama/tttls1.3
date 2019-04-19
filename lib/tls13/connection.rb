@@ -24,6 +24,7 @@ module TLS13
       @notyet_application_secret = true
       @state = 0 # ClientState or ServerState
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
+      @pks = nil # String
     end
 
     # @raise [TLS13::Error::ErrorAlerts]
@@ -219,7 +220,7 @@ module TLS13
     # @param context [String]
     # @param handshake_context_end [Integer]
     #
-    # @raise [RuntimeError]
+    # @raise [TLS13::Error::ErrorAlerts]
     #
     # @return [Boolean]
     # rubocop: disable Metrics/CyclomaticComplexity
