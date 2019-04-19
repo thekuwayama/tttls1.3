@@ -1,0 +1,60 @@
+# encoding: ascii-8bit
+# frozen_string_literal: true
+
+require_relative 'helper'
+
+hostname, port = (ARGV[0] || 'localhost:4433').split(':')
+
+settings_2nd = {
+  ca_file: __dir__ + '/../tmp/ca.crt'
+}
+process_new_session_ticket = proc do |nst, rms, digest|
+  settings_2nd[:ticket] = nst.ticket
+  settings_2nd[:resumption_master_secret] = rms
+  settings_2nd[:psk_digest] = digest
+  settings_2nd[:ticket_nonce] = nst.ticket_nonce
+  settings_2nd[:ticket_age_add] = nst.ticket_age_add
+  settings_2nd[:ticket_timestamp] = nst.timestamp
+end
+settings_1st = {
+  ca_file: __dir__ + '/../tmp/ca.crt',
+  process_new_session_ticket: process_new_session_ticket
+}
+
+[
+  # Initial Handshake:
+  settings_1st,
+  # Subsequent Handshake:
+  settings_2nd
+].each do |settings|
+  socket = TCPSocket.new(hostname, port)
+  client = TLS13::Client.new(socket, hostname, settings)
+  client.connect
+  http_get = <<~BIN
+    GET / HTTP/1.1\r
+    Host: #{hostname}\r
+    User-Agent: https_client\r
+    Accept: */*\r
+    \r
+  BIN
+  client.write(http_get)
+
+  # status line, header
+  buffer = ''
+  buffer += client.read until buffer.include?("\r\n\r\n")
+  print header = buffer.split("\r\n\r\n").first
+  # header; Content-Length
+  cl_line = header.split("\r\n").find { |s| s.match(/Content-Length:/i) }
+
+  # body
+  unless cl_line.nil?
+    cl = cl_line.split(':').last.to_i
+    print buffer = buffer.split("\r\n\r\n")[1..].join
+    while buffer.length < cl
+      print s = client.read
+      buffer += s
+    end
+  end
+
+  client.close
+end

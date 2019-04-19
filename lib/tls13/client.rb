@@ -48,7 +48,13 @@ module TLS13
     signature_algorithms: DEFAULT_CH_SIGNATURE_ALGORITHMS,
     supported_groups: DEFAULT_CH_NAMED_GROUP_LIST,
     key_share_groups: nil,
-    process_new_session_ticket: nil
+    process_new_session_ticket: nil,
+    ticket: nil,
+    resumption_master_secret: nil,
+    psk_digest: nil,
+    ticket_nonce: nil,
+    ticket_age_add: nil,
+    ticket_timestamp: nil
   }.freeze
 
   # rubocop: disable Metrics/ClassLength
@@ -62,6 +68,11 @@ module TLS13
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
       raise Error::ConfigError unless valid_settings?
+      return unless use_psk?
+
+      @psk = gen_psk_from_nst(@settings[:resumption_master_secret],
+                              @settings[:ticket_nonce],
+                              @settings[:psk_digest])
     end
 
     # NOTE:
@@ -151,7 +162,8 @@ module TLS13
           group = kse.group
           priv_key = @priv_keys[group]
           shared_key = gen_shared_secret(key_exchange, priv_key, group)
-          @key_schedule = KeySchedule.new(shared_secret: shared_key,
+          @key_schedule = KeySchedule.new(psk: @psk,
+                                          shared_secret: shared_key,
                                           cipher_suite: @cipher_suite,
                                           transcript: @transcript)
 
@@ -254,6 +266,16 @@ module TLS13
     end
     # rubocop: enable Metrics/CyclomaticComplexity
 
+    # @return [Boolean]
+    def use_psk?
+      !@settings[:ticket].nil? &&
+        !@settings[:resumption_master_secret].nil? &&
+        !@settings[:psk_digest].nil? &&
+        !@settings[:ticket_nonce].nil? &&
+        !@settings[:ticket_age_add].nil? &&
+        !@settings[:ticket_timestamp].nil?
+    end
+
     # @param resumption_master_secret [String]
     # @param ticket_nonce [String]
     # @param digest [String]
@@ -299,13 +321,53 @@ module TLS13
 
     # @return [TLS13::Message::ClientHello]
     def send_client_hello
+      exs = gen_extensions
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
-        extensions: gen_extensions
+        extensions: exs
       )
+
+      # pre_shared_key
+      #
+      # binder is computed as an HMAC over a transcript hash containing a
+      # partial ClientHello up to and including the
+      # PreSharedKeyExtension.identities field
+      #
+      # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
+      unless @settings[:ticket].nil?
+        digest = @settings[:psk_digest]
+        hash_len = OpenSSL::Digest.new(digest).digest_length
+        dummy_binders = ["\x00" * hash_len]
+        obfuscated_ticket_age = calc_obfuscated_ticket_age
+        psk = Message::Extension::PreSharedKey.new(
+          msg_type: Message::HandshakeType::CLIENT_HELLO,
+          offered_psks: Message::Extension::OfferedPsks.new(
+            identities: [
+              Message::Extension::PskIdentity.new(
+                identity: @settings[:ticket],
+                obfuscated_ticket_age: obfuscated_ticket_age
+              )
+            ],
+            binders: dummy_binders
+          )
+        )
+        exs[Message::ExtensionType::PRE_SHARED_KEY] = psk
+        # TODO: HRR
+        truncated_ch = ch.serialize[0...-(hash_len + 2)]
+        binder = OpenSSL::Digest.digest(digest, truncated_ch)
+        psk.offered_psks.binders[0] = binder
+      end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch
+    end
+
+    # @return [Integer]
+    def calc_obfuscated_ticket_age
+      # the "ticket_lifetime" field in the NewSessionTicket message is
+      # in seconds but the "obfuscated_ticket_age" is in milliseconds.
+      age = (Time.now.to_f * 1000).to_i - @settings[:ticket_timestamp] * 1000
+      (age + Convert.bin2i(@settings[:ticket_age_add])) % (2**32)
     end
 
     # NOTE:
