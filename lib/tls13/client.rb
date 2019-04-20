@@ -283,15 +283,15 @@ module TLS13
 
     # @param resumption_master_secret [String]
     # @param ticket_nonce [String]
-    # @param digest [String]
+    # @param digest [String] name of digest algorithm
     #
     # @return [String]
     def gen_psk_from_nst(resumption_master_secret, ticket_nonce, digest)
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      binary = hash_len.to_uint16
-      binary += 'tls13 resumption'.prefix_uint8_length
-      binary += ticket_nonce.prefix_uint8_length
-      OpenSSL::HMAC.digest(digest, resumption_master_secret, binary + 1.chr)
+      info = hash_len.to_uint16
+      info += 'tls13 resumption'.prefix_uint8_length
+      info += ticket_nonce.prefix_uint8_length
+      KeySchedule.hkdf_expand(resumption_master_secret, info, hash_len, digest)
     end
 
     # @return [TLS13::Message::Extensions]

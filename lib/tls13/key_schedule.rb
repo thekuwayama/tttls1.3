@@ -178,24 +178,26 @@ module TLS13
       binary = length.to_uint16
       binary += ('tls13 ' + label).prefix_uint8_length
       binary += context.prefix_uint8_length
-      hkdf_expand(secret, binary, length)
+      self.class.hkdf_expand(secret, binary, length, @digest)
     end
 
     # @param secret [String]
     # @param info [String]
     # @param length [Integer]
+    # @param digest [String] name of digest algorithm
     #
     # @raise [TLS13::Error::ErrorAlerts]
     #
     # @param [String]
-    def hkdf_expand(secret, info, length)
-      raise Error::ErrorAlerts, :internal_error if length > 255 * @hash_len
+    def self.hkdf_expand(secret, info, length, digest)
+      hash_len = OpenSSL::Digest.new(digest).digest_length
+      raise Error::ErrorAlerts, :internal_error if length > 255 * hash_len
 
-      n = (length.to_f / @hash_len).ceil
+      n = (length.to_f / hash_len).ceil
       okm = ''
       t = ''
       (1..n).each do |i|
-        t = OpenSSL::HMAC.digest(@digest, secret, t + info + i.chr)
+        t = OpenSSL::HMAC.digest(digest, secret, t + info + i.chr)
         okm += t
       end
       okm[0...length]
