@@ -28,6 +28,28 @@ module TLS13
     #
     # @return [String]
     def hash(digest, end_index)
+      s = concat_messages(digest, end_index)
+      OpenSSL::Digest.digest(digest, s)
+    end
+
+    # @param digest [String] name of digest algorithm
+    # @param end_index [Integer]
+    # @param truncate_bytes [Integer]
+    #
+    # @return [String]
+    def truncate_hash(digest, end_index, truncate_bytes)
+      s = concat_messages(digest, end_index)
+      truncated = s[0...-truncate_bytes]
+      OpenSSL::Digest.digest(digest, truncated)
+    end
+
+    private
+
+    # @param digest [String] name of digest algorithm
+    # @param end_index [Integer]
+    #
+    # @return [String]
+    def concat_messages(digest, end_index)
       exc_prefix = ''
       if include?(HRR)
         # as an exception to the general rule
@@ -41,8 +63,7 @@ module TLS13
       messages = (CH..end_index).to_a.map do |m|
         include?(m) ? self[m].serialize : ''
       end
-      messages = exc_prefix + messages.join
-      OpenSSL::Digest.digest(digest, messages)
+      exc_prefix + messages.join
     end
   end
 end
