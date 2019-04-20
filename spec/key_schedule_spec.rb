@@ -93,6 +93,11 @@ RSpec.describe KeySchedule do
                       transcript: transcript)
     end
 
+    it 'should generate binder key for resumption PSKs' do
+      expect(key_schedule.binder_key_res)
+        .to eq TESTBINARY_0_RTT_BINDER_KEY_RES
+    end
+
     it 'should generate server parameters write_key, iv' do
       expect(key_schedule.server_handshake_write_key)
         .to eq TESTBINARY_0_RTT_SERVER_PARAMETERS_WRITE_KEY

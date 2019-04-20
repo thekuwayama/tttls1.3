@@ -48,4 +48,22 @@ RSpec.describe Transcript do
         .to eq TESTBINARY_HRR_CH1_CF_TRANSCRIPT_HASH
     end
   end
+
+  context 'transcript, Resumed 0-RTT Handshake,' do
+    let(:transcript) do
+      t = Transcript.new
+      t.merge!(
+        CH => ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO)
+      )
+    end
+
+    let(:hash_len) do
+      OpenSSL::Digest.new('SHA256').digest_length
+    end
+
+    it 'should return valid transcript-hash' do
+      expect(transcript.truncate_hash('SHA256', CH, hash_len + 3))
+        .to eq TESTBINARY_0_RTT_BINDER_HASH
+    end
+  end
 end

@@ -8,10 +8,10 @@ hostname, port = (ARGV[0] || 'localhost:4433').split(':')
 settings_2nd = {
   ca_file: __dir__ + '/../tmp/ca.crt'
 }
-process_new_session_ticket = proc do |nst, rms, digest|
+process_new_session_ticket = proc do |nst, rms, cs|
   settings_2nd[:ticket] = nst.ticket
   settings_2nd[:resumption_master_secret] = rms
-  settings_2nd[:psk_digest] = digest
+  settings_2nd[:psk_cipher_suite] = cs
   settings_2nd[:ticket_nonce] = nst.ticket_nonce
   settings_2nd[:ticket_age_add] = nst.ticket_age_add
   settings_2nd[:ticket_timestamp] = nst.timestamp

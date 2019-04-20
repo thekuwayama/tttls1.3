@@ -30,6 +30,20 @@ module TLS13
     end
 
     # @return [String]
+    def binder_key_ext
+      hash = OpenSSL::Digest.digest(@digest, '')
+      base_key = derive_secret(early_secret, 'ext binder', hash)
+      hkdf_expand_label(base_key, 'finished', '', @hash_len)
+    end
+
+    # @return [String]
+    def binder_key_res
+      hash = OpenSSL::Digest.digest(@digest, '')
+      base_key = derive_secret(early_secret, 'res binder', hash)
+      hkdf_expand_label(base_key, 'finished', '', @hash_len)
+    end
+
+    # @return [String]
     def client_early_traffic_secret
       hash = OpenSSL::Digest.digest(@digest, '')
       derive_secret(early_secret, 'c e traffic', hash)

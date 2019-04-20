@@ -51,7 +51,7 @@ module TLS13
     process_new_session_ticket: nil,
     ticket: nil,
     resumption_master_secret: nil,
-    psk_digest: nil,
+    psk_cipher_suite: nil,
     ticket_nonce: nil,
     ticket_age_add: nil,
     ticket_timestamp: nil
@@ -71,9 +71,9 @@ module TLS13
       raise Error::ConfigError unless valid_settings?
       return unless use_psk?
 
+      digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       @psk = gen_psk_from_nst(@settings[:resumption_master_secret],
-                              @settings[:ticket_nonce],
-                              @settings[:psk_digest])
+                              @settings[:ticket_nonce], digest)
     end
 
     # NOTE:
@@ -275,7 +275,7 @@ module TLS13
     def use_psk?
       !@settings[:ticket].nil? &&
         !@settings[:resumption_master_secret].nil? &&
-        !@settings[:psk_digest].nil? &&
+        !@settings[:psk_cipher_suite].nil? &&
         !@settings[:ticket_nonce].nil? &&
         !@settings[:ticket_age_add].nil? &&
         !@settings[:ticket_timestamp].nil?
@@ -338,44 +338,18 @@ module TLS13
       # "psk_key_exchange_modes" extension.
       #
       # https://tools.ietf.org/html/rfc8446#section-4.2.9
-      add_psk_into_ch(ch) if use_psk?
+      ch = add_psk_into_ch(ch) if use_psk?
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch
     end
 
     # @param extensions [TLS13::Message::ClientHello]
+    #
+    # @return [TLS13::Message::ClientHello]
+    # rubocop: disable Metrics/MethodLength
     def add_psk_into_ch(clienthello)
       exs = clienthello.extensions
-      # pre_shared_key
-      #
-      # binder is computed as an HMAC over a transcript hash containing a
-      # partial ClientHello up to and including the
-      # PreSharedKeyExtension.identities field.
-      #
-      # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
-      digest = @settings[:psk_digest]
-      hash_len = OpenSSL::Digest.new(digest).digest_length
-      dummy_binders = ["\x00" * hash_len]
-      obfuscated_ticket_age = calc_obfuscated_ticket_age
-      psk = Message::Extension::PreSharedKey.new(
-        msg_type: Message::HandshakeType::CLIENT_HELLO,
-        offered_psks: Message::Extension::OfferedPsks.new(
-          identities: [
-            Message::Extension::PskIdentity.new(
-              identity: @settings[:ticket],
-              obfuscated_ticket_age: obfuscated_ticket_age
-            )
-          ],
-          binders: dummy_binders
-        )
-      )
-      exs[Message::ExtensionType::PRE_SHARED_KEY] = psk
-      @transcript[CH] = clienthello
-      s = @transcript.truncate_hash(digest, CH, hash_len + 2)
-      binder = OpenSSL::Digest.digest(digest, s)
-      psk.offered_psks.binders[0] = binder
-
       # psk_key_exchange_modes
       pkem = Message::Extension::PskKeyExchangeModes.new(
         [
@@ -384,7 +358,43 @@ module TLS13
         ]
       )
       exs[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
+
+      # pre_shared_key
+      #
+      # binder is computed as an HMAC over a transcript hash containing a
+      # partial ClientHello up to and including the
+      # PreSharedKeyExtension.identities field.
+      #
+      # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
+      digest = CipherSuite.digest(@settings[:psk_cipher_suite])
+      hash_len = OpenSSL::Digest.new(digest).digest_length
+      dummy_binders = ["\x00" * hash_len]
+      psk = Message::Extension::PreSharedKey.new(
+        msg_type: Message::HandshakeType::CLIENT_HELLO,
+        offered_psks: Message::Extension::OfferedPsks.new(
+          identities: [
+            Message::Extension::PskIdentity.new(
+              identity: @settings[:ticket],
+              obfuscated_ticket_age: calc_obfuscated_ticket_age
+            )
+          ],
+          binders: dummy_binders
+        )
+      )
+      exs[Message::ExtensionType::PRE_SHARED_KEY] = psk
+      ks = KeySchedule.new(psk: @psk,
+                           shared_secret: nil,
+                           cipher_suite: @settings[:psk_cipher_suite],
+                           transcript: nil)
+      transcript = Transcript.new
+      transcript[CH] = clienthello
+      hash = transcript.truncate_hash(digest, CH, hash_len + 3)
+      binder = OpenSSL::HMAC.digest(digest, ks.binder_key_res, hash)
+      psk.offered_psks.binders[0] = binder
+
+      clienthello
     end
+    # rubocop: enable Metrics/MethodLength
 
     # @return [Integer]
     def calc_obfuscated_ticket_age
@@ -639,8 +649,8 @@ module TLS13
       super(nst)
 
       rms = @key_schedule.resumption_master_secret
-      psk_digest = CipherSuite.digest(@cipher_suite)
-      @settings[:process_new_session_ticket]&.call(nst, rms, psk_digest)
+      cs = @cipher_suite
+      @settings[:process_new_session_ticket]&.call(nst, rms, cs)
     end
   end
   # rubocop: enable Metrics/ClassLength

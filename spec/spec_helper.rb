@@ -516,6 +516,16 @@ TESTBINARY_0_RTT_SHARED_SECRET = <<BIN.split.map(&:hex).map(&:chr).join
   4c 6a b3 bf 17 99 77 be     37 f7 23 57 0e 7c cb 2e
 BIN
 
+TESTBINARY_0_RTT_BINDER_HASH = <<BIN.split.map(&:hex).map(&:chr).join
+  63 22 4b 2e 45 73 f2 d3     45 4c a8 4b 9d 00 9a 04
+  f6 be 9e 05 71 1a 83 96     47 3a ef a0 1e 92 4a 14
+BIN
+
+TESTBINARY_0_RTT_BINDER_KEY_RES = <<BIN.split.map(&:hex).map(&:chr).join
+  55 88 67 3e 72 cb 59 c8     7d 22 0c af fe 94 f2 de
+  a9 a3 b1 60 9f 7d 50 e9     0a 48 22 7d b9 ed 7e aa
+BIN
+
 testbinary = <<BIN
   27 c6 bd c0 a3 dc ea 39     a4 73 26 d7 9b c9 e4 ee
 BIN
