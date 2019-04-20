@@ -325,6 +325,7 @@ module TLS13
     end
 
     # @return [TLS13::Message::ClientHello]
+    # rubocop: disable Metrics/MethodLength
     def send_client_hello
       exs = gen_extensions
       ch = Message::ClientHello.new(
@@ -332,14 +333,13 @@ module TLS13
         extensions: exs
       )
 
-      # pre_shared_key
-      #
-      # binder is computed as an HMAC over a transcript hash containing a
-      # partial ClientHello up to and including the
-      # PreSharedKeyExtension.identities field
-      #
-      # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
-      unless @settings[:ticket].nil?
+      if use_psk?
+        # pre_shared_key
+        # binder is computed as an HMAC over a transcript hash containing a
+        # partial ClientHello up to and including the
+        # PreSharedKeyExtension.identities field.
+        #
+        # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
         digest = @settings[:psk_digest]
         hash_len = OpenSSL::Digest.new(digest).digest_length
         dummy_binders = ["\x00" * hash_len]
@@ -361,11 +361,23 @@ module TLS13
         truncated_ch = ch.serialize[0...-(hash_len + 2)]
         binder = OpenSSL::Digest.digest(digest, truncated_ch)
         psk.offered_psks.binders[0] = binder
+
+        # psk_key_exchange_modes
+        # In order to use PSKs, clients MUST also send a
+        # "psk_key_exchange_modes" extension.
+        pkem = Message::Extension::PskKeyExchangeModes.new(
+          [
+            Message::Extension::PskKeyExchangeMode::PSK_DHE_KE,
+            Message::Extension::PskKeyExchangeMode::PSK_KE
+          ]
+        )
+        exs[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
       end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
       @transcript[CH] = ch
     end
+    # rubocop: enable Metrics/MethodLength
 
     # @return [Integer]
     def calc_obfuscated_ticket_age
