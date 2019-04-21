@@ -156,12 +156,9 @@ module TLS13
             if @transcript.include?(HRR) &&
                neq_hrr_supported_versions?(versions)
 
-          if sh.extensions.include?(Message::ExtensionType::PRE_SHARED_KEY)
-            @state = ClientState::WAIT_FINISHED
-          else
-            @psk = nil
-            @state = ClientState::WAIT_EE
-          end
+          @psk = nil \
+            unless sh.extensions
+                     .include?(Message::ExtensionType::PRE_SHARED_KEY)
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           key_exchange = kse.key_exchange
@@ -173,6 +170,7 @@ module TLS13
                                           shared_secret: shared_key,
                                           cipher_suite: @cipher_suite,
                                           transcript: @transcript)
+          @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           ee = recv_encrypted_extensions
           terminate(:illegal_parameter) if ee.any_forbidden_extensions?
@@ -182,8 +180,8 @@ module TLS13
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
           @send_record_size = rsl.record_size_limit unless rsl.nil?
 
-          # TODO: Using PSK
           @state = ClientState::WAIT_CERT_CR
+          @state = ClientState::WAIT_FINISHED unless @psk.nil?
         when ClientState::WAIT_CERT_CR
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
