@@ -329,34 +329,29 @@ module TLS13
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
         extensions: exs
       )
+      @transcript[CH] = ch
 
-      # pre_shared_key && psk_key_exchange_modes
-      #
-      # In order to use PSKs, clients MUST also send a
-      # "psk_key_exchange_modes" extension.
-      #
-      # https://tools.ietf.org/html/rfc8446#section-4.2.9
-      ch = add_psk_into_ch(ch) if use_psk?
+      if use_psk?
+        # pre_shared_key && psk_key_exchange_modes
+        #
+        # In order to use PSKs, clients MUST also send a
+        # "psk_key_exchange_modes" extension.
+        #
+        # https://tools.ietf.org/html/rfc8446#section-4.2.9
+        pkem = Message::Extension::PskKeyExchangeModes.new(
+          [Message::Extension::PskKeyExchangeMode::PSK_DHE_KE,
+           Message::Extension::PskKeyExchangeMode::PSK_KE]
+        )
+        ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
+        # at the end, sign PSK binder
+        sign_psk_binder
+      end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch])
-      @transcript[CH] = ch
     end
 
-    # @param extensions [TLS13::Message::ClientHello]
-    #
-    # @return [TLS13::Message::ClientHello]
-    # rubocop: disable Metrics/MethodLength
-    def add_psk_into_ch(clienthello)
-      exs = clienthello.extensions
-      # psk_key_exchange_modes
-      pkem = Message::Extension::PskKeyExchangeModes.new(
-        [
-          Message::Extension::PskKeyExchangeMode::PSK_DHE_KE,
-          Message::Extension::PskKeyExchangeMode::PSK_KE
-        ]
-      )
-      exs[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
-
+    # @return [String]
+    def sign_psk_binder
       # pre_shared_key
       #
       # binder is computed as an HMAC over a transcript hash containing a
@@ -370,29 +365,18 @@ module TLS13
       psk = Message::Extension::PreSharedKey.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         offered_psks: Message::Extension::OfferedPsks.new(
-          identities: [
-            Message::Extension::PskIdentity.new(
-              identity: @settings[:ticket],
-              obfuscated_ticket_age: calc_obfuscated_ticket_age
-            )
-          ],
+          identities: [Message::Extension::PskIdentity.new(
+            identity: @settings[:ticket],
+            obfuscated_ticket_age: calc_obfuscated_ticket_age
+          )],
           binders: dummy_binders
         )
       )
-      exs[Message::ExtensionType::PRE_SHARED_KEY] = psk
-      ks = KeySchedule.new(psk: @psk,
-                           shared_secret: nil,
-                           cipher_suite: @settings[:psk_cipher_suite],
-                           transcript: nil)
-      transcript = Transcript.new
-      transcript[CH] = clienthello
-      hash = transcript.truncate_hash(digest, CH, hash_len + 3)
-      binder = OpenSSL::HMAC.digest(digest, ks.binder_key_res, hash)
-      psk.offered_psks.binders[0] = binder
+      @transcript[CH].extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
 
-      clienthello
+      # TODO: ext binder
+      psk.offered_psks.binders[0] = do_sign_psk_binder(digest)
     end
-    # rubocop: enable Metrics/MethodLength
 
     # @return [Integer]
     def calc_obfuscated_ticket_age

@@ -214,6 +214,21 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/PerceivedComplexity
 
+    # @param digest [String] name of digest algorithm
+    #
+    # @return [String]
+    def do_sign_psk_binder(digest)
+      # TODO: ext binder
+      hash_len = OpenSSL::Digest.new(digest).digest_length
+      ks = KeySchedule.new(psk: @psk,
+                           shared_secret: nil,
+                           cipher_suite: @settings[:psk_cipher_suite],
+                           transcript: nil)
+      # transcript-hash (CH1 + HRR +) truncated-CH
+      hash = @transcript.truncate_hash(digest, CH, hash_len + 3)
+      OpenSSL::HMAC.digest(digest, ks.binder_key_res, hash)
+    end
+
     # @param certificate_pem [String]
     # @param signature_scheme [TLS13::SignatureScheme]
     # @param signature [String]
