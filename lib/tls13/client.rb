@@ -68,12 +68,19 @@ module TLS13
       @endpoint = :client
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
+      @early_data = nil
       raise Error::ConfigError unless valid_settings?
       return unless use_psk?
 
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       @psk = gen_psk_from_nst(@settings[:resumption_master_secret],
                               @settings[:ticket_nonce], digest)
+      @key_schedule = KeySchedule.new(
+        psk: @psk,
+        shared_secret: nil,
+        cipher_suite: @settings[:psk_cipher_suite],
+        transcript: nil
+      )
     end
 
     # NOTE:
@@ -121,6 +128,7 @@ module TLS13
         case @state
         when ClientState::START
           send_client_hello
+          # send_early_data if @use_early_data?
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           sh = recv_server_hello
@@ -236,6 +244,15 @@ module TLS13
     # rubocop: enable Metrics/MethodLength
     # rubocop: enable Metrics/PerceivedComplexity
 
+    # @param binary [String]
+    #
+    # @raise [TLS13::Error::ConfigError]
+    def early_data(binary)
+      raise Error::ConfigError unless @state == INITIAL && use_psk?
+
+      @early_data = binary
+    end
+
     private
 
     DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
@@ -277,6 +294,11 @@ module TLS13
         !@settings[:ticket_nonce].nil? &&
         !@settings[:ticket_age_add].nil? &&
         !@settings[:ticket_timestamp].nil?
+    end
+
+    # @return [Boolean]
+    def use_early_data?
+      !@early_data.nil?
     end
 
     # @param resumption_master_secret [String]

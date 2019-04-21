@@ -24,10 +24,10 @@ module TLS13
       @notyet_application_secret = true
       @state = 0 # ClientState or ServerState
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
-      @pks = nil # String
+      @psk = nil # String
     end
 
-    # @raise [TLS13::Error::ErrorAlerts]
+    # @raise [TLS13::Error::ConfigError]
     #
     # @return [String]
     def read
@@ -56,6 +56,8 @@ module TLS13
     end
 
     # @param binary [String]
+    #
+    # @raise [TLS13::Error::ConfigError]
     def write(binary)
       # secure channel has not established yet
       raise Error::ConfigError \
@@ -219,14 +221,11 @@ module TLS13
     # @return [String]
     def do_sign_psk_binder(digest)
       # TODO: ext binder
+      secret = @key_schedule.binder_key_res
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      ks = KeySchedule.new(psk: @psk,
-                           shared_secret: nil,
-                           cipher_suite: @settings[:psk_cipher_suite],
-                           transcript: nil)
       # transcript-hash (CH1 + HRR +) truncated-CH
       hash = @transcript.truncate_hash(digest, CH, hash_len + 3)
-      OpenSSL::HMAC.digest(digest, ks.binder_key_res, hash)
+      OpenSSL::HMAC.digest(digest, secret, hash)
     end
 
     # @param certificate_pem [String]

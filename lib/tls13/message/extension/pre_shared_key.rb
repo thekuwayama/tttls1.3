@@ -127,10 +127,10 @@ module TLS13
           raise Error::ErrorAlerts, :internal_error if binary.nil?
           return nil if binary.length < 2
 
-          pksids_len = Convert.bin2i(binary.slice(0, 2))
+          pskids_len = Convert.bin2i(binary.slice(0, 2))
           i = 2
           identities = [] # Array of PskIdentity
-          while i < pksids_len + 2
+          while i < pskids_len + 2
             return nil if i + 2 > binary.length
 
             id_len = Convert.bin2i(binary.slice(i, 2))
