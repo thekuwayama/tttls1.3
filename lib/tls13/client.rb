@@ -178,6 +178,12 @@ module TLS13
                                           shared_secret: shared_key,
                                           cipher_suite: @cipher_suite,
                                           transcript: @transcript)
+          @write_cipher = gen_cipher(@cipher_suite,
+                                     @key_schedule.client_handshake_write_key,
+                                     @key_schedule.client_handshake_write_iv)
+          @read_cipher = gen_cipher(@cipher_suite,
+                                    @key_schedule.server_handshake_write_key,
+                                    @key_schedule.server_handshake_write_iv)
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           ee = recv_encrypted_extensions
@@ -232,6 +238,12 @@ module TLS13
           # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
           send_finished
+          @write_cipher = gen_cipher(@cipher_suite,
+                                     @key_schedule.client_application_write_key,
+                                     @key_schedule.client_application_write_iv)
+          @read_cipher = gen_cipher(@cipher_suite,
+                                    @key_schedule.server_application_write_key,
+                                    @key_schedule.server_application_write_iv)
           @state = ClientState::CONNECTED
         when ClientState::CONNECTED
           break

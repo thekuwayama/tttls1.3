@@ -14,9 +14,7 @@ module TLS13
       @key_schedule = nil # TLS13::KeySchedule
       @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cipher = Cryptograph::Passer.new
-      @read_seq_num = nil # TLS13::SequenceNumber
       @write_cipher = Cryptograph::Passer.new
-      @write_seq_num = nil # TLS13::SequenceNumber
       @transcript = Transcript.new
       @message_queue = [] # Array of TLS13::Message::$Object
       @binary_buffer = '' # deposit Record.surplus_binary
@@ -76,23 +74,30 @@ module TLS13
 
     private
 
+    # @param cipher_suite [TLS13::CipherSuite]
+    # @param write_key [String]
+    # @param write_iv [String]
+    #
+    # @param [TLS13::Cryptograph::Aead]
+    def gen_cipher(cipher_suite, write_key, write_iv)
+      seq_num = SequenceNumber.new
+      Cryptograph::Aead.new(
+        cipher_suite: cipher_suite,
+        write_key: write_key,
+        write_iv: write_iv,
+        sequence_number: seq_num
+      )
+    end
+
     # @param type [TLS13::Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object] handshake messages
     def send_handshakes(type, messages)
-      if @write_seq_num.nil? &&
-         type == Message::ContentType::APPLICATION_DATA
-        @write_seq_num = SequenceNumber.new
-        @write_cipher \
-        = gen_aead_with_handshake_traffic_secret(@write_seq_num, @endpoint)
-      end
-      record = Message::Record.new(type: type, messages: messages,
-                                   cipher: @write_cipher)
+      record = Message::Record.new(
+        type: type,
+        messages: messages,
+        cipher: @write_cipher
+      )
       send_record(record)
-      return if messages.none? { |m| m.is_a?(Message::Finished) }
-
-      @write_seq_num = SequenceNumber.new
-      @write_cipher \
-      = gen_aead_with_application_traffic_secret(@write_seq_num, @endpoint)
     end
 
     def send_ccs
@@ -176,26 +181,10 @@ module TLS13
     # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TLS13::Message::Record]
-    # rubocop: disable Metrics/CyclomaticComplexity
-    # rubocop: disable Metrics/PerceivedComplexity
     def recv_record
       binary = @socket.read(5)
       record_len = Convert.bin2i(binary.slice(3, 2))
       binary += @socket.read(record_len)
-
-      if @read_seq_num.nil? &&
-         binary[0] == Message::ContentType::APPLICATION_DATA
-        @read_seq_num = SequenceNumber.new
-        sender = (@endpoint == :client ? :server : :client)
-        @read_cipher \
-        = gen_aead_with_handshake_traffic_secret(@read_seq_num, sender)
-      elsif @transcript.include?(SF) && @notyet_application_secret
-        @read_seq_num = SequenceNumber.new
-        sender = (@endpoint == :client ? :server : :client)
-        @read_cipher \
-        = gen_aead_with_application_traffic_secret(@read_seq_num, sender)
-        @notyet_application_secret = false
-      end
 
       begin
         buffer = @binary_buffer
@@ -213,8 +202,6 @@ module TLS13
 
       record
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
-    # rubocop: enable Metrics/PerceivedComplexity
 
     # @param digest [String] name of digest algorithm
     #
@@ -314,38 +301,6 @@ module TLS13
       )
 
       priv_key.dh_compute_key(pub_key)
-    end
-
-    # @param seq_num [TLS13::SequenceNumber]
-    # @param sender [Symbol, :client or :server]
-    #
-    # @return [TLS13::Cryptograph::Aead]
-    def gen_aead_with_handshake_traffic_secret(seq_num, sender)
-      write_key = @key_schedule.send("#{sender}_handshake_write_key")
-      write_iv = @key_schedule.send("#{sender}_handshake_write_iv")
-
-      Cryptograph::Aead.new(
-        cipher_suite: @cipher_suite,
-        write_key: write_key,
-        write_iv: write_iv,
-        sequence_number: seq_num
-      )
-    end
-
-    # @param seq_num [TLS13::SequenceNumber]
-    # @param sender [Symbol, :client or :server]
-    #
-    # @return [TLS13::Cryptograph::Aead]
-    def gen_aead_with_application_traffic_secret(seq_num, sender)
-      write_key = @key_schedule.send("#{sender}_application_write_key")
-      write_iv = @key_schedule.send("#{sender}_application_write_iv")
-
-      Cryptograph::Aead.new(
-        cipher_suite: @cipher_suite,
-        write_key: write_key,
-        write_iv: write_iv,
-        sequence_number: seq_num
-      )
     end
 
     # @return [Boolean]
