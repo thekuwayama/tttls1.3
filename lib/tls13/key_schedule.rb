@@ -50,6 +50,18 @@ module TLS13
     end
 
     # @return [String]
+    def early_data_write_key
+      secret = client_early_traffic_secret
+      hkdf_expand_label(secret, 'key', '', @key_len)
+    end
+
+    # @return [String]
+    def early_data_write_iv
+      secret = client_early_traffic_secret
+      hkdf_expand_label(secret, 'iv', '', @iv_len)
+    end
+
+    # @return [String]
     def early_exporter_master_secret
       hash = OpenSSL::Digest.digest(@digest, '')
       derive_secret(early_secret, 'e exp master', hash)
