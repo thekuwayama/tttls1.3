@@ -11,7 +11,7 @@ settings = {
   ca_file: __dir__ + '/../tmp/ca.crt',
   key_share_groups: [] # empty KeyShareClientHello.client_shares
 }
-client = TLS13::Client.new(socket, hostname, settings)
+client = TTTLS13::Client.new(socket, hostname, settings)
 client.connect
 client.write(http_get)
 

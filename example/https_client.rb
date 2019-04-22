@@ -8,7 +8,7 @@ http_get = http_get(hostname)
 
 socket = TCPSocket.new(hostname, port)
 settings = { ca_file: __dir__ + '/../tmp/ca.crt' }
-client = TLS13::Client.new(socket, hostname, settings)
+client = TTTLS13::Client.new(socket, hostname, settings)
 client.connect
 client.write(http_get)
 

@@ -29,7 +29,7 @@ settings_1st = {
   settings_2nd
 ].each do |settings|
   socket = TCPSocket.new(hostname, port)
-  client = TLS13::Client.new(socket, hostname, settings)
+  client = TTTLS13::Client.new(socket, hostname, settings)
   client.connect
   client.write(http_get)
 

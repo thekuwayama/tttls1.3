@@ -5,14 +5,14 @@ RSpec.configure(&:disable_monkey_patching!)
 
 # rubocop: disable Style/MixinUsage
 require 'openssl'
-require 'tls13'
-include TLS13
-include TLS13::Error
-include TLS13::CipherSuite
-include TLS13::SignatureScheme
-include TLS13::Cryptograph
-include TLS13::Message
-include TLS13::Message::Extension
+require 'tttls1.3'
+include TTTLS13
+include TTTLS13::Error
+include TTTLS13::CipherSuite
+include TTTLS13::SignatureScheme
+include TTTLS13::Cryptograph
+include TTTLS13::Message
+include TTTLS13::Message::Extension
 # rubocop: enable Style/MixinUsage
 
 class SimpleStream
@@ -31,12 +31,12 @@ class SimpleStream
   end
 end
 
-# TLS13::CipherSuites
+# TTTLS13::CipherSuites
 TESTBINARY_CIPHER_SUITES = <<BIN.split.map(&:hex).map(&:chr).join
   13 02 13 03 13 01
 BIN
 
-# TLS13::Message::Extension::$Object
+# TTTLS13::Message::Extension::$Object
 TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).map(&:chr).join
   00 0d 00 00 0a 67 69 74     68 75 62 2e 63 6f 6d
 BIN

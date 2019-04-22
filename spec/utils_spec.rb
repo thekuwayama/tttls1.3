@@ -4,7 +4,7 @@
 require 'spec_helper'
 using Refinements
 
-RSpec.describe TLS13::Refinements do
+RSpec.describe TTTLS13::Refinements do
   context '0' do
     let(:integer) do
       0

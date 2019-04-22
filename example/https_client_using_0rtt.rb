@@ -29,7 +29,7 @@ accepted_early_data = false
   settings_2nd
 ].each_with_index do |settings, i|
   socket = TCPSocket.new(hostname, port)
-  client = TLS13::Client.new(socket, hostname, settings)
+  client = TTTLS13::Client.new(socket, hostname, settings)
 
   # send message using early data; 0-RTT
   client.early_data(http_get) if i == 1 && settings.include?(:ticket)
