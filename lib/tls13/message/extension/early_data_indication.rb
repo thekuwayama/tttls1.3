@@ -12,7 +12,7 @@ module TLS13
         # @param max_early_data_size [Integer, nil]
         #
         # @raise [TLS13::Error::ErrorAlerts]
-        def initialize(max_early_data_size)
+        def initialize(max_early_data_size = nil)
           @extension_type = ExtensionType::EARLY_DATA
           @max_early_data_size = max_early_data_size
           raise Error::ErrorAlerts, :internal_error \

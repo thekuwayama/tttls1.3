@@ -118,6 +118,7 @@ module TLS13
             Message::Certificate,
             Message::CertificateVerify,
             Message::Finished,
+            Message::EndOfEarlyData,
             Message::NewSessionTicket].include?(type)
           ContentType::HANDSHAKE
         elsif type == ChangeCipherSpec
