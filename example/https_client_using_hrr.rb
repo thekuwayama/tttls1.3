@@ -1,8 +1,11 @@
+# encoding: ascii-8bit
 # frozen_string_literal: true
 
 require_relative 'helper'
 
 hostname, port = (ARGV[0] || 'localhost:4433').split(':')
+http_get = http_get(hostname)
+
 socket = TCPSocket.new(hostname, port)
 settings = {
   ca_file: __dir__ + '/../tmp/ca.crt',
@@ -10,13 +13,6 @@ settings = {
 }
 client = TLS13::Client.new(socket, hostname, settings)
 client.connect
-http_get = <<~BIN
-  GET / HTTP/1.1\r
-  Host: #{hostname}\r
-  User-Agent: https_client\r
-  Accept: */*\r
-  \r
-BIN
 client.write(http_get)
 
 # status line, header

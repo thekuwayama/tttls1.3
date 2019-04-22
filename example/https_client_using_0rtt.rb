@@ -4,6 +4,7 @@
 require_relative 'helper'
 
 hostname, port = (ARGV[0] || 'localhost:4433').split(':')
+http_get = http_get(hostname)
 
 settings_2nd = {
   ca_file: __dir__ + '/../tmp/ca.crt'
@@ -20,9 +21,7 @@ settings_1st = {
   ca_file: __dir__ + '/../tmp/ca.crt',
   process_new_session_ticket: process_new_session_ticket
 }
-
 accepted_early_data = false
-
 [
   # Initial Handshake:
   settings_1st,
@@ -31,13 +30,6 @@ accepted_early_data = false
 ].each_with_index do |settings, i|
   socket = TCPSocket.new(hostname, port)
   client = TLS13::Client.new(socket, hostname, settings)
-  http_get = <<~BIN
-    GET / HTTP/1.1\r
-    Host: #{hostname}\r
-    User-Agent: https_client\r
-    Accept: */*\r
-    \r
-  BIN
 
   # send message using early data; 0-RTT
   client.early_data(http_get) if i == 1 && settings.include?(:ticket)
