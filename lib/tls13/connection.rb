@@ -62,7 +62,7 @@ module TLS13
         unless @endpoint == :client && @state == ClientState::CONNECTED
 
       ap = Message::ApplicationData.new(binary)
-      send_application_data(ap)
+      send_application_data(ap, @write_cipher)
     end
 
     def close
@@ -78,7 +78,7 @@ module TLS13
     # @param write_key [String]
     # @param write_iv [String]
     #
-    # @param [TLS13::Cryptograph::Aead]
+    # @return [TLS13::Cryptograph::Aead]
     def gen_cipher(cipher_suite, write_key, write_iv)
       seq_num = SequenceNumber.new
       Cryptograph::Aead.new(
@@ -91,11 +91,12 @@ module TLS13
 
     # @param type [TLS13::Message::ContentType]
     # @param messages [Array of TLS13::Message::$Object] handshake messages
-    def send_handshakes(type, messages)
+    # @param write_cipher [TLS13::Cryptograph::Aead]
+    def send_handshakes(type, messages, write_cipher)
       record = Message::Record.new(
         type: type,
         messages: messages,
-        cipher: @write_cipher
+        cipher: write_cipher
       )
       send_record(record)
     end
@@ -111,12 +112,13 @@ module TLS13
     end
 
     # @param message [TLS13::Message::ApplicationData]
-    def send_application_data(message)
+    # @param write_cipher [TLS13::Cryptograph::Aead]
+    def send_application_data(message, write_cipher)
       ap_record = Message::Record.new(
         type: Message::ContentType::APPLICATION_DATA,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
-        cipher: @write_cipher
+        cipher: write_cipher
       )
       send_record(ap_record)
     end

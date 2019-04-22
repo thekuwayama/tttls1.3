@@ -68,7 +68,9 @@ module TLS13
       @endpoint = :client
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
-      @early_data = nil
+      @early_data = ''
+      @early_data_write_cipher = nil # Cryptograph::$Object
+      @accepted_early_data = false
       raise Error::ConfigError unless valid_settings?
       return unless use_psk?
 
@@ -81,6 +83,9 @@ module TLS13
         cipher_suite: @settings[:psk_cipher_suite],
         transcript: nil
       )
+      @early_data_write_cipher = gen_cipher(@settings[:psk_cipher_suite],
+                                            @key_schedule.early_data_write_key,
+                                            @key_schedule.early_data_write_iv)
     end
 
     # NOTE:
@@ -128,7 +133,11 @@ module TLS13
         case @state
         when ClientState::START
           send_client_hello
-          # send_early_data if @use_early_data?
+          if use_early_data?
+            send_early_data
+            send_eoed
+          end
+
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
           sh = recv_server_hello
@@ -193,6 +202,9 @@ module TLS13
 
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
           @send_record_size = rsl.record_size_limit unless rsl.nil?
+
+          @accepted_early_data = true \
+            if ee.extensions.include?(Message::ExtensionType::EARLY_DATA)
 
           @state = ClientState::WAIT_CERT_CR
           @state = ClientState::WAIT_FINISHED unless @psk.nil?
@@ -265,6 +277,11 @@ module TLS13
       @early_data = binary
     end
 
+    # @return [Boolean]
+    def accepted_early_data?
+      @accepted_early_data
+    end
+
     private
 
     DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
@@ -310,7 +327,18 @@ module TLS13
 
     # @return [Boolean]
     def use_early_data?
-      !@early_data.nil?
+      !(@early_data.nil? || @early_data.empty?)
+    end
+
+    def send_early_data
+      ap = Message::ApplicationData.new(@early_data)
+      ap_record = Message::Record.new(
+        type: Message::ContentType::APPLICATION_DATA,
+        legacy_record_version: Message::ProtocolVersion::TLS_1_2,
+        messages: [ap],
+        cipher: @early_data_write_cipher
+      )
+      send_record(ap_record)
     end
 
     # @param resumption_master_secret [String]
@@ -353,6 +381,9 @@ module TLS13
       exs << Message::Extension::ServerName.new(@hostname) \
         unless @hostname.nil? || @hostname.empty?
 
+      # early_data
+      exs << Message::Extension::EarlyDataIndication.new if use_early_data?
+
       Message::Extensions.new(exs)
     end
 
@@ -381,7 +412,7 @@ module TLS13
         sign_psk_binder
       end
 
-      send_handshakes(Message::ContentType::HANDSHAKE, [ch])
+      send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
     end
 
     # @return [String]
@@ -462,7 +493,7 @@ module TLS13
         legacy_compression_methods: ch1.legacy_compression_methods,
         extensions: new_exs
       )
-      send_handshakes(Message::ContentType::HANDSHAKE, [ch])
+      send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
       @transcript[CH] = ch
     end
 
@@ -520,9 +551,19 @@ module TLS13
     # @return [TLS13::Message::Finished]
     def send_finished
       cf = Message::Finished.new(sign_finished)
-      send_handshakes(Message::ContentType::APPLICATION_DATA, [cf])
+      send_handshakes(Message::ContentType::APPLICATION_DATA, [cf],
+                      @write_cipher)
 
       @transcript[CF] = cf
+    end
+
+    # @return [TLS13::Message::EndOfEarlyData]
+    def send_eoed
+      eoed = Message::EndOfEarlyData.new
+      send_handshakes(Message::ContentType::APPLICATION_DATA, [eoed],
+                      @early_data_write_cipher)
+
+      @transcript[EOED] = eoed
     end
 
     # @return [Boolean]
