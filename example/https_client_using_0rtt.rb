@@ -10,6 +10,8 @@ settings_2nd = {
   ca_file: __dir__ + '/../tmp/ca.crt'
 }
 process_new_session_ticket = proc do |nst, rms, cs|
+  return if Time.now.to_i - nst.timestamp > nst.ticket_lifetime
+
   settings_2nd[:ticket] = nst.ticket
   settings_2nd[:resumption_master_secret] = rms
   settings_2nd[:psk_cipher_suite] = cs
