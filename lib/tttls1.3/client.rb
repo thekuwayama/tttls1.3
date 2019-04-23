@@ -136,7 +136,6 @@ module TTTLS13
                          @key_schedule.early_data_write_key,
                          @key_schedule.early_data_write_iv)
             send_early_data
-            send_eoed
           end
 
           @state = ClientState::WAIT_SH
@@ -248,6 +247,7 @@ module TTTLS13
           recv_finished
           terminate(:decrypt_error) unless verify_finished
           send_ccs # compatibility mode
+          send_eoed if use_early_data? && accepted_early_data?
           # TODO: Send Certificate [+ CertificateVerify]
           send_finished
           @write_cipher = gen_cipher(@cipher_suite,
