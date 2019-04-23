@@ -248,7 +248,6 @@ module TTTLS13
           recv_finished
           terminate(:decrypt_error) unless verify_finished
           send_ccs # compatibility mode
-          # TODO: Send EndOfEarlyData
           # TODO: Send Certificate [+ CertificateVerify]
           send_finished
           @write_cipher = gen_cipher(@cipher_suite,
