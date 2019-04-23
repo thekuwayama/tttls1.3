@@ -93,11 +93,6 @@ RSpec.describe KeySchedule do
                       transcript: transcript)
     end
 
-    it 'should generate binder key for resumption PSKs' do
-      expect(key_schedule.binder_key_res)
-        .to eq TESTBINARY_0_RTT_BINDER_KEY_RES
-    end
-
     it 'should generate server parameters write_key, iv' do
       expect(key_schedule.server_handshake_write_key)
         .to eq TESTBINARY_0_RTT_SERVER_PARAMETERS_WRITE_KEY
@@ -110,6 +105,35 @@ RSpec.describe KeySchedule do
         .to eq TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_KEY
       expect(key_schedule.client_application_write_iv)
         .to eq TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_IV
+    end
+  end
+
+  context 'key_schedule, Resumed 0-RTT Handshake, ' \
+          'not negotiated shared_secret yet,' do
+    let(:key_schedule) do
+      transcript = Transcript.new
+      transcript[CH] = ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO)
+      KeySchedule.new(psk: TESTBINARY_0_RTT_PSK,
+                      shared_secret: nil,
+                      cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+                      transcript: transcript)
+    end
+
+    it 'should generate binder key for resumption PSKs' do
+      expect(key_schedule.binder_key_res)
+        .to eq TESTBINARY_0_RTT_BINDER_KEY_RES
+    end
+
+    it 'should generate client_early_traffic_secret' do
+      expect(key_schedule.client_early_traffic_secret)
+        .to eq TESTBINARY_0_RTT_C_E_TRAFFIC
+    end
+
+    it 'should generate 0-RTT application write_key, iv' do
+      expect(key_schedule.early_data_write_key)
+        .to eq TESTBINARY_0_RTT_EARLY_DATA_WRITE_KEY
+      expect(key_schedule.early_data_write_iv)
+        .to eq TESTBINARY_0_RTT_EARLY_DATA_WRITE_IV
     end
   end
 

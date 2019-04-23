@@ -81,11 +81,8 @@ module TTTLS13
         psk: @psk,
         shared_secret: nil,
         cipher_suite: @settings[:psk_cipher_suite],
-        transcript: nil
+        transcript: @transcript
       )
-      @early_data_write_cipher = gen_cipher(@settings[:psk_cipher_suite],
-                                            @key_schedule.early_data_write_key,
-                                            @key_schedule.early_data_write_iv)
     end
 
     # NOTE:
@@ -134,6 +131,10 @@ module TTTLS13
         when ClientState::START
           send_client_hello
           if use_early_data?
+            @early_data_write_cipher \
+            = gen_cipher(@settings[:psk_cipher_suite],
+                         @key_schedule.early_data_write_key,
+                         @key_schedule.early_data_write_iv)
             send_early_data
             send_eoed
           end

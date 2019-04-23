@@ -45,7 +45,7 @@ module TTTLS13
 
     # @return [String]
     def client_early_traffic_secret
-      hash = OpenSSL::Digest.digest(@digest, '')
+      hash = @transcript.hash(@digest, CH)
       derive_secret(early_secret, 'c e traffic', hash)
     end
 

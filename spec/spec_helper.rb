@@ -526,6 +526,19 @@ TESTBINARY_0_RTT_BINDER_KEY_RES = <<BIN.split.map(&:hex).map(&:chr).join
   a9 a3 b1 60 9f 7d 50 e9     0a 48 22 7d b9 ed 7e aa
 BIN
 
+TESTBINARY_0_RTT_C_E_TRAFFIC = <<BIN.split.map(&:hex).map(&:chr).join
+  3f bb e6 a6 0d eb 66 c3     0a 32 79 5a ba 0e ff 7e
+  aa 10 10 55 86 e7 be 5c     09 67 8d 63 b6 ca ab 62
+BIN
+
+TESTBINARY_0_RTT_EARLY_DATA_WRITE_KEY = <<BIN.split.map(&:hex).map(&:chr).join
+  92 02 05 a5 b7 bf 21 15     e6 fc 5c 29 42 83 4f 54
+BIN
+
+TESTBINARY_0_RTT_EARLY_DATA_WRITE_IV = <<BIN.split.map(&:hex).map(&:chr).join
+  6d 47 5f 09 93 c8 e5 64     61 0d b2 b9
+BIN
+
 testbinary = <<BIN
   27 c6 bd c0 a3 dc ea 39     a4 73 26 d7 9b c9 e4 ee
 BIN
