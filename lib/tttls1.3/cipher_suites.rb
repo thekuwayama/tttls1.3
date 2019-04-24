@@ -14,8 +14,7 @@ module TTTLS13
       def digest(cipher_suite)
         case cipher_suite
         when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
-             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_SHA256,
-             TLS_AES_128_CCM_8_SHA256
+             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_8_SHA256
           'SHA256'
         when TLS_AES_256_GCM_SHA384
           'SHA384'
@@ -27,8 +26,7 @@ module TTTLS13
       def hash_len(cipher_suite)
         case cipher_suite
         when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
-             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_SHA256,
-             TLS_AES_128_CCM_8_SHA256
+             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_8_SHA256
           32
         when TLS_AES_256_GCM_SHA384
           48
@@ -40,7 +38,7 @@ module TTTLS13
       def key_len(cipher_suite)
         case cipher_suite
         when TLS_AES_128_GCM_SHA256, TLS_AES_128_CCM_SHA256,
-             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_8_SHA256
+             TLS_AES_128_CCM_8_SHA256
           16
         when TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256
           32
