@@ -176,6 +176,8 @@ module TTTLS13
           @psk = nil \
             unless sh.extensions
                      .include?(Message::ExtensionType::PRE_SHARED_KEY)
+          terminate(:illegal_parameter) unless valid_sh_key_share?
+
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           key_exchange = kse.key_exchange
@@ -379,7 +381,7 @@ module TTTLS13
 
       # server_name
       exs << Message::Extension::ServerName.new(@hostname) \
-        unless @hostname.nil? || @hostname.empty?
+        if !@hostname.nil? && !@hostname.empty?
 
       # early_data
       exs << Message::Extension::EarlyDataIndication.new if use_early_data?
@@ -404,8 +406,7 @@ module TTTLS13
         #
         # https://tools.ietf.org/html/rfc8446#section-4.2.9
         pkem = Message::Extension::PskKeyExchangeModes.new(
-          [Message::Extension::PskKeyExchangeMode::PSK_DHE_KE,
-           Message::Extension::PskKeyExchangeMode::PSK_KE]
+          [Message::Extension::PskKeyExchangeMode::PSK_DHE_KE]
         )
         ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
         # at the end, sign PSK binder
@@ -682,6 +683,15 @@ module TTTLS13
       hrr = @transcript[HRR]
       versions != hrr.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
                      .versions
+    end
+
+    # @return [Boolean]
+    def valid_sh_key_share?
+      offered = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
+                               .key_share_entry.map(&:group)
+      selected = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
+                                .key_share_entry.first.group
+      offered.include?(selected)
     end
 
     # @return [Boolean]
