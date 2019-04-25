@@ -46,6 +46,7 @@ module TTTLS13
     ca_file: nil,
     cipher_suites: DEFAULT_CH_CIPHER_SUITES,
     signature_algorithms: DEFAULT_CH_SIGNATURE_ALGORITHMS,
+    signature_algorithms_cert: nil,
     supported_groups: DEFAULT_CH_NAMED_GROUP_LIST,
     key_share_groups: nil,
     process_new_session_ticket: nil,
@@ -290,7 +291,9 @@ module TTTLS13
     DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
 
     # @return [Boolean]
+    # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/PerceivedComplexity
     def valid_settings?
       cs = CipherSuite
       defined_cipher_suites = cs.constants.map { |c| cs.const_get(c) }
@@ -302,6 +305,10 @@ module TTTLS13
       defined_signature_schemes = ss.constants.map { |c| ss.const_get(c) }
       return false \
         unless (sa - defined_signature_schemes).empty?
+
+      sac = @settings[:signature_algorithms_cert] || []
+      return false \
+        unless (sac - defined_signature_schemes).empty?
 
       sg = @settings[:supported_groups]
       ng = Message::Extension::NamedGroup
@@ -315,7 +322,9 @@ module TTTLS13
 
       true
     end
+    # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [Boolean]
     def use_psk?
@@ -357,6 +366,8 @@ module TTTLS13
     end
 
     # @return [TTTLS13::Message::Extensions]
+    # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
     def gen_extensions
       exs = []
       # supported_versions: only TLS 1.3
@@ -368,6 +379,14 @@ module TTTLS13
       exs << Message::Extension::SignatureAlgorithms.new(
         @settings[:signature_algorithms]
       )
+
+      # signature_algorithms_cert
+      if !@settings[:signature_algorithms_cert].nil? &&
+         !@settings[:signature_algorithms_cert].empty?
+        exs << Message::Extension::SignatureAlgorithmsCert.new(
+          @settings[:signature_algorithms_cert]
+        )
+      end
 
       # supported_groups
       groups = @settings[:supported_groups]
@@ -388,6 +407,8 @@ module TTTLS13
 
       Message::Extensions.new(exs)
     end
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @return [TTTLS13::Message::ClientHello]
     def send_client_hello

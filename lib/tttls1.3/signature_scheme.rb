@@ -16,8 +16,8 @@ module TTTLS13
     RSA_PSS_RSAE_SHA384    = "\x08\x05"
     RSA_PSS_RSAE_SHA512    = "\x08\x06"
     # EdDSA algorithms
-    ED25519                = "\x08\x07"
-    ED448                  = "\x08\x08"
+    # ED25519                = "\x08\x07" # UNSUPPORTED
+    # ED448                  = "\x08\x08" # UNSUPPORTED
     # RSASSA-PSS algorithms with public key OID RSASSA-PSS
     RSA_PSS_PSS_SHA256     = "\x08\x09"
     RSA_PSS_PSS_SHA384     = "\x08\x0a"
