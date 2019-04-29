@@ -1,7 +1,7 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-require 'spec_helper'
+require_relative 'spec_helper'
 
 RSpec.describe Transcript do
   context 'transcript, not including HRR,' do

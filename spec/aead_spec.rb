@@ -1,7 +1,7 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-require 'spec_helper'
+require_relative 'spec_helper'
 
 RSpec.describe Aead do
   context 'aead using CipherSuite::TLS_AES_128_GCM_SHA256' do
