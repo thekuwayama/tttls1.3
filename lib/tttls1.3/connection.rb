@@ -235,27 +235,29 @@ module TTTLS13
       content = "\x20" * 64 + context + "\x00" + hash
       public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
 
+      # RSA signatures MUST use an RSASSA-PSS algorithm, regardless of whether
+      # RSASSA-PKCS1-v1_5 algorithms appear in "signature_algorithms".
       case signature_scheme
-      when SignatureScheme::RSA_PSS_RSAE_SHA256,
+      when SignatureScheme::RSA_PKCS1_SHA256,
+           SignatureScheme::RSA_PSS_RSAE_SHA256,
            SignatureScheme::RSA_PSS_PSS_SHA256
         public_key.verify_pss('SHA256', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA256')
-      when SignatureScheme::RSA_PSS_RSAE_SHA384,
+      when SignatureScheme::RSA_PKCS1_SHA384,
+           SignatureScheme::RSA_PSS_RSAE_SHA384,
            SignatureScheme::RSA_PSS_PSS_SHA384
         public_key.verify_pss('SHA384', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA384')
-      when SignatureScheme::RSA_PSS_RSAE_SHA512,
+      when SignatureScheme::RSA_PKCS1_SHA512,
+           SignatureScheme::RSA_PSS_RSAE_SHA512,
            SignatureScheme::RSA_PSS_PSS_SHA512
         public_key.verify_pss('SHA512', signature, content, salt_length: :auto,
                                                             mgf1_hash: 'SHA512')
-      when SignatureScheme::RSA_PKCS1_SHA256,
-           SignatureScheme::ECDSA_SECP256R1_SHA256
+      when SignatureScheme::ECDSA_SECP256R1_SHA256
         public_key.verify('SHA256', signature, content)
-      when SignatureScheme::RSA_PKCS1_SHA384,
-           SignatureScheme::ECDSA_SECP384R1_SHA384
+      when SignatureScheme::ECDSA_SECP384R1_SHA384
         public_key.verify('SHA384', signature, content)
-      when SignatureScheme::RSA_PKCS1_SHA512,
-           SignatureScheme::ECDSA_SECP521R1_SHA512
+      when SignatureScheme::ECDSA_SECP521R1_SHA512
         public_key.verify('SHA512', signature, content)
       else # TODO: ED25519, ED448
         terminate(:internal_error)
