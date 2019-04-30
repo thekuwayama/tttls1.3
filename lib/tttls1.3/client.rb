@@ -118,7 +118,7 @@ module TTTLS13
     # after here                v
     #                       CONNECTED
     #
-    # https://tools.ietf.org/html/rfc8446#appendix-A
+    # https://tools.ietf.org/html/rfc8446#appendix-A.1
     #
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/BlockLength

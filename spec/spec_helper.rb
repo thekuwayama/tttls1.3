@@ -4,7 +4,6 @@
 RSpec.configure(&:disable_monkey_patching!)
 
 # rubocop: disable Style/MixinUsage
-require 'openssl'
 require 'tttls1.3'
 include TTTLS13
 include TTTLS13::Error
@@ -439,7 +438,6 @@ BIN
 
 # https://tools.ietf.org/html/rfc8448#section-4
 # 4.  Resumed 0-RTT Handshake
-
 TESTBINARY_0_RTT_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 01 fc 03 03 1b c3     ce b6 bb e3 9c ff 93 83
   55 b5 a5 0a db 6d b2 1b     7a 6a f6 49 d7 b4 bc 41
@@ -565,7 +563,6 @@ TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_IV \
 
 # https://tools.ietf.org/html/rfc8448#section-5
 # 5.  HelloRetryRequest
-
 TESTBINARY_HRR_CLIENT_HELLO1 = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 00 b0 03 03 b0 b1     c5 a5 aa 37 c5 91 9f 2e
   d1 d5 c6 ff f7 fc b7 84     97 16 94 5a 2b 8c ee 92

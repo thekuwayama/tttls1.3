@@ -5,7 +5,6 @@ require_relative 'helper'
 
 TMP_DIR = __dir__ + '/../tmp'
 
-# rubocop: disable Metrics/BlockLength
 RSpec.describe Client do
   # testcases
   [
@@ -85,4 +84,3 @@ RSpec.describe Client do
     end
   end
 end
-# rubocop: enable Metrics/BlockLength

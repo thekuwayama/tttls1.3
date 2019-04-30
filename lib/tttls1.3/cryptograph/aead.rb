@@ -33,7 +33,8 @@ module TTTLS13
         @length_of_padding = length_of_padding
       end
 
-      # AEAD-Encrypt(write_key, nonce, additional_data, plaintext)
+      # NOTE:
+      #     AEAD-Encrypt(write_key, nonce, additional_data, plaintext)
       #
       # @param content [String]
       # @param type [TTTLS13::Message::ContentType]
@@ -50,8 +51,9 @@ module TTTLS13
         encrypted_data + cipher.auth_tag
       end
 
-      # AEAD-Decrypt(peer_write_key, nonce,
-      #              additional_data, AEADEncrypted)
+      # NOTE:
+      #     AEAD-Decrypt(peer_write_key, nonce,
+      #                  additional_data, AEADEncrypted)
       #
       # @param encrypted_record [String]
       # @param auth_data [String]
@@ -78,7 +80,7 @@ module TTTLS13
       #     struct {
       #         opaque content[TLSPlaintext.length];
       #         ContentType type;
-      #        uint8 zeros[length_of_padding];
+      #         uint8 zeros[length_of_padding];
       #     } TLSInnerPlaintext;
       #
       # @param record_size_limit [Integer]
@@ -93,6 +95,7 @@ module TTTLS13
       # @return [String]
       def additional_data(plaintext_len)
         ciphertext_len = plaintext_len + 16 # length of auth_tag is 16
+
         Message::ContentType::APPLICATION_DATA \
         + Message::ProtocolVersion::TLS_1_2 \
         + ciphertext_len.to_uint16
@@ -105,7 +108,7 @@ module TTTLS13
         @cipher.iv = @sequence_number.xor(@write_iv, iv_len)
       end
 
-      # @param [String]
+      # @param clear [String]
       #
       # @return [Integer]
       def scan_zeros(clear)
