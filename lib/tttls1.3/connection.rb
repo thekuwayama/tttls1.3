@@ -7,6 +7,8 @@ module TTTLS13
 
   # rubocop: disable Metrics/ClassLength
   class Connection
+    include Logging
+
     # @param socket [Socket]
     def initialize(socket)
       @socket = socket
@@ -142,6 +144,7 @@ module TTTLS13
 
     # @param record [TTTLS13::Message::Record]
     def send_record(record)
+      logger.debug(record.inspect)
       @socket.write(record.serialize(@send_record_size))
     end
 
@@ -202,6 +205,7 @@ module TTTLS13
         terminate(:unexpected_message)
       end
 
+      logger.debug(record.inspect)
       record
     end
 

@@ -21,5 +21,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '~> 2.0'
+  spec.add_dependency             'logger'
   spec.add_dependency             'openssl'
 end

@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 require 'openssl'
+require 'logger'
 
 require 'tttls1.3/version'
 require 'tttls1.3/utils'
+require 'tttls1.3/logging'
 require 'tttls1.3/error'
 require 'tttls1.3/cipher_suites'
 require 'tttls1.3/signature_scheme'

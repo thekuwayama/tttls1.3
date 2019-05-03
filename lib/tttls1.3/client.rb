@@ -55,7 +55,8 @@ module TTTLS13
     psk_cipher_suite: nil,
     ticket_nonce: nil,
     ticket_age_add: nil,
-    ticket_timestamp: nil
+    ticket_timestamp: nil,
+    loglevel: Logger::WARN
   }.freeze
 
   # rubocop: disable Metrics/ClassLength
@@ -69,6 +70,8 @@ module TTTLS13
       @endpoint = :client
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
+      logger.level = @settings[:loglevel]
+
       @early_data = ''
       @early_data_write_cipher = nil # Cryptograph::$Object
       @accepted_early_data = false

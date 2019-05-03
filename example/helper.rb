@@ -3,7 +3,6 @@
 $LOAD_PATH << __dir__ + '/../lib'
 
 require 'socket'
-require 'openssl'
 require 'tttls1.3'
 
 def http_get(hostname)
