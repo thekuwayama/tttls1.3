@@ -133,6 +133,8 @@ module TTTLS13
       loop do
         case @state
         when ClientState::START
+          logger.debug('ClientState::START')
+
           send_client_hello
           if use_early_data?
             @early_data_write_cipher \
@@ -144,6 +146,8 @@ module TTTLS13
 
           @state = ClientState::WAIT_SH
         when ClientState::WAIT_SH
+          logger.debug('ClientState::WAIT_SH')
+
           sh = recv_server_hello
           terminate(:illegal_parameter) unless valid_sh_legacy_version?
           terminate(:illegal_parameter) unless valid_sh_legacy_session_id_echo?
@@ -201,6 +205,8 @@ module TTTLS13
                                     @key_schedule.server_handshake_write_iv)
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
+          logger.debug('ClientState::WAIT_EE')
+
           ee = recv_encrypted_extensions
           terminate(:illegal_parameter) if ee.any_forbidden_extensions?
           terminate(:unsupported_extension) \
@@ -215,6 +221,8 @@ module TTTLS13
           @state = ClientState::WAIT_CERT_CR
           @state = ClientState::WAIT_FINISHED unless @psk.nil?
         when ClientState::WAIT_CERT_CR
+          logger.debug('ClientState::WAIT_EE')
+
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             @transcript[CT] = ct = message
@@ -235,6 +243,8 @@ module TTTLS13
             terminate(:unexpected_message)
           end
         when ClientState::WAIT_CERT
+          logger.debug('ClientState::WAIT_EE')
+
           ct = recv_certificate
           terminate(:unsupported_extension) \
             unless ct.certificate_list.map(&:extensions)
@@ -246,10 +256,14 @@ module TTTLS13
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
+          logger.debug('ClientState::WAIT_EE')
+
           recv_certificate_verify
           terminate(:decrypt_error) unless verify_certificate_verify
           @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
+          logger.debug('ClientState::WAIT_EE')
+
           recv_finished
           terminate(:decrypt_error) unless verify_finished
           send_ccs # compatibility mode
@@ -264,6 +278,8 @@ module TTTLS13
                                     @key_schedule.server_application_write_iv)
           @state = ClientState::CONNECTED
         when ClientState::CONNECTED
+          logger.debug('ClientState::WAIT_EE')
+
           break
         end
       end
