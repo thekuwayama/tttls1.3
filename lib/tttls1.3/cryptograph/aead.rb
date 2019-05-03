@@ -112,9 +112,9 @@ module TTTLS13
       #
       # @return [Integer]
       def scan_zeros(clear)
-        i = 0
+        i = 1
         i += 1 while clear[-i] == "\x00"
-        i
+        i - 1
       end
     end
   end
