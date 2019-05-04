@@ -46,6 +46,10 @@ RSpec.describe Client do
       ' -sigalgs RSA-PSS+SHA512',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
       signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA512]
+    ],
+    [
+      ' -record_padding 8446',
+      {}
     ]
   ].each do |opt, settings|
     context 'client interop' do
@@ -56,6 +60,7 @@ RSpec.describe Client do
               + '-key /tmp/server.key ' \
               + '-tls1_3 ' \
               + '-www ' \
+              + '-quiet ' \
               + opt
         pid = spawn(cmd)
         Process.detach(pid)
