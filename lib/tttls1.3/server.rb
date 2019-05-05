@@ -103,6 +103,8 @@ module TTTLS13
     end
     # rubocop: enable Metrics/CyclomaticComplexity
 
+    private
+
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::ClientHello]
@@ -111,6 +113,24 @@ module TTTLS13
       terminate(:unexpected_message) unless ch.is_a?(Message::ClientHello)
 
       @transcript[CH] = ch
+    end
+
+    # @return [String]
+    def sign_certificate_verify
+      context = 'TLS 1.3, server CertificateVerify'
+      do_sign_certificate_verify(private_key: @private_key,
+                                 signature_scheme: @signature_scheme,
+                                 context: context,
+                                 handshake_context_end: CT)
+    end
+
+    # @return [String]
+    def sign_finished
+      digest = CipherSuite.digest(@cipher_suite)
+      finished_key = @key_schedule.server_finished_key
+      do_sign_finished(digest: digest,
+                       finished_key: finished_key,
+                       handshake_context_end: CV)
     end
   end
 end
