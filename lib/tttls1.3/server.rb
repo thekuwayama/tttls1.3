@@ -19,11 +19,13 @@ module TTTLS13
   class Server < Connection
     # @param socket [Socket]
     # @param settings [Hash]
-    def initialize(socket, _settings)
+    # rubocop: disable Lint/UnusedMethodArgument
+    def initialize(socket, **settings)
       super(socket)
 
       @endpoint = :server
     end
+    # rubocop: enable Lint/UnusedMethodArgument
 
     # NOTE:
     #                              START <-----+
@@ -70,25 +72,45 @@ module TTTLS13
     # https://tools.ietf.org/html/rfc8446#appendix-A.2
     #
     # rubocop: disable Metrics/CyclomaticComplexity
-    # rubocop: disable Lint/EmptyWhen
     def accept
       @state = ServerState::START
       loop do
         case @state
         when ServerState::START
+          logger.debug('ServerState::START')
+
+          recv_client_hello
+          @state = ServerState::RECVD_CH
         when ServerState::RECVD_CH
+          logger.debug('ServerState::RECVD_CH')
         when ServerState::NEGOTIATED
+          logger.debug('ServerState::NEGOTIATED')
         when ServerState::WAIT_EOED
+          logger.debug('ServerState::WAIT_EOED')
         when ServerState::WAIT_FLIGHT2
+          logger.debug('ServerState::WAIT_FLIGHT2')
         when ServerState::WAIT_CERT
+          logger.debug('ServerState::WAIT_CERT')
         when ServerState::WAIT_CV
+          logger.debug('ServerState::WAIT_CV')
         when ServerState::WAIT_FINISHED
+          logger.debug('ServerState::WAIT_FINISHED')
         when ServerState::CONNECTED
+          logger.debug('ServerState::CONNECTED')
           break
         end
       end
     end
     # rubocop: enable Metrics/CyclomaticComplexity
-    # rubocop: enable Lint/EmptyWhen
+
+    # @raise [TTTLS13::Error::ErrorAlerts]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    def recv_client_hello
+      ch = recv_message
+      terminate(:unexpected_message) unless ch.is_a?(Message::ClientHello)
+
+      @transcript[CH] = ch
+    end
   end
 end
