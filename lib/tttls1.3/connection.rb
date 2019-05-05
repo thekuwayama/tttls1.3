@@ -30,10 +30,13 @@ module TTTLS13
     # @raise [TTTLS13::Error::ConfigError]
     #
     # @return [String]
+    # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/PerceivedComplexity
     def read
       # secure channel has not established yet
       raise Error::ConfigError \
-        unless @endpoint == :client && @state == ClientState::CONNECTED
+        unless (@endpoint == :client && @state == ClientState::CONNECTED) ||
+               (@endpoint == :server && @state == ServerState::CONNECTED)
       return '' if @state == EOF
 
       message = nil
@@ -49,6 +52,8 @@ module TTTLS13
 
       message.fragment
     end
+    # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [Boolean]
     def eof?
@@ -61,7 +66,8 @@ module TTTLS13
     def write(binary)
       # secure channel has not established yet
       raise Error::ConfigError \
-        unless @endpoint == :client && @state == ClientState::CONNECTED
+        unless (@endpoint == :client && @state == ClientState::CONNECTED) ||
+               (@endpoint == :server && @state == ServerState::CONNECTED)
 
       ap = Message::ApplicationData.new(binary)
       send_application_data(ap, @write_cipher)
