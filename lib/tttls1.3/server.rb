@@ -95,6 +95,9 @@ module TTTLS13
           logger.debug('ServerState::WAIT_CV')
         when ServerState::WAIT_FINISHED
           logger.debug('ServerState::WAIT_FINISHED')
+
+          recv_finished
+          @state = ServerState::CONNECTED
         when ServerState::CONNECTED
           logger.debug('ServerState::CONNECTED')
           break
@@ -113,6 +116,16 @@ module TTTLS13
       terminate(:unexpected_message) unless ch.is_a?(Message::ClientHello)
 
       @transcript[CH] = ch
+    end
+
+    # @raise [TTTLS13::Error::ErrorAlerts]
+    #
+    # @return [TTTLS13::Message::Finished]
+    def recv_finished
+      cf = recv_message
+      terminate(:unexpected_message) unless cf.is_a?(Message::Finished)
+
+      @transcript[CF] = cf
     end
 
     # @return [String]
