@@ -149,14 +149,20 @@ module TTTLS13
           logger.debug('ClientState::WAIT_SH')
 
           sh = recv_server_hello
-          terminate(:illegal_parameter) unless valid_sh_legacy_version?
-          terminate(:illegal_parameter) unless valid_sh_legacy_session_id_echo?
-          terminate(:illegal_parameter) unless valid_sh_cipher_suite?
-          terminate(:illegal_parameter) unless valid_sh_compression_method?
-          # only TLS 1.3
-          terminate(:illegal_parameter) unless valid_sh_random?
+          # support only TLS 1.3
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
+          # validate parameters
+          terminate(:illegal_parameter) unless valid_sh_legacy_version?
+          terminate(:illegal_parameter) unless valid_sh_random?
+          terminate(:illegal_parameter) unless valid_sh_legacy_session_id_echo?
+          terminate(:illegal_parameter) unless valid_sh_cipher_suite?
+          terminate(:illegal_parameter) \
+            if @transcript.include?(HRR) &&
+               neq_hrr_cipher_suite?(sh.cipher_suite)
+          terminate(:illegal_parameter) unless valid_sh_compression_method?
+
+          # handling HRR
           if sh.hrr?
             terminate(:unexpected_message) if received_2nd_hrr?
 
@@ -171,17 +177,17 @@ module TTTLS13
             next
           end
 
+          # validate extensions
           terminate(:unsupported_extension) \
             unless offered_ch_extensions?(sh.extensions)
-          terminate(:illegal_parameter) \
-            if @transcript.include?(HRR) &&
-               neq_hrr_cipher_suite?(sh.cipher_suite)
+
           versions \
           = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS].versions
           terminate(:illegal_parameter) \
             if @transcript.include?(HRR) &&
                neq_hrr_supported_versions?(versions)
 
+          # generate shared secret
           @psk = nil \
             unless sh.extensions
                      .include?(Message::ExtensionType::PRE_SHARED_KEY)
@@ -189,13 +195,13 @@ module TTTLS13
 
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
-          key_exchange = kse.key_exchange
+          ke = kse.key_exchange
           group = kse.group
           priv_key = @priv_keys[group]
-          shared_key = gen_shared_secret(key_exchange, priv_key, group)
+          shared_secret = gen_shared_secret(ke, priv_key, group)
           @cipher_suite = sh.cipher_suite
           @key_schedule = KeySchedule.new(psk: @psk,
-                                          shared_secret: shared_key,
+                                          shared_secret: shared_secret,
                                           cipher_suite: @cipher_suite,
                                           transcript: @transcript)
           @write_cipher = gen_cipher(@cipher_suite,
@@ -432,10 +438,9 @@ module TTTLS13
 
     # @return [TTTLS13::Message::ClientHello]
     def send_client_hello
-      exs = gen_ch_extensions
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
-        extensions: exs
+        extensions: gen_ch_extensions
       )
       @transcript[CH] = ch
 
@@ -611,12 +616,12 @@ module TTTLS13
     # @return [Boolean]
     def verify_certificate_verify
       ct = @transcript[CT]
-      certificate_pem = ct.certificate_list.first.cert_data.to_pem
+      public_key = ct.certificate_list.first.cert_data.public_key
       cv = @transcript[CV]
       signature_scheme = cv.signature_scheme
       signature = cv.signature
       context = 'TLS 1.3, server CertificateVerify'
-      do_verify_certificate_verify(certificate_pem: certificate_pem,
+      do_verify_certificate_verify(public_key: public_key,
                                    signature_scheme: signature_scheme,
                                    signature: signature,
                                    context: context,

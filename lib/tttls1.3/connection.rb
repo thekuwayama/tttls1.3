@@ -227,7 +227,52 @@ module TTTLS13
       OpenSSL::HMAC.digest(digest, secret, hash)
     end
 
-    # @param certificate_pem [String]
+    # @param private_key [OpenSSL::PKey::PKey]
+    # @param signature_scheme [TTTLS13::SignatureScheme]
+    # @param context [String]
+    # @param handshake_context_end [Integer]
+    #
+    # @raise [TTTLS13::Error::ErrorAlerts]
+    #
+    # @return [String]
+    # rubocop: disable Metrics/CyclomaticComplexity
+    def do_sign_certificate_verify(private_key:, signature_scheme:, context:,
+                                   handshake_context_end:)
+      digest = CipherSuite.digest(@cipher_suite)
+      hash = @transcript.hash(digest, handshake_context_end)
+      content = "\x20" * 64 + context + "\x00" + hash
+
+      # RSA signatures MUST use an RSASSA-PSS algorithm, regardless of whether
+      # RSASSA-PKCS1-v1_5 algorithms appear in "signature_algorithms".
+      case signature_scheme
+      when SignatureScheme::RSA_PKCS1_SHA256,
+           SignatureScheme::RSA_PSS_RSAE_SHA256,
+           SignatureScheme::RSA_PSS_PSS_SHA256
+        private_key.sign_pss('SHA256', content, salt_length: :digest,
+                                                mgf1_hash: 'SHA256')
+      when SignatureScheme::RSA_PKCS1_SHA384,
+           SignatureScheme::RSA_PSS_RSAE_SHA384,
+           SignatureScheme::RSA_PSS_PSS_SHA384
+        private_key.sign_pss('SHA384', content, salt_length: :digest,
+                                                mgf1_hash: 'SHA384')
+      when SignatureScheme::RSA_PKCS1_SHA512,
+           SignatureScheme::RSA_PSS_RSAE_SHA512,
+           SignatureScheme::RSA_PSS_PSS_SHA512
+        private_key.sign_pss('SHA512', content, salt_length: :digest,
+                                                mgf1_hash: 'SHA512')
+      when SignatureScheme::ECDSA_SECP256R1_SHA256
+        private_key.sign('SHA256', content)
+      when SignatureScheme::ECDSA_SECP384R1_SHA384
+        private_key.sign('SHA384', content)
+      when SignatureScheme::ECDSA_SECP521R1_SHA512
+        private_key.sign('SHA512', content)
+      else # TODO: ED25519, ED448
+        terminate(:internal_error)
+      end
+    end
+    # rubocop: enable Metrics/CyclomaticComplexity
+
+    # @param public_key [OpenSSL::PKey::PKey]
     # @param signature_scheme [TTTLS13::SignatureScheme]
     # @param signature [String]
     # @param context [String]
@@ -237,13 +282,12 @@ module TTTLS13
     #
     # @return [Boolean]
     # rubocop: disable Metrics/CyclomaticComplexity
-    def do_verify_certificate_verify(certificate_pem:, signature_scheme:,
+    def do_verify_certificate_verify(public_key:, signature_scheme:,
                                      signature:, context:,
                                      handshake_context_end:)
       digest = CipherSuite.digest(@cipher_suite)
       hash = @transcript.hash(digest, handshake_context_end)
       content = "\x20" * 64 + context + "\x00" + hash
-      public_key = OpenSSL::X509::Certificate.new(certificate_pem).public_key
 
       # RSA signatures MUST use an RSASSA-PSS algorithm, regardless of whether
       # RSASSA-PKCS1-v1_5 algorithms appear in "signature_algorithms".

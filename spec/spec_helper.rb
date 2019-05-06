@@ -129,6 +129,48 @@ BIN
 TESTBINARY_EARLY_DATA_INDICATION_CH = ''
 
 # https://tools.ietf.org/html/rfc8448#section-3
+# 2.  Private Keys
+TESTBINARY_PKEY_MODULUS = <<BIN.split.map(&:hex).map(&:chr).join
+  b4 bb 49 8f 82 79 30 3d     98 08 36 39 9b 36 c6 98
+  8c 0c 68 de 55 e1 bd b8     26 d3 90 1a 24 61 ea fd
+  2d e4 9a 91 d0 15 ab bc     9a 95 13 7a ce 6c 1a f1
+  9e aa 6a f9 8c 7c ed 43     12 09 98 e1 87 a8 0e e0
+  cc b0 52 4b 1b 01 8c 3e     0b 63 26 4d 44 9a 6d 38
+  e2 2a 5f da 43 08 46 74     80 30 53 0e f0 46 1c 8c
+  a9 d9 ef bf ae 8e a6 d1     d0 3e 2b d1 93 ef f0 ab
+  9a 80 02 c4 74 28 a6 d3     5a 8d 88 d7 9f 7f 1e 3f
+BIN
+
+TESTBINARY_PKEY_PUBLIC_EXPONENT = <<BIN.split.map(&:hex).map(&:chr).join
+  01 00 01
+BIN
+
+TESTBINARY_PKEY_PRIME1 = <<BIN.split.map(&:hex).map(&:chr).join
+  e4 35 fb 7c c8 37 37 75     6d ac ea 96 ab 7f 59 a2
+  cc 10 69 db 7d eb 19 0e     17 e3 3a 53 2b 27 3f 30
+  a3 27 aa 0a aa bc 58 cd     67 46 6a f9 84 5f ad c6
+  75 fe 09 4a f9 2c 4b d1     f2 c1 bc 33 dd 2e 05 15
+BIN
+
+TESTBINARY_PKEY_PRIME2 = <<BIN.split.map(&:hex).map(&:chr).join
+  ca bd 3b c0 e0 43 86 64     c8 d4 cc 9f 99 97 7a 94
+  d9 bb fe ad 8e 43 87 0a     ba e3 f7 eb 8b 4e 0e ee
+  8a f1 d9 b4 71 9b a6 19     6c f2 cb ba ee eb f8 b3
+  49 0a fe 9e 9f fa 74 a8     8a a5 1f c6 45 62 93 03
+BIN
+
+TESTBINARY_PKEY_PRIVATE_EXPONENT = <<BIN.split.map(&:hex).map(&:chr).join
+  04 de a7 05 d4 3a 6e a7     20 9d d8 07 21 11 a8 3c
+  81 e3 22 a5 92 78 b3 34     80 64 1e af 7c 0a 69 85
+  b8 e3 1c 44 f6 de 62 e1     b4 c2 30 9f 61 26 e7 7b
+  7c 41 e9 23 31 4b bf a3     88 13 05 dc 12 17 f1 6c
+  81 9c e5 38 e9 22 f3 69     82 8d 0e 57 19 5d 8c 84
+  88 46 02 07 b2 fa a7 26     bc f7 08 bb d7 db 7f 67
+  9f 89 34 92 fc 2a 62 2e     08 97 0a ac 44 1c e4 e0
+  c3 08 8d f2 5a e6 79 23     3d f8 a3 bd a2 ff 99 41
+BIN
+
+# https://tools.ietf.org/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 00 c0 03 03 cb 34     ec b1 e7 81 63 ba 1c 38
