@@ -230,7 +230,8 @@ RSpec.describe Client do
     end
 
     it 'should check downgrade protection value' do
-      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(ErrorAlerts)
+      expect(client.send(:valid_sh_random?)).to be false
+      expect(client.send(:negotiated_tls_1_3?)).to be true
     end
   end
 
@@ -252,7 +253,8 @@ RSpec.describe Client do
     end
 
     it 'should check downgrade protection value' do
-      expect { client.send(:negotiated_tls_1_3?) }.to raise_error(ErrorAlerts)
+      expect(client.send(:valid_sh_random?)).to be false
+      expect(client.send(:negotiated_tls_1_3?)).to be true
     end
   end
 

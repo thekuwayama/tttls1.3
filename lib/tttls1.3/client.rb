@@ -154,6 +154,7 @@ module TTTLS13
           terminate(:illegal_parameter) unless valid_sh_cipher_suite?
           terminate(:illegal_parameter) unless valid_sh_compression_method?
           # only TLS 1.3
+          terminate(:illegal_parameter) unless valid_sh_random?
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
           if sh.hrr?
@@ -387,7 +388,7 @@ module TTTLS13
     # @return [TTTLS13::Message::Extensions]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
-    def gen_extensions
+    def gen_ch_extensions
       exs = []
       # supported_versions: only TLS 1.3
       exs << Message::Extension::SupportedVersions.new(
@@ -431,7 +432,7 @@ module TTTLS13
 
     # @return [TTTLS13::Message::ClientHello]
     def send_client_hello
-      exs = gen_extensions
+      exs = gen_ch_extensions
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
         extensions: exs
@@ -648,23 +649,23 @@ module TTTLS13
     #     1. supported_versions == ["\x03\x04"]
     #     2. legacy_versions == ["\x03\x03"]
     #
-    # @raise [TTTLS13::Error::ErrorAlerts]
-    #
     # @return [Boolean]
     def negotiated_tls_1_3?
       sh = @transcript[SH]
+      sh_lv = sh.legacy_version
       sh_sv = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
                 &.versions
-      sh_r8 = sh.random[-8..]
-      if sh_sv&.first == Message::ProtocolVersion::TLS_1_3 &&
-         sh_r8 != DOWNGRADE_PROTECTION_TLS_1_2 &&
-         sh_r8 != DOWNGRADE_PROTECTION_TLS_1_1
-        true
-      elsif sh_sv.nil?
-        false
-      else
-        terminate(:illegal_parameter)
-      end
+
+      sh_lv == Message::ProtocolVersion::TLS_1_2 &&
+        sh_sv&.first == Message::ProtocolVersion::TLS_1_3
+    end
+
+    # @return [Boolean]
+    def valid_sh_random?
+      sh_r8 = @transcript[SH].random[-8..]
+
+      sh_r8 != DOWNGRADE_PROTECTION_TLS_1_2 &&
+        sh_r8 != DOWNGRADE_PROTECTION_TLS_1_1
     end
 
     # @return [Boolean]
