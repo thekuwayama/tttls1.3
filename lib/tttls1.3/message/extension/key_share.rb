@@ -109,6 +109,26 @@ module TTTLS13
           [key_share, priv_keys]
         end
 
+        # @param groups [TTTLS13::Message::Extension::NamedGroup]
+        #
+        # @return [TTTLS13::Message::Extensions::KeyShare]
+        # @return [OpenSSL::PKey::EC.$Object]
+        def self.gen_sh_key_share(group)
+          curve = NamedGroup.curve_name(group)
+          ec = OpenSSL::PKey::EC.new(curve)
+          ec.generate_key!
+
+          key_share = KeyShare.new(
+            msg_type: HandshakeType::SERVER_HELLO,
+            key_share_entry: KeyShareEntry.new(
+              group: group,
+              key_exchange: ec.public_key.to_octet_string(:uncompressed)
+            )
+          )
+
+          [key_share, ec]
+        end
+
         class << self
           private
 
