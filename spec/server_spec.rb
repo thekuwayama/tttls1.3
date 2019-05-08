@@ -25,6 +25,33 @@ RSpec.describe Server do
   end
 
   context 'server' do
+    let(:record) do
+      mock_socket = SimpleStream.new
+      server = Server.new(mock_socket)
+      transcript = Transcript.new
+      transcript[CH] = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      server.instance_variable_set(:@transcript, transcript)
+      cipher_suite = server.send(:select_cipher_suite)
+      server.instance_variable_set(:@cipher_suite, cipher_suite)
+      named_group = server.send(:select_named_group)
+      server.instance_variable_set(:@named_group, named_group)
+      signature_scheme = server.send(:select_signature_scheme)
+      server.instance_variable_set(:@signature_scheme, signature_scheme)
+      server.send(:send_server_hello)
+      Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
+    end
+
+    it 'should send ServerHello' do
+      expect(record.type).to eq ContentType::HANDSHAKE
+
+      message = record.messages.first
+      expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
+      expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
+      expect(message.legacy_compression_method).to eq "\x00"
+    end
+  end
+
+  context 'server' do
     let(:private_key) do
       rsa = OpenSSL::PKey::RSA.new
       rsa.set_key(OpenSSL::BN.new(TESTBINARY_PKEY_MODULUS, 2),

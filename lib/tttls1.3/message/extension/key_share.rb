@@ -120,10 +120,12 @@ module TTTLS13
 
           key_share = KeyShare.new(
             msg_type: HandshakeType::SERVER_HELLO,
-            key_share_entry: KeyShareEntry.new(
-              group: group,
-              key_exchange: ec.public_key.to_octet_string(:uncompressed)
-            )
+            key_share_entry: [
+              KeyShareEntry.new(
+                group: group,
+                key_exchange: ec.public_key.to_octet_string(:uncompressed)
+              )
+            ]
           )
 
           [key_share, ec]
