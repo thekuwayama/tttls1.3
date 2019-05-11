@@ -52,18 +52,8 @@ RSpec.describe Server do
   end
 
   context 'server' do
-    let(:private_key) do
-      rsa = OpenSSL::PKey::RSA.new
-      rsa.set_key(OpenSSL::BN.new(TESTBINARY_PKEY_MODULUS, 2),
-                  OpenSSL::BN.new(TESTBINARY_PKEY_PUBLIC_EXPONENT, 2),
-                  OpenSSL::BN.new(TESTBINARY_PKEY_PRIVATE_EXPONENT, 2))
-      rsa.set_factors(OpenSSL::BN.new(TESTBINARY_PKEY_PRIME1, 2),
-                      OpenSSL::BN.new(TESTBINARY_PKEY_PRIME2, 2))
-    end
-
     let(:server) do
       server = Server.new(nil)
-      server.instance_variable_set(:@private_key, private_key)
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),

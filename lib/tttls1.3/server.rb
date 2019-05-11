@@ -150,6 +150,23 @@ module TTTLS13
           logger.debug('ServerState::NEGOTIATED')
 
           @transcript[SH] = send_server_hello
+
+          # generate shared secret
+          ch = @transcript[CH]
+          ke = ch.extensions[Message::ExtensionType::KEY_SHARE]
+                 .key_share_entry.find { |kse| kse.group == @named_group }
+          shared_secret = gen_shared_secret(ke, @priv_key, @named_group)
+          @key_schedule = KeySchedule.new(psk: @psk,
+                                          shared_secret: shared_secret,
+                                          cipher_suite: @cipher_suite,
+                                          transcript: @transcript)
+          @write_cipher = gen_cipher(@cipher_suite,
+                                     @key_schedule.server_handshake_write_key,
+                                     @key_schedule.server_handshake_write_iv)
+          @read_cipher = gen_cipher(@cipher_suite,
+                                    @key_schedule.client_handshake_write_key,
+                                    @key_schedule.client_handshake_write_iv)
+          @state = ServerState::WAIT_FLIGHT2
         when ServerState::WAIT_EOED
           logger.debug('ServerState::WAIT_EOED')
         when ServerState::WAIT_FLIGHT2
@@ -161,7 +178,7 @@ module TTTLS13
         when ServerState::WAIT_FINISHED
           logger.debug('ServerState::WAIT_FINISHED')
 
-          recv_finished
+          @transcript[CF] = recv_finished
           @state = ServerState::CONNECTED
         when ServerState::CONNECTED
           logger.debug('ServerState::CONNECTED')
@@ -228,7 +245,7 @@ module TTTLS13
     # @return [String]
     def sign_certificate_verify
       context = 'TLS 1.3, server CertificateVerify'
-      do_sign_certificate_verify(private_key: @private_key,
+      do_sign_certificate_verify(private_key: @key,
                                  signature_scheme: @signature_scheme,
                                  context: context,
                                  handshake_context_end: CT)
