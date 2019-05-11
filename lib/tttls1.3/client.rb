@@ -135,7 +135,7 @@ module TTTLS13
         when ClientState::START
           logger.debug('ClientState::START')
 
-          send_client_hello
+          @transcript[CH] = send_client_hello
           if use_early_data?
             @early_data_write_cipher \
             = gen_cipher(@settings[:psk_cipher_suite],
@@ -148,7 +148,7 @@ module TTTLS13
         when ClientState::WAIT_SH
           logger.debug('ClientState::WAIT_SH')
 
-          sh = recv_server_hello
+          sh = @transcript[SH] = recv_server_hello
           # support only TLS 1.3
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
@@ -172,7 +172,8 @@ module TTTLS13
               unless offered_ch_extensions?(sh.extensions, HRR)
             terminate(:illegal_parameter) unless valid_hrr_key_share?
 
-            send_new_client_hello
+            ch = send_new_client_hello(@transcript[CH1], @transcript[HRR])
+            @transcript[CH] = ch
             @state = ClientState::WAIT_SH
             next
           end
@@ -188,9 +189,8 @@ module TTTLS13
                neq_hrr_supported_versions?(versions)
 
           # generate shared secret
-          @psk = nil \
-            unless sh.extensions
-                     .include?(Message::ExtensionType::PRE_SHARED_KEY)
+          @psk = nil unless sh.extensions
+                              .include?(Message::ExtensionType::PRE_SHARED_KEY)
           terminate(:illegal_parameter) unless valid_sh_key_share?
 
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
@@ -214,7 +214,7 @@ module TTTLS13
         when ClientState::WAIT_EE
           logger.debug('ClientState::WAIT_EE')
 
-          ee = recv_encrypted_extensions
+          ee = @transcript[EE] = recv_encrypted_extensions
           terminate(:illegal_parameter) if ee.any_forbidden_extensions?
           terminate(:unsupported_extension) \
             unless offered_ch_extensions?(ee.extensions)
@@ -232,7 +232,7 @@ module TTTLS13
 
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
-            @transcript[CT] = ct = message
+            ct = @transcript[CT] = message
             terminate(:unsupported_extension) \
               unless ct.certificate_list.map(&:extensions)
                        .all? { |ex| offered_ch_extensions?(ex) }
@@ -252,7 +252,7 @@ module TTTLS13
         when ClientState::WAIT_CERT
           logger.debug('ClientState::WAIT_EE')
 
-          ct = recv_certificate
+          ct = @transcript[CT] = recv_certificate
           terminate(:unsupported_extension) \
             unless ct.certificate_list.map(&:extensions)
                      .all? { |ex| offered_ch_extensions?(ex) }
@@ -265,18 +265,19 @@ module TTTLS13
         when ClientState::WAIT_CV
           logger.debug('ClientState::WAIT_EE')
 
-          recv_certificate_verify
+          @transcript[CV] = recv_certificate_verify
           terminate(:decrypt_error) unless verify_certificate_verify
           @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           logger.debug('ClientState::WAIT_EE')
 
-          recv_finished
+          @transcript[SF] = recv_finished
           terminate(:decrypt_error) unless verify_finished
           send_ccs # compatibility mode
-          send_eoed if use_early_data? && accepted_early_data?
+          @transcript[EOED] = send_eoed \
+            if use_early_data? && accepted_early_data?
           # TODO: Send Certificate [+ CertificateVerify]
-          send_finished
+          @transcript[CF] = send_finished
           @write_cipher = gen_cipher(@cipher_suite,
                                      @key_schedule.client_application_write_key,
                                      @key_schedule.client_application_write_iv)
@@ -442,7 +443,6 @@ module TTTLS13
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
         extensions: gen_ch_extensions
       )
-      @transcript[CH] = ch
 
       if use_psk?
         # pre_shared_key && psk_key_exchange_modes
@@ -456,14 +456,18 @@ module TTTLS13
         )
         ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
         # at the end, sign PSK binder
-        sign_psk_binder
+        sign_psk_binder(ch)
       end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
+
+      ch
     end
 
+    # @param ch [TTTLS13::Message::ClientHello]
+    #
     # @return [String]
-    def sign_psk_binder
+    def sign_psk_binder(ch)
       # pre_shared_key
       #
       # binder is computed as an HMAC over a transcript hash containing a
@@ -484,7 +488,8 @@ module TTTLS13
           binders: dummy_binders
         )
       )
-      @transcript[CH].extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
+      ch.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
+      @transcript[CH] = ch
 
       # TODO: ext binder
       psk.offered_psks.binders[0] = do_sign_psk_binder(digest)
@@ -501,15 +506,17 @@ module TTTLS13
     # NOTE:
     # https://tools.ietf.org/html/rfc8446#section-4.1.2
     #
+    # @param ch1 [TTTLS13::Message::ClientHello]
+    # @param hrr [TTTLS13::Message::ServerHello]
+    #
     # @return [TTTLS13::Message::ClientHello]
-    def send_new_client_hello
-      hrr_exs = @transcript[HRR].extensions
+    def send_new_client_hello(ch1, hrr)
       arr = []
 
       # key_share
-      if hrr_exs.include?(Message::ExtensionType::KEY_SHARE)
-        group = hrr_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
-                                                          .first.group
+      if hrr.extensions.include?(Message::ExtensionType::KEY_SHARE)
+        group = hrr.extensions[Message::ExtensionType::KEY_SHARE]
+                   .key_share_entry.first.group
         key_share, priv_keys \
                    = Message::Extension::KeyShare.gen_ch_key_share([group])
         arr << key_share
@@ -519,17 +526,15 @@ module TTTLS13
       # cookie
       #
       # When sending a HelloRetryRequest, the server MAY provide a "cookie"
-      # extension to the client... When sending the new ClientHello, the client
+      # extension to the client. When sending the new ClientHello, the client
       # MUST copy the contents of the extension received in the
       # HelloRetryRequest into a "cookie" extension in the new ClientHello.
       #
       # https://tools.ietf.org/html/rfc8446#section-4.2.2
-      if hrr_exs.include?(Message::ExtensionType::COOKIE)
-        arr << hrr_exs[Message::ExtensionType::COOKIE]
-      end
+      arr << hrr.extensions[Message::ExtensionType::COOKIE] \
+        if hrr.extensions.include?(Message::ExtensionType::COOKIE)
 
       # early_data
-      ch1 = @transcript[CH1]
       new_exs = ch1.extensions.merge(Message::Extensions.new(arr))
       new_exs.delete(Message::ExtensionType::EARLY_DATA)
       ch = Message::ClientHello.new(
@@ -541,7 +546,8 @@ module TTTLS13
         extensions: new_exs
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
-      @transcript[CH] = ch
+
+      ch
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
@@ -551,7 +557,7 @@ module TTTLS13
       sh = recv_message
       terminate(:unexpected_message) unless sh.is_a?(Message::ServerHello)
 
-      @transcript[SH] = sh
+      sh
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
@@ -562,7 +568,7 @@ module TTTLS13
       terminate(:unexpected_message) \
         unless ee.is_a?(Message::EncryptedExtensions)
 
-      @transcript[EE] = ee
+      ee
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
@@ -572,7 +578,7 @@ module TTTLS13
       ct = recv_message
       terminate(:unexpected_message) unless ct.is_a?(Message::Certificate)
 
-      @transcript[CT] = ct
+      ct
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
@@ -582,7 +588,7 @@ module TTTLS13
       cv = recv_message
       terminate(:unexpected_message) unless cv.is_a?(Message::CertificateVerify)
 
-      @transcript[CV] = cv
+      cv
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
@@ -592,7 +598,7 @@ module TTTLS13
       sf = recv_message
       terminate(:unexpected_message) unless sf.is_a?(Message::Finished)
 
-      @transcript[SF] = sf
+      sf
     end
 
     # @return [TTTLS13::Message::Finished]
@@ -601,7 +607,7 @@ module TTTLS13
       send_handshakes(Message::ContentType::APPLICATION_DATA, [cf],
                       @write_cipher)
 
-      @transcript[CF] = cf
+      cf
     end
 
     # @return [TTTLS13::Message::EndOfEarlyData]
@@ -610,7 +616,7 @@ module TTTLS13
       send_handshakes(Message::ContentType::APPLICATION_DATA, [eoed],
                       @early_data_write_cipher)
 
-      @transcript[EOED] = eoed
+      eoed
     end
 
     # @return [Boolean]

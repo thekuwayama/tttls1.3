@@ -129,7 +129,7 @@ module TTTLS13
         when ServerState::START
           logger.debug('ServerState::START')
 
-          recv_client_hello
+          @transcript[CH] = recv_client_hello
           @state = ServerState::RECVD_CH
         when ServerState::RECVD_CH
           logger.debug('ServerState::RECVD_CH')
@@ -149,7 +149,7 @@ module TTTLS13
         when ServerState::NEGOTIATED
           logger.debug('ServerState::NEGOTIATED')
 
-          send_server_hello
+          @transcript[SH] = send_server_hello
         when ServerState::WAIT_EOED
           logger.debug('ServerState::WAIT_EOED')
         when ServerState::WAIT_FLIGHT2
@@ -184,7 +184,7 @@ module TTTLS13
       ch = recv_message
       terminate(:unexpected_message) unless ch.is_a?(Message::ClientHello)
 
-      @transcript[CH] = ch
+      ch
     end
 
     # @return [TTTLS13::Message::ServerHello]
@@ -197,7 +197,7 @@ module TTTLS13
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [sh], @write_cipher)
 
-      @transcript[SH] = sh
+      sh
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
@@ -207,7 +207,7 @@ module TTTLS13
       cf = recv_message
       terminate(:unexpected_message) unless cf.is_a?(Message::Finished)
 
-      @transcript[CF] = cf
+      cf
     end
 
     # @return [TTTLS13::Message::Extensions]

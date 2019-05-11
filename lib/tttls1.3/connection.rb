@@ -150,7 +150,7 @@ module TTTLS13
 
     # @param record [TTTLS13::Message::Record]
     def send_record(record)
-      logger.debug('send ' + record.inspect)
+      logger.debug("send \n" + record.pretty_inspect)
       @socket.write(record.serialize(@send_record_size))
     end
 
@@ -211,7 +211,7 @@ module TTTLS13
         terminate(:unexpected_message)
       end
 
-      logger.debug('receive ' + record.inspect)
+      logger.debug("receive \n" + record.pretty_inspect)
       record
     end
 
