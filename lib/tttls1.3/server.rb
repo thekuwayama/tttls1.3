@@ -187,9 +187,16 @@ module TTTLS13
           logger.debug('ServerState::WAIT_FINISHED')
 
           @transcript[CF] = recv_finished
+          @write_cipher = gen_cipher(@cipher_suite,
+                                     @key_schedule.server_application_write_key,
+                                     @key_schedule.server_application_write_iv)
+          @read_cipher = gen_cipher(@cipher_suite,
+                                    @key_schedule.client_application_write_key,
+                                    @key_schedule.client_application_write_iv)
           @state = ServerState::CONNECTED
         when ServerState::CONNECTED
           logger.debug('ServerState::CONNECTED')
+
           break
         end
       end
