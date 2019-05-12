@@ -150,6 +150,7 @@ module TTTLS13
           logger.debug('ServerState::NEGOTIATED')
 
           @transcript[SH] = send_server_hello
+          send_ccs # compatibility mode
 
           # generate shared secret
           ke = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
