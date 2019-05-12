@@ -187,6 +187,7 @@ module TTTLS13
           logger.debug('ServerState::WAIT_FINISHED')
 
           @transcript[CF] = recv_finished
+          terminate(:decrypt_error) unless verify_finished
           @write_cipher = gen_cipher(@cipher_suite,
                                      @key_schedule.server_application_write_key,
                                      @key_schedule.server_application_write_iv)
@@ -326,6 +327,17 @@ module TTTLS13
       do_sign_finished(digest: digest,
                        finished_key: finished_key,
                        handshake_context_end: CV)
+    end
+
+    # @return [Boolean]
+    def verify_finished
+      digest = CipherSuite.digest(@cipher_suite)
+      finished_key = @key_schedule.client_finished_key
+      signature = @transcript[CF].verify_data
+      do_verify_finished(digest: digest,
+                         finished_key: finished_key,
+                         handshake_context_end: EOED,
+                         signature: signature)
     end
 
     # @return [Boolean]
