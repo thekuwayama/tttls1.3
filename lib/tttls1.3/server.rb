@@ -67,10 +67,10 @@ module TTTLS13
 
       return if @settings[:crt_file].nil?
 
-      crt_str = File.open(@settings[:crt_file]).read
+      crt_str = File.read(@settings[:crt_file])
       @crt = OpenSSL::X509::Certificate.new(crt_str)
       klass = @crt.public_key.class
-      @key = klass.new(File.open(@settings[:key_file]).read)
+      @key = klass.new(File.read(@settings[:key_file]))
     end
 
     # NOTE:
@@ -152,9 +152,9 @@ module TTTLS13
           @transcript[SH] = send_server_hello
 
           # generate shared secret
-          ch = @transcript[CH]
-          ke = ch.extensions[Message::ExtensionType::KEY_SHARE]
-                 .key_share_entry.find { |kse| kse.group == @named_group }
+          ke = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
+                              .key_share_entry
+                              .find { |e| e.group == @named_group }.key_exchange
           shared_secret = gen_shared_secret(ke, @priv_key, @named_group)
           @key_schedule = KeySchedule.new(psk: @psk,
                                           shared_secret: shared_secret,
@@ -171,6 +171,14 @@ module TTTLS13
           logger.debug('ServerState::WAIT_EOED')
         when ServerState::WAIT_FLIGHT2
           logger.debug('ServerState::WAIT_FLIGHT2')
+
+          ee = @transcript[EE] = gen_encrypted_extensions
+          # TODO: [Send CertificateRequest]
+          ct = @transcript[CT] = gen_certificate
+          cv = @transcript[CV] = gen_certificate_verify
+          sf = @transcript[SF] = gen_finished
+          send_server_parameters([ee, ct, cv, sf])
+          @state = ServerState::WAIT_FINISHED
         when ServerState::WAIT_CERT
           logger.debug('ServerState::WAIT_CERT')
         when ServerState::WAIT_CV
@@ -217,6 +225,43 @@ module TTTLS13
       sh
     end
 
+    # @param messages [Array of TTTLS13::Message::$Object]
+    #
+    # @return [Array of TTTLS13::Message::$Object]
+    def send_server_parameters(messages)
+      send_handshakes(Message::ContentType::APPLICATION_DATA,
+                      messages.reject(&:nil?),
+                      @write_cipher)
+
+      messages
+    end
+
+    # @return [TTTLS13::Message::EncryptedExtensions]
+    def gen_encrypted_extensions
+      Message::EncryptedExtensions.new(gen_ee_extensions)
+    end
+
+    # @return [TTTLS13::Message::Certificate, nil]
+    def gen_certificate
+      return nil if @crt.nil?
+
+      ce = Message::CertificateEntry.new(@crt)
+      Message::Certificate.new(certificate_list: [ce])
+    end
+
+    # @return [TTTLS13::Message::CertificateVerify, nil]
+    def gen_certificate_verify
+      return nil if @key.nil?
+
+      Message::CertificateVerify.new(signature_scheme: @signature_scheme,
+                                     signature: sign_certificate_verify)
+    end
+
+    # @return [TTTLS13::Message::Finished]
+    def gen_finished
+      Message::Finished.new(sign_finished)
+    end
+
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::Finished]
@@ -239,6 +284,22 @@ module TTTLS13
       key_share, @priv_key \
                  = Message::Extension::KeyShare.gen_sh_key_share(@named_group)
       exs << key_share
+      Message::Extensions.new(exs)
+    end
+
+    # @return [TTTLS13::Message::Extensions]
+    def gen_ee_extensions
+      exs = []
+
+      # server_name
+      exs << ServerName.new('') \
+        if @transcript[CH].extensions
+                          .include?(Message::ExtensionType::SERVER_NAME)
+
+      # supported_groups
+      exs \
+      << Message::Extension::SupportedGroups.new(@settings[:supported_groups])
+
       Message::Extensions.new(exs)
     end
 

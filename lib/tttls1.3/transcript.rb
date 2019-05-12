@@ -23,6 +23,8 @@ module TTTLS13
       super
     end
 
+    alias super_include? include?
+
     # @param digest [String] name of digest algorithm
     # @param end_index [Integer]
     #
@@ -41,6 +43,10 @@ module TTTLS13
       s = concat_messages(digest, end_index)
       truncated = s[0...-truncate_bytes]
       OpenSSL::Digest.digest(digest, truncated)
+    end
+
+    def include?(key)
+      super_include?(key) && !self[key].nil?
     end
 
     private

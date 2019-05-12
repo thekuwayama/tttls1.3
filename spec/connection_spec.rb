@@ -82,7 +82,7 @@ RSpec.describe Connection do
     it 'should sign server CertificateVerify.signature' do
       public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
-      # NOTE:
+
       # used RSASSA-PSS signature_scheme, salt is a random sequence.
       # CertificateVerify.signature is random.
       signature = connection.send(:do_sign_certificate_verify,
