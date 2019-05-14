@@ -25,9 +25,14 @@ RSpec.describe Server do
   end
 
   context 'server' do
+    let(:crt) do
+      OpenSSL::X509::Certificate.new(File.read(__dir__ + '/../tmp/server.crt'))
+    end
+
     let(:record) do
       mock_socket = SimpleStream.new
       server = Server.new(mock_socket)
+      server.instance_variable_set(:@crt, crt)
       transcript = Transcript.new
       transcript[CH] = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
       server.instance_variable_set(:@transcript, transcript)

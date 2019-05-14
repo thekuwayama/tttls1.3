@@ -364,6 +364,7 @@ module TTTLS13
       groups \
       = @transcript[CH].extensions[Message::ExtensionType::SUPPORTED_GROUPS]
                        &.named_group_list || []
+
       groups.find do |sg|
         @settings[:supported_groups].include?(sg)
       end
@@ -374,9 +375,9 @@ module TTTLS13
       algorithms \
       = @transcript[CH].extensions[Message::ExtensionType::SIGNATURE_ALGORITHMS]
                        &.supported_signature_algorithms || []
-      algorithms.find do |ss|
+
+      do_select_signature_algorithms(algorithms, @crt).find do |ss|
         @settings[:signature_algorithms].include?(ss)
-        # TODO: check @crt's signature_algorithm; rsaEncryption or rsassaPss
       end
     end
 

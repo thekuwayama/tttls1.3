@@ -431,6 +431,38 @@ module TTTLS13
       ctx.verify
     end
     # rubocop: enable Metrics/AbcSize
+
+    # @param signature_algorithms [Array of SignatureAlgorithms]
+    # @param crt [OpenSSL::X509::Certificate]
+    #
+    # @return [Array of TTTLS13::Message::Extension::SignatureAlgorithms]
+    def do_select_signature_algorithms(signature_algorithms, crt)
+      spki = OpenSSL::Netscape::SPKI.new
+      spki.public_key = crt.public_key
+      oid_str = spki.to_text.split("\n")
+                    .find { |l| l.include?('Public Key Algorithm:') }
+      signature_algorithms.select do |sa|
+        case sa
+        when SignatureScheme::ECDSA_SECP256R1_SHA256,
+             SignatureScheme::ECDSA_SECP384R1_SHA384,
+             SignatureScheme::ECDSA_SECP521R1_SHA512
+          oid_str.include?('id-ecPublicKey')
+        when SignatureScheme::RSA_PSS_PSS_SHA256,
+             SignatureScheme::RSA_PSS_PSS_SHA384,
+             SignatureScheme::RSA_PSS_PSS_SHA512
+          oid_str.include?('rsassaPss')
+        when SignatureScheme::RSA_PSS_RSAE_SHA256,
+             SignatureScheme::RSA_PSS_RSAE_SHA384,
+             SignatureScheme::RSA_PSS_RSAE_SHA512
+          oid_str.include?('rsaEncryption')
+        else
+          # RSASSA-PKCS1-v1_5 algorithms refer solely to signatures which appear
+          # in certificates and are not defined for use in signed TLS handshake
+          # messages
+          false
+        end
+      end
+    end
   end
   # rubocop: enable Metrics/ClassLength
 end
