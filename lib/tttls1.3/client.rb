@@ -74,7 +74,7 @@ module TTTLS13
 
       @early_data = ''
       @early_data_write_cipher = nil # Cryptograph::$Object
-      @accepted_early_data = false
+      @succeed_early_data = false
       raise Error::ConfigError unless valid_settings?
       return unless use_psk?
 
@@ -222,7 +222,7 @@ module TTTLS13
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
           @send_record_size = rsl.record_size_limit unless rsl.nil?
 
-          @accepted_early_data = true \
+          @succeed_early_data = true \
             if ee.extensions.include?(Message::ExtensionType::EARLY_DATA)
 
           @state = ClientState::WAIT_CERT_CR
@@ -238,8 +238,8 @@ module TTTLS13
                        .all? { |ex| offered_ch_extensions?(ex) }
 
             terminate(:certificate_unknown) \
-              unless certified_certificate?(ct.certificate_list,
-                                            @settings[:ca_file], @hostname)
+              unless trusted_certificate?(ct.certificate_list,
+                                          @settings[:ca_file], @hostname)
 
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
@@ -258,24 +258,24 @@ module TTTLS13
                      .all? { |ex| offered_ch_extensions?(ex) }
 
           terminate(:certificate_unknown) \
-            unless certified_certificate?(ct.certificate_list,
-                                          @settings[:ca_file], @hostname)
+            unless trusted_certificate?(ct.certificate_list,
+                                        @settings[:ca_file], @hostname)
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
           logger.debug('ClientState::WAIT_EE')
 
           @transcript[CV] = recv_certificate_verify
-          terminate(:decrypt_error) unless verify_certificate_verify
+          terminate(:decrypt_error) unless verified_certificate_verify?
           @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           logger.debug('ClientState::WAIT_EE')
 
           @transcript[SF] = recv_finished
-          terminate(:decrypt_error) unless verify_finished
+          terminate(:decrypt_error) unless verified_finished?
           send_ccs # compatibility mode
           @transcript[EOED] = send_eoed \
-            if use_early_data? && accepted_early_data?
+            if use_early_data? && succeed_early_data?
           # TODO: Send Certificate [+ CertificateVerify]
           @transcript[CF] = send_finished
           @write_cipher = gen_cipher(@cipher_suite,
@@ -308,8 +308,8 @@ module TTTLS13
     end
 
     # @return [Boolean]
-    def accepted_early_data?
-      @accepted_early_data
+    def succeed_early_data?
+      @succeed_early_data
     end
 
     private
@@ -620,18 +620,18 @@ module TTTLS13
     end
 
     # @return [Boolean]
-    def verify_certificate_verify
+    def verified_certificate_verify?
       ct = @transcript[CT]
       public_key = ct.certificate_list.first.cert_data.public_key
       cv = @transcript[CV]
       signature_scheme = cv.signature_scheme
       signature = cv.signature
       context = 'TLS 1.3, server CertificateVerify'
-      do_verify_certificate_verify(public_key: public_key,
-                                   signature_scheme: signature_scheme,
-                                   signature: signature,
-                                   context: context,
-                                   handshake_context_end: CT)
+      do_verified_certificate_verify?(public_key: public_key,
+                                      signature_scheme: signature_scheme,
+                                      signature: signature,
+                                      context: context,
+                                      handshake_context_end: CT)
     end
 
     # @return [String]
@@ -644,14 +644,14 @@ module TTTLS13
     end
 
     # @return [Boolean]
-    def verify_finished
+    def verified_finished?
       digest = CipherSuite.digest(@cipher_suite)
       finished_key = @key_schedule.server_finished_key
       signature = @transcript[SF].verify_data
-      do_verify_finished(digest: digest,
-                         finished_key: finished_key,
-                         handshake_context_end: CV,
-                         signature: signature)
+      do_verified_finished?(digest: digest,
+                            finished_key: finished_key,
+                            handshake_context_end: CV,
+                            signature: signature)
     end
 
     # NOTE:

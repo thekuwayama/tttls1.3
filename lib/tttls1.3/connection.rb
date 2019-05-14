@@ -170,7 +170,7 @@ module TTTLS13
           messages = record.messages
           break unless messages.empty?
         when Message::ContentType::CCS
-          terminate(:unexpected_message) unless ccs_receivable?
+          terminate(:unexpected_message) unless receivable_ccs?
           next
         when Message::ContentType::ALERT
           handle_received_alert(record.messages.first)
@@ -282,9 +282,9 @@ module TTTLS13
     #
     # @return [Boolean]
     # rubocop: disable Metrics/CyclomaticComplexity
-    def do_verify_certificate_verify(public_key:, signature_scheme:,
-                                     signature:, context:,
-                                     handshake_context_end:)
+    def do_verified_certificate_verify?(public_key:, signature_scheme:,
+                                        signature:, context:,
+                                        handshake_context_end:)
       digest = CipherSuite.digest(@cipher_suite)
       hash = @transcript.hash(digest, handshake_context_end)
       content = "\x20" * 64 + context + "\x00" + hash
@@ -335,8 +335,8 @@ module TTTLS13
     # @param signature [String]
     #
     # @return [Boolean]
-    def do_verify_finished(digest:, finished_key:, handshake_context_end:,
-                           signature:)
+    def do_verified_finished?(digest:, finished_key:, handshake_context_end:,
+                              signature:)
       do_sign_finished(
         digest: digest,
         finished_key: finished_key,
@@ -365,7 +365,7 @@ module TTTLS13
     #
     # Received ccs before the first ClientHello message or after the peer's
     # Finished message, peer MUST abort.
-    def ccs_receivable?
+    def receivable_ccs?
       return false unless @transcript.include?(CH)
       return false if @endpoint == :client && @transcript.include?(SF)
       return false if @endpoint == :server && @transcript.include?(CF)
@@ -403,7 +403,7 @@ module TTTLS13
     #
     # @return [Boolean]
     # rubocop: disable Metrics/AbcSize
-    def certified_certificate?(certificate_list, ca_file = nil, hostname = nil)
+    def trusted_certificate?(certificate_list, ca_file = nil, hostname = nil)
       store = OpenSSL::X509::Store.new
       store.set_default_paths
       store.add_file(ca_file) unless ca_file.nil?

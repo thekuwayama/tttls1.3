@@ -23,7 +23,7 @@ settings_1st = {
   ca_file: __dir__ + '/../tmp/ca.crt',
   process_new_session_ticket: process_new_session_ticket
 }
-accepted_early_data = false
+succeed_early_data = false
 [
   # Initial Handshake:
   settings_1st,
@@ -37,7 +37,7 @@ accepted_early_data = false
   client.early_data(http_get) if i == 1 && settings.include?(:ticket)
   client.connect
   # send message after Simple 1-RTT Handshake
-  client.write(http_get) if i.zero? || !client.accepted_early_data?
+  client.write(http_get) if i.zero? || !client.succeed_early_data?
 
   # status line, header
   buffer = ''
@@ -57,8 +57,8 @@ accepted_early_data = false
   end
 
   client.close
-  accepted_early_data = client.accepted_early_data?
+  succeed_early_data = client.succeed_early_data?
 end
 
 puts "\n" + '-' * 10
-puts "early data of 2nd handshake: #{accepted_early_data}"
+puts "early data of 2nd handshake: #{succeed_early_data}"

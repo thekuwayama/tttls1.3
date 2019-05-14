@@ -188,7 +188,7 @@ module TTTLS13
           logger.debug('ServerState::WAIT_FINISHED')
 
           @transcript[CF] = recv_finished
-          terminate(:decrypt_error) unless verify_finished
+          terminate(:decrypt_error) unless verified_finished?
           @write_cipher = gen_cipher(@cipher_suite,
                                      @key_schedule.server_application_write_key,
                                      @key_schedule.server_application_write_iv)
@@ -331,14 +331,14 @@ module TTTLS13
     end
 
     # @return [Boolean]
-    def verify_finished
+    def verified_finished?
       digest = CipherSuite.digest(@cipher_suite)
       finished_key = @key_schedule.client_finished_key
       signature = @transcript[CF].verify_data
-      do_verify_finished(digest: digest,
-                         finished_key: finished_key,
-                         handshake_context_end: EOED,
-                         signature: signature)
+      do_verified_finished?(digest: digest,
+                            finished_key: finished_key,
+                            handshake_context_end: EOED,
+                            signature: signature)
     end
 
     # @return [Boolean]
@@ -376,9 +376,7 @@ module TTTLS13
                        &.supported_signature_algorithms || []
       algorithms.find do |ss|
         @settings[:signature_algorithms].include?(ss)
-        # TODO
-        # 1. check @crt's signature_algorithm; rsaEncryption or rsassaPss
-        # 2. check supported_groups if signature_algorithm uses ECDSA algorithms
+        # TODO: check @crt's signature_algorithm; rsaEncryption or rsassaPss
       end
     end
 

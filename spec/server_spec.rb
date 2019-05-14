@@ -134,7 +134,7 @@ RSpec.describe Server do
       public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
       signature = cv.signature
-      expect(server.send(:do_verify_certificate_verify,
+      expect(server.send(:do_verified_certificate_verify?,
                          public_key: public_key,
                          signature_scheme: signature_scheme,
                          signature: signature,

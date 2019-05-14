@@ -165,11 +165,11 @@ RSpec.describe Client do
     end
 
     it 'should verify server CertificateVerify' do
-      expect(client.send(:verify_certificate_verify)).to be true
+      expect(client.send(:verified_certificate_verify?)).to be true
     end
 
     it 'should verify server Finished' do
-      expect(client.send(:verify_finished)).to be true
+      expect(client.send(:verified_finished?)).to be true
     end
 
     it 'should sign client Finished' do
@@ -293,12 +293,12 @@ RSpec.describe Client do
     end
 
     it 'should not certify certificate' do
-      expect(client.send(:certified_certificate?, certificate.certificate_list))
+      expect(client.send(:trusted_certificate?, certificate.certificate_list))
         .to be false
     end
 
     it 'should certify certificate, received path to private ca.crt' do
-      expect(client.send(:certified_certificate?, certificate.certificate_list,
+      expect(client.send(:trusted_certificate?, certificate.certificate_list,
                          __dir__ + '/../tmp/ca.crt')).to be true
     end
   end

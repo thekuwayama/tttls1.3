@@ -53,7 +53,7 @@ RSpec.describe Connection do
       public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
       signature = cv.signature
-      expect(connection.send(:do_verify_certificate_verify,
+      expect(connection.send(:do_verified_certificate_verify?,
                              public_key: public_key,
                              signature_scheme: signature_scheme,
                              signature: signature,
@@ -71,7 +71,7 @@ RSpec.describe Connection do
     end
 
     it 'should verify server Finished.verify_data' do
-      expect(connection.send(:do_verify_finished,
+      expect(connection.send(:do_verified_finished?,
                              digest: 'SHA256',
                              finished_key: TESTBINARY_SERVER_FINISHED_KEY,
                              handshake_context_end: CV,
@@ -90,7 +90,7 @@ RSpec.describe Connection do
                                   signature_scheme: signature_scheme,
                                   context: 'TLS 1.3, server CertificateVerify',
                                   handshake_context_end: CT)
-      expect(connection.send(:do_verify_certificate_verify,
+      expect(connection.send(:do_verified_certificate_verify?,
                              public_key: public_key,
                              signature_scheme: signature_scheme,
                              signature: signature,
@@ -132,7 +132,7 @@ RSpec.describe Connection do
       public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
       signature = cv.signature
-      expect(connection.send(:do_verify_certificate_verify,
+      expect(connection.send(:do_verified_certificate_verify?,
                              public_key: public_key,
                              signature_scheme: signature_scheme,
                              signature: signature,
