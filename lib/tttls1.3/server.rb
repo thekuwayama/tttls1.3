@@ -68,9 +68,10 @@ module TTTLS13
       return if @settings[:crt_file].nil?
 
       crt_str = File.read(@settings[:crt_file])
-      @crt = OpenSSL::X509::Certificate.new(crt_str)
+      @crt = OpenSSL::X509::Certificate.new(crt_str) # TODO: spki rsassaPss
       klass = @crt.public_key.class
       @key = klass.new(File.read(@settings[:key_file]))
+      raise Error::ConfigError unless @crt.check_private_key(@key)
     end
 
     # NOTE:
