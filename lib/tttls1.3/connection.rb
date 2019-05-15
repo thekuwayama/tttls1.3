@@ -353,34 +353,35 @@ module TTTLS13
     #
     # @return [Boolean]
     # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
     def certified_certificate?(certificate_list, ca_file = nil, hostname = nil)
-      store = OpenSSL::X509::Store.new
-      store.set_default_paths
-      store.add_file(ca_file) unless ca_file.nil?
-
       cert_bin = certificate_list.first.cert_data
       cert = OpenSSL::X509::Certificate.new(cert_bin)
-
-      chain = certificate_list[1..].map(&:cert_data).map do |c|
-        OpenSSL::X509::Certificate.new(c)
-      end
-      # TODO: parse authorityInfoAccess::CA Issuers
-
-      ctx = OpenSSL::X509::StoreContext.new(store, cert, chain)
 
       # not support CN matching, only support SAN matching
       unless hostname.nil?
         san = cert.extensions.find { |ex| ex.oid == 'subjectAltName' }
-        terminate(:bad_certificate) if san.nil?
+        return false if san.nil?
+
         ostr = OpenSSL::ASN1.decode(san.to_der).value.last
         san_match = OpenSSL::ASN1.decode(ostr.value).map(&:value)
                                  .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
                                  .any? { |s| hostname.match(/#{s}/) }
-        return san_match && ctx.verify
+        return false unless san_match
       end
-      ctx.verify
+      store = OpenSSL::X509::Store.new
+      store.set_default_paths
+      store.add_file(ca_file) unless ca_file.nil?
+      chain = certificate_list[1..].map(&:cert_data).map do |c|
+        OpenSSL::X509::Certificate.new(c)
+      end
+      # TODO: parse authorityInfoAccess::CA Issuers
+      ctx = OpenSSL::X509::StoreContext.new(store, cert, chain)
+      now = Time.now
+      ctx.verify && cert.not_before < now && now < cert.not_after
     end
     # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
   end
   # rubocop: enable Metrics/ClassLength
 end
