@@ -20,7 +20,7 @@ tttls1.3 provides client API with the following features:
 * HelloRetryRequest
 * Resumed 0-RTT Handshake (with PSK from ticket)
 
-NOT supports X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs.
+NOT supports certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs.
 
 
 ## Getting started
