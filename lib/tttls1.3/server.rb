@@ -35,9 +35,9 @@ module TTTLS13
   ].freeze
 
   DEFAULT_SP_NAMED_GROUP_LIST = [
-    Message::Extension::NamedGroup::SECP256R1,
-    Message::Extension::NamedGroup::SECP384R1,
-    Message::Extension::NamedGroup::SECP521R1
+    NamedGroup::SECP256R1,
+    NamedGroup::SECP384R1,
+    NamedGroup::SECP521R1
   ].freeze
 
   DEFAULT_SERVER_SETTINGS = {
@@ -60,8 +60,7 @@ module TTTLS13
       @settings = DEFAULT_SERVER_SETTINGS.merge(settings)
       logger.level = @settings[:loglevel]
 
-      # TODO: valid_settings?
-
+      raise Error::ConfigError unless valid_settings?
       return if @settings[:crt_file].nil?
 
       crt_str = File.read(@settings[:crt_file])
@@ -208,6 +207,28 @@ module TTTLS13
     # rubocop: enable Metrics/PerceivedComplexity
 
     private
+
+    # @return [Boolean]
+    def valid_settings?
+      cs = CipherSuite
+      defined_cipher_suites = cs.constants.map { |c| cs.const_get(c) }
+      return false \
+        unless (@settings[:cipher_suites] - defined_cipher_suites).empty?
+
+      sa = @settings[:signature_algorithms]
+      ss = SignatureScheme
+      defined_signature_schemes = ss.constants.map { |c| ss.const_get(c) }
+      return false \
+        unless (sa - defined_signature_schemes).empty?
+
+      sg = @settings[:supported_groups]
+      ng = NamedGroup
+      defined_named_groups = ng.constants.map { |c| ng.const_get(c) }
+      return false \
+        unless (sg - defined_named_groups).empty?
+
+      true
+    end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
@@ -357,7 +378,7 @@ module TTTLS13
       end
     end
 
-    # @return [TTTLS13::Message::Extension::NamedGroup, nil]
+    # @return [TTTLS13::NamedGroup, nil]
     def select_named_group
       groups \
       = @transcript[CH].extensions[Message::ExtensionType::SUPPORTED_GROUPS]

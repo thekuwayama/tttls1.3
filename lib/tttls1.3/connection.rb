@@ -346,11 +346,11 @@ module TTTLS13
 
     # @param key_exchange [String]
     # @param priv_key [OpenSSL::PKey::$Object]
-    # @param group [TTTLS13::Message::ExtensionType::NamedGroup]
+    # @param group [TTTLS13::NamedGroup]
     #
     # @return [String]
     def gen_shared_secret(key_exchange, priv_key, group)
-      curve = Message::Extension::NamedGroup.curve_name(group)
+      curve = NamedGroup.curve_name(group)
       terminate(:internal_error) if curve.nil?
 
       pub_key = OpenSSL::PKey::EC::Point.new(

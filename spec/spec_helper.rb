@@ -9,6 +9,7 @@ include TTTLS13
 include TTTLS13::Error
 include TTTLS13::CipherSuite
 include TTTLS13::SignatureScheme
+include TTTLS13::NamedGroup
 include TTTLS13::Cryptograph
 include TTTLS13::Message
 include TTTLS13::Message::Extension

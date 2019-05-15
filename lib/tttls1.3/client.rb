@@ -34,9 +34,9 @@ module TTTLS13
   ].freeze
 
   DEFAULT_CH_NAMED_GROUP_LIST = [
-    Message::Extension::NamedGroup::SECP256R1,
-    Message::Extension::NamedGroup::SECP384R1,
-    Message::Extension::NamedGroup::SECP521R1
+    NamedGroup::SECP256R1,
+    NamedGroup::SECP384R1,
+    NamedGroup::SECP521R1
   ].freeze
 
   DEFAULT_CLIENT_SETTINGS = {
@@ -335,7 +335,7 @@ module TTTLS13
         unless (sac - defined_signature_schemes).empty?
 
       sg = @settings[:supported_groups]
-      ng = Message::Extension::NamedGroup
+      ng = NamedGroup
       defined_named_groups = ng.constants.map { |c| ng.const_get(c) }
       return false \
         unless (sg - defined_named_groups).empty?
