@@ -133,6 +133,7 @@ module TTTLS13
           logger.debug('ClientState::START')
 
           @transcript[CH] = send_client_hello
+          send_ccs # compatibility mode
           if use_early_data?
             @early_data_write_cipher \
             = gen_cipher(@settings[:psk_cipher_suite],
@@ -270,7 +271,6 @@ module TTTLS13
 
           @transcript[SF] = recv_finished
           terminate(:decrypt_error) unless verified_finished?
-          send_ccs # compatibility mode
           @transcript[EOED] = send_eoed \
             if use_early_data? && succeed_early_data?
           # TODO: Send Certificate [+ CertificateVerify]
