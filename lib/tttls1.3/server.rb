@@ -135,12 +135,13 @@ module TTTLS13
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
           # validate/select parameters
-          terminamte(:illegal_parameter) unless valid_ch_compression_methods?
           @cipher_suite = select_cipher_suite
           @named_group = select_named_group
           @signature_scheme = select_signature_scheme
           terminate(:handshake_failure) \
             if @cipher_suite.nil? || @named_group.nil? || @signature_scheme.nil?
+          terminamte(:illegal_parameter) unless valid_ch_compression_methods?
+          terminate(:unrecognized_name) unless recognized_server_name?
 
           @state = ServerState::NEGOTIATED
         when ServerState::NEGOTIATED
@@ -320,7 +321,7 @@ module TTTLS13
       exs = []
 
       # server_name
-      exs << ServerName.new('') \
+      exs << Message::Extension::ServerName.new('') \
         if @transcript[CH].extensions
                           .include?(Message::ExtensionType::SERVER_NAME)
 
@@ -403,6 +404,17 @@ module TTTLS13
     # @return [Boolean]
     def valid_ch_compression_methods?
       @transcript[CH].legacy_compression_methods == ["\x00"]
+    end
+
+    # @return [Boolean]
+    def recognized_server_name?
+      server_name \
+      = @transcript[CH].extensions[Message::ExtensionType::SERVER_NAME]
+                       &.server_name
+
+      return true if server_name.nil?
+
+      matching_san?(@crt, server_name)
     end
   end
   # rubocop: enable Metrics/ClassLength

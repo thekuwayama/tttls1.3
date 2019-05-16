@@ -402,23 +402,12 @@ module TTTLS13
     # @param hostname [String]
     #
     # @return [Boolean]
-    # rubocop: disable Metrics/AbcSize
-    # rubocop: disable Metrics/CyclomaticComplexity
     def trusted_certificate?(certificate_list, ca_file = nil, hostname = nil)
       cert_bin = certificate_list.first.cert_data
       cert = OpenSSL::X509::Certificate.new(cert_bin)
 
       # not support CN matching, only support SAN matching
-      unless hostname.nil?
-        san = cert.extensions.find { |ex| ex.oid == 'subjectAltName' }
-        return false if san.nil?
-
-        ostr = OpenSSL::ASN1.decode(san.to_der).value.last
-        san_match = OpenSSL::ASN1.decode(ostr.value).map(&:value)
-                                 .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
-                                 .any? { |s| hostname.match(/#{s}/) }
-        return false unless san_match
-      end
+      return false if !hostname.nil? && !matching_san?(cert, hostname)
 
       store = OpenSSL::X509::Store.new
       store.set_default_paths
@@ -431,8 +420,22 @@ module TTTLS13
       now = Time.now
       ctx.verify && cert.not_before < now && now < cert.not_after
     end
-    # rubocop: enable Metrics/AbcSize
-    # rubocop: enable Metrics/CyclomaticComplexity
+
+    # @param cert [OpenSSL::X509::Certificate]
+    # @param name [String]
+    #
+    # @return [Boolean]
+    def matching_san?(cert, name)
+      san = cert.extensions.find { |ex| ex.oid == 'subjectAltName' }
+      return false if san.nil?
+
+      ostr = OpenSSL::ASN1.decode(san.to_der).value.last
+      matching = OpenSSL::ASN1.decode(ostr.value).map(&:value)
+                              .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
+                              .any? { |s| name.match(/#{s}/) }
+
+      matching
+    end
 
     # @param signature_algorithms [Array of SignatureAlgorithms]
     # @param crt [OpenSSL::X509::Certificate]
