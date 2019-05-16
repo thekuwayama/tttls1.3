@@ -151,9 +151,12 @@ module TTTLS13
           send_ccs # compatibility mode
 
           # generate shared secret
+          terminate(:illegal_parameter) unless valid_ch_key_share?
           ke = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
-                              .key_share_entry
-                              .find { |e| e.group == @named_group }.key_exchange
+                              &.key_share_entry
+                              &.find { |e| e.group == @named_group }
+                              &.key_exchange
+          # TODO: Send HelloRetryRequest
           shared_secret = gen_shared_secret(ke, @priv_key, @named_group)
           @key_schedule = KeySchedule.new(psk: @psk,
                                           shared_secret: shared_secret,
@@ -415,6 +418,16 @@ module TTTLS13
       return true if server_name.nil?
 
       matching_san?(@crt, server_name)
+    end
+
+    # @return [Boolean]
+    def valid_ch_key_share?
+      ks = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
+      ks_groups = ks&.key_share_entry&.map(&:group) || []
+      sg = @transcript[CH].extensions[Message::ExtensionType::SUPPORTED_GROUPS]
+      sp_groups = sg&.named_group_list || []
+
+      ks_groups.uniq == ks_groups && (ks_groups - sp_groups).empty?
     end
   end
   # rubocop: enable Metrics/ClassLength
