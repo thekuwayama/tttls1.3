@@ -19,7 +19,10 @@ RSpec.describe Client do
       message = record.messages.first
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
-      expect(message.cipher_suites).to eq DEFAULT_CH_CIPHER_SUITES
+      expect(message.cipher_suites)
+        .to eq [CipherSuite::TLS_AES_256_GCM_SHA384,
+                CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_AES_128_GCM_SHA256]
       expect(message.legacy_compression_methods).to eq ["\x00"]
     end
   end
@@ -219,7 +222,7 @@ RSpec.describe Client do
       client = Client.new(mock_socket, 'localhost')
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       random = OpenSSL::Random.random_bytes(24) + \
-               Client::DOWNGRADE_PROTECTION_TLS_1_2
+               Client.const_get(:DOWNGRADE_PROTECTION_TLS_1_2)
       sh.instance_variable_set(:@random, random)
       transcript = {
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -242,7 +245,7 @@ RSpec.describe Client do
       client = Client.new(mock_socket, 'localhost')
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       random = OpenSSL::Random.random_bytes(24) + \
-               Client::DOWNGRADE_PROTECTION_TLS_1_1
+               Client.const_get(:DOWNGRADE_PROTECTION_TLS_1_1)
       sh.instance_variable_set(:@random, random)
       transcript = {
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),

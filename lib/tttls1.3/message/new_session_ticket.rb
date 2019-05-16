@@ -4,13 +4,13 @@
 module TTTLS13
   using Refinements
   module Message
-    class NewSessionTicket
-      # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
-      APPEARABLE_EXTENSIONS = [
-        ExtensionType::EARLY_DATA
-      ].freeze
-      private_constant :APPEARABLE_EXTENSIONS
+    # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+    APPEARABLE_NST_EXTENSIONS = [
+      ExtensionType::EARLY_DATA
+    ].freeze
+    private_constant :APPEARABLE_NST_EXTENSIONS
 
+    class NewSessionTicket
       attr_reader :msg_type
       attr_reader :ticket_lifetime
       attr_reader :ticket_age_add
@@ -93,7 +93,7 @@ module TTTLS13
 
       # @return [Boolean]
       def only_appearable_extensions?
-        exs = @extensions.keys - APPEARABLE_EXTENSIONS
+        exs = @extensions.keys - APPEARABLE_NST_EXTENSIONS
         return true if exs.empty?
 
         !(exs - DEFINED_EXTENSIONS).empty?

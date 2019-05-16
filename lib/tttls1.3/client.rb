@@ -20,6 +20,7 @@ module TTTLS13
     CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
     CipherSuite::TLS_AES_128_GCM_SHA256
   ].freeze
+  private_constant :DEFAULT_CH_CIPHER_SUITES
 
   DEFAULT_CH_SIGNATURE_ALGORITHMS = [
     SignatureScheme::ECDSA_SECP256R1_SHA256,
@@ -32,12 +33,14 @@ module TTTLS13
     SignatureScheme::RSA_PKCS1_SHA384,
     SignatureScheme::RSA_PKCS1_SHA512
   ].freeze
+  private_constant :DEFAULT_CH_SIGNATURE_ALGORITHMS
 
   DEFAULT_CH_NAMED_GROUP_LIST = [
     NamedGroup::SECP256R1,
     NamedGroup::SECP384R1,
     NamedGroup::SECP521R1
   ].freeze
+  private_constant :DEFAULT_CH_NAMED_GROUP_LIST
 
   DEFAULT_CLIENT_SETTINGS = {
     ca_file: nil,
@@ -55,9 +58,15 @@ module TTTLS13
     ticket_timestamp: nil,
     loglevel: Logger::WARN
   }.freeze
+  private_constant :DEFAULT_CLIENT_SETTINGS
 
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
+    DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
+    private_constant :DOWNGRADE_PROTECTION_TLS_1_2
+    DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
+    private_constant :DOWNGRADE_PROTECTION_TLS_1_1
+
     # @param socket [Socket]
     # @param hostname [String]
     # @param settings [Hash]
@@ -147,6 +156,7 @@ module TTTLS13
           logger.debug('ClientState::WAIT_SH')
 
           sh = @transcript[SH] = recv_server_hello
+          terminate(:illegal_parameter) unless sh.only_appearable_extensions?
           # support only TLS 1.3
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
@@ -213,7 +223,7 @@ module TTTLS13
           logger.debug('ClientState::WAIT_EE')
 
           ee = @transcript[EE] = recv_encrypted_extensions
-          terminate(:illegal_parameter) if ee.only_appearable_extensions?
+          terminate(:illegal_parameter) unless ee.only_appearable_extensions?
           terminate(:unsupported_extension) \
             unless offered_ch_extensions?(ee.extensions)
 
@@ -231,6 +241,7 @@ module TTTLS13
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             ct = @transcript[CT] = message
+            terminate(:illegal_parameter) unless ct.only_appearable_extensions?
             terminate(:unsupported_extension) \
               unless ct.certificate_list.map(&:extensions)
                        .all? { |ex| offered_ch_extensions?(ex) }
@@ -251,6 +262,7 @@ module TTTLS13
           logger.debug('ClientState::WAIT_EE')
 
           ct = @transcript[CT] = recv_certificate
+          terminate(:illegal_parameter) unless ct.only_appearable_extensions?
           terminate(:unsupported_extension) \
             unless ct.certificate_list.map(&:extensions)
                      .all? { |ex| offered_ch_extensions?(ex) }
@@ -311,42 +323,33 @@ module TTTLS13
 
     private
 
-    DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
-    DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
-
     # @return [Boolean]
-    # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/PerceivedComplexity
     def valid_settings?
-      cs = CipherSuite
-      defined_cipher_suites = cs.constants.map { |c| cs.const_get(c) }
+      mod = CipherSuite
+      defined_cipher_suites = mod.constants.map { |c| mod.const_get(c) }
       return false \
         unless (@settings[:cipher_suites] - defined_cipher_suites).empty?
 
       sa = @settings[:signature_algorithms]
-      ss = SignatureScheme
-      defined_signature_schemes = ss.constants.map { |c| ss.const_get(c) }
-      return false \
-        unless (sa - defined_signature_schemes).empty?
+      mod = SignatureScheme
+      defined_signature_schemes = mod.constants.map { |c| mod.const_get(c) }
+      return false unless (sa - defined_signature_schemes).empty?
 
       sac = @settings[:signature_algorithms_cert] || []
-      return false \
-        unless (sac - defined_signature_schemes).empty?
+      return false unless (sac - defined_signature_schemes).empty?
 
       sg = @settings[:supported_groups]
-      ng = NamedGroup
-      defined_named_groups = ng.constants.map { |c| ng.const_get(c) }
-      return false \
-        unless (sg - defined_named_groups).empty?
+      return false unless (sac - defined_signature_schemes).empty?
 
       ksg = @settings[:key_share_groups]
-      return false unless ksg.nil? || ((ksg - sg).empty? &&
-                                       sg.select { |g| ksg.include?(g) } == ksg)
+      return false \
+        unless ksg.nil? ||
+               ((ksg - sg).empty? && sg.select { |g| ksg.include?(g) } == ksg)
 
       true
     end
-    # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/PerceivedComplexity
 

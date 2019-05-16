@@ -21,6 +21,7 @@ module TTTLS13
     CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
     CipherSuite::TLS_AES_128_GCM_SHA256
   ].freeze
+  private_constant :DEFAULT_SP_CIPHER_SUITES
 
   DEFAULT_SP_SIGNATURE_ALGORITHMS = [
     SignatureScheme::ECDSA_SECP256R1_SHA256,
@@ -33,12 +34,14 @@ module TTTLS13
     SignatureScheme::RSA_PKCS1_SHA384,
     SignatureScheme::RSA_PKCS1_SHA512
   ].freeze
+  private_constant :DEFAULT_SP_SIGNATURE_ALGORITHMS
 
   DEFAULT_SP_NAMED_GROUP_LIST = [
     NamedGroup::SECP256R1,
     NamedGroup::SECP384R1,
     NamedGroup::SECP521R1
   ].freeze
+  private_constant :DEFAULT_SP_NAMED_GROUP_LIST
 
   DEFAULT_SERVER_SETTINGS = {
     crt_file: nil,
@@ -48,6 +51,7 @@ module TTTLS13
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
     loglevel: Logger::WARN
   }.freeze
+  private_constant :DEFAULT_SERVER_SETTINGS
 
   # rubocop: disable Metrics/ClassLength
   class Server < Connection
@@ -126,7 +130,8 @@ module TTTLS13
         when ServerState::START
           logger.debug('ServerState::START')
 
-          @transcript[CH] = recv_client_hello
+          ch = @transcript[CH] = recv_client_hello
+          terminate(:illegal_parameter) unless ch.only_appearable_extensions?
           @state = ServerState::RECVD_CH
         when ServerState::RECVD_CH
           logger.debug('ServerState::RECVD_CH')
@@ -214,22 +219,17 @@ module TTTLS13
 
     # @return [Boolean]
     def valid_settings?
-      cs = CipherSuite
-      defined_cipher_suites = cs.constants.map { |c| cs.const_get(c) }
-      return false \
-        unless (@settings[:cipher_suites] - defined_cipher_suites).empty?
+      mod = CipherSuite
+      defined = mod.constants.map { |c| mod.const_get(c) }
+      return false unless (@settings[:cipher_suites] - defined).empty?
 
-      sa = @settings[:signature_algorithms]
-      ss = SignatureScheme
-      defined_signature_schemes = ss.constants.map { |c| ss.const_get(c) }
-      return false \
-        unless (sa - defined_signature_schemes).empty?
+      mod = SignatureScheme
+      defined = mod.constants.map { |c| mod.const_get(c) }
+      return false unless (@settings[:signature_algorithms] - defined).empty?
 
-      sg = @settings[:supported_groups]
-      ng = NamedGroup
-      defined_named_groups = ng.constants.map { |c| ng.const_get(c) }
-      return false \
-        unless (sg - defined_named_groups).empty?
+      mod = NamedGroup
+      defined = mod.constants.map { |c| mod.const_get(c) }
+      return false unless (@settings[:supported_groups] - defined).empty?
 
       true
     end

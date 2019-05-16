@@ -4,22 +4,22 @@
 module TTTLS13
   using Refinements
   module Message
-    class EncryptedExtensions
-      # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
-      APPEARABLE_EXTENSIONS = [
-        ExtensionType::SERVER_NAME,
-        ExtensionType::MAX_FRAGMENT_LENGTH,
-        ExtensionType::SUPPORTED_GROUPS,
-        ExtensionType::USE_SRTP,
-        ExtensionType::HEARTBEAT,
-        ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
-        ExtensionType::CLIENT_CERTIFICATE_TYPE,
-        ExtensionType::SERVER_CERTIFICATE_TYPE,
-        ExtensionType::RECORD_SIZE_LIMIT,
-        ExtensionType::EARLY_DATA
-      ].freeze
-      private_constant :APPEARABLE_EXTENSIONS
+    # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+    APPEARABLE_EE_EXTENSIONS = [
+      ExtensionType::SERVER_NAME,
+      ExtensionType::MAX_FRAGMENT_LENGTH,
+      ExtensionType::SUPPORTED_GROUPS,
+      ExtensionType::USE_SRTP,
+      ExtensionType::HEARTBEAT,
+      ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
+      ExtensionType::CLIENT_CERTIFICATE_TYPE,
+      ExtensionType::SERVER_CERTIFICATE_TYPE,
+      ExtensionType::RECORD_SIZE_LIMIT,
+      ExtensionType::EARLY_DATA
+    ].freeze
+    private_constant :APPEARABLE_EE_EXTENSIONS
 
+    class EncryptedExtensions
       attr_reader :msg_type
       attr_reader :extensions
 
@@ -59,7 +59,7 @@ module TTTLS13
 
       # @return [Boolean]
       def only_appearable_extensions?
-        exs = @extensions.keys - APPEARABLE_EXTENSIONS
+        exs = @extensions.keys - APPEARABLE_EE_EXTENSIONS
         return true if exs.empty?
 
         !(exs - DEFINED_EXTENSIONS).empty?
