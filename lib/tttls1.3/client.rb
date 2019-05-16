@@ -213,7 +213,7 @@ module TTTLS13
           logger.debug('ClientState::WAIT_EE')
 
           ee = @transcript[EE] = recv_encrypted_extensions
-          terminate(:illegal_parameter) if ee.any_forbidden_extensions?
+          terminate(:illegal_parameter) if ee.only_appearable_extensions?
           terminate(:unsupported_extension) \
             unless offered_ch_extensions?(ee.extensions)
 

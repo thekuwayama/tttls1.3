@@ -5,6 +5,36 @@ module TTTLS13
   using Refinements
   module Message
     class ClientHello
+      # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+      APPEARABLE_EXTENSIONS = [
+        ExtensionType::SERVER_NAME,
+        ExtensionType::MAX_FRAGMENT_LENGTH,
+        ExtensionType::STATUS_REQUEST,
+        ExtensionType::SUPPORTED_GROUPS,
+        ExtensionType::SIGNATURE_ALGORITHMS,
+        ExtensionType::USE_SRTP,
+        ExtensionType::HEARTBEAT,
+        ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
+        ExtensionType::SIGNED_CERTIFICATE_TIMESTAMP,
+        ExtensionType::CLIENT_CERTIFICATE_TYPE,
+        ExtensionType::SERVER_CERTIFICATE_TYPE,
+        ExtensionType::PADDING,
+        ExtensionType::RECORD_SIZE_LIMIT,
+        ExtensionType::PWD_PROTECT,
+        ExtensionType::PWD_CLEAR,
+        ExtensionType::PASSWORD_SALT,
+        ExtensionType::PRE_SHARED_KEY,
+        ExtensionType::EARLY_DATA,
+        ExtensionType::SUPPORTED_VERSIONS,
+        ExtensionType::COOKIE,
+        ExtensionType::PSK_KEY_EXCHANGE_MODES,
+        ExtensionType::CERTIFICATE_AUTHORITIES,
+        ExtensionType::POST_HANDSHAKE_AUTH,
+        ExtensionType::SIGNATURE_ALGORITHMS_CERT,
+        ExtensionType::KEY_SHARE
+      ].freeze
+      private_constant :APPEARABLE_EXTENSIONS
+
       attr_reader :msg_type
       attr_reader :legacy_version
       attr_reader :random
@@ -95,6 +125,14 @@ module TTTLS13
       end
       # rubocop: enable Metrics/AbcSize
       # rubocop: enable Metrics/MethodLength
+
+      # @return [Boolean]
+      def only_appearable_extensions?
+        exs = @extensions.keys - APPEARABLE_EXTENSIONS
+        return true if exs.empty?
+
+        !(exs - DEFINED_EXTENSIONS).empty?
+      end
     end
   end
 end

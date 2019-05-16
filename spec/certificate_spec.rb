@@ -52,4 +52,27 @@ RSpec.describe Certificate do
       expect(message.serialize).to eq TESTBINARY_CERTIFICATE
     end
   end
+
+  context 'invalid certificate, including forbidden extension type,' do
+    let(:certificate) do
+      OpenSSL::X509::Certificate.new(File.read(__dir__ + '/../tmp/server.crt'))
+    end
+
+    let(:server_name) do
+      ServerName.new('')
+    end
+
+    let(:message) do
+      Certificate.new(
+        certificate_list: [
+          CertificateEntry.new(certificate, Extensions.new([server_name]))
+        ]
+      )
+    end
+
+    it 'should be generated' do
+      expect(message.msg_type).to eq HandshakeType::CERTIFICATE
+      expect(message.only_appearable_extensions?).to be false
+    end
+  end
 end

@@ -9,6 +9,24 @@ module TTTLS13
       HRR_RANDOM \
       = "\xcf\x21\xad\x74\xe5\x9a\x61\x11\xbe\x1d\x8c\x02\x1e\x65\xb8\x91" \
         "\xc2\xa2\x11\x16\x7a\xbb\x8c\x5e\x07\x9e\x09\xe2\xc8\xa8\x33\x9c"
+      private_constant :HRR_RANDOM
+
+      # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+      APPEARABLE_SH_EXTENSIONS = [
+        ExtensionType::PRE_SHARED_KEY,
+        ExtensionType::PASSWORD_SALT,
+        ExtensionType::SUPPORTED_VERSIONS,
+        ExtensionType::KEY_SHARE
+      ].freeze
+      private_constant :APPEARABLE_SH_EXTENSIONS
+
+      APPEARABLE_HRR_EXTENSIONS = [
+        ExtensionType::COOKIE,
+        ExtensionType::PASSWORD_SALT,
+        ExtensionType::SUPPORTED_VERSIONS,
+        ExtensionType::KEY_SHARE
+      ].freeze
+      private_constant :APPEARABLE_HRR_EXTENSIONS
 
       attr_reader :msg_type
       attr_reader :legacy_version
@@ -110,6 +128,15 @@ module TTTLS13
       # @return [Boolean]
       def hrr?
         @hrr
+      end
+
+      # @return [Boolean]
+      def only_appearable_extensions?
+        exs = @extensions.keys - APPEARABLE_SH_EXTENSIONS
+        exs = @extensions.keys - APPEARABLE_HRR_EXTENSIONS if hrr?
+        return true if exs.empty?
+
+        !(exs - DEFINED_EXTENSIONS).empty?
       end
     end
   end

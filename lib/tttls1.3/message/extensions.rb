@@ -20,6 +20,9 @@ module TTTLS13
       SERVER_CERTIFICATE_TYPE                = "\x00\x14"
       PADDING                                = "\x00\x15"
       RECORD_SIZE_LIMIT                      = "\x00\x1c"
+      PWD_PROTECT                            = "\x00\x1d"
+      PWD_CLEAR                              = "\x00\x1e"
+      PASSWORD_SALT                          = "\x00\x1f"
       PRE_SHARED_KEY                         = "\x00\x29"
       EARLY_DATA                             = "\x00\x2a"
       SUPPORTED_VERSIONS                     = "\x00\x2b"
@@ -31,6 +34,10 @@ module TTTLS13
       SIGNATURE_ALGORITHMS_CERT              = "\x00\x32"
       KEY_SHARE                              = "\x00\x33"
     end
+
+    DEFINED_EXTENSIONS = ExtensionType.constants.map do |c|
+      ExtensionType.const_get(c)
+    end.freeze
 
     class Extensions < Hash
       # @param extensions [Array of TTTLS13::Message::Extension::$Object]
