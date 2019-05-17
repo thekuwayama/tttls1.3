@@ -71,7 +71,7 @@ RSpec.describe Server do
       end
 
       let(:client) do
-        ip = IPSocket.getaddress(Socket.gethostname)
+        ip = Socket.ip_address_list.find(&:ipv4_private?).ip_address
         cmd = 'echo -n ping | openssl s_client ' \
               + '-connect local:4433 ' \
               + '-tls1_3 ' \

@@ -141,7 +141,8 @@ module TTTLS13
         when ClientState::START
           logger.debug('ClientState::START')
 
-          @transcript[CH] = send_client_hello
+          exs, @priv_keys = gen_ch_extensions
+          @transcript[CH] = send_client_hello(exs)
           send_ccs # compatibility mode
           if use_early_data?
             @early_data_write_cipher \
@@ -393,6 +394,7 @@ module TTTLS13
     end
 
     # @return [TTTLS13::Message::Extensions]
+    # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     def gen_ch_extensions
@@ -423,7 +425,6 @@ module TTTLS13
       key_share, priv_keys \
                  = Message::Extension::KeyShare.gen_ch_key_share(ksg)
       exs << key_share
-      @priv_keys = priv_keys.merge(@priv_keys)
 
       # server_name
       exs << Message::Extension::ServerName.new(@hostname) \
@@ -432,16 +433,18 @@ module TTTLS13
       # early_data
       exs << Message::Extension::EarlyDataIndication.new if use_early_data?
 
-      Message::Extensions.new(exs)
+      [Message::Extensions.new(exs), priv_keys]
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
 
+    # @param exs [TTTLS13::Message::Extensions]
+    #
     # @return [TTTLS13::Message::ClientHello]
-    def send_client_hello
+    def send_client_hello(exs)
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
-        extensions: gen_ch_extensions
+        extensions: exs
       )
 
       if use_psk?

@@ -9,7 +9,8 @@ RSpec.describe Client do
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket, 'localhost')
-      client.send(:send_client_hello)
+      exs, _priv_keys = client.send(:gen_ch_extensions)
+      client.send(:send_client_hello, exs)
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
 

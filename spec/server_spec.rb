@@ -42,7 +42,8 @@ RSpec.describe Server do
       server.instance_variable_set(:@named_group, named_group)
       signature_scheme = server.send(:select_signature_scheme)
       server.instance_variable_set(:@signature_scheme, signature_scheme)
-      server.send(:send_server_hello)
+      exs, _priv_key = server.send(:gen_sh_extensions)
+      server.send(:send_server_hello, exs)
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
 

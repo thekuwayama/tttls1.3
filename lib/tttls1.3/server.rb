@@ -152,7 +152,8 @@ module TTTLS13
         when ServerState::NEGOTIATED
           logger.debug('ServerState::NEGOTIATED')
 
-          @transcript[SH] = send_server_hello
+          exs, @priv_key = gen_sh_extensions
+          @transcript[SH] = send_server_hello(exs)
           send_ccs # compatibility mode
 
           # generate shared secret
@@ -244,13 +245,15 @@ module TTTLS13
       ch
     end
 
+    # @param exs [TTTLS13::Message::Extensions]
+    #
     # @return [TTTLS13::Message::ServerHello]
-    def send_server_hello
+    def send_server_hello(exs)
       ch_session_id = @transcript[CH].legacy_session_id
       sh = Message::ServerHello.new(
         legacy_session_id_echo: ch_session_id,
         cipher_suite: @cipher_suite,
-        extensions: gen_sh_extensions
+        extensions: exs
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [sh], @write_cipher)
 
@@ -305,6 +308,7 @@ module TTTLS13
     end
 
     # @return [TTTLS13::Message::Extensions]
+    # @return [OpenSSL::PKey::EC.$Object]
     def gen_sh_extensions
       exs = []
       # supported_versions: only TLS 1.3
@@ -313,10 +317,11 @@ module TTTLS13
       )
 
       # key_share
-      key_share, @priv_key \
+      key_share, priv_key \
                  = Message::Extension::KeyShare.gen_sh_key_share(@named_group)
       exs << key_share
-      Message::Extensions.new(exs)
+
+      [Message::Extensions.new(exs), priv_key]
     end
 
     # @return [TTTLS13::Message::Extensions]
