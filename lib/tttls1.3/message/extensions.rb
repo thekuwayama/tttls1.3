@@ -119,7 +119,7 @@ module TTTLS13
           when ExtensionType::SIGNATURE_ALGORITHMS
             Extension::SignatureAlgorithms.deserialize(binary)
           when ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
-            Extension::Alpn..deserialize(binary)
+            Extension::Alpn.deserialize(binary)
           when ExtensionType::RECORD_SIZE_LIMIT
             Extension::RecordSizeLimit.deserialize(binary)
           when ExtensionType::PRE_SHARED_KEY
