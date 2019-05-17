@@ -7,48 +7,50 @@ TMP_DIR = __dir__ + '/../tmp'
 
 RSpec.describe Client do
   # testcases
+  # opt [String] openssl s_server options
+  # settings [Hash] TTTLS13::Server settings
   [
     [
-      ' -ciphersuites TLS_AES_256_GCM_SHA384',
+      '-ciphersuites TLS_AES_256_GCM_SHA384',
       cipher_suites: [CipherSuite::TLS_AES_256_GCM_SHA384]
     ],
     [
-      ' -ciphersuites TLS_CHACHA20_POLY1305_SHA256',
+      '-ciphersuites TLS_CHACHA20_POLY1305_SHA256',
       cipher_suites: [CipherSuite::TLS_CHACHA20_POLY1305_SHA256]
     ],
     [
-      ' -ciphersuites TLS_AES_128_GCM_SHA256',
+      '-ciphersuites TLS_AES_128_GCM_SHA256',
       cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
     ],
     [
-      ' -groups P-256',
+      '-groups P-256',
       supported_groups: [NamedGroup::SECP256R1]
     ],
     [
-      ' -groups P-384',
+      '-groups P-384',
       supported_groups: [NamedGroup::SECP384R1]
     ],
     [
-      ' -groups P-521',
+      '-groups P-521',
       supported_groups: [NamedGroup::SECP521R1]
     ],
     [
-      ' -sigalgs RSA-PSS+SHA256',
+      '-sigalgs RSA-PSS+SHA256',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
       signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256]
     ],
     [
-      ' -sigalgs RSA-PSS+SHA384',
+      '-sigalgs RSA-PSS+SHA384',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
       signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA384]
     ],
     [
-      ' -sigalgs RSA-PSS+SHA512',
+      '-sigalgs RSA-PSS+SHA512',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
       signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA512]
     ],
     [
-      ' -record_padding 8446',
+      '-record_padding 8446',
       {}
     ]
   ].each do |opt, settings|
