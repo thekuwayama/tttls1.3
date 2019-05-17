@@ -216,14 +216,15 @@ module TTTLS13
     end
 
     # @param digest [String] name of digest algorithm
+    # @param transcript [TTTLS13::Transcript]
     #
     # @return [String]
-    def do_sign_psk_binder(digest)
+    def do_sign_psk_binder(digest, transcript)
       # TODO: ext binder
       secret = @key_schedule.binder_key_res
       hash_len = OpenSSL::Digest.new(digest).digest_length
       # transcript-hash (CH1 + HRR +) truncated-CH
-      hash = @transcript.truncate_hash(digest, CH, hash_len + 3)
+      hash = transcript.truncate_hash(digest, CH, hash_len + 3)
       OpenSSL::HMAC.digest(digest, secret, hash)
     end
 

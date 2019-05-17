@@ -489,10 +489,10 @@ module TTTLS13
         )
       )
       ch.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
-      @transcript[CH] = ch
 
-      # TODO: ext binder
-      psk.offered_psks.binders[0] = do_sign_psk_binder(digest)
+      transcript = @transcript.clone
+      transcript[CH] = ch
+      psk.offered_psks.binders[0] = do_sign_psk_binder(digest, transcript)
     end
 
     # @return [Integer]
