@@ -287,7 +287,7 @@ RSpec.describe Client do
   context 'client, received Certificate signed by private CA,' do
     let(:certificate) do
       server_crt = OpenSSL::X509::Certificate.new(
-        File.read(__dir__ + '/../tmp/server.crt')
+        File.read(__dir__ + '/fixtures/rsa_rsa.crt')
       )
       Certificate.new(certificate_list: [CertificateEntry.new(server_crt)])
     end
@@ -303,7 +303,7 @@ RSpec.describe Client do
 
     it 'should certify certificate, received path to private ca.crt' do
       expect(client.send(:trusted_certificate?, certificate.certificate_list,
-                         __dir__ + '/../tmp/ca.crt')).to be true
+                         __dir__ + '/fixtures/rsa_ca.crt')).to be true
     end
   end
 

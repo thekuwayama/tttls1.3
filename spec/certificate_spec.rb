@@ -7,7 +7,9 @@ using Refinements
 RSpec.describe Certificate do
   context 'valid certificate' do
     let(:certificate) do
-      OpenSSL::X509::Certificate.new(File.read(__dir__ + '/../tmp/server.crt'))
+      OpenSSL::X509::Certificate.new(
+        File.read(__dir__ + '/fixtures/rsa_rsa.crt')
+      )
     end
 
     let(:message) do
@@ -55,7 +57,9 @@ RSpec.describe Certificate do
 
   context 'invalid certificate, including forbidden extension type,' do
     let(:certificate) do
-      OpenSSL::X509::Certificate.new(File.read(__dir__ + '/../tmp/server.crt'))
+      OpenSSL::X509::Certificate.new(
+        File.read(__dir__ + '/fixtures/rsa_rsa.crt')
+      )
     end
 
     let(:server_name) do

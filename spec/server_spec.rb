@@ -26,7 +26,9 @@ RSpec.describe Server do
 
   context 'server' do
     let(:crt) do
-      OpenSSL::X509::Certificate.new(File.read(__dir__ + '/../tmp/server.crt'))
+      OpenSSL::X509::Certificate.new(
+        File.read(__dir__ + '/fixtures/rsa_rsa.crt')
+      )
     end
 
     let(:record) do
@@ -83,7 +85,7 @@ RSpec.describe Server do
     let(:server) do
       server = Server.new(nil)
       crt = OpenSSL::X509::Certificate.new(
-        File.read(__dir__ + '/../tmp/server.crt')
+        File.read(__dir__ + '/fixtures/rsa_rsa.crt')
       )
       server.instance_variable_set(:@crt, crt)
       server
