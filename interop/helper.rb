@@ -9,4 +9,5 @@ include TTTLS13
 include TTTLS13::CipherSuite
 include TTTLS13::SignatureScheme
 include TTTLS13::Message::Extension
+include TTTLS13::Error
 # rubocop: enable Style/MixinUsage
