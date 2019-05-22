@@ -9,7 +9,8 @@ RSpec.describe Client do
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket, 'localhost')
-      client.send(:send_client_hello)
+      exs, _priv_keys = client.send(:gen_ch_extensions)
+      client.send(:send_client_hello, exs)
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
 
@@ -19,7 +20,10 @@ RSpec.describe Client do
       message = record.messages.first
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
-      expect(message.cipher_suites).to eq DEFAULT_CH_CIPHER_SUITES
+      expect(message.cipher_suites)
+        .to eq [CipherSuite::TLS_AES_256_GCM_SHA384,
+                CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_AES_128_GCM_SHA256]
       expect(message.legacy_compression_methods).to eq ["\x00"]
     end
   end
@@ -165,11 +169,11 @@ RSpec.describe Client do
     end
 
     it 'should verify server CertificateVerify' do
-      expect(client.send(:verify_certificate_verify)).to be true
+      expect(client.send(:verified_certificate_verify?)).to be true
     end
 
     it 'should verify server Finished' do
-      expect(client.send(:verify_finished)).to be true
+      expect(client.send(:verified_finished?)).to be true
     end
 
     it 'should sign client Finished' do
@@ -219,7 +223,7 @@ RSpec.describe Client do
       client = Client.new(mock_socket, 'localhost')
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       random = OpenSSL::Random.random_bytes(24) + \
-               Client::DOWNGRADE_PROTECTION_TLS_1_2
+               Client.const_get(:DOWNGRADE_PROTECTION_TLS_1_2)
       sh.instance_variable_set(:@random, random)
       transcript = {
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -242,7 +246,7 @@ RSpec.describe Client do
       client = Client.new(mock_socket, 'localhost')
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       random = OpenSSL::Random.random_bytes(24) + \
-               Client::DOWNGRADE_PROTECTION_TLS_1_1
+               Client.const_get(:DOWNGRADE_PROTECTION_TLS_1_1)
       sh.instance_variable_set(:@random, random)
       transcript = {
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -283,7 +287,7 @@ RSpec.describe Client do
   context 'client, received Certificate signed by private CA,' do
     let(:certificate) do
       server_crt = OpenSSL::X509::Certificate.new(
-        File.read(__dir__ + '/../tmp/server.crt')
+        File.read(__dir__ + '/fixtures/rsa_rsa.crt')
       )
       Certificate.new(certificate_list: [CertificateEntry.new(server_crt)])
     end
@@ -293,13 +297,13 @@ RSpec.describe Client do
     end
 
     it 'should not certify certificate' do
-      expect(client.send(:certified_certificate?, certificate.certificate_list))
+      expect(client.send(:trusted_certificate?, certificate.certificate_list))
         .to be false
     end
 
     it 'should certify certificate, received path to private ca.crt' do
-      expect(client.send(:certified_certificate?, certificate.certificate_list,
-                         __dir__ + '/../tmp/ca.crt')).to be true
+      expect(client.send(:trusted_certificate?, certificate.certificate_list,
+                         __dir__ + '/fixtures/rsa_ca.crt')).to be true
     end
   end
 

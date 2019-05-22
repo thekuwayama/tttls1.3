@@ -83,7 +83,7 @@ module TTTLS13
         end
         # rubocop: enable Metrics/CyclomaticComplexity
 
-        # @param groups [Array of TTTLS13::Message::Extension::NamedGroup]
+        # @param groups [Array of TTTLS13::NamedGroup]
         #
         # @return [TTTLS13::Message::Extensions::KeyShare]
         # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
@@ -107,6 +107,28 @@ module TTTLS13
           )
 
           [key_share, priv_keys]
+        end
+
+        # @param groups [TTTLS13::NamedGroup]
+        #
+        # @return [TTTLS13::Message::Extensions::KeyShare]
+        # @return [OpenSSL::PKey::EC.$Object]
+        def self.gen_sh_key_share(group)
+          curve = NamedGroup.curve_name(group)
+          ec = OpenSSL::PKey::EC.new(curve)
+          ec.generate_key!
+
+          key_share = KeyShare.new(
+            msg_type: HandshakeType::SERVER_HELLO,
+            key_share_entry: [
+              KeyShareEntry.new(
+                group: group,
+                key_exchange: ec.public_key.to_octet_string(:uncompressed)
+              )
+            ]
+          )
+
+          [key_share, ec]
         end
 
         class << self
@@ -196,7 +218,7 @@ module TTTLS13
         attr_reader :group
         attr_reader :key_exchange
 
-        # @param group [TTTLS13::Message::Extension::NamedGroup]
+        # @param group [TTTLS13::NamedGroup]
         # @param key_exchange [String]
         #
         # @raise [TTTLS13::Error::ErrorAlerts]

@@ -1,8 +1,6 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-Dir[File.dirname(__FILE__) + '/message/*.rb'].each { |f| require f }
-
 module TTTLS13
   module Message
     module ContentType
@@ -44,5 +42,40 @@ module TTTLS13
       KEY_UPDATE           = "\x18"
       MESSAGE_HASH         = "\xfe"
     end
+
+    module ExtensionType
+      SERVER_NAME                            = "\x00\x00"
+      MAX_FRAGMENT_LENGTH                    = "\x00\x01"
+      STATUS_REQUEST                         = "\x00\x05"
+      SUPPORTED_GROUPS                       = "\x00\x0a"
+      SIGNATURE_ALGORITHMS                   = "\x00\x0d"
+      USE_SRTP                               = "\x00\x0e"
+      HEARTBEAT                              = "\x00\x0f"
+      APPLICATION_LAYER_PROTOCOL_NEGOTIATION = "\x00\x10"
+      SIGNED_CERTIFICATE_TIMESTAMP           = "\x00\x12"
+      CLIENT_CERTIFICATE_TYPE                = "\x00\x13"
+      SERVER_CERTIFICATE_TYPE                = "\x00\x14"
+      PADDING                                = "\x00\x15"
+      RECORD_SIZE_LIMIT                      = "\x00\x1c"
+      PWD_PROTECT                            = "\x00\x1d"
+      PWD_CLEAR                              = "\x00\x1e"
+      PASSWORD_SALT                          = "\x00\x1f"
+      PRE_SHARED_KEY                         = "\x00\x29"
+      EARLY_DATA                             = "\x00\x2a"
+      SUPPORTED_VERSIONS                     = "\x00\x2b"
+      COOKIE                                 = "\x00\x2c"
+      PSK_KEY_EXCHANGE_MODES                 = "\x00\x2d"
+      CERTIFICATE_AUTHORITIES                = "\x00\x2f"
+      OID_FILTERS                            = "\x00\x30"
+      POST_HANDSHAKE_AUTH                    = "\x00\x31"
+      SIGNATURE_ALGORITHMS_CERT              = "\x00\x32"
+      KEY_SHARE                              = "\x00\x33"
+    end
+
+    DEFINED_EXTENSIONS = ExtensionType.constants.map do |c|
+      ExtensionType.const_get(c)
+    end.freeze
   end
 end
+
+Dir[File.dirname(__FILE__) + '/message/*.rb'].each { |f| require f }

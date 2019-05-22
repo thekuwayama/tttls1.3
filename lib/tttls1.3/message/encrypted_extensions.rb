@@ -4,23 +4,24 @@
 module TTTLS13
   using Refinements
   module Message
+    # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+    APPEARABLE_EE_EXTENSIONS = [
+      ExtensionType::SERVER_NAME,
+      ExtensionType::MAX_FRAGMENT_LENGTH,
+      ExtensionType::SUPPORTED_GROUPS,
+      ExtensionType::USE_SRTP,
+      ExtensionType::HEARTBEAT,
+      ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
+      ExtensionType::CLIENT_CERTIFICATE_TYPE,
+      ExtensionType::SERVER_CERTIFICATE_TYPE,
+      ExtensionType::RECORD_SIZE_LIMIT,
+      ExtensionType::EARLY_DATA
+    ].freeze
+    private_constant :APPEARABLE_EE_EXTENSIONS
+
     class EncryptedExtensions
       attr_reader :msg_type
       attr_reader :extensions
-
-      # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
-      ALLOWED_EXTENSIONS = [
-        ExtensionType::SERVER_NAME,
-        ExtensionType::MAX_FRAGMENT_LENGTH,
-        ExtensionType::SUPPORTED_GROUPS,
-        ExtensionType::USE_SRTP,
-        ExtensionType::HEARTBEAT,
-        ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
-        ExtensionType::CLIENT_CERTIFICATE_TYPE,
-        ExtensionType::SERVER_CERTIFICATE_TYPE,
-        ExtensionType::RECORD_SIZE_LIMIT,
-        ExtensionType::EARLY_DATA
-      ].freeze
 
       # @param extensions [TTTLS13::Message::Extensions]
       def initialize(extensions = Extensions.new)
@@ -57,8 +58,11 @@ module TTTLS13
       end
 
       # @return [Boolean]
-      def any_forbidden_extensions?
-        !(@extensions.keys - ALLOWED_EXTENSIONS).empty?
+      def only_appearable_extensions?
+        exs = @extensions.keys - APPEARABLE_EE_EXTENSIONS
+        return true if exs.empty?
+
+        !(exs - DEFINED_EXTENSIONS).empty?
       end
     end
   end

@@ -108,28 +108,31 @@ module TTTLS13
       #
       # @return [TTTLS13::Message::ContentType]
       def messages_type
-        types = @messages.map(&:class).uniq
+        types = @messages.map do |m|
+          if [Message::ClientHello,
+              Message::ServerHello,
+              Message::EncryptedExtensions,
+              Message::Certificate,
+              Message::CertificateVerify,
+              Message::Finished,
+              Message::EndOfEarlyData,
+              Message::NewSessionTicket].include?(m.class)
+            ContentType::HANDSHAKE
+          elsif m.class == ChangeCipherSpec
+            ContentType::CCS
+          elsif m.class == Message::ApplicationData
+            ContentType::APPLICATION_DATA
+          elsif m.class == Message::Alert
+            ContentType::ALERT
+          else
+            raise Error::ErrorAlerts, :internal_error
+          end
+        end
+
+        types.uniq!
         raise Error::ErrorAlerts, :internal_error unless types.length == 1
 
-        type = types.first
-        if [Message::ClientHello,
-            Message::ServerHello,
-            Message::EncryptedExtensions,
-            Message::Certificate,
-            Message::CertificateVerify,
-            Message::Finished,
-            Message::EndOfEarlyData,
-            Message::NewSessionTicket].include?(type)
-          ContentType::HANDSHAKE
-        elsif type == ChangeCipherSpec
-          ContentType::CCS
-        elsif type == Message::ApplicationData
-          ContentType::APPLICATION_DATA
-        elsif type == Message::Alert
-          ContentType::ALERT
-        else
-          raise Error::ErrorAlerts, :internal_error
-        end
+        types.first
       end
 
       class << self

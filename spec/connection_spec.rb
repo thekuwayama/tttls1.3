@@ -5,6 +5,16 @@ require_relative 'spec_helper'
 
 RSpec.describe Connection do
   context 'connection, Simple 1-RTT Handshake,' do
+    let(:private_key) do
+      rsa = OpenSSL::PKey::RSA.new
+      rsa.set_key(OpenSSL::BN.new(TESTBINARY_PKEY_MODULUS, 2),
+                  OpenSSL::BN.new(TESTBINARY_PKEY_PUBLIC_EXPONENT, 2),
+                  OpenSSL::BN.new(TESTBINARY_PKEY_PRIVATE_EXPONENT, 2))
+      rsa.set_factors(OpenSSL::BN.new(TESTBINARY_PKEY_PRIME1, 2),
+                      OpenSSL::BN.new(TESTBINARY_PKEY_PRIME2, 2))
+      rsa
+    end
+
     let(:ct) do
       Certificate.deserialize(TESTBINARY_CERTIFICATE)
     end
@@ -40,24 +50,15 @@ RSpec.describe Connection do
     end
 
     it 'should verify server CertificateVerify.signature' do
-      certificate_pem = ct.certificate_list.first.cert_data.to_pem
+      public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
       signature = cv.signature
-      expect(connection.send(:do_verify_certificate_verify,
-                             certificate_pem: certificate_pem,
+      expect(connection.send(:do_verified_certificate_verify?,
+                             public_key: public_key,
                              signature_scheme: signature_scheme,
                              signature: signature,
                              context: 'TLS 1.3, server CertificateVerify',
                              handshake_context_end: CT))
-        .to be true
-    end
-
-    it 'should verify server Finished.verify_data' do
-      expect(connection.send(:do_verify_finished,
-                             digest: 'SHA256',
-                             finished_key: TESTBINARY_SERVER_FINISHED_KEY,
-                             handshake_context_end: CV,
-                             signature: sf.verify_data))
         .to be true
     end
 
@@ -67,6 +68,35 @@ RSpec.describe Connection do
                              finished_key: TESTBINARY_CLIENT_FINISHED_KEY,
                              handshake_context_end: EOED))
         .to eq cf.verify_data
+    end
+
+    it 'should verify server Finished.verify_data' do
+      expect(connection.send(:do_verified_finished?,
+                             digest: 'SHA256',
+                             finished_key: TESTBINARY_SERVER_FINISHED_KEY,
+                             handshake_context_end: CV,
+                             signature: sf.verify_data))
+        .to be true
+    end
+
+    it 'should sign server CertificateVerify.signature' do
+      public_key = ct.certificate_list.first.cert_data.public_key
+      signature_scheme = cv.signature_scheme
+
+      # used RSASSA-PSS signature_scheme, salt is a random sequence.
+      # CertificateVerify.signature is random.
+      signature = connection.send(:do_sign_certificate_verify,
+                                  private_key: private_key,
+                                  signature_scheme: signature_scheme,
+                                  context: 'TLS 1.3, server CertificateVerify',
+                                  handshake_context_end: CT)
+      expect(connection.send(:do_verified_certificate_verify?,
+                             public_key: public_key,
+                             signature_scheme: signature_scheme,
+                             signature: signature,
+                             context: 'TLS 1.3, server CertificateVerify',
+                             handshake_context_end: CT))
+        .to be true
     end
   end
 
@@ -99,11 +129,11 @@ RSpec.describe Connection do
     end
 
     it 'should verify server CertificateVerify.signature' do
-      certificate_pem = ct.certificate_list.first.cert_data.to_pem
+      public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
       signature = cv.signature
-      expect(connection.send(:do_verify_certificate_verify,
-                             certificate_pem: certificate_pem,
+      expect(connection.send(:do_verified_certificate_verify?,
+                             public_key: public_key,
                              signature_scheme: signature_scheme,
                              signature: signature,
                              context: 'TLS 1.3, server CertificateVerify',

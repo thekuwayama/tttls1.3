@@ -4,6 +4,12 @@
 module TTTLS13
   using Refinements
   module Message
+    # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+    APPEARABLE_NST_EXTENSIONS = [
+      ExtensionType::EARLY_DATA
+    ].freeze
+    private_constant :APPEARABLE_NST_EXTENSIONS
+
     class NewSessionTicket
       attr_reader :msg_type
       attr_reader :ticket_lifetime
@@ -84,6 +90,14 @@ module TTTLS13
                              extensions: extensions)
       end
       # rubocop: enable Metrics/AbcSize
+
+      # @return [Boolean]
+      def only_appearable_extensions?
+        exs = @extensions.keys - APPEARABLE_NST_EXTENSIONS
+        return true if exs.empty?
+
+        !(exs - DEFINED_EXTENSIONS).empty?
+      end
     end
   end
 end

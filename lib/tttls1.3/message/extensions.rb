@@ -6,32 +6,6 @@ Dir[File.dirname(__FILE__) + '/extension/*.rb'].each { |f| require f }
 module TTTLS13
   using Refinements
   module Message
-    module ExtensionType
-      SERVER_NAME                            = "\x00\x00"
-      MAX_FRAGMENT_LENGTH                    = "\x00\x01"
-      STATUS_REQUEST                         = "\x00\x05"
-      SUPPORTED_GROUPS                       = "\x00\x0a"
-      SIGNATURE_ALGORITHMS                   = "\x00\x0d"
-      USE_SRTP                               = "\x00\x0e"
-      HEARTBEAT                              = "\x00\x0f"
-      APPLICATION_LAYER_PROTOCOL_NEGOTIATION = "\x00\x10"
-      SIGNED_CERTIFICATE_TIMESTAMP           = "\x00\x12"
-      CLIENT_CERTIFICATE_TYPE                = "\x00\x13"
-      SERVER_CERTIFICATE_TYPE                = "\x00\x14"
-      PADDING                                = "\x00\x15"
-      RECORD_SIZE_LIMIT                      = "\x00\x1c"
-      PRE_SHARED_KEY                         = "\x00\x29"
-      EARLY_DATA                             = "\x00\x2a"
-      SUPPORTED_VERSIONS                     = "\x00\x2b"
-      COOKIE                                 = "\x00\x2c"
-      PSK_KEY_EXCHANGE_MODES                 = "\x00\x2d"
-      CERTIFICATE_AUTHORITIES                = "\x00\x2f"
-      OID_FILTERS                            = "\x00\x30"
-      POST_HANDSHAKE_AUTH                    = "\x00\x31"
-      SIGNATURE_ALGORITHMS_CERT              = "\x00\x32"
-      KEY_SHARE                              = "\x00\x33"
-    end
-
     class Extensions < Hash
       # @param extensions [Array of TTTLS13::Message::Extension::$Object]
       #
@@ -145,7 +119,7 @@ module TTTLS13
           when ExtensionType::SIGNATURE_ALGORITHMS
             Extension::SignatureAlgorithms.deserialize(binary)
           when ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
-            Extension::Alpn..deserialize(binary)
+            Extension::Alpn.deserialize(binary)
           when ExtensionType::RECORD_SIZE_LIMIT
             Extension::RecordSizeLimit.deserialize(binary)
           when ExtensionType::PRE_SHARED_KEY

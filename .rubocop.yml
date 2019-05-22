@@ -10,6 +10,9 @@ Metrics/AbcSize:
 Metrics/MethodLength:
   Max: 30
 
+Naming/UncommunicativeMethodParamName:
+  MinNameLength: 1
+
 Metrics/BlockLength:
   Exclude:
     - 'Rakefile'

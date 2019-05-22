@@ -4,7 +4,7 @@
 require_relative 'helper'
 
 hostname, port = (ARGV[0] || 'localhost:4433').split(':')
-http_get = http_get(hostname)
+req = simple_http_request(hostname)
 
 settings_2nd = {
   ca_file: __dir__ + '/../tmp/ca.crt'
@@ -23,7 +23,9 @@ settings_1st = {
   ca_file: __dir__ + '/../tmp/ca.crt',
   process_new_session_ticket: process_new_session_ticket
 }
-accepted_early_data = false
+
+succeed_early_data = false
+
 [
   # Initial Handshake:
   settings_1st,
@@ -34,31 +36,15 @@ accepted_early_data = false
   client = TTTLS13::Client.new(socket, hostname, settings)
 
   # send message using early data; 0-RTT
-  client.early_data(http_get) if i == 1 && settings.include?(:ticket)
+  client.early_data(req) if i == 1 && settings.include?(:ticket)
   client.connect
   # send message after Simple 1-RTT Handshake
-  client.write(http_get) if i.zero? || !client.accepted_early_data?
-
-  # status line, header
-  buffer = ''
-  buffer += client.read until buffer.include?("\r\n\r\n")
-  print header = buffer.split("\r\n\r\n").first
-  # header; Content-Length
-  cl_line = header.split("\r\n").find { |s| s.match(/Content-Length:/i) }
-
-  # body
-  unless cl_line.nil?
-    cl = cl_line.split(':').last.to_i
-    print buffer = buffer.split("\r\n\r\n")[1..].join
-    while buffer.length < cl
-      print s = client.read
-      buffer += s
-    end
-  end
-
+  client.write(req) if i.zero? || !client.succeed_early_data?
+  print recv_http_response(client)
   client.close
-  accepted_early_data = client.accepted_early_data?
+
+  succeed_early_data = client.succeed_early_data?
 end
 
 puts "\n" + '-' * 10
-puts "early data of 2nd handshake: #{accepted_early_data}"
+puts "early data of 2nd handshake: #{succeed_early_data}"

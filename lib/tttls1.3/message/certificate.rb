@@ -4,6 +4,13 @@
 module TTTLS13
   using Refinements
   module Message
+    # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-1
+    APPEARABLE_CT_EXTENSIONS = [
+      ExtensionType::STATUS_REQUEST,
+      ExtensionType::SIGNED_CERTIFICATE_TIMESTAMP
+    ].freeze
+    private_constant :APPEARABLE_CT_EXTENSIONS
+
     class Certificate
       attr_reader :msg_type
       attr_reader :certificate_request_context
@@ -56,6 +63,17 @@ module TTTLS13
           certificate_request_context: certificate_request_context,
           certificate_list: certificate_list
         )
+      end
+
+      # @return [Boolean]
+      def only_appearable_extensions?
+        cl_exs = @certificate_list.map do |e|
+          e.instance_variable_get(:@extensions).keys
+        end
+        exs = cl_exs.uniq.flatten - APPEARABLE_CT_EXTENSIONS
+        return true if exs.empty?
+
+        !(exs - DEFINED_EXTENSIONS).empty?
       end
 
       class << self
