@@ -668,7 +668,7 @@ module TTTLS13
       sh = @transcript[SH]
       sh_lv = sh.legacy_version
       sh_sv = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
-                &.versions || []
+               &.versions || []
 
       sh_lv == Message::ProtocolVersion::TLS_1_2 &&
         sh_sv.first == Message::ProtocolVersion::TLS_1_3

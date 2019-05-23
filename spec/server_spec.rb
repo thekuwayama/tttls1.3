@@ -40,8 +40,8 @@ RSpec.describe Server do
       server.instance_variable_set(:@transcript, transcript)
       cipher_suite = server.send(:select_cipher_suite)
       server.instance_variable_set(:@cipher_suite, cipher_suite)
-      named_group = server.send(:select_named_group)
-      server.instance_variable_set(:@named_group, named_group)
+      # X25519 is unsupported so @named_group uses SECP256R1.
+      server.instance_variable_set(:@named_group, NamedGroup::SECP256R1)
       signature_scheme = server.send(:select_signature_scheme)
       server.instance_variable_set(:@signature_scheme, signature_scheme)
       exs, _priv_key = server.send(:gen_sh_extensions)

@@ -140,13 +140,14 @@ module TTTLS13
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
           # validate/select parameters
+          terminamte(:illegal_parameter) unless valid_ch_compression_methods?
+          terminate(:illegal_parameter) unless valid_ch_key_share?
+          terminate(:unrecognized_name) unless recognized_server_name?
           @cipher_suite = select_cipher_suite
           @named_group = select_named_group
           @signature_scheme = select_signature_scheme
           terminate(:handshake_failure) \
             if @cipher_suite.nil? || @named_group.nil? || @signature_scheme.nil?
-          terminamte(:illegal_parameter) unless valid_ch_compression_methods?
-          terminate(:unrecognized_name) unless recognized_server_name?
 
           @state = ServerState::NEGOTIATED
         when ServerState::NEGOTIATED
@@ -156,13 +157,12 @@ module TTTLS13
           @transcript[SH] = send_server_hello(exs)
           send_ccs # compatibility mode
 
+          # TODO: Send HelloRetryRequest if @named_group.nil?
           # generate shared secret
-          terminate(:illegal_parameter) unless valid_ch_key_share?
           ke = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
-                              &.key_share_entry
-                              &.find { |e| e.group == @named_group }
-                              &.key_exchange
-          # TODO: Send HelloRetryRequest
+                             &.key_share_entry
+                             &.find { |e| e.group == @named_group }
+                             &.key_exchange
           shared_secret = gen_shared_secret(ke, @priv_key, @named_group)
           @key_schedule = KeySchedule.new(psk: @psk,
                                           shared_secret: shared_secret,
@@ -374,7 +374,7 @@ module TTTLS13
       ch = @transcript[CH]
       ch_lv = ch.legacy_version
       ch_sv = ch.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
-                &.versions || []
+               &.versions || []
 
       ch_lv == Message::ProtocolVersion::TLS_1_2 &&
         ch_sv.include?(Message::ProtocolVersion::TLS_1_3)
@@ -389,12 +389,11 @@ module TTTLS13
 
     # @return [TTTLS13::NamedGroup, nil]
     def select_named_group
-      groups \
-      = @transcript[CH].extensions[Message::ExtensionType::SUPPORTED_GROUPS]
-                       &.named_group_list || []
+      ks_groups = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
+                                &.key_share_entry&.map(&:group) || []
 
-      groups.find do |sg|
-        @settings[:supported_groups].include?(sg)
+      ks_groups.find do |g|
+        @settings[:supported_groups].include?(g)
       end
     end
 
@@ -402,7 +401,7 @@ module TTTLS13
     def select_signature_scheme
       algorithms \
       = @transcript[CH].extensions[Message::ExtensionType::SIGNATURE_ALGORITHMS]
-                       &.supported_signature_algorithms || []
+                      &.supported_signature_algorithms || []
 
       do_select_signature_algorithms(algorithms, @crt).find do |ss|
         @settings[:signature_algorithms].include?(ss)
@@ -418,7 +417,7 @@ module TTTLS13
     def recognized_server_name?
       server_name \
       = @transcript[CH].extensions[Message::ExtensionType::SERVER_NAME]
-                       &.server_name
+                      &.server_name
 
       return true if server_name.nil?
 
