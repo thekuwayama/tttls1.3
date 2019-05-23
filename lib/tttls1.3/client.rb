@@ -420,6 +420,7 @@ module TTTLS13
       # supported_groups
       groups = @settings[:supported_groups]
       exs << Message::Extension::SupportedGroups.new(groups)
+
       # key_share
       ksg = @settings[:key_share_groups] || groups
       key_share, priv_keys \
@@ -744,7 +745,7 @@ module TTTLS13
     def valid_sh_key_share?
       offered = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
                                .key_share_entry.map(&:group)
-      selected = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
+      selected = @transcript[SH].extensions[Message::ExtensionType::KEY_SHARE]
                                 .key_share_entry.first.group
       offered.include?(selected)
     end
@@ -754,14 +755,11 @@ module TTTLS13
       # TODO: pre_shared_key
       ch1_exs = @transcript[CH1].extensions
       ngl = ch1_exs[Message::ExtensionType::SUPPORTED_GROUPS].named_group_list
+      kse = ch1_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
       group = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
                               .key_share_entry.first.group
-      return false unless ngl.include?(group)
 
-      kse = ch1_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
-      return false if !kse.empty? && kse.map(&:group).include?(group)
-
-      true
+      ngl.include?(group) && !kse.map(&:group).include?(group)
     end
 
     # @param nst [TTTLS13::Message::NewSessionTicket]

@@ -369,11 +369,10 @@ module TTTLS13
       #
       # Server may receive an unprotected record of type change_cipher_spec
       # between the first and second ClientHello
-      return false unless @transcript.include?(CH) || @transcript.include?(CH1)
-      return false if @endpoint == :client && @transcript.include?(SF)
-      return false if @endpoint == :server && @transcript.include?(CF)
+      finished = (@endpoint == :client ? SF : CF)
 
-      true
+      (@transcript.include?(CH) || @transcript.include?(CH1)) &&
+        !@transcript.include?(finished)
     end
 
     # @param symbol [Symbol] key of ALERT_DESCRIPTION
