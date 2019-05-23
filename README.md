@@ -67,6 +67,7 @@ tttls1.3 provides client API with the following features:
 tttls1.3 provides server API with the following features:
 
 * Simple 1-RTT Handshake
+* HelloRetryRequest
 
 **NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs.
 
