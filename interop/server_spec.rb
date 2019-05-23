@@ -120,6 +120,14 @@ RSpec.describe Server do
       signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512]
     ],
     [
+      true,
+      '-groups P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
+      FIXTURES_DIR + '/rsa_rsassaPss.crt',
+      FIXTURES_DIR + '/rsa_rsassaPss.key',
+      signature_algorithms_cert: [SignatureScheme::RSA_PSS_RSAE_SHA256],
+      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256]
+    ],
+    [
       false,
       '-groups P-256:P-384:P-521 -sigalgs ECDSA+SHA256:ECDSA+SHA384:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:RSA+SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',

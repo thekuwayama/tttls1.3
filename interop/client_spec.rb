@@ -119,6 +119,14 @@ RSpec.describe Client do
       signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512]
     ],
     [
+      true,
+      '-sigalgs RSA-PSS+SHA256',
+      'rsa_rsassaPss.crt',
+      'rsa_rsassaPss.key',
+      signature_algorithms_cert: [SignatureScheme::RSA_PSS_RSAE_SHA256],
+      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256]
+    ],
+    [
       false,
       '-sigalgs ECDSA+SHA256:ECDSA+SHA384:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:RSA+SHA256',
       'rsa_secp521r1.crt',
