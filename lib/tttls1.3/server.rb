@@ -432,7 +432,13 @@ module TTTLS13
       sg = @transcript[CH].extensions[Message::ExtensionType::SUPPORTED_GROUPS]
       sp_groups = sg&.named_group_list || []
 
-      ks_groups.uniq == ks_groups && (ks_groups - sp_groups).empty?
+      # Each KeyShareEntry value MUST correspond to a group offered in the
+      # "supported_groups" extension and MUST appear in the same order.
+      #
+      # Clients MUST NOT offer multiple KeyShareEntry values for the same group.
+      (ks_groups - sp_groups).empty? &&
+        sp_groups.filter { |g| ks_groups.include?(g) } == ks_groups &&
+        ks_groups.uniq == ks_groups
     end
   end
   # rubocop: enable Metrics/ClassLength
