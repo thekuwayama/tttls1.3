@@ -131,6 +131,17 @@ module TTTLS13
           [key_share, ec]
         end
 
+        # @param groups [TTTLS13::NamedGroup]
+        #
+        # @return [TTTLS13::Message::Extensions::KeyShare]
+        def self.gen_hrr_key_share(group)
+          kse = KeyShareEntry.new(group: group)
+          KeyShare.new(
+            msg_type: HandshakeType::HELLO_RETRY_REQUEST,
+            key_share_entry: [kse]
+          )
+        end
+
         class << self
           private
 
