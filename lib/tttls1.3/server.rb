@@ -147,8 +147,15 @@ module TTTLS13
           @named_group = select_named_group
           @signature_scheme = select_signature_scheme
           terminate(:handshake_failure) \
-            if @cipher_suite.nil? || @named_group.nil? || @signature_scheme.nil?
+            if @cipher_suite.nil? || @signature_scheme.nil?
 
+          # send HRR
+          if @named_group.nil?
+            @transcript[CH1] = @transcript.delete(CH)
+            @transcript[HRR] = send_hello_retry_request
+            @state = ServerState::START
+            next
+          end
           @state = ServerState::NEGOTIATED
         when ServerState::NEGOTIATED
           logger.debug('ServerState::NEGOTIATED')
@@ -157,7 +164,6 @@ module TTTLS13
           @transcript[SH] = send_server_hello(exs)
           send_ccs # compatibility mode
 
-          # TODO: Send HelloRetryRequest if @named_group.nil?
           # generate shared secret
           ke = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
                              &.key_share_entry
@@ -254,6 +260,38 @@ module TTTLS13
         legacy_session_id_echo: ch_session_id,
         cipher_suite: @cipher_suite,
         extensions: exs
+      )
+      send_handshakes(Message::ContentType::HANDSHAKE, [sh], @write_cipher)
+
+      sh
+    end
+
+    # @return [TTTLS13::Message::ServerHello]
+    def send_hello_retry_request
+      exs = []
+      # supported_versions
+      exs << Message::Extension::SupportedVersions.new(
+        msg_type: Message::HandshakeType::SERVER_HELLO
+      )
+
+      # key_share
+      ch1 = @transcript[CH1]
+      sp_groups = ch1.extensions[Message::ExtensionType::SUPPORTED_GROUPS]
+                    &.named_group_list || []
+      ks_groups = ch1.extensions[Message::ExtensionType::KEY_SHARE]
+                    &.key_share_entry&.map(&:group) || []
+      ksg = sp_groups.find do |g|
+        !ks_groups.include?(g) && @settings[:supported_groups].include?(g)
+      end
+
+      # TODO: cookie
+      exs << Message::Extension::KeyShare.gen_hrr_key_share(ksg)
+
+      sh = Message::ServerHello.new(
+        random: Message::HRR_RANDOM,
+        legacy_session_id_echo: ch1.legacy_session_id,
+        cipher_suite: @cipher_suite,
+        extensions: Message::Extensions.new(exs)
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [sh], @write_cipher)
 

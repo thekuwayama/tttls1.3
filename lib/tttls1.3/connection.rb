@@ -363,11 +363,13 @@ module TTTLS13
     end
 
     # @return [Boolean]
-    #
-    # Received ccs before the first ClientHello message or after the peer's
-    # Finished message, peer MUST abort.
     def receivable_ccs?
-      return false unless @transcript.include?(CH)
+      # Received ccs before the first ClientHello message or after the peer's
+      # Finished message, peer MUST abort.
+      #
+      # Server may receive an unprotected record of type change_cipher_spec
+      # between the first and second ClientHello
+      return false unless @transcript.include?(CH) || @transcript.include?(CH1)
       return false if @endpoint == :client && @transcript.include?(SF)
       return false if @endpoint == :server && @transcript.include?(CF)
 

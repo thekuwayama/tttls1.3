@@ -21,13 +21,12 @@ module TTTLS13
     ].freeze
     private_constant :APPEARABLE_HRR_EXTENSIONS
 
-    class ServerHello
-      # special value of the SHA-256 of "HelloRetryRequest"
-      HRR_RANDOM \
-      = "\xcf\x21\xad\x74\xe5\x9a\x61\x11\xbe\x1d\x8c\x02\x1e\x65\xb8\x91" \
-        "\xc2\xa2\x11\x16\x7a\xbb\x8c\x5e\x07\x9e\x09\xe2\xc8\xa8\x33\x9c"
-      private_constant :HRR_RANDOM
+    # special value of the SHA-256 of "HelloRetryRequest"
+    HRR_RANDOM \
+    = "\xcf\x21\xad\x74\xe5\x9a\x61\x11\xbe\x1d\x8c\x02\x1e\x65\xb8\x91" \
+      "\xc2\xa2\x11\x16\x7a\xbb\x8c\x5e\x07\x9e\x09\xe2\xc8\xa8\x33\x9c"
 
+    class ServerHello
       attr_reader :msg_type
       attr_reader :legacy_version
       attr_reader :random
