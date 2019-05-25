@@ -27,10 +27,10 @@ RSpec.describe Certificate do
 
     it 'should be serialized' do
       expect(message.serialize).to eq HandshakeType::CERTIFICATE \
-                                      + 990.to_uint24 \
+                                      + 742.to_uint24 \
                                       + 0.to_uint8 \
-                                      + 986.to_uint24 \
-                                      + 981.to_uint24 \
+                                      + 738.to_uint24 \
+                                      + 733.to_uint24 \
                                       + certificate.to_der \
                                       + 0.to_uint16
     end

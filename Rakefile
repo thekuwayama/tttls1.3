@@ -17,7 +17,7 @@ directory TMP_DIR
 
 file CA_KEY => TMP_DIR do
   puts "generate #{CA_KEY}..."
-  ca_key = OpenSSL::PKey::RSA.generate(4096)
+  ca_key = OpenSSL::PKey::RSA.generate(2048)
   File.write(CA_KEY, ca_key.to_pem)
 end
 
@@ -32,7 +32,7 @@ file CA_CRT => [TMP_DIR, CA_KEY] do
   ca_crt.not_before = Time.now
   ca_crt.not_after = Time.now + (60 * 60 * 24 * 365 * 10)
   ca_crt.public_key = ca_key.public_key
-  ca_crt.serial = 1
+  ca_crt.serial = OpenSSL::BN.rand(64)
   ca_crt.version = 2
   ca_crt.issuer = issu
   ca_crt.subject = sub
@@ -83,7 +83,7 @@ file SERVER_CRT => [TMP_DIR, CA_CRT, SERVER_KEY] do
   server_crt.not_before = Time.now
   server_crt.not_after = Time.now + (60 * 60 * 24 * 365)
   server_crt.public_key = server_key.public_key
-  server_crt.serial = 2
+  server_crt.serial = OpenSSL::BN.rand(64)
   server_crt.version = 2
   server_crt.issuer = ca_crt.issuer
   server_crt.subject = sub
