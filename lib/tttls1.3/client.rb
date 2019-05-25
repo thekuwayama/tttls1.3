@@ -158,26 +158,30 @@ module TTTLS13
 
           sh = @transcript[SH] = recv_server_hello
           terminate(:illegal_parameter) unless sh.only_appearable_extensions?
+
           # support only TLS 1.3
           terminate(:protocol_version) unless negotiated_tls_1_3?
 
           # validate parameters
-          terminate(:illegal_parameter) unless valid_sh_legacy_version?
+          terminate(:illegal_parameter) unless equal_ch_sh_legacy_version?
           terminate(:illegal_parameter) unless valid_sh_random?
-          terminate(:illegal_parameter) unless valid_sh_legacy_session_id_echo?
-          terminate(:illegal_parameter) unless valid_sh_cipher_suite?
-          terminate(:illegal_parameter) \
-            if @transcript.include?(HRR) &&
-               neq_hrr_cipher_suite?(sh.cipher_suite)
+          terminate(:illegal_parameter) unless equal_ch_sh_legacy_session_id?
+          terminate(:illegal_parameter) unless ch_include_sh_cipher_suite?
           terminate(:illegal_parameter) unless valid_sh_compression_method?
+          terminate(:illegal_parameter) \
+            if @transcript.include?(HRR) && !equal_sh_hrr_cipher_suites?
+          terminate(:unsupported_extension) \
+            unless offered_ch_extensions?(sh.extensions)
+          terminate(:illegal_parameter) \
+            if @transcript.include?(HRR) && !equal_sh_hrr_supported_versions?
 
           # handling HRR
           if sh.hrr?
-            terminate(:unexpected_message) if received_2nd_hrr?
+            terminate(:unexpected_message) if @transcript.include?(HRR)
             ch1 = @transcript[CH1] = @transcript.delete(CH)
             hrr = @transcript[HRR] = @transcript.delete(SH)
             terminate(:unsupported_extension) \
-              unless offered_ch_extensions?(sh.extensions, HRR)
+              unless offered_ch1_extensions?(sh.extensions)
             terminate(:illegal_parameter) unless valid_hrr_key_share?
 
             exs, priv_keys = gen_newch_extensions(ch1, hrr)
@@ -187,21 +191,10 @@ module TTTLS13
             next
           end
 
-          # validate extensions
-          terminate(:unsupported_extension) \
-            unless offered_ch_extensions?(sh.extensions)
-
-          versions \
-          = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS].versions
-          terminate(:illegal_parameter) \
-            if @transcript.include?(HRR) &&
-               neq_hrr_supported_versions?(versions)
-
           # generate shared secret
           @psk = nil unless sh.extensions
                               .include?(Message::ExtensionType::PRE_SHARED_KEY)
-          terminate(:illegal_parameter) unless valid_sh_key_share?
-
+          terminate(:illegal_parameter) unless ch_include_sh_key_share?
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           ke = kse.key_exchange
@@ -692,19 +685,19 @@ module TTTLS13
     end
 
     # @return [Boolean]
-    def valid_sh_legacy_version?
+    def equal_ch_sh_legacy_version?
       @transcript[CH].legacy_version ==
         @transcript[SH].legacy_version
     end
 
     # @return [Boolean]
-    def valid_sh_legacy_session_id_echo?
+    def equal_ch_sh_legacy_session_id?
       @transcript[CH].legacy_session_id ==
         @transcript[SH].legacy_session_id_echo
     end
 
     # @return [Boolean]
-    def valid_sh_cipher_suite?
+    def ch_include_sh_cipher_suite?
       @transcript[CH].cipher_suites.include?(@transcript[SH].cipher_suite)
     end
 
@@ -714,48 +707,40 @@ module TTTLS13
     end
 
     # @param extensions [TTTLS13::Message::Extensions]
-    # @param transcript_index [Integer]
     #
     # @return [Boolean]
-    def offered_ch_extensions?(extensions, transcript_index = nil)
-      keys = extensions.keys
-      if transcript_index == HRR
-        keys -= @transcript[CH1].extensions.keys
-        keys -= [Message::ExtensionType::COOKIE]
-      else
-        keys -= @transcript[CH].extensions.keys
-      end
+    def offered_ch_extensions?(extensions)
+      keys = extensions.keys - @transcript[CH].extensions.keys
       keys.empty?
     end
 
     # @return [Boolean]
-    def received_2nd_hrr?
-      @transcript.include?(HRR)
-    end
-
-    # @param cipher_suite [TTTLS13::CipherSuite]
-    #
-    # @return [Boolean]
-    def neq_hrr_cipher_suite?(cipher_suite)
-      cipher_suite != @transcript[HRR].cipher_suite
-    end
-
-    # @param versions [Array of TTTLS13::Message::ProtocolVersion]
-    #
-    # @return [Boolean]
-    def neq_hrr_supported_versions?(versions)
-      hrr = @transcript[HRR]
-      versions != hrr.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
-                     .versions
+    def offered_ch1_extensions?(extensions)
+      keys = extensions.keys - @transcript[CH1].extensions.keys \
+             - [Message::ExtensionType::COOKIE]
+      keys.empty?
     end
 
     # @return [Boolean]
-    def valid_sh_key_share?
-      offered = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
-                               .key_share_entry.map(&:group)
-      selected = @transcript[SH].extensions[Message::ExtensionType::KEY_SHARE]
-                                .key_share_entry.first.group
-      offered.include?(selected)
+    def equal_sh_hrr_cipher_suites?
+      @transcript[SH].cipher_suite == @transcript[HRR].cipher_suite
+    end
+
+    # @return [Boolean]
+    def equal_sh_hrr_supported_versions?
+      sh_exs = @transcript[SH].extensions
+      hrr_exs = @transcript[HRR].extensions
+      sh_exs[Message::ExtensionType::SUPPORTED_VERSIONS].versions \
+      == hrr_exs[Message::ExtensionType::SUPPORTED_VERSIONS].versions
+    end
+
+    # @return [Boolean]
+    def ch_include_sh_key_share?
+      ch_ks = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
+                             .key_share_entry.map(&:group)
+      sh_ks = @transcript[SH].extensions[Message::ExtensionType::KEY_SHARE]
+                             .key_share_entry.first.group
+      ch_ks.include?(sh_ks)
     end
 
     # @return [Boolean]
