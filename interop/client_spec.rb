@@ -140,6 +140,13 @@ RSpec.describe Client do
       'rsa_rsa.crt',
       'rsa_rsa.key',
       {}
+    ],
+    [
+      true,
+      '',
+      'rsa_rsa.crt',
+      'rsa_rsa.key',
+      key_share_groups: []
     ]
     # rubocop: enable Metrics/LineLength
   ].each do |normal, opt, crt, key, settings|
