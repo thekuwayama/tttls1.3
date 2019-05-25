@@ -74,6 +74,8 @@ module TTTLS13
     end
 
     def close
+      return if @state == EOF
+
       send_alert(:close_notify)
       @state = EOF
 
