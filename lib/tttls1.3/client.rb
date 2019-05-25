@@ -174,15 +174,15 @@ module TTTLS13
           # handling HRR
           if sh.hrr?
             terminate(:unexpected_message) if received_2nd_hrr?
-
-            @transcript[CH1] = @transcript.delete(CH)
-            @transcript[HRR] = @transcript.delete(SH)
+            ch1 = @transcript[CH1] = @transcript.delete(CH)
+            hrr = @transcript[HRR] = @transcript.delete(SH)
             terminate(:unsupported_extension) \
               unless offered_ch_extensions?(sh.extensions, HRR)
             terminate(:illegal_parameter) unless valid_hrr_key_share?
 
-            ch = send_new_client_hello(@transcript[CH1], @transcript[HRR])
-            @transcript[CH] = ch
+            exs, priv_keys = gen_newch_extensions(ch1, hrr)
+            @priv_keys = priv_keys.merge(@priv_keys)
+            @transcript[CH] = send_new_client_hello(ch1, exs)
             @state = ClientState::WAIT_SH
             next
           end
@@ -507,24 +507,20 @@ module TTTLS13
       (age + Convert.bin2i(@settings[:ticket_age_add])) % (2**32)
     end
 
-    # NOTE:
-    # https://tools.ietf.org/html/rfc8446#section-4.1.2
-    #
     # @param ch1 [TTTLS13::Message::ClientHello]
     # @param hrr [TTTLS13::Message::ServerHello]
     #
-    # @return [TTTLS13::Message::ClientHello]
-    def send_new_client_hello(ch1, hrr)
-      arr = []
-
+    # @return [TTTLS13::Message::Extensions]
+    # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
+    def gen_newch_extensions(ch1, hrr)
+      exs = []
       # key_share
       if hrr.extensions.include?(Message::ExtensionType::KEY_SHARE)
         group = hrr.extensions[Message::ExtensionType::KEY_SHARE]
                    .key_share_entry.first.group
         key_share, priv_keys \
                    = Message::Extension::KeyShare.gen_ch_key_share([group])
-        arr << key_share
-        @priv_keys = priv_keys.merge(@priv_keys)
+        exs << key_share
       end
 
       # cookie
@@ -535,19 +531,31 @@ module TTTLS13
       # HelloRetryRequest into a "cookie" extension in the new ClientHello.
       #
       # https://tools.ietf.org/html/rfc8446#section-4.2.2
-      arr << hrr.extensions[Message::ExtensionType::COOKIE] \
+      exs << hrr.extensions[Message::ExtensionType::COOKIE] \
         if hrr.extensions.include?(Message::ExtensionType::COOKIE)
 
       # early_data
-      new_exs = ch1.extensions.merge(Message::Extensions.new(arr))
+      new_exs = ch1.extensions.merge(Message::Extensions.new(exs))
       new_exs.delete(Message::ExtensionType::EARLY_DATA)
+
+      [new_exs, priv_keys]
+    end
+
+    # NOTE:
+    # https://tools.ietf.org/html/rfc8446#section-4.1.2
+    #
+    # @param ch1 [TTTLS13::Message::ClientHello]
+    # @param hrr [TTTLS13::Message::Extensions]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    def send_new_client_hello(ch1, exs)
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
         legacy_session_id: ch1.legacy_session_id,
         cipher_suites: ch1.cipher_suites,
         legacy_compression_methods: ch1.legacy_compression_methods,
-        extensions: new_exs
+        extensions: exs
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
 
