@@ -132,21 +132,26 @@ module TTTLS13
           logger.debug('ServerState::START')
 
           ch = @transcript[CH] = recv_client_hello
-          terminate(:illegal_parameter) unless ch.only_appearable_extensions?
+
+          # support only TLS 1.3
+          terminate(:protocol_version) unless ch.negotiated_tls_1_3?
+
+          # validate parameters
+          terminate(:illegal_parameter) unless ch.appearable_extensions?
+          terminamte(:illegal_parameter) \
+            unless ch.legacy_compression_methods == ["\x00"]
+          terminate(:illegal_parameter) unless ch.valid_key_share?
+          terminate(:unrecognized_name) unless recognized_server_name?(ch)
+
           @state = ServerState::RECVD_CH
         when ServerState::RECVD_CH
           logger.debug('ServerState::RECVD_CH')
 
-          # support only TLS 1.3
-          terminate(:protocol_version) unless negotiated_tls_1_3?
-
-          # validate/select parameters
-          terminamte(:illegal_parameter) unless valid_ch_compression_methods?
-          terminate(:illegal_parameter) unless valid_ch_key_share?
-          terminate(:unrecognized_name) unless recognized_server_name?
-          @cipher_suite = select_cipher_suite
-          @named_group = select_named_group
-          @signature_scheme = select_signature_scheme
+          # select parameters
+          ch = @transcript[CH]
+          @cipher_suite = select_cipher_suite(ch)
+          @named_group = select_named_group(ch)
+          @signature_scheme = select_signature_scheme(ch)
           terminate(:handshake_failure) \
             if @cipher_suite.nil? || @signature_scheme.nil?
 
@@ -413,75 +418,48 @@ module TTTLS13
       )
     end
 
-    # @return [Boolean]
-    def negotiated_tls_1_3?
-      ch = @transcript[CH]
-      ch_lv = ch.legacy_version
-      ch_sv = ch.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
-               &.versions || []
-
-      ch_lv == Message::ProtocolVersion::TLS_1_2 &&
-        ch_sv.include?(Message::ProtocolVersion::TLS_1_3)
-    end
-
+    # @param ch [TTTLS13::Message::ClientHello]
+    #
     # @return [TTTLS13::CipherSuite, nil]
-    def select_cipher_suite
-      @transcript[CH].cipher_suites.find do |cs|
+    def select_cipher_suite(ch)
+      ch.cipher_suites.find do |cs|
         @settings[:cipher_suites].include?(cs)
       end
     end
 
+    # @param ch [TTTLS13::Message::ClientHello]
+    #
     # @return [TTTLS13::NamedGroup, nil]
-    def select_named_group
-      ks_groups = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
-                                &.key_share_entry&.map(&:group) || []
+    def select_named_group(ch)
+      ks_groups = ch.extensions[Message::ExtensionType::KEY_SHARE]
+                   &.key_share_entry&.map(&:group) || []
 
       ks_groups.find do |g|
         @settings[:supported_groups].include?(g)
       end
     end
 
+    # @param ch [TTTLS13::Message::ClientHello]
+    #
     # @return [TTTLS13::SignatureScheme, nil]
-    def select_signature_scheme
-      algorithms \
-      = @transcript[CH].extensions[Message::ExtensionType::SIGNATURE_ALGORITHMS]
-                      &.supported_signature_algorithms || []
+    def select_signature_scheme(ch)
+      algorithms = ch.extensions[Message::ExtensionType::SIGNATURE_ALGORITHMS]
+                    &.supported_signature_algorithms || []
 
       do_select_signature_algorithms(algorithms, @crt).find do |ss|
         @settings[:signature_algorithms].include?(ss)
       end
     end
 
+    # @param ch [TTTLS13::Message::ClientHello]
+    #
     # @return [Boolean]
-    def valid_ch_compression_methods?
-      @transcript[CH].legacy_compression_methods == ["\x00"]
-    end
-
-    # @return [Boolean]
-    def recognized_server_name?
-      server_name \
-      = @transcript[CH].extensions[Message::ExtensionType::SERVER_NAME]
-                      &.server_name
-
+    def recognized_server_name?(ch)
+      server_name = ch.extensions[Message::ExtensionType::SERVER_NAME]
+                     &.server_name
       return true if server_name.nil?
 
       matching_san?(@crt, server_name)
-    end
-
-    # @return [Boolean]
-    def valid_ch_key_share?
-      ks = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
-      ks_groups = ks&.key_share_entry&.map(&:group) || []
-      sg = @transcript[CH].extensions[Message::ExtensionType::SUPPORTED_GROUPS]
-      sp_groups = sg&.named_group_list || []
-
-      # Each KeyShareEntry value MUST correspond to a group offered in the
-      # "supported_groups" extension and MUST appear in the same order.
-      #
-      # Clients MUST NOT offer multiple KeyShareEntry values for the same group.
-      (ks_groups - sp_groups).empty? &&
-        sp_groups.filter { |g| ks_groups.include?(g) } == ks_groups &&
-        ks_groups.uniq == ks_groups
     end
   end
   # rubocop: enable Metrics/ClassLength

@@ -66,7 +66,7 @@ module TTTLS13
       end
 
       # @return [Boolean]
-      def only_appearable_extensions?
+      def appearable_extensions?
         cl_exs = @certificate_list.map do |e|
           e.instance_variable_get(:@extensions).keys
         end

@@ -76,7 +76,7 @@ RSpec.describe Certificate do
 
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
-      expect(message.only_appearable_extensions?).to be false
+      expect(message.appearable_extensions?).to be false
     end
   end
 end

@@ -92,7 +92,7 @@ module TTTLS13
       # rubocop: enable Metrics/AbcSize
 
       # @return [Boolean]
-      def only_appearable_extensions?
+      def appearable_extensions?
         exs = @extensions.keys - APPEARABLE_NST_EXTENSIONS
         return true if exs.empty?
 

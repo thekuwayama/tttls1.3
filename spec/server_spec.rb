@@ -31,31 +31,35 @@ RSpec.describe Server do
       )
     end
 
-    let(:record) do
-      mock_socket = SimpleStream.new
-      server = Server.new(mock_socket)
-      server.instance_variable_set(:@crt, crt)
-      transcript = Transcript.new
-      transcript[CH] = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
-      server.instance_variable_set(:@transcript, transcript)
-      cipher_suite = server.send(:select_cipher_suite)
-      server.instance_variable_set(:@cipher_suite, cipher_suite)
+    let(:ch) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+
       # X25519 is unsupported so @named_group uses SECP256R1.
-      server.instance_variable_set(:@named_group, NamedGroup::SECP256R1)
-      signature_scheme = server.send(:select_signature_scheme)
-      server.instance_variable_set(:@signature_scheme, signature_scheme)
-      exs, _priv_key = server.send(:gen_sh_extensions)
-      server.send(:send_server_hello, exs)
-      Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
+      key_share = KeyShare.new(
+        msg_type: HandshakeType::CLIENT_HELLO,
+        key_share_entry: [
+          KeyShareEntry.new(
+            group: NamedGroup::SECP256R1,
+            key_exchange: "\x04" + OpenSSL::Random.random_bytes(64)
+          )
+        ]
+      )
+      ch.extensions[ExtensionType::KEY_SHARE] = key_share
+      ch
     end
 
-    it 'should send ServerHello' do
-      expect(record.type).to eq ContentType::HANDSHAKE
+    let(:server) do
+      server = Server.new(nil)
+      server.instance_variable_set(:@crt, crt)
+      server
+    end
 
-      message = record.messages.first
-      expect(message.msg_type).to eq HandshakeType::SERVER_HELLO
-      expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
-      expect(message.legacy_compression_method).to eq "\x00"
+    it 'should select parameters' do
+      expect(server.send(:select_cipher_suite, ch))
+        .to eq CipherSuite::TLS_AES_128_GCM_SHA256
+      expect(server.send(:select_named_group, ch)).to eq NamedGroup::SECP256R1
+      expect(server.send(:select_signature_scheme, ch))
+        .to eq SignatureScheme::RSA_PSS_RSAE_SHA256
     end
   end
 

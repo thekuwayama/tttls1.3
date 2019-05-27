@@ -21,6 +21,12 @@ module TTTLS13
     ].freeze
     private_constant :APPEARABLE_HRR_EXTENSIONS
 
+    DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
+    private_constant :DOWNGRADE_PROTECTION_TLS_1_2
+
+    DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
+    private_constant :DOWNGRADE_PROTECTION_TLS_1_1
+
     # special value of the SHA-256 of "HelloRetryRequest"
     HRR_RANDOM \
     = "\xcf\x21\xad\x74\xe5\x9a\x61\x11\xbe\x1d\x8c\x02\x1e\x65\xb8\x91" \
@@ -130,12 +136,26 @@ module TTTLS13
       end
 
       # @return [Boolean]
-      def only_appearable_extensions?
+      def appearable_extensions?
         exs = @extensions.keys - APPEARABLE_SH_EXTENSIONS
         exs = @extensions.keys - APPEARABLE_HRR_EXTENSIONS if hrr?
         return true if exs.empty?
 
         !(exs - DEFINED_EXTENSIONS).empty?
+      end
+
+      # @return [Booelan]
+      def negotiated_tls_1_3?
+        sv = @extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
+
+        @legacy_version == Message::ProtocolVersion::TLS_1_2 &&
+          (sv&.versions || []).first == Message::ProtocolVersion::TLS_1_3
+      end
+
+      # @return [Boolean]
+      def downgraded?
+        [DOWNGRADE_PROTECTION_TLS_1_2,
+         DOWNGRADE_PROTECTION_TLS_1_1].include?(@random[-8..])
       end
     end
   end

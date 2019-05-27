@@ -36,6 +36,7 @@ RSpec.describe ClientHello do
                                            TLS_AES_128_GCM_SHA256]
       expect(message.legacy_compression_methods).to eq ["\x00"]
       expect(message.extensions).to be_empty
+      expect(message.negotiated_tls_1_3?).to be false
     end
 
     it 'should be serialized' do
@@ -59,6 +60,7 @@ RSpec.describe ClientHello do
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
+      expect(message.negotiated_tls_1_3?).to be true
     end
 
     it 'should generate valid serializable object' do
@@ -74,6 +76,7 @@ RSpec.describe ClientHello do
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::CLIENT_HELLO
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
+      expect(message.negotiated_tls_1_3?).to be true
     end
 
     it 'should generate valid serializable object' do

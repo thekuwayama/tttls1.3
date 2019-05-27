@@ -32,6 +32,9 @@ RSpec.describe ServerHello do
       expect(message.cipher_suite).to eq CipherSuite::TLS_AES_256_GCM_SHA384
       expect(message.legacy_compression_method).to eq "\x00"
       expect(message.extensions).to be_empty
+      expect(message.hrr?).to be false
+      expect(message.appearable_extensions?).to be true
+      expect(message.negotiated_tls_1_3?).to be false
     end
 
     it 'should be serialized' do
@@ -57,6 +60,9 @@ RSpec.describe ServerHello do
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.cipher_suite).to eq CipherSuite::TLS_AES_128_GCM_SHA256
       expect(message.legacy_compression_method).to eq "\x00"
+      expect(message.hrr?).to be false
+      expect(message.appearable_extensions?).to be true
+      expect(message.negotiated_tls_1_3?).to be true
     end
 
     it 'should generate valid serializable object' do
@@ -75,6 +81,8 @@ RSpec.describe ServerHello do
       expect(message.cipher_suite).to eq CipherSuite::TLS_AES_128_GCM_SHA256
       expect(message.legacy_compression_method).to eq "\x00"
       expect(message.hrr?).to be true
+      expect(message.appearable_extensions?).to be true
+      expect(message.negotiated_tls_1_3?).to be true
     end
 
     it 'should generate valid serializable object' do
@@ -92,6 +100,9 @@ RSpec.describe ServerHello do
       expect(message.legacy_version).to eq ProtocolVersion::TLS_1_2
       expect(message.cipher_suite).to eq CipherSuite::TLS_AES_128_GCM_SHA256
       expect(message.legacy_compression_method).to eq "\x00"
+      expect(message.hrr?).to be false
+      expect(message.appearable_extensions?).to be true
+      expect(message.negotiated_tls_1_3?).to be true
     end
 
     it 'should generate valid serializable object' do
@@ -123,6 +134,8 @@ RSpec.describe ServerHello do
       expect(message.legacy_compression_method).to eq "\x00"
       expect(message.extensions).to be_empty
       expect(message.hrr?).to eq true
+      expect(message.appearable_extensions?).to be true
+      expect(message.negotiated_tls_1_3?).to be false
     end
 
     it 'should be serialized' do
@@ -135,6 +148,53 @@ RSpec.describe ServerHello do
                                       + cipher_suite \
                                       + "\x00" \
                                       + Extensions.new.serialize
+    end
+  end
+
+  context 'server_hello with random[-8..] == downgrade protection ' \
+          'value(TLS 1.2)' do
+    let(:message) do
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      random = OpenSSL::Random.random_bytes(24) + \
+               ServerHello.const_get(:DOWNGRADE_PROTECTION_TLS_1_2)
+      sh.instance_variable_set(:@random, random)
+      sh
+    end
+
+    it 'should check downgrade protection value' do
+      expect(message.negotiated_tls_1_3?).to be true
+      expect(message.downgraded?).to be true
+    end
+  end
+
+  context 'server_hello with random[-8..] == downgrade protection ' \
+          'value(TLS 1.2)' do
+    let(:message) do
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      random = OpenSSL::Random.random_bytes(24) + \
+               ServerHello.const_get(:DOWNGRADE_PROTECTION_TLS_1_1)
+      sh.instance_variable_set(:@random, random)
+      sh
+    end
+
+    it 'should check downgrade protection value' do
+      expect(message.negotiated_tls_1_3?).to be true
+      expect(message.downgraded?).to be true
+    end
+  end
+
+  context 'server_hello with supported_versions not including "\x03\x04"' do
+    let(:message) do
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      extensions = sh.instance_variable_get(:@extensions)
+      extensions[ExtensionType::SUPPORTED_VERSIONS] = nil
+      sh.instance_variable_set(:@extensions, extensions)
+      sh
+    end
+
+    it 'should check downgrade protection value' do
+      expect(message.negotiated_tls_1_3?).to be false
+      expect(message.downgraded?).to be false
     end
   end
 end

@@ -58,7 +58,7 @@ module TTTLS13
       end
 
       # @return [Boolean]
-      def only_appearable_extensions?
+      def appearable_extensions?
         exs = @extensions.keys - APPEARABLE_EE_EXTENSIONS
         return true if exs.empty?
 

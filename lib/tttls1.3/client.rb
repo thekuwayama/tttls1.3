@@ -63,11 +63,6 @@ module TTTLS13
 
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
-    DOWNGRADE_PROTECTION_TLS_1_2 = "\x44\x4F\x57\x4E\x47\x52\x44\x01"
-    private_constant :DOWNGRADE_PROTECTION_TLS_1_2
-    DOWNGRADE_PROTECTION_TLS_1_1 = "\x44\x4F\x57\x4E\x47\x52\x44\x00"
-    private_constant :DOWNGRADE_PROTECTION_TLS_1_1
-
     # @param socket [Socket]
     # @param hostname [String]
     # @param settings [Hash]
@@ -158,33 +153,62 @@ module TTTLS13
           logger.debug('ClientState::WAIT_SH')
 
           sh = @transcript[SH] = recv_server_hello
-          terminate(:illegal_parameter) unless sh.only_appearable_extensions?
 
           # support only TLS 1.3
-          terminate(:protocol_version) unless negotiated_tls_1_3?
+          terminate(:protocol_version) unless sh.negotiated_tls_1_3?
 
           # validate parameters
-          terminate(:illegal_parameter) unless equal_ch_sh_legacy_version?
-          terminate(:illegal_parameter) unless valid_sh_random?
-          terminate(:illegal_parameter) unless equal_ch_sh_legacy_session_id?
-          terminate(:illegal_parameter) unless ch_include_sh_cipher_suite?
-          terminate(:illegal_parameter) unless valid_sh_compression_method?
+          terminate(:illegal_parameter) unless sh.appearable_extensions?
+          terminate(:illegal_parameter) if sh.downgraded?
           terminate(:illegal_parameter) \
-            if @transcript.include?(HRR) && !equal_sh_hrr_cipher_suites?
+            unless sh.legacy_compression_method == "\x00"
+
+          # validate sh using ch
+          ch = @transcript[CH]
+          terminate(:illegal_parameter) \
+            unless sh.legacy_version == ch.legacy_version
+          terminate(:illegal_parameter) \
+            unless sh.legacy_session_id_echo == ch.legacy_session_id
+          terminate(:illegal_parameter) \
+            unless ch.cipher_suites.include?(sh.cipher_suite)
           terminate(:unsupported_extension) \
-            unless offered_ch_extensions?(sh.extensions)
-          terminate(:illegal_parameter) \
-            if @transcript.include?(HRR) && !equal_sh_hrr_supported_versions?
+            unless (sh.extensions.keys - ch.extensions.keys).empty?
+
+          # validate sh using hrr
+          if @transcript.include?(HRR)
+            hrr = @transcript[HRR]
+            terminate(:illegal_parameter) \
+              unless sh.cipher_suite == hrr.cipher_suite
+
+            sh_sv = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
+            hrr_sv = hrr.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
+            terminate(:illegal_parameter) \
+              unless sh_sv.versions == hrr_sv.versions
+          end
 
           # handling HRR
           if sh.hrr?
             terminate(:unexpected_message) if @transcript.include?(HRR)
             ch1 = @transcript[CH1] = @transcript.delete(CH)
             hrr = @transcript[HRR] = @transcript.delete(SH)
-            terminate(:unsupported_extension) \
-              unless offered_ch1_extensions?(sh.extensions)
-            terminate(:illegal_parameter) unless valid_hrr_key_share?
 
+            # validate cookie
+            diff_sets = sh.extensions.keys - ch1.extensions.keys
+            terminate(:unsupported_extension) \
+              unless (diff_sets - [Message::ExtensionType::COOKIE]).empty?
+
+            # validate key_share
+            # TODO: pre_shared_key
+            ngl = ch1.extensions[Message::ExtensionType::SUPPORTED_GROUPS]
+                     .named_group_list
+            kse = ch1.extensions[Message::ExtensionType::KEY_SHARE]
+                     .key_share_entry
+            group = hrr.extensions[Message::ExtensionType::KEY_SHARE]
+                       .key_share_entry.first.group
+            terminate(:illegal_parameter) \
+              unless ngl.include?(group) && !kse.map(&:group).include?(group)
+
+            # send new client_hello
             exs, priv_keys = gen_newch_extensions(ch1, hrr)
             @priv_keys = priv_keys.merge(@priv_keys)
             @transcript[CH] = send_new_client_hello(ch1, exs)
@@ -195,7 +219,12 @@ module TTTLS13
           # generate shared secret
           @psk = nil unless sh.extensions
                               .include?(Message::ExtensionType::PRE_SHARED_KEY)
-          terminate(:illegal_parameter) unless ch_include_sh_key_share?
+          ch_ks = ch.extensions[Message::ExtensionType::KEY_SHARE]
+                    .key_share_entry.map(&:group)
+          sh_ks = sh.extensions[Message::ExtensionType::KEY_SHARE]
+                    .key_share_entry.first.group
+          terminate(:illegal_parameter) unless ch_ks.include?(sh_ks)
+
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           ke = kse.key_exchange
@@ -218,9 +247,11 @@ module TTTLS13
           logger.debug('ClientState::WAIT_EE')
 
           ee = @transcript[EE] = recv_encrypted_extensions
-          terminate(:illegal_parameter) unless ee.only_appearable_extensions?
+          terminate(:illegal_parameter) unless ee.appearable_extensions?
+
+          ch = @transcript[CH]
           terminate(:unsupported_extension) \
-            unless offered_ch_extensions?(ee.extensions)
+            unless (ee.extensions.keys - ch.extensions.keys).empty?
 
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
           @send_record_size = rsl.record_size_limit unless rsl.nil?
@@ -236,10 +267,12 @@ module TTTLS13
           message = recv_message
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             ct = @transcript[CT] = message
-            terminate(:illegal_parameter) unless ct.only_appearable_extensions?
+            terminate(:illegal_parameter) unless ct.appearable_extensions?
+
+            ch = @transcript[CH]
             terminate(:unsupported_extension) \
               unless ct.certificate_list.map(&:extensions)
-                       .all? { |ex| offered_ch_extensions?(ex) }
+                       .all? { |e| (e.keys - ch.extensions.keys).empty? }
 
             terminate(:certificate_unknown) \
               unless trusted_certificate?(ct.certificate_list,
@@ -257,10 +290,12 @@ module TTTLS13
           logger.debug('ClientState::WAIT_EE')
 
           ct = @transcript[CT] = recv_certificate
-          terminate(:illegal_parameter) unless ct.only_appearable_extensions?
+          terminate(:illegal_parameter) unless ct.appearable_extensions?
+
+          ch = @transcript[CH]
           terminate(:unsupported_extension) \
             unless ct.certificate_list.map(&:extensions)
-                     .all? { |ex| offered_ch_extensions?(ex) }
+                     .all? { |e| (e.keys - ch.extensions.keys).empty? }
 
           terminate(:certificate_unknown) \
             unless trusted_certificate?(ct.certificate_list,
@@ -673,102 +708,6 @@ module TTTLS13
         context: 'TLS 1.3, server CertificateVerify',
         hash: hash
       )
-    end
-
-    # NOTE:
-    # This implementation supports only TLS 1.3,
-    # so negotiated_tls_1_3? assumes that it sent ClientHello with:
-    #     1. supported_versions == ["\x03\x04"]
-    #     2. legacy_versions == ["\x03\x03"]
-    #
-    # @return [Boolean]
-    def negotiated_tls_1_3?
-      sh = @transcript[SH]
-      sh_lv = sh.legacy_version
-      sh_sv = sh.extensions[Message::ExtensionType::SUPPORTED_VERSIONS]
-               &.versions || []
-
-      sh_lv == Message::ProtocolVersion::TLS_1_2 &&
-        sh_sv.first == Message::ProtocolVersion::TLS_1_3
-    end
-
-    # @return [Boolean]
-    def valid_sh_random?
-      sh_r8 = @transcript[SH].random[-8..]
-
-      sh_r8 != DOWNGRADE_PROTECTION_TLS_1_2 &&
-        sh_r8 != DOWNGRADE_PROTECTION_TLS_1_1
-    end
-
-    # @return [Boolean]
-    def equal_ch_sh_legacy_version?
-      @transcript[CH].legacy_version ==
-        @transcript[SH].legacy_version
-    end
-
-    # @return [Boolean]
-    def equal_ch_sh_legacy_session_id?
-      @transcript[CH].legacy_session_id ==
-        @transcript[SH].legacy_session_id_echo
-    end
-
-    # @return [Boolean]
-    def ch_include_sh_cipher_suite?
-      @transcript[CH].cipher_suites.include?(@transcript[SH].cipher_suite)
-    end
-
-    # @return [Boolean]
-    def valid_sh_compression_method?
-      @transcript[SH].legacy_compression_method == "\x00"
-    end
-
-    # @param extensions [TTTLS13::Message::Extensions]
-    #
-    # @return [Boolean]
-    def offered_ch_extensions?(extensions)
-      keys = extensions.keys - @transcript[CH].extensions.keys
-      keys.empty?
-    end
-
-    # @return [Boolean]
-    def offered_ch1_extensions?(extensions)
-      keys = extensions.keys - @transcript[CH1].extensions.keys \
-             - [Message::ExtensionType::COOKIE]
-      keys.empty?
-    end
-
-    # @return [Boolean]
-    def equal_sh_hrr_cipher_suites?
-      @transcript[SH].cipher_suite == @transcript[HRR].cipher_suite
-    end
-
-    # @return [Boolean]
-    def equal_sh_hrr_supported_versions?
-      sh_exs = @transcript[SH].extensions
-      hrr_exs = @transcript[HRR].extensions
-      sh_exs[Message::ExtensionType::SUPPORTED_VERSIONS].versions \
-      == hrr_exs[Message::ExtensionType::SUPPORTED_VERSIONS].versions
-    end
-
-    # @return [Boolean]
-    def ch_include_sh_key_share?
-      ch_ks = @transcript[CH].extensions[Message::ExtensionType::KEY_SHARE]
-                             .key_share_entry.map(&:group)
-      sh_ks = @transcript[SH].extensions[Message::ExtensionType::KEY_SHARE]
-                             .key_share_entry.first.group
-      ch_ks.include?(sh_ks)
-    end
-
-    # @return [Boolean]
-    def valid_hrr_key_share?
-      # TODO: pre_shared_key
-      ch1_exs = @transcript[CH1].extensions
-      ngl = ch1_exs[Message::ExtensionType::SUPPORTED_GROUPS].named_group_list
-      kse = ch1_exs[Message::ExtensionType::KEY_SHARE].key_share_entry
-      group = @transcript[HRR].extensions[Message::ExtensionType::KEY_SHARE]
-                              .key_share_entry.first.group
-
-      ngl.include?(group) && !kse.map(&:group).include?(group)
     end
 
     # @param nst [TTTLS13::Message::NewSessionTicket]
