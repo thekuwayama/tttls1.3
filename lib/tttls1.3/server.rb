@@ -3,6 +3,7 @@
 
 module TTTLS13
   using Refinements
+
   module ServerState
     # initial value is 0, eof value is -1
     START         = 1
@@ -200,8 +201,15 @@ module TTTLS13
         when ServerState::WAIT_FINISHED
           logger.debug('ServerState::WAIT_FINISHED')
 
-          @transcript[CF] = recv_finished
-          terminate(:decrypt_error) unless verified_finished?
+          cf = @transcript[CF] = recv_finished
+          digest = CipherSuite.digest(@cipher_suite)
+          vf = verified_finished?(
+            finished: cf,
+            digest: digest,
+            finished_key: @key_schedule.client_finished_key,
+            hash: @transcript.hash(digest, EOED)
+          )
+          terminate(:decrypt_error) unless vf
           @write_cipher = gen_cipher(@cipher_suite,
                                      @key_schedule.server_application_write_key,
                                      @key_schedule.server_application_write_iv)
@@ -326,13 +334,26 @@ module TTTLS13
     def gen_certificate_verify
       return nil if @key.nil?
 
+      digest = CipherSuite.digest(@cipher_suite)
+      signature = sign_certificate_verify(
+        key: @key,
+        signature_scheme: @signature_scheme,
+        hash: @transcript.hash(digest, CT)
+      )
       Message::CertificateVerify.new(signature_scheme: @signature_scheme,
-                                     signature: sign_certificate_verify)
+                                     signature: signature)
     end
 
     # @return [TTTLS13::Message::Finished]
     def gen_finished
-      Message::Finished.new(sign_finished)
+      digest = CipherSuite.digest(@cipher_suite)
+      signature = sign_finished(
+        digest: digest,
+        finished_key: @key_schedule.server_finished_key,
+        hash: @transcript.hash(digest, CV)
+      )
+
+      Message::Finished.new(signature)
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
@@ -378,33 +399,18 @@ module TTTLS13
       Message::Extensions.new(exs)
     end
 
+    # @param key [OpenSSL::PKey::PKey]
+    # @param signature_scheme [TTTLS13::SignatureScheme]
+    # @param hash [String]
+    #
     # @return [String]
-    def sign_certificate_verify
-      context = 'TLS 1.3, server CertificateVerify'
-      do_sign_certificate_verify(private_key: @key,
-                                 signature_scheme: @signature_scheme,
-                                 context: context,
-                                 handshake_context_end: CT)
-    end
-
-    # @return [String]
-    def sign_finished
-      digest = CipherSuite.digest(@cipher_suite)
-      finished_key = @key_schedule.server_finished_key
-      do_sign_finished(digest: digest,
-                       finished_key: finished_key,
-                       handshake_context_end: CV)
-    end
-
-    # @return [Boolean]
-    def verified_finished?
-      digest = CipherSuite.digest(@cipher_suite)
-      finished_key = @key_schedule.client_finished_key
-      signature = @transcript[CF].verify_data
-      do_verified_finished?(digest: digest,
-                            finished_key: finished_key,
-                            handshake_context_end: EOED,
-                            signature: signature)
+    def sign_certificate_verify(key:, signature_scheme:, hash:)
+      do_sign_certificate_verify(
+        key: key,
+        signature_scheme: signature_scheme,
+        context: 'TLS 1.3, server CertificateVerify',
+        hash: hash
+      )
     end
 
     # @return [Boolean]

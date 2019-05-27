@@ -21,7 +21,6 @@ module TTTLS13
       @message_queue = [] # Array of TTTLS13::Message::$Object
       @binary_buffer = '' # deposit Record.surplus_binary
       @cipher_suite = nil # TTTLS13::CipherSuite
-      @notyet_application_secret = true
       @state = 0 # ClientState or ServerState
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
       @psk = nil # String
@@ -172,7 +171,7 @@ module TTTLS13
           messages = record.messages
           break unless messages.empty?
         when Message::ContentType::CCS
-          terminate(:unexpected_message) unless receivable_ccs?
+          terminate(:unexpected_message) unless receivable_ccs?(@transcript)
           next
         when Message::ContentType::ALERT
           handle_received_alert(record.messages.first)
@@ -217,32 +216,37 @@ module TTTLS13
       record
     end
 
+    # @param ch1 [TTTLS13::Message::ClientHello]
+    # @param hrr [TTTLS13::Message::ServerHello]
+    # @param ch [TTTLS13::Message::ClientHello]
+    # @param binder_key [String]
     # @param digest [String] name of digest algorithm
-    # @param transcript [TTTLS13::Transcript]
     #
     # @return [String]
-    def do_sign_psk_binder(digest, transcript)
+    def do_sign_psk_binder(ch1:, hrr:, ch:, binder_key:, digest:)
       # TODO: ext binder
-      secret = @key_schedule.binder_key_res
       hash_len = OpenSSL::Digest.new(digest).digest_length
+      tt = Transcript.new
+      tt.merge!(
+        CH1 => ch1,
+        HRR => hrr,
+        CH => ch
+      )
       # transcript-hash (CH1 + HRR +) truncated-CH
-      hash = transcript.truncate_hash(digest, CH, hash_len + 3)
-      OpenSSL::HMAC.digest(digest, secret, hash)
+      hash = tt.truncate_hash(digest, CH, hash_len + 3)
+      OpenSSL::HMAC.digest(digest, binder_key, hash)
     end
 
-    # @param private_key [OpenSSL::PKey::PKey]
+    # @param key [OpenSSL::PKey::PKey]
     # @param signature_scheme [TTTLS13::SignatureScheme]
     # @param context [String]
-    # @param handshake_context_end [Integer]
+    # @param hash [String]
     #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [String]
     # rubocop: disable Metrics/CyclomaticComplexity
-    def do_sign_certificate_verify(private_key:, signature_scheme:, context:,
-                                   handshake_context_end:)
-      digest = CipherSuite.digest(@cipher_suite)
-      hash = @transcript.hash(digest, handshake_context_end)
+    def do_sign_certificate_verify(key:, signature_scheme:, context:, hash:)
       content = "\x20" * 64 + context + "\x00" + hash
 
       # RSA signatures MUST use an RSASSA-PSS algorithm, regardless of whether
@@ -251,24 +255,24 @@ module TTTLS13
       when SignatureScheme::RSA_PKCS1_SHA256,
            SignatureScheme::RSA_PSS_RSAE_SHA256,
            SignatureScheme::RSA_PSS_PSS_SHA256
-        private_key.sign_pss('SHA256', content, salt_length: :digest,
-                                                mgf1_hash: 'SHA256')
+        key.sign_pss('SHA256', content, salt_length: :digest,
+                                        mgf1_hash: 'SHA256')
       when SignatureScheme::RSA_PKCS1_SHA384,
            SignatureScheme::RSA_PSS_RSAE_SHA384,
            SignatureScheme::RSA_PSS_PSS_SHA384
-        private_key.sign_pss('SHA384', content, salt_length: :digest,
-                                                mgf1_hash: 'SHA384')
+        key.sign_pss('SHA384', content, salt_length: :digest,
+                                        mgf1_hash: 'SHA384')
       when SignatureScheme::RSA_PKCS1_SHA512,
            SignatureScheme::RSA_PSS_RSAE_SHA512,
            SignatureScheme::RSA_PSS_PSS_SHA512
-        private_key.sign_pss('SHA512', content, salt_length: :digest,
-                                                mgf1_hash: 'SHA512')
+        key.sign_pss('SHA512', content, salt_length: :digest,
+                                        mgf1_hash: 'SHA512')
       when SignatureScheme::ECDSA_SECP256R1_SHA256
-        private_key.sign('SHA256', content)
+        key.sign('SHA256', content)
       when SignatureScheme::ECDSA_SECP384R1_SHA384
-        private_key.sign('SHA384', content)
+        key.sign('SHA384', content)
       when SignatureScheme::ECDSA_SECP521R1_SHA512
-        private_key.sign('SHA512', content)
+        key.sign('SHA512', content)
       else # TODO: ED25519, ED448
         terminate(:internal_error)
       end
@@ -279,17 +283,14 @@ module TTTLS13
     # @param signature_scheme [TTTLS13::SignatureScheme]
     # @param signature [String]
     # @param context [String]
-    # @param handshake_context_end [Integer]
+    # @param hash [String]
     #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [Boolean]
     # rubocop: disable Metrics/CyclomaticComplexity
     def do_verified_certificate_verify?(public_key:, signature_scheme:,
-                                        signature:, context:,
-                                        handshake_context_end:)
-      digest = CipherSuite.digest(@cipher_suite)
-      hash = @transcript.hash(digest, handshake_context_end)
+                                        signature:, context:, hash:)
       content = "\x20" * 64 + context + "\x00" + hash
 
       # RSA signatures MUST use an RSASSA-PSS algorithm, regardless of whether
@@ -324,27 +325,22 @@ module TTTLS13
 
     # @param digest [String] name of digest algorithm
     # @param finished_key [String]
-    # @param handshake_context_end [Integer]
+    # @param hash [String]
     #
     # @return [String]
-    def do_sign_finished(digest:, finished_key:, handshake_context_end:)
-      hash = @transcript.hash(digest, handshake_context_end)
+    def sign_finished(digest:, finished_key:, hash:)
       OpenSSL::HMAC.digest(digest, finished_key, hash)
     end
 
+    # @param finished [TTTLS13::Message::Finished]
     # @param digest [String] name of digest algorithm
     # @param finished_key [String]
-    # @param handshake_context_end [Integer]
-    # @param signature [String]
+    # @param hash [String]
     #
     # @return [Boolean]
-    def do_verified_finished?(digest:, finished_key:, handshake_context_end:,
-                              signature:)
-      do_sign_finished(
-        digest: digest,
-        finished_key: finished_key,
-        handshake_context_end: handshake_context_end
-      ) == signature
+    def verified_finished?(finished:, digest:, finished_key:, hash:)
+      sign_finished(digest: digest, finished_key: finished_key, hash: hash) \
+      == finished.verify_data
     end
 
     # @param key_exchange [String]
@@ -364,8 +360,10 @@ module TTTLS13
       priv_key.dh_compute_key(pub_key)
     end
 
+    # @param transcript [TTTLS13::Transcript]
+    #
     # @return [Boolean]
-    def receivable_ccs?
+    def receivable_ccs?(transcript)
       # Received ccs before the first ClientHello message or after the peer's
       # Finished message, peer MUST abort.
       #
@@ -373,8 +371,8 @@ module TTTLS13
       # between the first and second ClientHello
       finished = (@endpoint == :client ? SF : CF)
 
-      (@transcript.include?(CH) || @transcript.include?(CH1)) &&
-        !@transcript.include?(finished)
+      (transcript.include?(CH) || transcript.include?(CH1)) &&
+        !transcript.include?(finished)
     end
 
     # @param symbol [Symbol] key of ALERT_DESCRIPTION
@@ -385,6 +383,9 @@ module TTTLS13
       raise Error::ErrorAlerts, symbol
     end
 
+    # @param alert [TTTLS13::Message::Alert]
+    #
+    # @raise [TTTLS13::Error::ErrorAlerts]
     def handle_received_alert(alert)
       unless alert.description == Message::ALERT_DESCRIPTION[:close_notify] ||
              alert.description == Message::ALERT_DESCRIPTION[:user_canceled]
@@ -392,6 +393,7 @@ module TTTLS13
       end
 
       @state = EOF
+      nil
     end
 
     # @param _nst [TTTLS13::Message::NewSessionTicket]

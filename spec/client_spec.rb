@@ -143,41 +143,74 @@ RSpec.describe Client do
   end
 
   context 'client' do
-    let(:client) do
-      client = Client.new(nil, 'localhost')
+    let(:cipher_suite) do
+      CipherSuite::TLS_AES_128_GCM_SHA256
+    end
+
+    let(:ct) do
+      Certificate.deserialize(TESTBINARY_CERTIFICATE)
+    end
+
+    let(:cv) do
+      CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+    end
+
+    let(:sf) do
+      Finished.deserialize(TESTBINARY_SERVER_FINISHED)
+    end
+
+    let(:transcript) do
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
         SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
-        CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
+        CT => ct,
+        CV => cv,
+        SF => sf
       )
-      client.instance_variable_set(:@transcript, transcript)
-      ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
-                           cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                           transcript: transcript)
-      client.instance_variable_set(:@key_schedule, ks)
-      client.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      client
     end
 
-    let(:client_finished) do
+    let(:key_schedule) do
+      KeySchedule.new(
+        shared_secret: TESTBINARY_SHARED_SECRET,
+        cipher_suite: cipher_suite,
+        transcript: transcript
+      )
+    end
+
+    let(:client) do
+      Client.new(nil, 'localhost')
+    end
+
+    let(:cf) do
       Finished.deserialize(TESTBINARY_CLIENT_FINISHED)
     end
 
     it 'should verify server CertificateVerify' do
-      expect(client.send(:verified_certificate_verify?)).to be true
+      digest = CipherSuite.digest(cipher_suite)
+      expect(client.send(:verified_certificate_verify?,
+                         ct: ct,
+                         cv: cv,
+                         hash: transcript.hash(digest, CT))).to be true
     end
 
     it 'should verify server Finished' do
-      expect(client.send(:verified_finished?)).to be true
+      digest = CipherSuite.digest(cipher_suite)
+      expect(client.send(:verified_finished?,
+                         finished: sf,
+                         digest: digest,
+                         finished_key: key_schedule.server_finished_key,
+                         hash: transcript.hash(digest, CV))).to be true
     end
 
     it 'should sign client Finished' do
-      expect(client.send(:sign_finished)).to eq client_finished.verify_data
+      digest = CipherSuite.digest(cipher_suite)
+      signature = cf.verify_data
+      expect(client.send(:sign_finished,
+                         digest: digest,
+                         finished_key: key_schedule.client_finished_key,
+                         hash: transcript.hash(digest, EOED))).to eq signature
     end
   end
 

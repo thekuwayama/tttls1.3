@@ -115,9 +115,7 @@ RSpec.describe Server do
       Certificate.deserialize(TESTBINARY_CERTIFICATE)
     end
 
-    let(:server) do
-      server = Server.new(nil)
-      server.instance_variable_set(:@key, key)
+    let(:transcript) do
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -125,11 +123,22 @@ RSpec.describe Server do
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
         CT => ct
       )
+    end
+
+    let(:cipher_suite) do
+      CipherSuite::TLS_AES_128_GCM_SHA256
+    end
+
+    let(:signature_scheme) do
+      SignatureScheme::RSA_PSS_RSAE_SHA256
+    end
+
+    let(:server) do
+      server = Server.new(nil)
+      server.instance_variable_set(:@key, key)
       server.instance_variable_set(:@transcript, transcript)
-      server.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      server.instance_variable_set(:@signature_scheme,
-                                   SignatureScheme::RSA_PSS_RSAE_SHA256)
+      server.instance_variable_set(:@cipher_suite, cipher_suite)
+      server.instance_variable_set(:@signature_scheme, signature_scheme)
       server
     end
 
@@ -142,12 +151,13 @@ RSpec.describe Server do
       public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
       signature = cv.signature
+      digest = CipherSuite.digest(cipher_suite)
       expect(server.send(:do_verified_certificate_verify?,
                          public_key: public_key,
                          signature_scheme: signature_scheme,
                          signature: signature,
                          context: 'TLS 1.3, server CertificateVerify',
-                         handshake_context_end: CT))
+                         hash: transcript.hash(digest, CT)))
         .to be true
     end
   end

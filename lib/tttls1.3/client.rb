@@ -3,6 +3,7 @@
 
 module TTTLS13
   using Refinements
+
   module ClientState
     # initial value is 0, eof value is -1
     START         = 1
@@ -269,14 +270,27 @@ module TTTLS13
         when ClientState::WAIT_CV
           logger.debug('ClientState::WAIT_EE')
 
-          @transcript[CV] = recv_certificate_verify
-          terminate(:decrypt_error) unless verified_certificate_verify?
+          cv = @transcript[CV] = recv_certificate_verify
+          digest = CipherSuite.digest(@cipher_suite)
+          vcv = verified_certificate_verify?(
+            ct: @transcript[CT],
+            cv: cv,
+            hash: @transcript.hash(digest, CT)
+          )
+          terminate(:decrypt_error) unless vcv
           @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           logger.debug('ClientState::WAIT_EE')
 
-          @transcript[SF] = recv_finished
-          terminate(:decrypt_error) unless verified_finished?
+          sf = @transcript[SF] = recv_finished
+          digest = CipherSuite.digest(@cipher_suite)
+          vf = verified_finished?(
+            finished: sf,
+            digest: digest,
+            finished_key: @key_schedule.server_finished_key,
+            hash: @transcript.hash(digest, CV)
+          )
+          terminate(:decrypt_error) unless vf
           @transcript[EOED] = send_eoed \
             if use_early_data? && succeed_early_data?
           # TODO: Send Certificate [+ CertificateVerify]
@@ -453,7 +467,12 @@ module TTTLS13
         )
         ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
         # at the end, sign PSK binder
-        sign_psk_binder(ch)
+        sign_psk_binder(
+          ch1: @transcript[CH1],
+          hrr: @transcript[HRR],
+          ch: ch,
+          binder_key: @key_schedule.binder_key_res
+        )
       end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
@@ -461,10 +480,13 @@ module TTTLS13
       ch
     end
 
+    # @param ch1 [TTTLS13::Message::ClientHello]
+    # @param hrr [TTTLS13::Message::ServerHello]
     # @param ch [TTTLS13::Message::ClientHello]
+    # @param binder_key [String]
     #
     # @return [String]
-    def sign_psk_binder(ch)
+    def sign_psk_binder(ch1:, hrr:, ch:, binder_key:)
       # pre_shared_key
       #
       # binder is computed as an HMAC over a transcript hash containing a
@@ -487,9 +509,13 @@ module TTTLS13
       )
       ch.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
 
-      transcript = @transcript.clone
-      transcript[CH] = ch
-      psk.offered_psks.binders[0] = do_sign_psk_binder(digest, transcript)
+      psk.offered_psks.binders[0] = do_sign_psk_binder(
+        ch1: ch1,
+        hrr: hrr,
+        ch: ch,
+        binder_key: binder_key,
+        digest: digest
+      )
     end
 
     # @return [Integer]
@@ -608,7 +634,13 @@ module TTTLS13
 
     # @return [TTTLS13::Message::Finished]
     def send_finished
-      cf = Message::Finished.new(sign_finished)
+      digest = CipherSuite.digest(@cipher_suite)
+      signature = sign_finished(
+        digest: digest,
+        finished_key: @key_schedule.client_finished_key,
+        hash: @transcript.hash(digest, EOED)
+      )
+      cf = Message::Finished.new(signature)
       send_handshakes(Message::ContentType::APPLICATION_DATA, [cf],
                       @write_cipher)
 
@@ -624,39 +656,23 @@ module TTTLS13
       eoed
     end
 
+    # @param ct [TTTLS13::Message::Certificate]
+    # @param cv [TTTLS13::Message::CertificateVerify]
+    # @param hash [String]
+    #
     # @return [Boolean]
-    def verified_certificate_verify?
-      ct = @transcript[CT]
+    def verified_certificate_verify?(ct:, cv:, hash:)
       public_key = ct.certificate_list.first.cert_data.public_key
-      cv = @transcript[CV]
       signature_scheme = cv.signature_scheme
       signature = cv.signature
-      context = 'TLS 1.3, server CertificateVerify'
-      do_verified_certificate_verify?(public_key: public_key,
-                                      signature_scheme: signature_scheme,
-                                      signature: signature,
-                                      context: context,
-                                      handshake_context_end: CT)
-    end
 
-    # @return [String]
-    def sign_finished
-      digest = CipherSuite.digest(@cipher_suite)
-      finished_key = @key_schedule.client_finished_key
-      do_sign_finished(digest: digest,
-                       finished_key: finished_key,
-                       handshake_context_end: EOED)
-    end
-
-    # @return [Boolean]
-    def verified_finished?
-      digest = CipherSuite.digest(@cipher_suite)
-      finished_key = @key_schedule.server_finished_key
-      signature = @transcript[SF].verify_data
-      do_verified_finished?(digest: digest,
-                            finished_key: finished_key,
-                            handshake_context_end: CV,
-                            signature: signature)
+      do_verified_certificate_verify?(
+        public_key: public_key,
+        signature_scheme: signature_scheme,
+        signature: signature,
+        context: 'TLS 1.3, server CertificateVerify',
+        hash: hash
+      )
     end
 
     # NOTE:
