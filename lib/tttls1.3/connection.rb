@@ -13,17 +13,15 @@ module TTTLS13
     def initialize(socket)
       @socket = socket
       @endpoint = nil # Symbol or String, :client or :server
-      @key_schedule = nil # TTTLS13::KeySchedule
-      @priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       @read_cipher = Cryptograph::Passer.new
       @write_cipher = Cryptograph::Passer.new
-      @transcript = Transcript.new
       @message_queue = [] # Array of TTTLS13::Message::$Object
       @binary_buffer = '' # deposit Record.surplus_binary
       @cipher_suite = nil # TTTLS13::CipherSuite
+      @named_group = nil # TTTLS13::NamedGroup
+      @signature_scheme = nil # TTTLS13::SignatureScheme
       @state = 0 # ClientState or ServerState
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
-      @psk = nil # String
     end
 
     # @raise [TTTLS13::Error::ConfigError]
@@ -40,7 +38,7 @@ module TTTLS13
 
       message = nil
       loop do
-        message = recv_message
+        message = recv_message(receivable_ccs: false)
         # At any time after the server has received the client Finished
         # message, it MAY send a NewSessionTicket message.
         break unless message.is_a?(Message::NewSessionTicket)
@@ -155,11 +153,13 @@ module TTTLS13
       @socket.write(record.serialize(@send_record_size))
     end
 
+    # @param receivable_ccs [Boolean]
+    #
     # @raise [TTTLS13::Error::ErrorAlerts
     #
     # @return [TTTLS13::Message::$Object]
     # rubocop: disable Metrics/CyclomaticComplexity
-    def recv_message
+    def recv_message(receivable_ccs:)
       return @message_queue.shift unless @message_queue.empty?
 
       messages = nil
@@ -171,7 +171,7 @@ module TTTLS13
           messages = record.messages
           break unless messages.empty?
         when Message::ContentType::CCS
-          terminate(:unexpected_message) unless receivable_ccs?(@transcript)
+          terminate(:unexpected_message) unless receivable_ccs
           next
         when Message::ContentType::ALERT
           handle_received_alert(record.messages.first)

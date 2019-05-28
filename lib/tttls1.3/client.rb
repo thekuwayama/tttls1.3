@@ -78,17 +78,6 @@ module TTTLS13
       @early_data_write_cipher = nil # Cryptograph::$Object
       @succeed_early_data = false
       raise Error::ConfigError unless valid_settings?
-      return unless use_psk?
-
-      digest = CipherSuite.digest(@settings[:psk_cipher_suite])
-      @psk = gen_psk_from_nst(@settings[:resumption_master_secret],
-                              @settings[:ticket_nonce], digest)
-      @key_schedule = KeySchedule.new(
-        psk: @psk,
-        shared_secret: nil,
-        cipher_suite: @settings[:psk_cipher_suite],
-        transcript: @transcript
-      )
     end
 
     # NOTE:
@@ -131,20 +120,41 @@ module TTTLS13
     # rubocop: disable Metrics/MethodLength
     # rubocop: disable Metrics/PerceivedComplexity
     def connect
+      transcript = Transcript.new
+      key_schedule = nil # TTTLS13::KeySchedule
+      psk = nil
+      priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
+      if use_psk?
+        psk = gen_psk_from_nst(
+          @settings[:resumption_master_secret],
+          @settings[:ticket_nonce],
+          CipherSuite.digest(@settings[:psk_cipher_suite])
+        )
+        key_schedule = KeySchedule.new(
+          psk: psk,
+          shared_secret: nil,
+          cipher_suite: @settings[:psk_cipher_suite],
+          transcript: transcript
+        )
+      end
+
       @state = ClientState::START
       loop do
         case @state
         when ClientState::START
           logger.debug('ClientState::START')
 
-          exs, @priv_keys = gen_ch_extensions
-          @transcript[CH] = send_client_hello(exs)
+          extensions, priv_keys = gen_ch_extensions
+          binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
+          transcript[CH] = send_client_hello(extensions, binder_key)
+
           send_ccs # compatibility mode
           if use_early_data?
-            @early_data_write_cipher \
-            = gen_cipher(@settings[:psk_cipher_suite],
-                         @key_schedule.early_data_write_key,
-                         @key_schedule.early_data_write_iv)
+            @early_data_write_cipher = gen_cipher(
+              @settings[:psk_cipher_suite],
+              key_schedule.early_data_write_key,
+              key_schedule.early_data_write_iv
+            )
             send_early_data
           end
 
@@ -152,7 +162,7 @@ module TTTLS13
         when ClientState::WAIT_SH
           logger.debug('ClientState::WAIT_SH')
 
-          sh = @transcript[SH] = recv_server_hello
+          sh = transcript[SH] = recv_server_hello
 
           # support only TLS 1.3
           terminate(:protocol_version) unless sh.negotiated_tls_1_3?
@@ -164,7 +174,7 @@ module TTTLS13
             unless sh.legacy_compression_method == "\x00"
 
           # validate sh using ch
-          ch = @transcript[CH]
+          ch = transcript[CH]
           terminate(:illegal_parameter) \
             unless sh.legacy_version == ch.legacy_version
           terminate(:illegal_parameter) \
@@ -175,8 +185,8 @@ module TTTLS13
             unless (sh.extensions.keys - ch.extensions.keys).empty?
 
           # validate sh using hrr
-          if @transcript.include?(HRR)
-            hrr = @transcript[HRR]
+          if transcript.include?(HRR)
+            hrr = transcript[HRR]
             terminate(:illegal_parameter) \
               unless sh.cipher_suite == hrr.cipher_suite
 
@@ -188,9 +198,9 @@ module TTTLS13
 
           # handling HRR
           if sh.hrr?
-            terminate(:unexpected_message) if @transcript.include?(HRR)
-            ch1 = @transcript[CH1] = @transcript.delete(CH)
-            hrr = @transcript[HRR] = @transcript.delete(SH)
+            terminate(:unexpected_message) if transcript.include?(HRR)
+            ch1 = transcript[CH1] = transcript.delete(CH)
+            hrr = transcript[HRR] = transcript.delete(SH)
 
             # validate cookie
             diff_sets = sh.extensions.keys - ch1.extensions.keys
@@ -209,16 +219,16 @@ module TTTLS13
               unless ngl.include?(group) && !kse.map(&:group).include?(group)
 
             # send new client_hello
-            exs, priv_keys = gen_newch_extensions(ch1, hrr)
-            @priv_keys = priv_keys.merge(@priv_keys)
-            @transcript[CH] = send_new_client_hello(ch1, exs)
+            extensions, pk = gen_newch_extensions(ch1, hrr)
+            priv_keys = pk.merge(priv_keys)
+            transcript[CH] = send_new_client_hello(ch1, extensions)
             @state = ClientState::WAIT_SH
             next
           end
 
           # generate shared secret
-          @psk = nil unless sh.extensions
-                              .include?(Message::ExtensionType::PRE_SHARED_KEY)
+          psk = nil unless sh.extensions
+                             .include?(Message::ExtensionType::PRE_SHARED_KEY)
           ch_ks = ch.extensions[Message::ExtensionType::KEY_SHARE]
                     .key_share_entry.map(&:group)
           sh_ks = sh.extensions[Message::ExtensionType::KEY_SHARE]
@@ -228,28 +238,34 @@ module TTTLS13
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
                   .key_share_entry.first
           ke = kse.key_exchange
-          group = kse.group
-          priv_key = @priv_keys[group]
-          shared_secret = gen_shared_secret(ke, priv_key, group)
+          @named_group = kse.group
+          priv_key = priv_keys[@named_group]
+          shared_secret = gen_shared_secret(ke, priv_key, @named_group)
           @cipher_suite = sh.cipher_suite
-          @key_schedule = KeySchedule.new(psk: @psk,
-                                          shared_secret: shared_secret,
-                                          cipher_suite: @cipher_suite,
-                                          transcript: @transcript)
-          @write_cipher = gen_cipher(@cipher_suite,
-                                     @key_schedule.client_handshake_write_key,
-                                     @key_schedule.client_handshake_write_iv)
-          @read_cipher = gen_cipher(@cipher_suite,
-                                    @key_schedule.server_handshake_write_key,
-                                    @key_schedule.server_handshake_write_iv)
+          key_schedule = KeySchedule.new(
+            psk: psk,
+            shared_secret: shared_secret,
+            cipher_suite: @cipher_suite,
+            transcript: transcript
+          )
+          @write_cipher = gen_cipher(
+            @cipher_suite,
+            key_schedule.client_handshake_write_key,
+            key_schedule.client_handshake_write_iv
+          )
+          @read_cipher = gen_cipher(
+            @cipher_suite,
+            key_schedule.server_handshake_write_key,
+            key_schedule.server_handshake_write_iv
+          )
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           logger.debug('ClientState::WAIT_EE')
 
-          ee = @transcript[EE] = recv_encrypted_extensions
+          ee = transcript[EE] = recv_encrypted_extensions
           terminate(:illegal_parameter) unless ee.appearable_extensions?
 
-          ch = @transcript[CH]
+          ch = transcript[CH]
           terminate(:unsupported_extension) \
             unless (ee.extensions.keys - ch.extensions.keys).empty?
 
@@ -260,16 +276,16 @@ module TTTLS13
             if ee.extensions.include?(Message::ExtensionType::EARLY_DATA)
 
           @state = ClientState::WAIT_CERT_CR
-          @state = ClientState::WAIT_FINISHED unless @psk.nil?
+          @state = ClientState::WAIT_FINISHED unless psk.nil?
         when ClientState::WAIT_CERT_CR
           logger.debug('ClientState::WAIT_EE')
 
-          message = recv_message
+          message = recv_message(receivable_ccs: true)
           if message.msg_type == Message::HandshakeType::CERTIFICATE
-            ct = @transcript[CT] = message
+            ct = transcript[CT] = message
             terminate(:illegal_parameter) unless ct.appearable_extensions?
 
-            ch = @transcript[CH]
+            ch = transcript[CH]
             terminate(:unsupported_extension) \
               unless ct.certificate_list.map(&:extensions)
                        .all? { |e| (e.keys - ch.extensions.keys).empty? }
@@ -280,7 +296,7 @@ module TTTLS13
 
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
-            @transcript[CR] = message
+            transcript[CR] = message
             # TODO: client authentication
             @state = ClientState::WAIT_CERT
           else
@@ -289,10 +305,10 @@ module TTTLS13
         when ClientState::WAIT_CERT
           logger.debug('ClientState::WAIT_EE')
 
-          ct = @transcript[CT] = recv_certificate
+          ct = transcript[CT] = recv_certificate
           terminate(:illegal_parameter) unless ct.appearable_extensions?
 
-          ch = @transcript[CH]
+          ch = transcript[CH]
           terminate(:unsupported_extension) \
             unless ct.certificate_list.map(&:extensions)
                      .all? { |e| (e.keys - ch.extensions.keys).empty? }
@@ -305,40 +321,52 @@ module TTTLS13
         when ClientState::WAIT_CV
           logger.debug('ClientState::WAIT_EE')
 
-          cv = @transcript[CV] = recv_certificate_verify
+          cv = transcript[CV] = recv_certificate_verify
           digest = CipherSuite.digest(@cipher_suite)
-          vcv = verified_certificate_verify?(
-            ct: @transcript[CT],
-            cv: cv,
-            hash: @transcript.hash(digest, CT)
-          )
-          terminate(:decrypt_error) unless vcv
+          hash = transcript.hash(digest, CT)
+          terminate(:decrypt_error) \
+            unless verified_certificate_verify?(transcript[CT], cv, hash)
+
+          @signature_scheme = cv.signature_scheme
+
           @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           logger.debug('ClientState::WAIT_EE')
 
-          sf = @transcript[SF] = recv_finished
+          sf = transcript[SF] = recv_finished
           digest = CipherSuite.digest(@cipher_suite)
-          vf = verified_finished?(
+          verified = verified_finished?(
             finished: sf,
             digest: digest,
-            finished_key: @key_schedule.server_finished_key,
-            hash: @transcript.hash(digest, CV)
+            finished_key: key_schedule.server_finished_key,
+            hash: transcript.hash(digest, CV)
           )
-          terminate(:decrypt_error) unless vf
-          @transcript[EOED] = send_eoed \
+          terminate(:decrypt_error) unless verified
+
+          transcript[EOED] = send_eoed \
             if use_early_data? && succeed_early_data?
+
           # TODO: Send Certificate [+ CertificateVerify]
-          @transcript[CF] = send_finished
-          @write_cipher = gen_cipher(@cipher_suite,
-                                     @key_schedule.client_application_write_key,
-                                     @key_schedule.client_application_write_iv)
-          @read_cipher = gen_cipher(@cipher_suite,
-                                    @key_schedule.server_application_write_key,
-                                    @key_schedule.server_application_write_iv)
+          signature = sign_finished(
+            digest: digest,
+            finished_key: key_schedule.client_finished_key,
+            hash: transcript.hash(digest, EOED)
+          )
+          transcript[CF] = send_finished(signature)
+          @write_cipher = gen_cipher(
+            @cipher_suite,
+            key_schedule.client_application_write_key,
+            key_schedule.client_application_write_iv
+          )
+          @read_cipher = gen_cipher(
+            @cipher_suite,
+            key_schedule.server_application_write_key,
+            key_schedule.server_application_write_iv
+          )
+          @resumption_master_secret = key_schedule.resumption_master_secret
           @state = ClientState::CONNECTED
         when ClientState::CONNECTED
-          logger.debug('ClientState::WAIT_EE')
+          logger.debug('ClientState::CONNECTED')
 
           break
         end
@@ -481,13 +509,14 @@ module TTTLS13
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
 
-    # @param exs [TTTLS13::Message::Extensions]
+    # @param extensions [TTTLS13::Message::Extensions]
+    # @param binder_key [String, nil]
     #
     # @return [TTTLS13::Message::ClientHello]
-    def send_client_hello(exs)
+    def send_client_hello(extensions, binder_key = nil)
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
-        extensions: exs
+        extensions: extensions
       )
 
       if use_psk?
@@ -503,10 +532,8 @@ module TTTLS13
         ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
         # at the end, sign PSK binder
         sign_psk_binder(
-          ch1: @transcript[CH1],
-          hrr: @transcript[HRR],
           ch: ch,
-          binder_key: @key_schedule.binder_key_res
+          binder_key: binder_key
         )
       end
 
@@ -521,7 +548,7 @@ module TTTLS13
     # @param binder_key [String]
     #
     # @return [String]
-    def sign_psk_binder(ch1:, hrr:, ch:, binder_key:)
+    def sign_psk_binder(ch1: nil, hrr: nil, ch:, binder_key:)
       # pre_shared_key
       #
       # binder is computed as an HMAC over a transcript hash containing a
@@ -599,17 +626,17 @@ module TTTLS13
     # https://tools.ietf.org/html/rfc8446#section-4.1.2
     #
     # @param ch1 [TTTLS13::Message::ClientHello]
-    # @param hrr [TTTLS13::Message::Extensions]
+    # @param extensions [TTTLS13::Message::Extensions]
     #
     # @return [TTTLS13::Message::ClientHello]
-    def send_new_client_hello(ch1, exs)
+    def send_new_client_hello(ch1, extensions)
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
         legacy_session_id: ch1.legacy_session_id,
         cipher_suites: ch1.cipher_suites,
         legacy_compression_methods: ch1.legacy_compression_methods,
-        extensions: exs
+        extensions: extensions
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
 
@@ -620,7 +647,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ServerHello]
     def recv_server_hello
-      sh = recv_message
+      sh = recv_message(receivable_ccs: true)
       terminate(:unexpected_message) unless sh.is_a?(Message::ServerHello)
 
       sh
@@ -630,7 +657,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::EncryptedExtensions]
     def recv_encrypted_extensions
-      ee = recv_message
+      ee = recv_message(receivable_ccs: true)
       terminate(:unexpected_message) \
         unless ee.is_a?(Message::EncryptedExtensions)
 
@@ -641,7 +668,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::Certificate]
     def recv_certificate
-      ct = recv_message
+      ct = recv_message(receivable_ccs: true)
       terminate(:unexpected_message) unless ct.is_a?(Message::Certificate)
 
       ct
@@ -651,7 +678,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::CertificateVerify]
     def recv_certificate_verify
-      cv = recv_message
+      cv = recv_message(receivable_ccs: true)
       terminate(:unexpected_message) unless cv.is_a?(Message::CertificateVerify)
 
       cv
@@ -661,20 +688,14 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::Finished]
     def recv_finished
-      sf = recv_message
+      sf = recv_message(receivable_ccs: true)
       terminate(:unexpected_message) unless sf.is_a?(Message::Finished)
 
       sf
     end
 
     # @return [TTTLS13::Message::Finished]
-    def send_finished
-      digest = CipherSuite.digest(@cipher_suite)
-      signature = sign_finished(
-        digest: digest,
-        finished_key: @key_schedule.client_finished_key,
-        hash: @transcript.hash(digest, EOED)
-      )
+    def send_finished(signature)
       cf = Message::Finished.new(signature)
       send_handshakes(Message::ContentType::APPLICATION_DATA, [cf],
                       @write_cipher)
@@ -696,7 +717,7 @@ module TTTLS13
     # @param hash [String]
     #
     # @return [Boolean]
-    def verified_certificate_verify?(ct:, cv:, hash:)
+    def verified_certificate_verify?(ct, cv, hash)
       public_key = ct.certificate_list.first.cert_data.public_key
       signature_scheme = cv.signature_scheme
       signature = cv.signature
@@ -716,7 +737,7 @@ module TTTLS13
     def process_new_session_ticket(nst)
       super(nst)
 
-      rms = @key_schedule.resumption_master_secret
+      rms = @resumption_master_secret
       cs = @cipher_suite
       @settings[:process_new_session_ticket]&.call(nst, rms, cs)
     end

@@ -9,8 +9,8 @@ RSpec.describe Client do
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket, 'localhost')
-      exs, _priv_keys = client.send(:gen_ch_extensions)
-      client.send(:send_client_hello, exs)
+      extensions, _priv_keys = client.send(:gen_ch_extensions)
+      client.send(:send_client_hello, extensions)
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
 
@@ -55,15 +55,13 @@ RSpec.describe Client do
       client = Client.new(mock_socket, 'localhost')
       client.instance_variable_set(:@cipher_suite,
                                    CipherSuite::TLS_AES_128_GCM_SHA256)
-      read_seq_num = SequenceNumber.new
       cipher = Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        sequence_number: read_seq_num
+        sequence_number: SequenceNumber.new
       )
       client.instance_variable_set(:@read_cipher, cipher)
-      client.instance_variable_set(:@read_seq_num, read_seq_num)
       client
     end
 
@@ -95,9 +93,11 @@ RSpec.describe Client do
   end
 
   context 'client' do
-    let(:record) do
-      mock_socket = SimpleStream.new
-      client = Client.new(mock_socket, 'localhost')
+    let(:cipher_suite) do
+      CipherSuite::TLS_AES_128_GCM_SHA256
+    end
+
+    let(:transcript) do
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -107,25 +107,37 @@ RSpec.describe Client do
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
         SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
       )
-      client.instance_variable_set(:@transcript, transcript)
-      ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
-                           cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                           transcript: transcript)
-      client.instance_variable_set(:@key_schedule, ks)
-      client.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      write_seq_num = SequenceNumber.new
+      transcript
+    end
+
+    let(:finished_key) do
+      key_schedule = KeySchedule.new(
+        shared_secret: TESTBINARY_SHARED_SECRET,
+        cipher_suite: cipher_suite,
+        transcript: transcript
+      )
+      key_schedule.client_finished_key
+    end
+
+    let(:record) do
+      mock_socket = SimpleStream.new
+      client = Client.new(mock_socket, 'localhost')
       write_cipher = Cryptograph::Aead.new(
-        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        cipher_suite: cipher_suite,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        sequence_number: write_seq_num
+        sequence_number: SequenceNumber.new
       )
       client.instance_variable_set(:@write_cipher, write_cipher)
-      client.instance_variable_set(:@write_seq_num, write_seq_num)
-      client.send(:send_finished)
+      digest = CipherSuite.digest(cipher_suite)
+      hash = transcript.hash(digest, EOED)
+      signature = client.send(:sign_finished,
+                              digest: digest,
+                              finished_key: finished_key,
+                              hash: hash)
+      client.send(:send_finished, signature)
       read_cipher = Cryptograph::Aead.new(
-        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        cipher_suite: cipher_suite,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new
@@ -188,29 +200,28 @@ RSpec.describe Client do
     end
 
     it 'should verify server CertificateVerify' do
-      digest = CipherSuite.digest(cipher_suite)
-      expect(client.send(:verified_certificate_verify?,
-                         ct: ct,
-                         cv: cv,
-                         hash: transcript.hash(digest, CT))).to be true
+      hash = transcript.hash(CipherSuite.digest(cipher_suite), CT)
+      expect(client.send(:verified_certificate_verify?, ct, cv, hash))
+        .to be true
     end
 
     it 'should verify server Finished' do
       digest = CipherSuite.digest(cipher_suite)
+      hash = transcript.hash(digest, CV)
       expect(client.send(:verified_finished?,
                          finished: sf,
                          digest: digest,
                          finished_key: key_schedule.server_finished_key,
-                         hash: transcript.hash(digest, CV))).to be true
+                         hash: hash)).to be true
     end
 
     it 'should sign client Finished' do
       digest = CipherSuite.digest(cipher_suite)
-      signature = cf.verify_data
+      hash = transcript.hash(digest, EOED)
       expect(client.send(:sign_finished,
                          digest: digest,
                          finished_key: key_schedule.client_finished_key,
-                         hash: transcript.hash(digest, EOED))).to eq signature
+                         hash: hash)).to eq cf.verify_data
     end
   end
 

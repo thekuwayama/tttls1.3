@@ -14,7 +14,7 @@ RSpec.describe Server do
                         + msg_len.to_uint16 \
                         + TESTBINARY_CLIENT_HELLO)
       server = Server.new(mock_socket)
-      server.send(:recv_client_hello)
+      server.send(:recv_client_hello, true)
     end
 
     it 'should receive ClientHello' do
@@ -49,31 +49,29 @@ RSpec.describe Server do
     end
 
     let(:server) do
-      server = Server.new(nil)
-      server.instance_variable_set(:@crt, crt)
-      server
+      Server.new(nil)
     end
 
     it 'should select parameters' do
       expect(server.send(:select_cipher_suite, ch))
         .to eq CipherSuite::TLS_AES_128_GCM_SHA256
       expect(server.send(:select_named_group, ch)).to eq NamedGroup::SECP256R1
-      expect(server.send(:select_signature_scheme, ch))
+      expect(server.send(:select_signature_scheme, ch, crt))
         .to eq SignatureScheme::RSA_PSS_RSAE_SHA256
     end
   end
 
   context 'server' do
+    let(:ch) do
+      ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+    end
+
     let(:server) do
-      server = Server.new(nil)
-      transcript = Transcript.new
-      transcript[CH] = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
-      server.instance_variable_set(:@transcript, transcript)
-      server
+      Server.new(nil)
     end
 
     it 'should generate EncryptedExtensions' do
-      ee = server.send(:gen_encrypted_extensions)
+      ee = server.send(:gen_encrypted_extensions, ch)
       expect(ee).to be_a_kind_of(EncryptedExtensions)
       expect(ee.extensions).to include(ExtensionType::SERVER_NAME)
       expect(ee.extensions[ExtensionType::SERVER_NAME].server_name).to eq ''
@@ -86,17 +84,18 @@ RSpec.describe Server do
   end
 
   context 'server' do
-    let(:server) do
-      server = Server.new(nil)
-      crt = OpenSSL::X509::Certificate.new(
+    let(:crt) do
+      OpenSSL::X509::Certificate.new(
         File.read(__dir__ + '/fixtures/rsa_rsa.crt')
       )
-      server.instance_variable_set(:@crt, crt)
-      server
+    end
+
+    let(:server) do
+      Server.new(nil)
     end
 
     it 'should generate Certificate' do
-      ct = server.send(:gen_certificate)
+      ct = server.send(:gen_certificate, crt)
       expect(ct).to be_a_kind_of(Certificate)
 
       certificate_entry = ct.certificate_list.first
@@ -138,16 +137,13 @@ RSpec.describe Server do
     end
 
     let(:server) do
-      server = Server.new(nil)
-      server.instance_variable_set(:@key, key)
-      server.instance_variable_set(:@transcript, transcript)
-      server.instance_variable_set(:@cipher_suite, cipher_suite)
-      server.instance_variable_set(:@signature_scheme, signature_scheme)
-      server
+      Server.new(nil)
     end
 
     it 'should generate CertificateVerify' do
-      cv = server.send(:gen_certificate_verify)
+      digest = CipherSuite.digest(cipher_suite)
+      hash = transcript.hash(digest, CT)
+      cv = server.send(:gen_certificate_verify, key, signature_scheme, hash)
       expect(cv).to be_a_kind_of(CertificateVerify)
 
       # used RSASSA-PSS signature_scheme, salt is a random sequence.
@@ -167,8 +163,11 @@ RSpec.describe Server do
   end
 
   context 'server' do
-    let(:server) do
-      server = Server.new(nil)
+    let(:cipher_suite) do
+      CipherSuite::TLS_AES_128_GCM_SHA256
+    end
+
+    let(:transcript) do
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -177,24 +176,30 @@ RSpec.describe Server do
         CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
       )
-      server.instance_variable_set(:@transcript, transcript)
-      ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
-                           cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                           transcript: transcript)
-      server.instance_variable_set(:@key_schedule, ks)
-      server.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      server
+      transcript
     end
 
-    let(:verify_data) do
-      Finished.deserialize(TESTBINARY_SERVER_FINISHED).verify_data
+    let(:key_schedule) do
+      KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
+                      cipher_suite: cipher_suite,
+                      transcript: transcript)
+    end
+
+    let(:signature) do
+      server = Server.new(nil)
+      digest = CipherSuite.digest(cipher_suite)
+      server.send(:sign_finished,
+                  digest: digest,
+                  finished_key: key_schedule.server_finished_key,
+                  hash: transcript.hash(digest, CV))
+    end
+
+    let(:sf) do
+      Finished.deserialize(TESTBINARY_SERVER_FINISHED)
     end
 
     it 'should generate Finished' do
-      sf = server.send(:gen_finished)
-      expect(sf).to be_a_kind_of(Finished)
-      expect(sf.verify_data).to eq verify_data
+      expect(signature).to eq sf.verify_data
     end
   end
 end
