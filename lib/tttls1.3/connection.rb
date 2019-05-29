@@ -13,8 +13,9 @@ module TTTLS13
     def initialize(socket)
       @socket = socket
       @endpoint = nil # Symbol or String, :client or :server
-      @read_cipher = Cryptograph::Passer.new
-      @write_cipher = Cryptograph::Passer.new
+      @ap_wcipher = Cryptograph::Passer.new
+      @ap_rcipher = Cryptograph::Passer.new
+      @alert_wcipher = Cryptograph::Passer.new
       @message_queue = [] # Array of TTTLS13::Message::$Object
       @binary_buffer = '' # deposit Record.surplus_binary
       @cipher_suite = nil # TTTLS13::CipherSuite
@@ -38,7 +39,7 @@ module TTTLS13
 
       message = nil
       loop do
-        message = recv_message(receivable_ccs: false)
+        message = recv_message(receivable_ccs: false, cipher: @ap_rcipher)
         # At any time after the server has received the client Finished
         # message, it MAY send a NewSessionTicket message.
         break unless message.is_a?(Message::NewSessionTicket)
@@ -67,7 +68,7 @@ module TTTLS13
                (@endpoint == :server && @state == ServerState::CONNECTED)
 
       ap = Message::ApplicationData.new(binary)
-      send_application_data(ap, @write_cipher)
+      send_application_data(ap, @ap_wcipher)
     end
 
     def close
@@ -113,12 +114,12 @@ module TTTLS13
 
     # @param type [TTTLS13::Message::ContentType]
     # @param messages [Array of TTTLS13::Message::$Object] handshake messages
-    # @param write_cipher [TTTLS13::Cryptograph::Aead]
-    def send_handshakes(type, messages, write_cipher)
+    # @param cipher [TTTLS13::Cryptograph::Aead, Passer]
+    def send_handshakes(type, messages, cipher)
       record = Message::Record.new(
         type: type,
         messages: messages,
-        cipher: write_cipher
+        cipher: cipher
       )
       send_record(record)
     end
@@ -134,13 +135,13 @@ module TTTLS13
     end
 
     # @param message [TTTLS13::Message::ApplicationData]
-    # @param write_cipher [TTTLS13::Cryptograph::Aead]
-    def send_application_data(message, write_cipher)
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    def send_application_data(message, cipher)
       ap_record = Message::Record.new(
         type: Message::ContentType::APPLICATION_DATA,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
-        cipher: write_cipher
+        cipher: cipher
       )
       send_record(ap_record)
     end
@@ -152,12 +153,12 @@ module TTTLS13
       )
       type = Message::ContentType::ALERT
       type = Message::ContentType::APPLICATION_DATA \
-        if @write_cipher.is_a?(Cryptograph::Aead)
+        if @alert_wcipher.is_a?(Cryptograph::Aead)
       alert_record = Message::Record.new(
         type: type,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
-        cipher: @write_cipher
+        cipher: @alert_wcipher
       )
       send_record(alert_record)
     end
@@ -169,17 +170,18 @@ module TTTLS13
     end
 
     # @param receivable_ccs [Boolean]
+    # @param cipher [TTTLS13::Cryptograph::Aead, Passer]
     #
     # @raise [TTTLS13::Error::ErrorAlerts
     #
     # @return [TTTLS13::Message::$Object]
     # rubocop: disable Metrics/CyclomaticComplexity
-    def recv_message(receivable_ccs:)
+    def recv_message(receivable_ccs:, cipher:)
       return @message_queue.shift unless @message_queue.empty?
 
       messages = nil
       loop do
-        record = recv_record
+        record = recv_record(cipher)
         case record.type
         when Message::ContentType::HANDSHAKE,
              Message::ContentType::APPLICATION_DATA
@@ -207,15 +209,17 @@ module TTTLS13
     end
     # rubocop: enable Metrics/CyclomaticComplexity
 
+    # @param wcipher [TTTLS13::Cryptograph::Aead, Passer]
+    #
     # @return [TTTLS13::Message::Record]
-    def recv_record
+    def recv_record(cipher)
       binary = @socket.read(5)
       record_len = Convert.bin2i(binary.slice(3, 2))
       binary += @socket.read(record_len)
 
       begin
         buffer = @binary_buffer
-        record = Message::Record.deserialize(binary, @read_cipher, buffer)
+        record = Message::Record.deserialize(binary, cipher, buffer)
         @binary_buffer = record.surplus_binary
       rescue Error::ErrorAlerts => e
         terminate(e.message.to_sym)

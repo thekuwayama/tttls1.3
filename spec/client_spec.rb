@@ -52,42 +52,41 @@ RSpec.describe Client do
     let(:client) do
       mock_socket = SimpleStream.new
       mock_socket.write(TESTBINARY_SERVER_PARAMETERS_RECORD)
-      client = Client.new(mock_socket, 'localhost')
-      client.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      cipher = Cryptograph::Aead.new(
+      Client.new(mock_socket, 'localhost')
+    end
+
+    let(:cipher) do
+      Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         sequence_number: SequenceNumber.new
       )
-      client.instance_variable_set(:@read_cipher, cipher)
-      client
     end
 
     it 'should receive EncryptedExtensions' do
-      message = client.send(:recv_encrypted_extensions)
+      message = client.send(:recv_encrypted_extensions, cipher)
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
     end
 
     it 'should receive Certificate' do
-      client.send(:recv_encrypted_extensions) # to skip
-      message = client.send(:recv_certificate)
+      client.send(:recv_encrypted_extensions, cipher) # to skip
+      message = client.send(:recv_certificate, cipher)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
     end
 
     it 'should receive CertificateVerify' do
-      client.send(:recv_encrypted_extensions) # to skip
-      client.send(:recv_certificate)          # to skip
-      message = client.send(:recv_certificate_verify)
+      client.send(:recv_encrypted_extensions, cipher) # to skip
+      client.send(:recv_certificate, cipher)          # to skip
+      message = client.send(:recv_certificate_verify, cipher)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
     end
 
     it 'should receive Finished' do
-      client.send(:recv_encrypted_extensions) # to skip
-      client.send(:recv_certificate)          # to skip
-      client.send(:recv_certificate_verify)   # to skip
-      message = client.send(:recv_finished)
+      client.send(:recv_encrypted_extensions, cipher) # to skip
+      client.send(:recv_certificate, cipher)          # to skip
+      client.send(:recv_certificate_verify, cipher)   # to skip
+      message = client.send(:recv_finished, cipher)
       expect(message.msg_type).to eq HandshakeType::FINISHED
     end
   end
@@ -122,27 +121,26 @@ RSpec.describe Client do
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket, 'localhost')
-      write_cipher = Cryptograph::Aead.new(
-        cipher_suite: cipher_suite,
-        write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
-        write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        sequence_number: SequenceNumber.new
-      )
-      client.instance_variable_set(:@write_cipher, write_cipher)
       digest = CipherSuite.digest(cipher_suite)
       hash = transcript.hash(digest, EOED)
       signature = client.send(:sign_finished,
                               digest: digest,
                               finished_key: finished_key,
                               hash: hash)
-      client.send(:send_finished, signature)
-      read_cipher = Cryptograph::Aead.new(
+      hs_wcipher = Cryptograph::Aead.new(
         cipher_suite: cipher_suite,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new
       )
-      Record.deserialize(mock_socket.read, read_cipher)
+      client.send(:send_finished, signature, hs_wcipher)
+      hs_rcipher = Cryptograph::Aead.new(
+        cipher_suite: cipher_suite,
+        write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
+        write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
+        sequence_number: SequenceNumber.new
+      )
+      Record.deserialize(mock_socket.read, hs_rcipher)
     end
 
     it 'should send Finished' do

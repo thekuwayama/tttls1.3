@@ -129,6 +129,9 @@ module TTTLS13
       key_schedule = nil # TTTLS13::KeySchedule
       priv_key = nil # OpenSSL::PKey::$Object
 
+      hs_wcipher = nil # TTTLS13::Cryptograph::$Object
+      hs_rcipher = nil # TTTLS13::Cryptograph::$Object
+
       @state = ServerState::START
       loop do
         case @state
@@ -189,12 +192,12 @@ module TTTLS13
             cipher_suite: @cipher_suite,
             transcript: transcript
           )
-          @write_cipher = gen_cipher(
+          @alert_wcipher = hs_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.server_handshake_write_key,
             key_schedule.server_handshake_write_iv
           )
-          @read_cipher = gen_cipher(
+          hs_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,
             key_schedule.client_handshake_write_iv
@@ -222,7 +225,7 @@ module TTTLS13
             hash: transcript.hash(digest, CV)
           )
           sf = transcript[SF] = Message::Finished.new(signature)
-          send_server_parameters([ee, ct, cv, sf])
+          send_server_parameters([ee, ct, cv, sf], hs_wcipher)
           @state = ServerState::WAIT_FINISHED
         when ServerState::WAIT_CERT
           logger.debug('ServerState::WAIT_CERT')
@@ -231,7 +234,7 @@ module TTTLS13
         when ServerState::WAIT_FINISHED
           logger.debug('ServerState::WAIT_FINISHED')
 
-          cf = transcript[CF] = recv_finished
+          cf = transcript[CF] = recv_finished(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
           verified = verified_finished?(
             finished: cf,
@@ -240,12 +243,12 @@ module TTTLS13
             hash: transcript.hash(digest, EOED)
           )
           terminate(:decrypt_error) unless verified
-          @write_cipher = gen_cipher(
+          @alert_wcipher = @ap_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.server_application_write_key,
             key_schedule.server_application_write_iv
           )
-          @read_cipher = gen_cipher(
+          @ap_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_application_write_key,
             key_schedule.client_application_write_iv
@@ -289,7 +292,8 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     def recv_client_hello(receivable_ccs)
-      ch = recv_message(receivable_ccs: receivable_ccs)
+      ch = recv_message(receivable_ccs: receivable_ccs,
+                        cipher: Cryptograph::Passer.new)
       terminate(:unexpected_message) unless ch.is_a?(Message::ClientHello)
 
       ch
@@ -306,7 +310,8 @@ module TTTLS13
         cipher_suite: cipher_suite,
         extensions: extensions
       )
-      send_handshakes(Message::ContentType::HANDSHAKE, [sh], @write_cipher)
+      send_handshakes(Message::ContentType::HANDSHAKE, [sh],
+                      Cryptograph::Passer.new)
 
       sh
     end
@@ -339,17 +344,19 @@ module TTTLS13
         cipher_suite: @cipher_suite,
         extensions: Message::Extensions.new(exs)
       )
-      send_handshakes(Message::ContentType::HANDSHAKE, [sh], @write_cipher)
+      send_handshakes(Message::ContentType::HANDSHAKE, [sh],
+                      Cryptograph::Passer.new)
 
       sh
     end
 
     # @param messages [Array of TTTLS13::Message::$Object]
+    # @param cipher [TTTLS13::Cryptograph::Aead]
     #
     # @return [Array of TTTLS13::Message::$Object]
-    def send_server_parameters(messages)
+    def send_server_parameters(messages, cipher)
       send_handshakes(Message::ContentType::APPLICATION_DATA,
-                      messages.reject(&:nil?), @write_cipher)
+                      messages.reject(&:nil?), cipher)
 
       messages
     end
@@ -384,13 +391,13 @@ module TTTLS13
                                      signature: signature)
     end
 
-    # @param transcript [TTTLS13::Transcript]
+    # @param cipher [TTTLS13::Cryptograph::Aead]
     #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::Finished]
-    def recv_finished
-      cf = recv_message(receivable_ccs: true)
+    def recv_finished(cipher)
+      cf = recv_message(receivable_ccs: true, cipher: cipher)
       terminate(:unexpected_message) unless cf.is_a?(Message::Finished)
 
       cf

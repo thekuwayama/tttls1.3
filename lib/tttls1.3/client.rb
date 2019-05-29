@@ -75,7 +75,6 @@ module TTTLS13
       logger.level = @settings[:loglevel]
 
       @early_data = ''
-      @early_data_write_cipher = nil # Cryptograph::$Object
       @succeed_early_data = false
       raise Error::ConfigError unless valid_settings?
     end
@@ -137,6 +136,9 @@ module TTTLS13
           transcript: transcript
         )
       end
+      hs_wcipher = nil # TTTLS13::Cryptograph::$Object
+      hs_rcipher = nil # TTTLS13::Cryptograph::$Object
+      e_wcipher = nil # TTTLS13::Cryptograph::$Object
 
       @state = ClientState::START
       loop do
@@ -150,12 +152,12 @@ module TTTLS13
 
           send_ccs # compatibility mode
           if use_early_data?
-            @early_data_write_cipher = gen_cipher(
+            e_wcipher = gen_cipher(
               @settings[:psk_cipher_suite],
               key_schedule.early_data_write_key,
               key_schedule.early_data_write_iv
             )
-            send_early_data
+            send_early_data(e_wcipher)
           end
 
           @state = ClientState::WAIT_SH
@@ -248,12 +250,12 @@ module TTTLS13
             cipher_suite: @cipher_suite,
             transcript: transcript
           )
-          @write_cipher = gen_cipher(
+          @alert_wcipher = hs_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,
             key_schedule.client_handshake_write_iv
           )
-          @read_cipher = gen_cipher(
+          hs_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.server_handshake_write_key,
             key_schedule.server_handshake_write_iv
@@ -262,7 +264,7 @@ module TTTLS13
         when ClientState::WAIT_EE
           logger.debug('ClientState::WAIT_EE')
 
-          ee = transcript[EE] = recv_encrypted_extensions
+          ee = transcript[EE] = recv_encrypted_extensions(hs_rcipher)
           terminate(:illegal_parameter) unless ee.appearable_extensions?
 
           ch = transcript[CH]
@@ -280,7 +282,7 @@ module TTTLS13
         when ClientState::WAIT_CERT_CR
           logger.debug('ClientState::WAIT_EE')
 
-          message = recv_message(receivable_ccs: true)
+          message = recv_message(receivable_ccs: true, cipher: hs_rcipher)
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             ct = transcript[CT] = message
             terminate(:illegal_parameter) unless ct.appearable_extensions?
@@ -305,7 +307,7 @@ module TTTLS13
         when ClientState::WAIT_CERT
           logger.debug('ClientState::WAIT_EE')
 
-          ct = transcript[CT] = recv_certificate
+          ct = transcript[CT] = recv_certificate(hs_rcipher)
           terminate(:illegal_parameter) unless ct.appearable_extensions?
 
           ch = transcript[CH]
@@ -321,7 +323,7 @@ module TTTLS13
         when ClientState::WAIT_CV
           logger.debug('ClientState::WAIT_EE')
 
-          cv = transcript[CV] = recv_certificate_verify
+          cv = transcript[CV] = recv_certificate_verify(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
           hash = transcript.hash(digest, CT)
           terminate(:decrypt_error) \
@@ -333,7 +335,7 @@ module TTTLS13
         when ClientState::WAIT_FINISHED
           logger.debug('ClientState::WAIT_EE')
 
-          sf = transcript[SF] = recv_finished
+          sf = transcript[SF] = recv_finished(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
           verified = verified_finished?(
             finished: sf,
@@ -343,7 +345,7 @@ module TTTLS13
           )
           terminate(:decrypt_error) unless verified
 
-          transcript[EOED] = send_eoed \
+          transcript[EOED] = send_eoed(e_wcipher) \
             if use_early_data? && succeed_early_data?
 
           # TODO: Send Certificate [+ CertificateVerify]
@@ -352,13 +354,13 @@ module TTTLS13
             finished_key: key_schedule.client_finished_key,
             hash: transcript.hash(digest, EOED)
           )
-          transcript[CF] = send_finished(signature)
-          @write_cipher = gen_cipher(
+          transcript[CF] = send_finished(signature, hs_wcipher)
+          @alert_wcipher = @ap_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_application_write_key,
             key_schedule.client_application_write_iv
           )
-          @read_cipher = gen_cipher(
+          @ap_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.server_application_write_key,
             key_schedule.server_application_write_iv
@@ -439,13 +441,14 @@ module TTTLS13
       !(@early_data.nil? || @early_data.empty?)
     end
 
-    def send_early_data
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    def send_early_data(cipher)
       ap = Message::ApplicationData.new(@early_data)
       ap_record = Message::Record.new(
         type: Message::ContentType::APPLICATION_DATA,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [ap],
-        cipher: @early_data_write_cipher
+        cipher: cipher
       )
       send_record(ap_record)
     end
@@ -537,7 +540,8 @@ module TTTLS13
         )
       end
 
-      send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
+      send_handshakes(Message::ContentType::HANDSHAKE, [ch],
+                      Cryptograph::Passer.new)
 
       ch
     end
@@ -638,7 +642,8 @@ module TTTLS13
         legacy_compression_methods: ch1.legacy_compression_methods,
         extensions: extensions
       )
-      send_handshakes(Message::ContentType::HANDSHAKE, [ch], @write_cipher)
+      send_handshakes(Message::ContentType::HANDSHAKE, [ch],
+                      Cryptograph::Passer.new)
 
       ch
     end
@@ -647,67 +652,77 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ServerHello]
     def recv_server_hello
-      sh = recv_message(receivable_ccs: true)
+      sh = recv_message(receivable_ccs: true, cipher: Cryptograph::Passer.new)
       terminate(:unexpected_message) unless sh.is_a?(Message::ServerHello)
 
       sh
     end
 
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::EncryptedExtensions]
-    def recv_encrypted_extensions
-      ee = recv_message(receivable_ccs: true)
+    def recv_encrypted_extensions(cipher)
+      ee = recv_message(receivable_ccs: true, cipher: cipher)
       terminate(:unexpected_message) \
         unless ee.is_a?(Message::EncryptedExtensions)
 
       ee
     end
 
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::Certificate]
-    def recv_certificate
-      ct = recv_message(receivable_ccs: true)
+    def recv_certificate(cipher)
+      ct = recv_message(receivable_ccs: true, cipher: cipher)
       terminate(:unexpected_message) unless ct.is_a?(Message::Certificate)
 
       ct
     end
 
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::CertificateVerify]
-    def recv_certificate_verify
-      cv = recv_message(receivable_ccs: true)
+    def recv_certificate_verify(cipher)
+      cv = recv_message(receivable_ccs: true, cipher: cipher)
       terminate(:unexpected_message) unless cv.is_a?(Message::CertificateVerify)
 
       cv
     end
 
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::Finished]
-    def recv_finished
-      sf = recv_message(receivable_ccs: true)
+    def recv_finished(cipher)
+      sf = recv_message(receivable_ccs: true, cipher: cipher)
       terminate(:unexpected_message) unless sf.is_a?(Message::Finished)
 
       sf
     end
 
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    #
     # @return [TTTLS13::Message::Finished]
-    def send_finished(signature)
+    def send_finished(signature, cipher)
       cf = Message::Finished.new(signature)
-      send_handshakes(Message::ContentType::APPLICATION_DATA, [cf],
-                      @write_cipher)
+      send_handshakes(Message::ContentType::APPLICATION_DATA, [cf], cipher)
 
       cf
     end
 
+    # @param cipher [TTTLS13::Cryptograph::Aead]
+    #
     # @return [TTTLS13::Message::EndOfEarlyData]
-    def send_eoed
+    def send_eoed(cipher)
       eoed = Message::EndOfEarlyData.new
-      send_handshakes(Message::ContentType::APPLICATION_DATA, [eoed],
-                      @early_data_write_cipher)
+      send_handshakes(Message::ContentType::APPLICATION_DATA, [eoed], cipher)
 
       eoed
     end
