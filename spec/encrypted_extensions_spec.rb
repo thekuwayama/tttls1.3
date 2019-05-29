@@ -31,7 +31,7 @@ RSpec.describe EncryptedExtensions do
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
       expect(message.extensions).to eq extensions
-      expect(message.only_appearable_extensions?).to be true
+      expect(message.appearable_extensions?).to be true
     end
 
     it 'should be serialized' do
@@ -55,7 +55,7 @@ RSpec.describe EncryptedExtensions do
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
       expect(message.extensions).to eq extensions
-      expect(message.only_appearable_extensions?).to be false
+      expect(message.appearable_extensions?).to be false
     end
   end
 
@@ -67,7 +67,7 @@ RSpec.describe EncryptedExtensions do
     it 'should be generated' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
       expect(message.extensions).to eq Extensions.new
-      expect(message.only_appearable_extensions?).to be true
+      expect(message.appearable_extensions?).to be true
     end
 
     it 'should be serialized' do
@@ -84,7 +84,7 @@ RSpec.describe EncryptedExtensions do
 
     it 'should generate valid object' do
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
-      expect(message.only_appearable_extensions?).to be true
+      expect(message.appearable_extensions?).to be true
     end
 
     it 'should generate valid serializable object' do

@@ -127,11 +127,36 @@ module TTTLS13
       # rubocop: enable Metrics/MethodLength
 
       # @return [Boolean]
-      def only_appearable_extensions?
+      def appearable_extensions?
         exs = @extensions.keys - APPEARABLE_CH_EXTENSIONS
         return true if exs.empty?
 
         !(exs - DEFINED_EXTENSIONS).empty?
+      end
+
+      # @return [Boolean]
+      def negotiated_tls_1_3?
+        sv = @extensions[ExtensionType::SUPPORTED_VERSIONS]
+
+        @legacy_version == ProtocolVersion::TLS_1_2 &&
+          (sv&.versions || []).include?(ProtocolVersion::TLS_1_3)
+      end
+
+      # @return [Boolean]
+      def valid_key_share?
+        ks = @extensions[Message::ExtensionType::KEY_SHARE]
+        ks_groups = ks&.key_share_entry&.map(&:group) || []
+        sg = @extensions[Message::ExtensionType::SUPPORTED_GROUPS]
+        sg_groups = sg&.named_group_list || []
+
+        # Each KeyShareEntry value MUST correspond to a group offered in the
+        # "supported_groups" extension and MUST appear in the same order.
+        #
+        # Clients MUST NOT offer multiple KeyShareEntry values for the same
+        # group.
+        (ks_groups - sg_groups).empty? &&
+          sg_groups.filter { |g| ks_groups.include?(g) } == ks_groups &&
+          ks_groups.uniq == ks_groups
       end
     end
   end

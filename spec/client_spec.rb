@@ -9,8 +9,8 @@ RSpec.describe Client do
     let(:record) do
       mock_socket = SimpleStream.new
       client = Client.new(mock_socket, 'localhost')
-      exs, _priv_keys = client.send(:gen_ch_extensions)
-      client.send(:send_client_hello, exs)
+      extensions, _priv_keys = client.send(:gen_ch_extensions)
+      client.send(:send_client_hello, extensions)
       Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
     end
 
@@ -52,52 +52,51 @@ RSpec.describe Client do
     let(:client) do
       mock_socket = SimpleStream.new
       mock_socket.write(TESTBINARY_SERVER_PARAMETERS_RECORD)
-      client = Client.new(mock_socket, 'localhost')
-      client.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      read_seq_num = SequenceNumber.new
-      cipher = Cryptograph::Aead.new(
+      Client.new(mock_socket, 'localhost')
+    end
+
+    let(:cipher) do
+      Cryptograph::Aead.new(
         cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
         write_key: TESTBINARY_SERVER_PARAMETERS_WRITE_KEY,
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
-        sequence_number: read_seq_num
+        sequence_number: SequenceNumber.new
       )
-      client.instance_variable_set(:@read_cipher, cipher)
-      client.instance_variable_set(:@read_seq_num, read_seq_num)
-      client
     end
 
     it 'should receive EncryptedExtensions' do
-      message = client.send(:recv_encrypted_extensions)
+      message = client.send(:recv_encrypted_extensions, cipher)
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
     end
 
     it 'should receive Certificate' do
-      client.send(:recv_encrypted_extensions) # to skip
-      message = client.send(:recv_certificate)
+      client.send(:recv_encrypted_extensions, cipher) # to skip
+      message = client.send(:recv_certificate, cipher)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
     end
 
     it 'should receive CertificateVerify' do
-      client.send(:recv_encrypted_extensions) # to skip
-      client.send(:recv_certificate)          # to skip
-      message = client.send(:recv_certificate_verify)
+      client.send(:recv_encrypted_extensions, cipher) # to skip
+      client.send(:recv_certificate, cipher)          # to skip
+      message = client.send(:recv_certificate_verify, cipher)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
     end
 
     it 'should receive Finished' do
-      client.send(:recv_encrypted_extensions) # to skip
-      client.send(:recv_certificate)          # to skip
-      client.send(:recv_certificate_verify)   # to skip
-      message = client.send(:recv_finished)
+      client.send(:recv_encrypted_extensions, cipher) # to skip
+      client.send(:recv_certificate, cipher)          # to skip
+      client.send(:recv_certificate_verify, cipher)   # to skip
+      message = client.send(:recv_finished, cipher)
       expect(message.msg_type).to eq HandshakeType::FINISHED
     end
   end
 
   context 'client' do
-    let(:record) do
-      mock_socket = SimpleStream.new
-      client = Client.new(mock_socket, 'localhost')
+    let(:cipher_suite) do
+      CipherSuite::TLS_AES_128_GCM_SHA256
+    end
+
+    let(:transcript) do
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
@@ -107,30 +106,41 @@ RSpec.describe Client do
         CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
         SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
       )
-      client.instance_variable_set(:@transcript, transcript)
-      ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
-                           cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                           transcript: transcript)
-      client.instance_variable_set(:@key_schedule, ks)
-      client.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      write_seq_num = SequenceNumber.new
-      write_cipher = Cryptograph::Aead.new(
-        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-        write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
-        write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
-        sequence_number: write_seq_num
+      transcript
+    end
+
+    let(:finished_key) do
+      key_schedule = KeySchedule.new(
+        shared_secret: TESTBINARY_SHARED_SECRET,
+        cipher_suite: cipher_suite,
+        transcript: transcript
       )
-      client.instance_variable_set(:@write_cipher, write_cipher)
-      client.instance_variable_set(:@write_seq_num, write_seq_num)
-      client.send(:send_finished)
-      read_cipher = Cryptograph::Aead.new(
-        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+      key_schedule.client_finished_key
+    end
+
+    let(:record) do
+      mock_socket = SimpleStream.new
+      client = Client.new(mock_socket, 'localhost')
+      digest = CipherSuite.digest(cipher_suite)
+      hash = transcript.hash(digest, EOED)
+      signature = client.send(:sign_finished,
+                              digest: digest,
+                              finished_key: finished_key,
+                              hash: hash)
+      hs_wcipher = Cryptograph::Aead.new(
+        cipher_suite: cipher_suite,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new
       )
-      Record.deserialize(mock_socket.read, read_cipher)
+      client.send(:send_finished, signature, hs_wcipher)
+      hs_rcipher = Cryptograph::Aead.new(
+        cipher_suite: cipher_suite,
+        write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
+        write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
+        sequence_number: SequenceNumber.new
+      )
+      Record.deserialize(mock_socket.read, hs_rcipher)
     end
 
     it 'should send Finished' do
@@ -143,144 +153,73 @@ RSpec.describe Client do
   end
 
   context 'client' do
-    let(:client) do
-      client = Client.new(nil, 'localhost')
+    let(:cipher_suite) do
+      CipherSuite::TLS_AES_128_GCM_SHA256
+    end
+
+    let(:ct) do
+      Certificate.deserialize(TESTBINARY_CERTIFICATE)
+    end
+
+    let(:cv) do
+      CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+    end
+
+    let(:sf) do
+      Finished.deserialize(TESTBINARY_SERVER_FINISHED)
+    end
+
+    let(:transcript) do
       transcript = Transcript.new
       transcript.merge!(
         CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
         SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
         EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
-        CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
+        CT => ct,
+        CV => cv,
+        SF => sf
       )
-      client.instance_variable_set(:@transcript, transcript)
-      ks = KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
-                           cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                           transcript: transcript)
-      client.instance_variable_set(:@key_schedule, ks)
-      client.instance_variable_set(:@cipher_suite,
-                                   CipherSuite::TLS_AES_128_GCM_SHA256)
-      client
     end
 
-    let(:client_finished) do
+    let(:key_schedule) do
+      KeySchedule.new(
+        shared_secret: TESTBINARY_SHARED_SECRET,
+        cipher_suite: cipher_suite,
+        transcript: transcript
+      )
+    end
+
+    let(:client) do
+      Client.new(nil, 'localhost')
+    end
+
+    let(:cf) do
       Finished.deserialize(TESTBINARY_CLIENT_FINISHED)
     end
 
     it 'should verify server CertificateVerify' do
-      expect(client.send(:verified_certificate_verify?)).to be true
+      hash = transcript.hash(CipherSuite.digest(cipher_suite), CT)
+      expect(client.send(:verified_certificate_verify?, ct, cv, hash))
+        .to be true
     end
 
     it 'should verify server Finished' do
-      expect(client.send(:verified_finished?)).to be true
+      digest = CipherSuite.digest(cipher_suite)
+      hash = transcript.hash(digest, CV)
+      expect(client.send(:verified_finished?,
+                         finished: sf,
+                         digest: digest,
+                         finished_key: key_schedule.server_finished_key,
+                         hash: hash)).to be true
     end
 
     it 'should sign client Finished' do
-      expect(client.send(:sign_finished)).to eq client_finished.verify_data
-    end
-  end
-
-  context 'client' do
-    let(:client) do
-      client = Client.new(nil, 'localhost')
-      transcript = {
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
-      }
-      client.instance_variable_set(:@transcript, transcript)
-      client
-    end
-
-    it 'should check that ServerHello.legacy_version matches ' \
-       'ClientHello.legacy_version' do
-      expect(client.send(:equal_ch_sh_legacy_version?)).to be true
-    end
-
-    it 'should check that ServerHello.legacy_session_id_echo matches ' \
-       'ClientHello.legacy_session_id' do
-      expect(client.send(:equal_ch_sh_legacy_session_id?)).to be true
-    end
-
-    it 'should check that ServerHello.cipher_suite is included in' \
-       'ClientHello.cipher_suites' do
-      expect(client.send(:ch_include_sh_cipher_suite?)).to be true
-    end
-
-    it 'should check that ServerHello.compression_method is valid value' do
-      expect(client.send(:valid_sh_compression_method?)).to be true
-    end
-
-    it 'should check that negotiated protocol_version is TLS 1.3' do
-      expect(client.send(:negotiated_tls_1_3?)).to be true
-    end
-  end
-
-  context 'client, received ServerHello with random[-8..] == ' \
-          'downgrade protection value(TLS 1.2),' do
-    let(:client) do
-      mock_socket = SimpleStream.new
-      client = Client.new(mock_socket, 'localhost')
-      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
-      random = OpenSSL::Random.random_bytes(24) + \
-               Client.const_get(:DOWNGRADE_PROTECTION_TLS_1_2)
-      sh.instance_variable_set(:@random, random)
-      transcript = {
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => sh
-      }
-      client.instance_variable_set(:@transcript, transcript)
-      client
-    end
-
-    it 'should check downgrade protection value' do
-      expect(client.send(:valid_sh_random?)).to be false
-      expect(client.send(:negotiated_tls_1_3?)).to be true
-    end
-  end
-
-  context 'client, received ServerHello with random[-8..] == ' \
-          'downgrade protection value(prior to TLS 1.2),' do
-    let(:client) do
-      mock_socket = SimpleStream.new
-      client = Client.new(mock_socket, 'localhost')
-      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
-      random = OpenSSL::Random.random_bytes(24) + \
-               Client.const_get(:DOWNGRADE_PROTECTION_TLS_1_1)
-      sh.instance_variable_set(:@random, random)
-      transcript = {
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => sh
-      }
-      client.instance_variable_set(:@transcript, transcript)
-      client
-    end
-
-    it 'should check downgrade protection value' do
-      expect(client.send(:valid_sh_random?)).to be false
-      expect(client.send(:negotiated_tls_1_3?)).to be true
-    end
-  end
-
-  context 'client, received ServerHello with supported_versions not ' \
-          'including "\x03\x04",' do
-    let(:client) do
-      mock_socket = SimpleStream.new
-      client = Client.new(mock_socket, 'localhost')
-      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
-      extensions = sh.instance_variable_get(:@extensions)
-      extensions[ExtensionType::SUPPORTED_VERSIONS] = nil
-      sh.instance_variable_set(:@extensions, extensions)
-      transcript = {
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => sh
-      }
-      client.instance_variable_set(:@transcript, transcript)
-      client
-    end
-
-    it 'should check negotiated protocol_version' do
-      expect(client.send(:negotiated_tls_1_3?)).to be false
+      digest = CipherSuite.digest(cipher_suite)
+      hash = transcript.hash(digest, EOED)
+      expect(client.send(:sign_finished,
+                         digest: digest,
+                         finished_key: key_schedule.client_finished_key,
+                         hash: hash)).to eq cf.verify_data
     end
   end
 
