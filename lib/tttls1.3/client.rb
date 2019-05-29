@@ -136,6 +136,7 @@ module TTTLS13
           transcript: transcript
         )
       end
+
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
@@ -223,7 +224,9 @@ module TTTLS13
             # send new client_hello
             extensions, pk = gen_newch_extensions(ch1, hrr)
             priv_keys = pk.merge(priv_keys)
-            transcript[CH] = send_new_client_hello(ch1, extensions)
+            binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
+            transcript[CH] = send_new_client_hello(ch1, hrr, extensions,
+                                                   binder_key)
             @state = ClientState::WAIT_SH
             next
           end
@@ -468,8 +471,6 @@ module TTTLS13
 
     # @return [TTTLS13::Message::Extensions]
     # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
-    # rubocop: disable Metrics/AbcSize
-    # rubocop: disable Metrics/CyclomaticComplexity
     def gen_ch_extensions
       exs = []
       # supported_versions: only TLS 1.3
@@ -501,16 +502,13 @@ module TTTLS13
       exs << key_share
 
       # server_name
-      exs << Message::Extension::ServerName.new(@hostname) \
-        if !@hostname.nil? && !@hostname.empty?
+      exs << Message::Extension::ServerName.new(@hostname)
 
       # early_data
       exs << Message::Extension::EarlyDataIndication.new if use_early_data?
 
       [Message::Extensions.new(exs), priv_keys]
     end
-    # rubocop: enable Metrics/AbcSize
-    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
@@ -630,10 +628,12 @@ module TTTLS13
     # https://tools.ietf.org/html/rfc8446#section-4.1.2
     #
     # @param ch1 [TTTLS13::Message::ClientHello]
+    # @param hrr [TTTLS13::Message::ServerHello]
     # @param extensions [TTTLS13::Message::Extensions]
+    # @param binder_key [String, nil]
     #
     # @return [TTTLS13::Message::ClientHello]
-    def send_new_client_hello(ch1, extensions)
+    def send_new_client_hello(ch1, hrr, extensions, binder_key = nil)
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
@@ -642,6 +642,15 @@ module TTTLS13
         legacy_compression_methods: ch1.legacy_compression_methods,
         extensions: extensions
       )
+
+      # pre_shared_key
+      #
+      # Updating the "pre_shared_key" extension if present by recomputing
+      # the "obfuscated_ticket_age" and binder values.
+      if ch1.extensions.include?(Message::ExtensionType::PRE_SHARED_KEY)
+        sign_psk_binder(ch1: ch1, hrr: hrr, ch: ch, binder_key: binder_key)
+      end
+
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 

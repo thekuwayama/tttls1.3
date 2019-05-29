@@ -166,7 +166,7 @@ module TTTLS13
           # send HRR
           if @named_group.nil?
             ch1 = transcript[CH1] = transcript.delete(CH)
-            transcript[HRR] = send_hello_retry_request(ch1)
+            transcript[HRR] = send_hello_retry_request(ch1, @cipher_suite)
             @state = ServerState::START
             next
           end
@@ -317,9 +317,10 @@ module TTTLS13
     end
 
     # @param ch1 [TTTLS13::Message::ClientHello]
+    # @param cipher_suite [TTTLS13::CipherSuite]
     #
     # @return [TTTLS13::Message::ServerHello]
-    def send_hello_retry_request(ch1)
+    def send_hello_retry_request(ch1, cipher_suite)
       exs = []
       # supported_versions
       exs << Message::Extension::SupportedVersions.new(
@@ -341,7 +342,7 @@ module TTTLS13
       sh = Message::ServerHello.new(
         random: Message::HRR_RANDOM,
         legacy_session_id_echo: ch1.legacy_session_id,
-        cipher_suite: @cipher_suite,
+        cipher_suite: cipher_suite,
         extensions: Message::Extensions.new(exs)
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [sh],
