@@ -79,6 +79,21 @@ module TTTLS13
       nil
     end
 
+    # @return [TTTLS13::CipherSuite, nil]
+    def negotiated_cipher_suite
+      @cipher_suite
+    end
+
+    # @return [TTTLS13::NamedGroup, nil]
+    def negotiated_named_group
+      @named_group
+    end
+
+    # @return [TTTLS13::SignatureScheme, nil]
+    def negotiated_signature_scheme
+      @signature_scheme
+    end
+
     private
 
     # @param cipher_suite [TTTLS13::CipherSuite]
