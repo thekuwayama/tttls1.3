@@ -4,6 +4,7 @@
 require_relative 'helper'
 
 FIXTURES_DIR = __dir__ + '/../spec/fixtures'
+PORT = 4433
 
 RSpec.describe Client do
   # testcases
@@ -152,23 +153,25 @@ RSpec.describe Client do
   ].each do |normal, opt, crt, key, settings|
     context 'client interop' do
       before do
-        cmd = "docker run -v #{FIXTURES_DIR}:/tmp -p 4433:4433 -it openssl " \
-              + 'openssl s_server ' \
+        cmd = 'openssl s_server ' \
               + "-cert /tmp/#{crt} " \
               + "-key /tmp/#{key} " \
               + '-tls1_3 ' \
               + '-www ' \
               + '-quiet ' \
               + opt
-        pid = spawn(cmd)
+        pid = spawn('docker run ' \
+                    + "--volume #{FIXTURES_DIR}:/tmp " \
+                    + "--publish #{PORT}:#{PORT} " \
+                    + 'openssl ' + cmd)
         Process.detach(pid)
 
-        sleep(2.5) # waiting for openssl s_server
+        wait_to_listen(PORT)
       end
 
       let(:client) do
         hostname = 'localhost'
-        @socket = TCPSocket.new(hostname, 4433)
+        @socket = TCPSocket.new(hostname, PORT)
         settings[:ca_file] = FIXTURES_DIR + '/rsa_ca.crt'
         Client.new(@socket, hostname, settings)
       end
