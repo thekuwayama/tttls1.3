@@ -128,4 +128,18 @@ end
 
 RuboCop::RakeTask.new
 RSpec::Core::RakeTask.new(:spec)
+
+desc 'interoperability test: TTTLS13::Client'
+RSpec::Core::RakeTask.new(:interop_client) do |t|
+  t.pattern = Dir.glob('interop/client_spec.rb')
+end
+
+desc 'interoperability test: TTTLS13::Server'
+RSpec::Core::RakeTask.new(:interop_server) do |t|
+  t.pattern = Dir.glob('interop/server_spec.rb')
+end
+
+desc 'interoperability test between openssl'
+task interop: %i[interop_client interop_server]
+
 task default: %i[rubocop spec]

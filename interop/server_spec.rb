@@ -4,7 +4,9 @@
 require_relative 'helper'
 
 FIXTURES_DIR = __dir__ + '/../spec/fixtures'
-tcpserver = TCPServer.open(4433)
+PORT = 4433
+
+tcpserver = TCPServer.open(PORT)
 
 RSpec.describe Server do
   # testcases
@@ -153,15 +155,18 @@ RSpec.describe Server do
       end
 
       let(:client) do
+        wait_to_listen(PORT)
+
         ip = Socket.ip_address_list.find(&:ipv4_private?).ip_address
         cmd = 'echo -n ping | openssl s_client ' \
-              + '-connect local:4433 ' \
+              + "-connect local:#{PORT} " \
               + '-tls1_3 ' \
               + '-CAfile /tmp/rsa_ca.crt ' \
               + '-servername localhost ' \
               + '-quiet ' \
               + opt
-        "docker run -v #{FIXTURES_DIR}:/tmp " \
+        'docker run ' \
+        + "--volume #{FIXTURES_DIR}:/tmp " \
         + "--add-host=local:#{ip} -it openssl " \
         + "sh -c \"#{cmd}\" 2>&1 >/dev/null"
       end
@@ -173,7 +178,7 @@ RSpec.describe Server do
 
       if normal
         it "should accept request from openssl s_client ...#{opt}" do
-          spawn('sleep 2; ' + client)
+          spawn(client)
           expect { server.accept }.to_not raise_error
           expect(server.read).to include 'ping'
           expect { server.write('pong') }.to_not raise_error
@@ -181,7 +186,7 @@ RSpec.describe Server do
         end
       else # exceptions scenarios
         it "should NOT accept request from openssl s_client ...#{opt}" do
-          spawn('sleep 2; ' + client)
+          spawn(client)
           expect { server.accept }.to raise_error ErrorAlerts
         end
       end
