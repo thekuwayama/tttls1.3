@@ -402,11 +402,6 @@ module TTTLS13
       @succeed_early_data
     end
 
-    # @return [String]
-    def negotiated_alpn
-      @alpn
-    end
-
     private
 
     # @return [Boolean]

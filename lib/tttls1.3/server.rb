@@ -153,11 +153,12 @@ module TTTLS13
           terminate(:unrecognized_name) unless recognized_server_name?(ch, @crt)
 
           # alpn
-          if !@settings[:alpn].nil? && !@settings[:alpn].empty?
-            pnl = ch.extensions[
-              Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
-            ]&.protocol_name_list || []
-            @alpn = pnl.find { |p| @settings[:alpn].include?(p) }
+          ch_alpn = ch.extensions[
+            Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
+          ]
+          if !@settings[:alpn].nil? && !@settings[:alpn].empty? && !ch_alpn.nil?
+            @alpn = ch_alpn.protocol_name_list
+                           .find { |p| @settings[:alpn].include?(p) }
 
             terminate(:no_application_protocol) if @alpn.nil?
           end

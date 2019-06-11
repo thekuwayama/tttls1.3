@@ -23,6 +23,7 @@ module TTTLS13
       @signature_scheme = nil # TTTLS13::SignatureScheme
       @state = 0 # ClientState or ServerState
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
+      @alpn = nil # String
     end
 
     # @raise [TTTLS13::Error::ConfigError]
@@ -93,6 +94,11 @@ module TTTLS13
     # @return [TTTLS13::SignatureScheme, nil]
     def negotiated_signature_scheme
       @signature_scheme
+    end
+
+    # @return [String]
+    def negotiated_alpn
+      @alpn
     end
 
     private
