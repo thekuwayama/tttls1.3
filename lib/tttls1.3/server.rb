@@ -50,6 +50,7 @@ module TTTLS13
     cipher_suites: DEFAULT_SP_CIPHER_SUITES,
     signature_algorithms: DEFAULT_SP_SIGNATURE_ALGORITHMS,
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
+    alpn: nil,
     loglevel: Logger::WARN
   }.freeze
   private_constant :DEFAULT_SERVER_SETTINGS
@@ -151,6 +152,16 @@ module TTTLS13
           terminate(:illegal_parameter) unless ch.valid_key_share?
           terminate(:unrecognized_name) unless recognized_server_name?(ch, @crt)
 
+          # alpn
+          if !@settings[:alpn].nil? && !@settings[:alpn].empty?
+            pnl = ch.extensions[
+              Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
+            ]&.protocol_name_list || []
+            @alpn = pnl.find { |p| @settings[:alpn].include?(p) }
+
+            terminate(:no_application_protocol) if @alpn.nil?
+          end
+
           @state = ServerState::RECVD_CH
         when ServerState::RECVD_CH
           logger.debug('ServerState::RECVD_CH')
@@ -209,7 +220,7 @@ module TTTLS13
           logger.debug('ServerState::WAIT_FLIGHT2')
 
           ch = transcript[CH]
-          ee = transcript[EE] = gen_encrypted_extensions(ch)
+          ee = transcript[EE] = gen_encrypted_extensions(ch, @alpn)
           # TODO: [Send CertificateRequest]
           ct = transcript[CT] = gen_certificate(@crt)
           digest = CipherSuite.digest(@cipher_suite)
@@ -335,9 +346,9 @@ module TTTLS13
       ksg = sp_groups.find do |g|
         !ks_groups.include?(g) && @settings[:supported_groups].include?(g)
       end
+      exs << Message::Extension::KeyShare.gen_hrr_key_share(ksg)
 
       # TODO: cookie
-      exs << Message::Extension::KeyShare.gen_hrr_key_share(ksg)
 
       sh = Message::ServerHello.new(
         random: Message::HRR_RANDOM,
@@ -363,10 +374,11 @@ module TTTLS13
     end
 
     # @param ch [TTTLS13::Message::ClientHello]
+    # @param alpn [String]
     #
     # @return [TTTLS13::Message::EncryptedExtensions]
-    def gen_encrypted_extensions(ch)
-      Message::EncryptedExtensions.new(gen_ee_extensions(ch))
+    def gen_encrypted_extensions(ch, alpn = nil)
+      Message::EncryptedExtensions.new(gen_ee_extensions(ch, alpn))
     end
 
     # @param crt [OpenSSL::X509::Certificate]
@@ -424,9 +436,10 @@ module TTTLS13
     end
 
     # @param ch [TTTLS13::Message::ClientHello]
+    # @param alpn [String]
     #
     # @return [TTTLS13::Message::Extensions]
-    def gen_ee_extensions(ch)
+    def gen_ee_extensions(ch, alpn)
       exs = []
 
       # server_name
@@ -436,6 +449,9 @@ module TTTLS13
       # supported_groups
       exs \
       << Message::Extension::SupportedGroups.new(@settings[:supported_groups])
+
+      # alpn
+      exs << Message::Extension::Alpn.new([alpn]) unless alpn.nil?
 
       Message::Extensions.new(exs)
     end

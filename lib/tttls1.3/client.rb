@@ -50,6 +50,7 @@ module TTTLS13
     signature_algorithms_cert: nil,
     supported_groups: DEFAULT_CH_NAMED_GROUP_LIST,
     key_share_groups: nil,
+    alpn: nil,
     process_new_session_ticket: nil,
     ticket: nil,
     resumption_master_secret: nil,
@@ -280,6 +281,10 @@ module TTTLS13
           @succeed_early_data = true \
             if ee.extensions.include?(Message::ExtensionType::EARLY_DATA)
 
+          @alpn = ee.extensions[
+            Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
+          ]&.protocol_name_list&.first
+
           @state = ClientState::WAIT_CERT_CR
           @state = ClientState::WAIT_FINISHED unless psk.nil?
         when ClientState::WAIT_CERT_CR
@@ -397,6 +402,11 @@ module TTTLS13
       @succeed_early_data
     end
 
+    # @return [String]
+    def negotiated_alpn
+      @alpn
+    end
+
     private
 
     # @return [Boolean]
@@ -471,6 +481,8 @@ module TTTLS13
 
     # @return [TTTLS13::Message::Extensions]
     # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
+    # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
     def gen_ch_extensions
       exs = []
       # supported_versions: only TLS 1.3
@@ -507,8 +519,14 @@ module TTTLS13
       # early_data
       exs << Message::Extension::EarlyDataIndication.new if use_early_data?
 
+      # alpn
+      exs << Message::Extension::Alpn.new(@settings[:alpn].reject(&:empty?)) \
+        if !@settings[:alpn].nil? && !@settings[:alpn].empty?
+
       [Message::Extensions.new(exs), priv_keys]
     end
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]

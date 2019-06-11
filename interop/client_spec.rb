@@ -148,6 +148,13 @@ RSpec.describe Client do
       'rsa_rsa.crt',
       'rsa_rsa.key',
       key_share_groups: []
+    ],
+    [
+      true,
+      '-alpn http/1.1',
+      'rsa_rsa.crt',
+      'rsa_rsa.key',
+      alpn: ['http/1.1']
     ]
     # rubocop: enable Metrics/LineLength
   ].each do |normal, opt, crt, key, settings|
