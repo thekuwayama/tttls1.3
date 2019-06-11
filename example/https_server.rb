@@ -6,8 +6,11 @@ require_relative 'helper'
 port = ARGV[0] || 4433
 
 tcpserver = TCPServer.open(port)
-settings = { crt_file: __dir__ + '/../tmp/server.crt',
-             key_file: __dir__ + '/../tmp/server.key' }
+settings = {
+  crt_file: __dir__ + '/../tmp/server.crt',
+  key_file: __dir__ + '/../tmp/server.key',
+  alpn: ['http/1.1', 'http/1.0']
+}
 
 # rubocop: disable Metrics/BlockLength
 loop do

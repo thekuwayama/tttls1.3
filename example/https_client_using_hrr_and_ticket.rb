@@ -7,7 +7,8 @@ hostname, port = (ARGV[0] || 'localhost:4433').split(':')
 req = simple_http_request(hostname)
 
 settings_2nd = {
-  ca_file: __dir__ + '/../tmp/ca.crt'
+  ca_file: __dir__ + '/../tmp/ca.crt',
+  alpn: ['http/1.1', 'http/1.0']
 }
 process_new_session_ticket = proc do |nst, rms, cs|
   return if Time.now.to_i - nst.timestamp > nst.ticket_lifetime
@@ -22,6 +23,7 @@ process_new_session_ticket = proc do |nst, rms, cs|
 end
 settings_1st = {
   ca_file: __dir__ + '/../tmp/ca.crt',
+  alpn: ['http/1.1', 'http/1.0'],
   process_new_session_ticket: process_new_session_ticket
 }
 
