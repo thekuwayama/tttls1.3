@@ -164,6 +164,13 @@ RSpec.describe Server do
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       alpn: ['http/1.1']
+    ],
+    [
+      true,
+      '-groups P-256:P-384:P-521',
+      FIXTURES_DIR + '/rsa_rsa.crt',
+      FIXTURES_DIR + '/rsa_rsa.key',
+      compatibility_mode: false
     ]
     # rubocop: enable Metrics/LineLength
   ].each do |normal, opt, crt, key, settings|
