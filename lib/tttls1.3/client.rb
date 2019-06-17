@@ -58,6 +58,7 @@ module TTTLS13
     ticket_nonce: nil,
     ticket_age_add: nil,
     ticket_timestamp: nil,
+    compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
   private_constant :DEFAULT_CLIENT_SETTINGS
@@ -152,7 +153,7 @@ module TTTLS13
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
           transcript[CH] = send_client_hello(extensions, binder_key)
 
-          send_ccs # compatibility mode
+          send_ccs if @settings[:compatibility_mode]
           if use_early_data?
             e_wcipher = gen_cipher(
               @settings[:psk_cipher_suite],

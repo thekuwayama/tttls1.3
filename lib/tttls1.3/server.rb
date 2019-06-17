@@ -51,6 +51,7 @@ module TTTLS13
     signature_algorithms: DEFAULT_SP_SIGNATURE_ALGORITHMS,
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
     alpn: nil,
+    compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
   private_constant :DEFAULT_SERVER_SETTINGS
@@ -190,7 +191,7 @@ module TTTLS13
           extensions, priv_key = gen_sh_extensions(@named_group)
           transcript[SH] = send_server_hello(extensions, @cipher_suite,
                                              ch.legacy_session_id)
-          send_ccs # compatibility mode
+          send_ccs if @settings[:compatibility_mode]
 
           # generate shared secret
           ke = ch.extensions[Message::ExtensionType::KEY_SHARE]
