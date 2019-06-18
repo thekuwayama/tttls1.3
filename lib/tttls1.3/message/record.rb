@@ -42,21 +42,18 @@ module TTTLS13
       # @return [String]
       def serialize(record_size_limit = DEFAULT_RECORD_SIZE_LIMIT)
         tlsplaintext = @messages.map(&:serialize).join + @surplus_binary
-        if messages_type == ContentType::APPLICATION_DATA
-          max = cipher.tlsplaintext_length_limit(record_size_limit)
+        if @cipher.is_a?(Cryptograph::Aead)
+          max = @cipher.tlsplaintext_length_limit(record_size_limit)
           fragments = tlsplaintext.scan(/.{1,#{max}}/m)
         else
           fragments = [tlsplaintext]
         end
         fragments = [''] if fragments.empty?
 
-        binary = ''
-        fragments.each do |s|
-          binary += @type + @legacy_record_version
-          binary += @cipher.encrypt(s, messages_type).prefix_uint16_length
-        end
-
-        binary
+        fragments.map do |s|
+          @type + @legacy_record_version \
+          + @cipher.encrypt(s, messages_type).prefix_uint16_length
+        end.join
       end
 
       # NOTE:
