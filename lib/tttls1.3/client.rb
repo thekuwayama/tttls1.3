@@ -294,16 +294,7 @@ module TTTLS13
           message = recv_message(receivable_ccs: true, cipher: hs_rcipher)
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             ct = transcript[CT] = message
-            terminate(:illegal_parameter) unless ct.appearable_extensions?
-
-            ch = transcript[CH]
-            terminate(:unsupported_extension) \
-              unless ct.certificate_list.map(&:extensions)
-                       .all? { |e| (e.keys - ch.extensions.keys).empty? }
-
-            terminate(:certificate_unknown) \
-              unless trusted_certificate?(ct.certificate_list,
-                                          @settings[:ca_file], @hostname)
+            terminate_invalid_certificate(ct, transcript[CH])
 
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
@@ -317,16 +308,7 @@ module TTTLS13
           logger.debug('ClientState::WAIT_EE')
 
           ct = transcript[CT] = recv_certificate(hs_rcipher)
-          terminate(:illegal_parameter) unless ct.appearable_extensions?
-
-          ch = transcript[CH]
-          terminate(:unsupported_extension) \
-            unless ct.certificate_list.map(&:extensions)
-                     .all? { |e| (e.keys - ch.extensions.keys).empty? }
-
-          terminate(:certificate_unknown) \
-            unless trusted_certificate?(ct.certificate_list,
-                                        @settings[:ca_file], @hostname)
+          terminate_invalid_certificate(ct, transcript[CH])
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
@@ -748,6 +730,20 @@ module TTTLS13
       send_handshakes(Message::ContentType::APPLICATION_DATA, [eoed], cipher)
 
       eoed
+    end
+
+    # @param ct [TTTLS13::Message::Certificate]
+    # @param ch [TTTLS13::Message::ClientHello]
+    def terminate_invalid_certificate(ct, ch)
+      terminate(:illegal_parameter) unless ct.appearable_extensions?
+
+      terminate(:unsupported_extension) \
+        unless ct.certificate_list.map(&:extensions)
+                 .all? { |e| (e.keys - ch.extensions.keys).empty? }
+
+      terminate(:certificate_unknown) \
+        unless trusted_certificate?(ct.certificate_list,
+                                    @settings[:ca_file], @hostname)
     end
 
     # @param ct [TTTLS13::Message::Certificate]
