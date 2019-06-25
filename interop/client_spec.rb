@@ -151,10 +151,10 @@ RSpec.describe Client do
     ],
     [
       true,
-      '-alpn http/1.1',
+      '-alpn http/1.0',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      alpn: ['http/1.1']
+      alpn: ['http/1.0']
     ],
     [
       true,
