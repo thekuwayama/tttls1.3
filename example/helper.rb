@@ -5,35 +5,54 @@ $LOAD_PATH << __dir__ + '/../lib'
 require 'socket'
 require 'tttls1.3'
 require 'webrick'
+require 'http/parser'
+require 'time'
 
-def simple_http_request(hostname)
-  s = <<~BIN
-    GET / HTTP/1.1
+def simple_http_request(hostname, path = '/')
+  s = <<~REQUEST
+    GET #{path} HTTP/1.1
     Host: #{hostname}
-    User-Agent: https_client
+    User-Agent: tttls1.3/examples
     Accept: */*
 
-  BIN
-  s.gsub("\n", "\r\n")
+  REQUEST
+
+  s.gsub(WEBrick::LF, WEBrick::CRLF)
+end
+
+def simple_http_response(body)
+  s = <<~RESPONSE
+    HTTP/1.1 200 OK
+    Date: #{Time.now.httpdate}
+    Content-Type: text/html
+    Content-Length: #{body.length}
+    Server: tttls1.3/examples
+
+    #{body}
+  RESPONSE
+
+  s.gsub(WEBrick::LF, WEBrick::CRLF)
 end
 
 def recv_http_response(client)
-  # status line, header
-  buf = ''
-  buf += client.read until buf.include?(WEBrick::CRLF * 2)
-  header = buf.split(WEBrick::CRLF * 2).first
-  # header; Content-Length
-  cl_line = header.split(WEBrick::CRLF).find { |s| s.match(/Content-Length:/i) }
+  parser = HTTP::Parser.new
+  buf = nil
 
-  # body
-  unless cl_line.nil?
-    cl = cl_line.split(':').last.to_i
-    buf = buf.split(WEBrick::CRLF * 2)[1..].join
-    while buf.length < cl
-      s = client.read
-      buf += s
-    end
+  parser.on_headers_complete = proc do |headers|
+    buf =
+      [
+        'HTTP/' + parser.http_version.join('.'),
+        parser.status_code,
+        WEBrick::HTTPStatus.reason_phrase(parser.status_code)
+      ].join(' ') + "\r\n" \
+      + headers.map { |k, v| k + ': ' + v + WEBrick::CRLF }.join \
+      + WEBrick::CRLF
   end
 
-  header + WEBrick::CRLF * 2 + buf
+  parser.on_body = proc do |chunk|
+    buf += chunk
+  end
+
+  parser << client.read unless client.eof?
+  buf
 end

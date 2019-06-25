@@ -14,5 +14,6 @@ settings = {
 client = TTTLS13::Client.new(socket, hostname, settings)
 client.connect
 client.write(req)
+
 print recv_http_response(client)
 client.close

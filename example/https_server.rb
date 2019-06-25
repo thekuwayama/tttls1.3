@@ -12,29 +12,18 @@ settings = {
   alpn: ['http/1.1', 'http/1.0']
 }
 
-# rubocop: disable Metrics/BlockLength
 loop do
   socket = tcpserver.accept
   Thread.start(socket) do |s|
     Timeout.timeout(5) do
       server = TTTLS13::Server.new(s, settings)
       server.accept
-      buffer = ''
-      buffer += server.read until buffer.include?(WEBrick::CRLF * 2)
-      req = WEBrick::HTTPRequest.new(WEBrick::Config::HTTP)
-      req.parse(StringIO.new(buffer))
-      puts req.to_s
-      res = WEBrick::HTTPResponse.new(WEBrick::Config::HTTP)
-      res.status = 200
-      res.body = 'Hello'
-      res.content_length = 5
-      res.content_type = 'text/html'
-      server.write(
-        res.status_line \
-        + res.header.map { |k, v| k + ': ' + v }.join(WEBrick::CRLF) \
-        + WEBrick::CRLF * 2 \
-        + res.body
-      )
+
+      parser = HTTP::Parser.new
+      parser.on_message_complete = proc do
+        server.write(simple_http_response('TEST'))
+      end
+      parser << server.read unless server.eof?
       server.close
     end
   rescue Timeout::Error => e
@@ -43,4 +32,3 @@ loop do
     s.close
   end
 end
-# rubocop: enable Metrics/BlockLength
