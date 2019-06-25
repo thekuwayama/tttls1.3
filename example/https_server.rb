@@ -12,23 +12,35 @@ settings = {
   alpn: ['http/1.1', 'http/1.0']
 }
 
+# rubocop: disable Metrics/BlockLength
 loop do
   socket = tcpserver.accept
   Thread.start(socket) do |s|
-    Timeout.timeout(5) do
+    Timeout.timeout(2) do
       server = TTTLS13::Server.new(s, settings)
       server.accept
 
       parser = HTTP::Parser.new
       parser.on_message_complete = proc do
-        server.write(simple_http_response('TEST'))
+        if !parser.http_method.nil?
+          @logger.info 'Receive Request'
+          server.write(simple_http_response('TEST'))
+        else
+          @logger.warn 'Not Request'
+        end
       end
-      parser << server.read unless server.eof?
+
+      begin
+        parser << server.read unless server.eof?
+      rescue HTTP::Parser::Error
+        @logger.warn 'Parser Error'
+      end
       server.close
     end
-  rescue Timeout::Error => e
-    puts e.to_s + "\n\n"
+  rescue Timeout::Error
+    @logger.warn 'Timeout'
   ensure
     s.close
   end
 end
+# rubocop: enable Metrics/BlockLength
