@@ -4,11 +4,12 @@
 require_relative 'helper'
 
 hostname, port = (ARGV[0] || 'localhost:4433').split(':')
+ca_file = __dir__ + '/../tmp/ca.crt'
 req = simple_http_request(hostname)
 
 socket = TCPSocket.new(hostname, port)
 settings = {
-  ca_file: __dir__ + '/../tmp/ca.crt',
+  ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1']
 }
 client = TTTLS13::Client.new(socket, hostname, settings)
