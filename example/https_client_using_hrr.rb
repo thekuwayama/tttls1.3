@@ -10,7 +10,7 @@ socket = TCPSocket.new(hostname, port)
 settings = {
   ca_file: __dir__ + '/../tmp/ca.crt',
   key_share_groups: [], # empty KeyShareClientHello.client_shares
-  alpn: ['http/1.1', 'http/1.0']
+  alpn: ['http/1.1']
 }
 client = TTTLS13::Client.new(socket, hostname, settings)
 client.connect

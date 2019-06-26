@@ -9,7 +9,7 @@ tcpserver = TCPServer.open(port)
 settings = {
   crt_file: __dir__ + '/../tmp/server.crt',
   key_file: __dir__ + '/../tmp/server.key',
-  alpn: ['http/1.1', 'http/1.0']
+  alpn: ['http/1.1']
 }
 
 # rubocop: disable Metrics/BlockLength
