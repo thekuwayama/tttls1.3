@@ -16,11 +16,10 @@ settings = {
 loop do
   socket = tcpserver.accept
   Thread.start(socket) do |s|
-    Timeout.timeout(2) do
+    Timeout.timeout(1) do
       server = TTTLS13::Server.new(s, settings)
-      server.accept
-
       parser = HTTP::Parser.new
+
       parser.on_message_complete = proc do
         if !parser.http_method.nil?
           @logger.info 'Receive Request'
@@ -31,11 +30,14 @@ loop do
       end
 
       begin
+        server.accept
         parser << server.read unless server.eof?
-      rescue HTTP::Parser::Error
+      rescue HTTP::Parser::Error, TTTLS13::Error::ErrorAlerts
         @logger.warn 'Parser Error'
+      ensure
+        server.close
+        parser.reset!
       end
-      server.close
     end
   rescue Timeout::Error
     @logger.warn 'Timeout'

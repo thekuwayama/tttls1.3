@@ -66,7 +66,7 @@ module TTTLS13
       #
       # @raise [TTTLS13::Error::ErrorAlerts]
       #
-      # @return [TTTLS13::Message::Record, String]
+      # @return [TTTLS13::Message::Record]
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, cipher, buffered = '')
@@ -140,7 +140,7 @@ module TTTLS13
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
-        # @return [Array of TTTLS13::Message::$Object, String]
+        # @return [Array of TTTLS13::Message::$Object]
         # @return [String]
         def deserialize_fragment(binary, type)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
