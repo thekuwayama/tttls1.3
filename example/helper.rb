@@ -7,7 +7,6 @@ require 'tttls1.3'
 require 'webrick'
 require 'http/parser'
 require 'time'
-require 'logger'
 
 def simple_http_request(hostname, path = '/')
   s = <<~REQUEST
@@ -57,5 +56,3 @@ def recv_http_response(client)
   parser << client.read unless client.eof?
   buf
 end
-
-@logger = Logger.new(STDERR, Logger::WARN)
