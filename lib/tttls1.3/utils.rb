@@ -15,46 +15,28 @@ module TTTLS13
         raise Error::ErrorAlerts, :internal_error \
           if negative? || self >= (1 << 16)
 
-        [
-          self / (1 << 8),
-          self % (1 << 8)
-        ].map(&:chr).join
+        [self].pack('N1')[2..]
       end
 
       def to_uint24
         raise Error::ErrorAlerts, :internal_error \
           if negative? || self >= (1 << 24)
 
-        [
-          self / (1 << 16),
-          self % (1 << 16) / (1 << 8),
-          self % (1 << 8)
-        ].map(&:chr).join
+        [self].pack('N1')[1..]
       end
 
       def to_uint32
         raise Error::ErrorAlerts, :internal_error \
           if negative? || self >= (1 << 32)
 
-        [
-          self / (1 << 24),
-          self % (1 << 24) / (1 << 16),
-          self % (1 << 16) / (1 << 8),
-          self % (1 << 8)
-        ].map(&:chr).join
+        [self].pack('N1')
       end
 
       def to_uint64
         raise Error::ErrorAlerts, :internal_error \
           if negative? || self >= (1 << 64)
 
-        [
-          self / (1 << 32),
-          self % (1 << 32) / (1 << 24),
-          self % (1 << 24) / (1 << 16),
-          self % (1 << 16) / (1 << 8),
-          self % (1 << 8)
-        ].map(&:chr).join
+        [self >> 32, self].pack('N2')
       end
     end
 

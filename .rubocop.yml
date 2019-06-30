@@ -1,6 +1,9 @@
 AllCops:
   TargetRubyVersion: 2.6
 
+Style/NumericLiterals:
+  Enabled: false
+
 Style/Documentation:
   Enabled: false
 

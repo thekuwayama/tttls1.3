@@ -11,23 +11,28 @@ RSpec.describe TTTLS13::Refinements do
     end
 
     it 'should return uint8' do
+      expect(integer.to_uint8.length).to eq 1
       expect(integer.to_uint8).to eq "\x00"
     end
 
     it 'should return uint16' do
+      expect(integer.to_uint16.length).to eq 2
       expect(integer.to_uint16).to eq "\x00\x00"
     end
 
     it 'should return uint24' do
+      expect(integer.to_uint24.length).to eq 3
       expect(integer.to_uint24).to eq "\x00\x00\x00"
     end
 
     it 'should return uint32' do
+      expect(integer.to_uint32.length).to eq 4
       expect(integer.to_uint32).to eq "\x00\x00\x00\x00"
     end
 
     it 'should return uint64' do
-      expect(integer.to_uint64).to eq "\x00\x00\x00\x00\x00"
+      expect(integer.to_uint64.length).to eq 8
+      expect(integer.to_uint64).to eq "\x00\x00\x00\x00\x00\x00\x00\x00"
     end
   end
 
@@ -67,19 +72,23 @@ RSpec.describe TTTLS13::Refinements do
     end
 
     it 'should return uint16' do
+      expect(integer.to_uint16.length).to eq 2
       expect(integer.to_uint16).to eq "\x01\x00"
     end
 
     it 'should return uint24' do
+      expect(integer.to_uint24.length).to eq 3
       expect(integer.to_uint24).to eq "\x00\x01\x00"
     end
 
     it 'should return uint32' do
+      expect(integer.to_uint32.length).to eq 4
       expect(integer.to_uint32).to eq "\x00\x00\x01\x00"
     end
 
     it 'should return uint64' do
-      expect(integer.to_uint64).to eq "\x00\x00\x00\x01\x00"
+      expect(integer.to_uint64.length).to eq 8
+      expect(integer.to_uint64).to eq "\x00\x00\x00\x00\x00\x00\x01\x00"
     end
   end
 
@@ -97,15 +106,18 @@ RSpec.describe TTTLS13::Refinements do
     end
 
     it 'should return uint24' do
+      expect(integer.to_uint24.length).to eq 3
       expect(integer.to_uint24).to eq "\x01\x00\x00"
     end
 
     it 'should return uint32' do
+      expect(integer.to_uint32.length).to eq 4
       expect(integer.to_uint32).to eq "\x00\x01\x00\x00"
     end
 
     it 'should return uint64' do
-      expect(integer.to_uint64).to eq "\x00\x00\x01\x00\x00"
+      expect(integer.to_uint64.length).to eq 8
+      expect(integer.to_uint64).to eq "\x00\x00\x00\x00\x00\x01\x00\x00"
     end
   end
 
@@ -127,11 +139,13 @@ RSpec.describe TTTLS13::Refinements do
     end
 
     it 'should return uint32' do
+      expect(integer.to_uint32.length).to eq 4
       expect(integer.to_uint32).to eq "\x01\x00\x00\x00"
     end
 
     it 'should return uint64' do
-      expect(integer.to_uint64).to eq "\x00\x01\x00\x00\x00"
+      expect(integer.to_uint64.length).to eq 8
+      expect(integer.to_uint64).to eq "\x00\x00\x00\x00\x01\x00\x00\x00"
     end
   end
 
@@ -157,7 +171,8 @@ RSpec.describe TTTLS13::Refinements do
     end
 
     it 'should return uint64' do
-      expect(integer.to_uint64).to eq "\x01\x00\x00\x00\x00"
+      expect(integer.to_uint64.length).to eq 8
+      expect(integer.to_uint64).to eq "\x00\x00\x00\x01\x00\x00\x00\x00"
     end
   end
 
@@ -193,11 +208,16 @@ RSpec.describe TTTLS13::Refinements do
     end
 
     it 'should be prefixed' do
-      expect(string.prefix_uint8_length).to eq "\x06string"
-      expect(string.prefix_uint16_length).to eq "\x00\x06string"
-      expect(string.prefix_uint24_length).to eq "\x00\x00\x06string"
-      expect(string.prefix_uint32_length).to eq "\x00\x00\x00\x06string"
-      expect(string.prefix_uint64_length).to eq "\x00\x00\x00\x00\x06string"
+      expect(string.prefix_uint8_length)
+        .to eq "\x06string"
+      expect(string.prefix_uint16_length)
+        .to eq "\x00\x06string"
+      expect(string.prefix_uint24_length)
+        .to eq "\x00\x00\x06string"
+      expect(string.prefix_uint32_length)
+        .to eq "\x00\x00\x00\x06string"
+      expect(string.prefix_uint64_length)
+        .to eq "\x00\x00\x00\x00\x00\x00\x00\x06string"
     end
   end
 end
@@ -209,7 +229,7 @@ RSpec.describe Convert do
     end
 
     it 'should be converted to integer' do
-      expect(Convert.bin2i(binary)).to eq 4_886_718_345
+      expect(Convert.bin2i(binary)).to eq 4886718345
     end
   end
 end
