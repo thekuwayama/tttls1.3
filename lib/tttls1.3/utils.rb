@@ -15,7 +15,7 @@ module TTTLS13
         raise Error::ErrorAlerts, :internal_error \
           if negative? || self >= (1 << 16)
 
-        [self].pack('N1')[2..]
+        [self].pack('n')
       end
 
       def to_uint24
@@ -66,7 +66,7 @@ module TTTLS13
   module Convert
     class << self
       def bin2i(binary)
-        binary.unpack('C*').reverse.map.with_index { |x, i| x << 8 * i }.sum
+        OpenSSL::BN.new(binary, 2).to_i
       end
     end
   end
