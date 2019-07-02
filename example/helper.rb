@@ -53,6 +53,10 @@ def recv_http_response(client)
     buf += chunk
   end
 
-  parser << client.read unless client.eof?
+  parser.on_message_complete = proc do
+    client.close
+  end
+
+  parser << client.read until client.eof?
   buf
 end

@@ -44,7 +44,8 @@ succeed_early_data = false
   # send message after Simple 1-RTT Handshake
   client.write(req) if i.zero? || !client.succeed_early_data?
   print recv_http_response(client)
-  client.close
+  client.close unless client.eof?
+  socket.close
 
   succeed_early_data = client.succeed_early_data?
 end

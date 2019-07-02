@@ -17,4 +17,5 @@ client = TTTLS13::Client.new(socket, hostname, settings)
 client.connect
 client.write(req)
 print recv_http_response(client)
-client.close
+client.close unless client.eof?
+socket.close

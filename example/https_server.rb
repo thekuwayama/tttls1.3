@@ -29,6 +29,7 @@ Etc.nprocessors.times do
           if !parser.http_method.nil?
             logger.info 'Receive Request'
             server.write(simple_http_response('TEST'))
+            server.close
           else
             logger.warn 'Not Request'
           end
@@ -36,11 +37,11 @@ Etc.nprocessors.times do
 
         begin
           server.accept
-          parser << server.read unless server.eof?
+          parser << server.read until server.eof?
         rescue HTTP::Parser::Error, TTTLS13::Error::ErrorAlerts
           logger.warn 'Parser Error'
         ensure
-          server.close
+          server.close unless server.eof?
           parser.reset!
         end
       end
