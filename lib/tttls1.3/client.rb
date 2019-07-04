@@ -169,12 +169,17 @@ module TTTLS13
 
           sh = transcript[SH] = recv_server_hello
 
+          # downgrade protection
+          if !sh.negotiated_tls_1_3? && sh.downgraded?
+            terminate(:illegal_parameter)
           # support only TLS 1.3
-          terminate(:protocol_version) unless sh.negotiated_tls_1_3?
+          elsif !sh.negotiated_tls_1_3?
+            terminate(:protocol_version)
+          end
 
           # validate parameters
-          terminate(:illegal_parameter) unless sh.appearable_extensions?
-          terminate(:illegal_parameter) if sh.downgraded?
+          terminate(:illegal_parameter) \
+            unless sh.appearable_extensions?
           terminate(:illegal_parameter) \
             unless sh.legacy_compression_method == "\x00"
 
