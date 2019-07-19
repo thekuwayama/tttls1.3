@@ -294,7 +294,7 @@ module TTTLS13
           @state = ClientState::WAIT_CERT_CR
           @state = ClientState::WAIT_FINISHED unless psk.nil?
         when ClientState::WAIT_CERT_CR
-          logger.debug('ClientState::WAIT_EE')
+          logger.debug('ClientState::WAIT_CERT_CR')
 
           message = recv_message(receivable_ccs: true, cipher: hs_rcipher)
           if message.msg_type == Message::HandshakeType::CERTIFICATE
@@ -310,14 +310,14 @@ module TTTLS13
             terminate(:unexpected_message)
           end
         when ClientState::WAIT_CERT
-          logger.debug('ClientState::WAIT_EE')
+          logger.debug('ClientState::WAIT_CERT')
 
           ct = transcript[CT] = recv_certificate(hs_rcipher)
           terminate_invalid_certificate(ct, transcript[CH])
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
-          logger.debug('ClientState::WAIT_EE')
+          logger.debug('ClientState::WAIT_CV')
 
           cv = transcript[CV] = recv_certificate_verify(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
@@ -329,7 +329,7 @@ module TTTLS13
 
           @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
-          logger.debug('ClientState::WAIT_EE')
+          logger.debug('ClientState::WAIT_FINISHED')
 
           sf = transcript[SF] = recv_finished(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
@@ -361,6 +361,7 @@ module TTTLS13
             key_schedule.server_application_write_key,
             key_schedule.server_application_write_iv
           )
+          @exporter_master_secret = key_schedule.exporter_master_secret
           @resumption_master_secret = key_schedule.resumption_master_secret
           @state = ClientState::CONNECTED
         when ClientState::CONNECTED
@@ -456,10 +457,8 @@ module TTTLS13
     # @return [String]
     def gen_psk_from_nst(resumption_master_secret, ticket_nonce, digest)
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      info = hash_len.to_uint16
-      info += 'tls13 resumption'.prefix_uint8_length
-      info += ticket_nonce.prefix_uint8_length
-      KeySchedule.hkdf_expand(resumption_master_secret, info, hash_len, digest)
+      KeySchedule.hkdf_expand_label(resumption_master_secret, 'resumption',
+                                    ticket_nonce, hash_len, digest)
     end
 
     # @return [TTTLS13::Message::Extensions]

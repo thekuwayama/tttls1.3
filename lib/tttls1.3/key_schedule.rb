@@ -33,14 +33,14 @@ module TTTLS13
     def binder_key_ext
       hash = OpenSSL::Digest.digest(@digest, '')
       base_key = derive_secret(early_secret, 'ext binder', hash)
-      hkdf_expand_label(base_key, 'finished', '', @hash_len)
+      self.class.hkdf_expand_label(base_key, 'finished', '', @hash_len, @digest)
     end
 
     # @return [String]
     def binder_key_res
       hash = OpenSSL::Digest.digest(@digest, '')
       base_key = derive_secret(early_secret, 'res binder', hash)
-      hkdf_expand_label(base_key, 'finished', '', @hash_len)
+      self.class.hkdf_expand_label(base_key, 'finished', '', @hash_len, @digest)
     end
 
     # @return [String]
@@ -52,13 +52,13 @@ module TTTLS13
     # @return [String]
     def early_data_write_key
       secret = client_early_traffic_secret
-      hkdf_expand_label(secret, 'key', '', @key_len)
+      self.class.hkdf_expand_label(secret, 'key', '', @key_len, @digest)
     end
 
     # @return [String]
     def early_data_write_iv
       secret = client_early_traffic_secret
-      hkdf_expand_label(secret, 'iv', '', @iv_len)
+      self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
     # @return [String]
@@ -87,19 +87,19 @@ module TTTLS13
     # @return [String]
     def client_finished_key
       secret = client_handshake_traffic_secret
-      hkdf_expand_label(secret, 'finished', '', @hash_len)
+      self.class.hkdf_expand_label(secret, 'finished', '', @hash_len, @digest)
     end
 
     # @return [String]
     def client_handshake_write_key
       secret = client_handshake_traffic_secret
-      hkdf_expand_label(secret, 'key', '', @key_len)
+      self.class.hkdf_expand_label(secret, 'key', '', @key_len, @digest)
     end
 
     # @return [String]
     def client_handshake_write_iv
       secret = client_handshake_traffic_secret
-      hkdf_expand_label(secret, 'iv', '', @iv_len)
+      self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
     # @return [String]
@@ -111,19 +111,19 @@ module TTTLS13
     # @return [String]
     def server_finished_key
       secret = server_handshake_traffic_secret
-      hkdf_expand_label(secret, 'finished', '', @hash_len)
+      self.class.hkdf_expand_label(secret, 'finished', '', @hash_len, @digest)
     end
 
     # @return [String]
     def server_handshake_write_key
       secret = server_handshake_traffic_secret
-      hkdf_expand_label(secret, 'key', '', @key_len)
+      self.class.hkdf_expand_label(secret, 'key', '', @key_len, @digest)
     end
 
     # @return [String]
     def server_handshake_write_iv
       secret = server_handshake_traffic_secret
-      hkdf_expand_label(secret, 'iv', '', @iv_len)
+      self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
     # @return [String]
@@ -147,13 +147,13 @@ module TTTLS13
     # @return [String]
     def client_application_write_key
       secret = client_application_traffic_secret
-      hkdf_expand_label(secret, 'key', '', @key_len)
+      self.class.hkdf_expand_label(secret, 'key', '', @key_len, @digest)
     end
 
     # @return [String]
     def client_application_write_iv
       secret = client_application_traffic_secret
-      hkdf_expand_label(secret, 'iv', '', @iv_len)
+      self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
     # @return [String]
@@ -165,13 +165,13 @@ module TTTLS13
     # @return [String]
     def server_application_write_key
       secret = server_application_traffic_secret
-      hkdf_expand_label(secret, 'key', '', @key_len)
+      self.class.hkdf_expand_label(secret, 'key', '', @key_len, @digest)
     end
 
     # @return [String]
     def server_application_write_iv
       secret = server_application_traffic_secret
-      hkdf_expand_label(secret, 'iv', '', @iv_len)
+      self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
     # @return [String]
@@ -198,13 +198,14 @@ module TTTLS13
     # @param label [String]
     # @param context [String]
     # @param length [Integer]
+    # @param digest [String] name of digest algorithm
     #
     # @return [String]
-    def hkdf_expand_label(secret, label, context, length)
+    def self.hkdf_expand_label(secret, label, context, length, digest)
       binary = length.to_uint16
       binary += ('tls13 ' + label).prefix_uint8_length
       binary += context.prefix_uint8_length
-      self.class.hkdf_expand(secret, binary, length, @digest)
+      hkdf_expand(secret, binary, length, digest)
     end
 
     # @param secret [String]
@@ -235,7 +236,7 @@ module TTTLS13
     #
     # @return [String]
     def derive_secret(secret, label, context)
-      hkdf_expand_label(secret, label, context, @hash_len)
+      self.class.hkdf_expand_label(secret, label, context, @hash_len, @digest)
     end
   end
   # rubocop: enable Metrics/ClassLength

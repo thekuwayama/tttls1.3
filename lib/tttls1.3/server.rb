@@ -266,6 +266,7 @@ module TTTLS13
             key_schedule.client_application_write_key,
             key_schedule.client_application_write_iv
           )
+          @exporter_master_secret = key_schedule.exporter_master_secret
           @state = ServerState::CONNECTED
         when ServerState::CONNECTED
           logger.debug('ServerState::CONNECTED')

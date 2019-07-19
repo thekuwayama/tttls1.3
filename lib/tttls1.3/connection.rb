@@ -24,6 +24,7 @@ module TTTLS13
       @state = 0 # ClientState or ServerState
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
       @alpn = nil # String
+      @exporter_master_secret = nil # String
     end
 
     # @raise [TTTLS13::Error::ConfigError]
@@ -101,7 +102,44 @@ module TTTLS13
       @alpn
     end
 
+    # @param label [String]
+    # @param context [String]
+    # @param key_length [Integer]
+    #
+    # @return [String, nil]
+    def exporter(label, context, key_length)
+      return nil if @exporter_master_secret.nil? || @cipher_suite.nil?
+
+      digest = CipherSuite.digest(@cipher_suite)
+      do_exporter(@exporter_master_secret, digest, label, context, key_length)
+    end
+
     private
+
+    # @param secret [String] (early_)exporter_master_secret
+    # @param digest [String] name of digest algorithm
+    # @param label [String]
+    # @param context [String]
+    # @param key_length [Integer]
+    #
+    # @return [String]
+    def do_exporter(secret, digest, label, context, key_length)
+      derived_secret = KeySchedule.hkdf_expand_label(
+        secret,
+        label,
+        OpenSSL::Digest.digest(digest, ''),
+        OpenSSL::Digest.new(digest).digest_length,
+        digest
+      )
+
+      KeySchedule.hkdf_expand_label(
+        derived_secret,
+        'exporter',
+        OpenSSL::Digest.digest(digest, context),
+        key_length,
+        digest
+      )
+    end
 
     # @param cipher_suite [TTTLS13::CipherSuite]
     # @param write_key [String]
