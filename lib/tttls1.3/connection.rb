@@ -23,6 +23,7 @@ module TTTLS13
       @signature_scheme = nil # TTTLS13::SignatureScheme
       @state = 0 # ClientState or ServerState
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
+      @recv_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
       @alpn = nil # String
       @exporter_master_secret = nil # String
     end

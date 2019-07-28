@@ -22,7 +22,7 @@ module TTTLS13
       # @param cipher [TTTLS13::Cryptograph::$Object]
       def initialize(type:,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
-                     messages: [],
+                     messages:,
                      surplus_binary: '',
                      cipher:)
         @type = type
@@ -48,7 +48,6 @@ module TTTLS13
         else
           fragments = [tlsplaintext]
         end
-        fragments = [''] if fragments.empty?
 
         fragments.map do |s|
           @type + @legacy_record_version \

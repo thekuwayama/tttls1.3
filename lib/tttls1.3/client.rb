@@ -282,7 +282,7 @@ module TTTLS13
             unless (ee.extensions.keys - ch.extensions.keys).empty?
 
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
-          @send_record_size = rsl.record_size_limit unless rsl.nil?
+          @recv_record_size = rsl.record_size_limit unless rsl.nil?
 
           @succeed_early_data = true \
             if ee.extensions.include?(Message::ExtensionType::EARLY_DATA)
