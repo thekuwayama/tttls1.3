@@ -264,7 +264,8 @@ module TTTLS13
 
       begin
         buffer = @binary_buffer
-        record = Message::Record.deserialize(binary, cipher, buffer)
+        record = Message::Record.deserialize(binary, cipher, buffer,
+                                             @recv_record_size)
         @binary_buffer = record.surplus_binary
       rescue Error::ErrorAlerts => e
         terminate(e.message.to_sym)

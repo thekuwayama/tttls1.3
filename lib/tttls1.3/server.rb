@@ -164,6 +164,10 @@ module TTTLS13
             terminate(:no_application_protocol) if @alpn.nil?
           end
 
+          # record_size_limit
+          ch_rsl = ch.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
+          @send_record_size = ch_rsl.record_size_limit unless ch_rsl.nil?
+
           @state = ServerState::RECVD_CH
         when ServerState::RECVD_CH
           logger.debug('ServerState::RECVD_CH')
@@ -222,7 +226,9 @@ module TTTLS13
           logger.debug('ServerState::WAIT_FLIGHT2')
 
           ch = transcript[CH]
-          ee = transcript[EE] = gen_encrypted_extensions(ch, @alpn)
+          rsl = @send_record_size \
+            unless ch.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT].nil?
+          ee = transcript[EE] = gen_encrypted_extensions(ch, @alpn, rsl)
           # TODO: [Send CertificateRequest]
           ct = transcript[CT] = gen_certificate(@crt)
           digest = CipherSuite.digest(@cipher_suite)
@@ -377,11 +383,14 @@ module TTTLS13
     end
 
     # @param ch [TTTLS13::Message::ClientHello]
-    # @param alpn [String]
+    # @param alpn [String, nil]
+    # @param record_size_limit [Integer, nil]
     #
     # @return [TTTLS13::Message::EncryptedExtensions]
-    def gen_encrypted_extensions(ch, alpn = nil)
-      Message::EncryptedExtensions.new(gen_ee_extensions(ch, alpn))
+    def gen_encrypted_extensions(ch, alpn = nil, record_size_limit = nil)
+      Message::EncryptedExtensions.new(
+        gen_ee_extensions(ch, alpn, record_size_limit)
+      )
     end
 
     # @param crt [OpenSSL::X509::Certificate]
@@ -440,9 +449,10 @@ module TTTLS13
 
     # @param ch [TTTLS13::Message::ClientHello]
     # @param alpn [String]
+    # @param record_size_limit [Integer, nil]
     #
     # @return [TTTLS13::Message::Extensions]
-    def gen_ee_extensions(ch, alpn)
+    def gen_ee_extensions(ch, alpn, record_size_limit)
       exs = []
 
       # server_name
@@ -455,6 +465,10 @@ module TTTLS13
 
       # alpn
       exs << Message::Extension::Alpn.new([alpn]) unless alpn.nil?
+
+      # record_size_limit
+      exs << Message::Extension::RecordSizeLimit.new(record_size_limit) \
+        unless record_size_limit.nil?
 
       Message::Extensions.new(exs)
     end

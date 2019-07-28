@@ -13,7 +13,8 @@ module TTTLS13
 
       # @param encrypted_record [String]
       #
-      # @return [String and TTTLS13::Message::ContentType]
+      # @return [String]
+      # @return [TTTLS13::Message::ContentType]
       def decrypt(encrypted_record, _auth_data)
         [encrypted_record, encrypted_record[0]]
       end
