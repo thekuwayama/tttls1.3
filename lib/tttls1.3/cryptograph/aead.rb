@@ -5,6 +5,8 @@ module TTTLS13
   using Refinements
   module Cryptograph
     class Aead
+      attr_reader :auth_tag_len
+
       # @param cipher_suite [TTTLS13::CipherSuite]
       # @param write_key [String]
       # @param write_iv [String]
@@ -31,6 +33,7 @@ module TTTLS13
         @write_iv = write_iv
         @sequence_number = sequence_number
         @length_of_padding = length_of_padding
+        @auth_tag_len = CipherSuite.auth_tag_len(@cipher_suite)
       end
 
       # NOTE:
@@ -60,14 +63,15 @@ module TTTLS13
       #
       # @raise [OpenSSL::Cipher::CipherError]
       #
-      # @return [String and TTTLS13::Message::ContentType]
+      # @return [String]
+      # @return [TTTLS13::Message::ContentType]
       def decrypt(encrypted_record, auth_data)
         reset_cipher
         decipher = @cipher.decrypt
-        auth_tag = encrypted_record[-16..-1]
+        auth_tag = encrypted_record[-@auth_tag_len..-1]
         decipher.auth_tag = auth_tag
         decipher.auth_data = auth_data # record header of TLSCiphertext
-        clear = decipher.update(encrypted_record[0...-16]) # auth_tag
+        clear = decipher.update(encrypted_record[0...-@auth_tag_len])
         decipher.final
         zeros_len = scan_zeros(clear)
         postfix_len = 1 + zeros_len # type || zeros
@@ -94,7 +98,7 @@ module TTTLS13
 
       # @return [String]
       def additional_data(plaintext_len)
-        ciphertext_len = plaintext_len + 16 # length of auth_tag is 16
+        ciphertext_len = plaintext_len + @auth_tag_len
 
         Message::ContentType::APPLICATION_DATA \
         + Message::ProtocolVersion::TLS_1_2 \

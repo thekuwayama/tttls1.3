@@ -1,4 +1,3 @@
-# encoding: ascii-8bit
 # frozen_string_literal: true
 
 module TTTLS13
@@ -22,7 +21,7 @@ module TTTLS13
       # @param cipher [TTTLS13::Cryptograph::$Object]
       def initialize(type:,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
-                     messages: [],
+                     messages:,
                      surplus_binary: '',
                      cipher:)
         @type = type
@@ -48,7 +47,6 @@ module TTTLS13
         else
           fragments = [tlsplaintext]
         end
-        fragments = [''] if fragments.empty?
 
         fragments.map do |s|
           @type + @legacy_record_version \
@@ -63,13 +61,16 @@ module TTTLS13
       # @param binary [String]
       # @param cipher [TTTLS13::Cryptograph::$Object]
       # @param buffered [String] surplus_binary
+      # @param record_size_limit [Integer]
       #
       # @raise [TTTLS13::Error::ErrorAlerts]
       #
       # @return [TTTLS13::Message::Record]
+      # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
-      def self.deserialize(binary, cipher, buffered = '')
+      def self.deserialize(binary, cipher, buffered = '',
+                           record_size_limit = DEFAULT_RECORD_SIZE_LIMIT)
         raise Error::ErrorAlerts, :internal_error if binary.nil?
         raise Error::ErrorAlerts, :decode_error if binary.length < 5
 
@@ -85,17 +86,22 @@ module TTTLS13
           unless binary.length == 5 + fragment_len
 
         if type == ContentType::APPLICATION_DATA
+          if fragment.length - cipher.auth_tag_len > record_size_limit
+            raise Error::ErrorAlerts, :record_overflow
+          end
+
           fragment, inner_type = cipher.decrypt(fragment, binary.slice(0, 5))
         end
+
         messages, surplus_binary = deserialize_fragment(buffered + fragment,
                                                         inner_type || type)
-
         Record.new(type: type,
                    legacy_record_version: legacy_record_version,
                    messages: messages,
                    surplus_binary: surplus_binary,
                    cipher: cipher)
       end
+      # rubocop: enable Metrics/AbcSize
       # rubocop: enable Metrics/CyclomaticComplexity
       # rubocop: enable Metrics/PerceivedComplexity
 

@@ -4,10 +4,10 @@
 require_relative 'helper'
 require 'etc'
 require 'logger'
+require 'timeout'
 
 port = ARGV[0] || 4433
 
-tcpserver = TCPServer.open(port)
 settings = {
   crt_file: __dir__ + '/../tmp/server.crt',
   key_file: __dir__ + '/../tmp/server.key',
@@ -54,7 +54,6 @@ Etc.nprocessors.times do
 end
 # rubocop: enable Metrics/BlockLength
 
-loop do
-  socket = tcpserver.accept
+Socket.tcp_server_loop(port) do |socket, _addr|
   q << socket
 end

@@ -58,6 +58,7 @@ module TTTLS13
     ticket_nonce: nil,
     ticket_age_add: nil,
     ticket_timestamp: nil,
+    record_size_limit: nil,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -282,7 +283,7 @@ module TTTLS13
             unless (ee.extensions.keys - ch.extensions.keys).empty?
 
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
-          @send_record_size = rsl.record_size_limit unless rsl.nil?
+          @recv_record_size = rsl.record_size_limit unless rsl.nil?
 
           @succeed_early_data = true \
             if ee.extensions.include?(Message::ExtensionType::EARLY_DATA)
@@ -394,6 +395,7 @@ module TTTLS13
     private
 
     # @return [Boolean]
+    # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/PerceivedComplexity
     def valid_settings?
@@ -418,8 +420,12 @@ module TTTLS13
         unless ksg.nil? ||
                ((ksg - sg).empty? && sg.select { |g| ksg.include?(g) } == ksg)
 
+      rsl = @settings[:record_size_limit]
+      return false if !rsl.nil? && (rsl < 64 || rsl > 2**14 + 1)
+
       true
     end
+    # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/PerceivedComplexity
 
@@ -465,8 +471,19 @@ module TTTLS13
     # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/PerceivedComplexity
     def gen_ch_extensions
       exs = []
+      # server_name
+      exs << Message::Extension::ServerName.new(@hostname)
+
+      # record_size_limit
+      unless @settings[:record_size_limit].nil?
+        exs << Message::Extension::RecordSizeLimit.new(
+          @settings[:record_size_limit]
+        )
+      end
+
       # supported_versions: only TLS 1.3
       exs << Message::Extension::SupportedVersions.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO
@@ -495,9 +512,6 @@ module TTTLS13
                  = Message::Extension::KeyShare.gen_ch_key_share(ksg)
       exs << key_share
 
-      # server_name
-      exs << Message::Extension::ServerName.new(@hostname)
-
       # early_data
       exs << Message::Extension::EarlyDataIndication.new if use_early_data?
 
@@ -509,6 +523,7 @@ module TTTLS13
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/PerceivedComplexity
 
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]

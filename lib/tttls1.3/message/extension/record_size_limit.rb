@@ -15,7 +15,8 @@ module TTTLS13
         def initialize(record_size_limit)
           @extension_type = ExtensionType::RECORD_SIZE_LIMIT
           @record_size_limit = record_size_limit
-          raise Error::ErrorAlerts, :internal_error if @record_size_limit < 64
+          raise Error::ErrorAlerts, :internal_error \
+            if @record_size_limit < 64 || @record_size_limit > 2**14 + 1
         end
 
         # @return [String]
