@@ -98,6 +98,7 @@ tttls1.3 client is configurable using keyword arguments.
 | `:ticket_nonce` | String | nil | The ticket\_nonce for PSK. |
 | `:ticket_age_add` | String | nil | The ticket\_age\_add for PSK. |
 | `:ticket_timestamp` | Integer | nil | The ticket\_timestamp for PSK. |
+| `:record_size_limit` | Integer | nil | The record\_size\_limit offerd in ClientHello extensions. If not needed to be present, set nil. |
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
 | `:loglevel` | Logger constant | Logger::WARN | If needed to print verbose, set Logger::DEBUG. |
 
