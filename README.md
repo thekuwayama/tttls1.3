@@ -5,7 +5,8 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/47f3c267d9cfd2c8e388/maintainability)](https://codeclimate.com/github/thekuwayama/tttls1.3/maintainability)
 
 tttls1.3 is Ruby implementation of [TLS 1.3](https://tools.ietf.org/html/rfc8446) protocol.
-tttls1.3 uses [openssl](https://github.com/ruby/openssl) as backend for crypto and X.509 operations.
+
+tttls1.3 uses [openssl](https://github.com/ruby/openssl) for crypto and X.509 operations.
 
 It is the purpose of this project to understand the TLS 1.3 protocol and implement the TLS 1.3 protocol using Ruby.
 Backward compatibility and performance are not objective.
@@ -22,7 +23,7 @@ tttls1.3 provides client API with the following features:
 * HelloRetryRequest
 * Resumed 0-RTT Handshake (with PSK from NST)
 
-**NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs.
+**NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
 
 ### Server
 
@@ -31,7 +32,7 @@ tttls1.3 provides server API with the following features:
 * Simple 1-RTT Handshake
 * HelloRetryRequest
 
-**NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs.
+**NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs and Resumed 0-RTT Handshake.
 
 
 ## Getting started
@@ -73,7 +74,7 @@ server.write(YOUR_MESSAGE)
 server.close
 ```
 
-HTTPS examples are [here](https://github.com/thekuwayama/tttls1.3/tree/master/example).
+[Here](https://github.com/thekuwayama/tttls1.3/tree/master/example) are some examples of HTTPS.
 
 
 ## Settings
@@ -101,6 +102,7 @@ tttls1.3 client is configurable using keyword arguments.
 | `:record_size_limit` | Integer | nil | The record\_size\_limit offerd in ClientHello extensions. If not needed to be present, set nil. |
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
 | `:loglevel` | Logger constant | Logger::WARN | If needed to print verbose, set Logger::DEBUG. |
+
 
 ### Server
 
