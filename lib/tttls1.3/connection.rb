@@ -254,7 +254,7 @@ module TTTLS13
     end
     # rubocop: enable Metrics/CyclomaticComplexity
 
-    # @param wcipher [TTTLS13::Cryptograph::Aead, Passer]
+    # @param cipher [TTTLS13::Cryptograph::Aead, Passer]
     #
     # @return [TTTLS13::Message::Record]
     def recv_record(cipher)

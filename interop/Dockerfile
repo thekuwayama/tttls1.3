@@ -26,3 +26,5 @@ RUN curl -s https://www.openssl.org/source/openssl-${version}.tar.gz | tar -C /b
 
 ENV LD_LIBRARY_PATH /opt/openssl/openssl-${version}/lib
 ENV PATH /opt/openssl/openssl-${version}/bin:$PATH
+
+EXPOSE 4433
