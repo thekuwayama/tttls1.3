@@ -12,6 +12,14 @@ include TTTLS13::Message::Extension
 include TTTLS13::Error
 # rubocop: enable Style/MixinUsage
 
-def wait_to_listen(port)
-  sleep(0.2) while `lsof -ni :#{port}`.empty?
+def wait_to_listen(host, port)
+  loop do
+    s = TCPSocket.open(host, port) # check by TCP handshake
+  rescue # rubocop: disable Style/RescueStandardError
+    sleep(0.2)
+    next
+  else
+    s.close
+    break
+  end
 end

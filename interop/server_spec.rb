@@ -176,16 +176,19 @@ RSpec.describe Server do
   ].each do |normal, opt, crt, key, settings|
     context 'server interop' do
       let(:server) do
-        @socket = tcpserver.accept
+        loop do
+          @socket = tcpserver.accept
+          break unless @socket.eof?
+        end
         settings[:crt_file] = crt
         settings[:key_file] = key
         Server.new(@socket, settings)
       end
 
       let(:client) do
-        wait_to_listen(PORT)
-
         ip = Socket.ip_address_list.find(&:ipv4_private?).ip_address
+        wait_to_listen(ip, PORT)
+
         cmd = 'echo -n ping | openssl s_client ' \
               + "-connect local:#{PORT} " \
               + '-tls1_3 ' \
@@ -216,6 +219,7 @@ RSpec.describe Server do
         it "should NOT accept request from openssl s_client ...#{opt}" do
           spawn(client)
           expect { server.accept }.to raise_error ErrorAlerts
+          expect { server.close }.to_not raise_error
         end
       end
     end

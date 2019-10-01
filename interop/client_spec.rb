@@ -180,7 +180,7 @@ RSpec.describe Client do
                     + 'openssl ' + cmd)
         Process.detach(pid)
 
-        wait_to_listen(PORT)
+        wait_to_listen('127.0.0.1', PORT)
       end
 
       let(:client) do
