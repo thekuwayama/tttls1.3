@@ -38,8 +38,8 @@ Etc.nprocessors.times do
         begin
           server.accept
           parser << server.read until server.eof?
-        rescue HTTP::Parser::Error, TTTLS13::Error::ErrorAlerts
-          logger.warn 'Parser Error'
+        rescue StandardError => e
+          logger.warn e
         ensure
           server.close unless server.eof?
           parser.reset!
