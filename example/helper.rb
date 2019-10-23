@@ -21,17 +21,15 @@ def simple_http_request(hostname, path = '/')
 end
 
 def simple_http_response(body)
-  s = <<~RESPONSE
+  h = <<~RESPONSE_HEADER_EOS
     HTTP/1.1 200 OK
     Date: #{Time.now.httpdate}
     Content-Type: text/html
     Content-Length: #{body.length}
     Server: tttls1.3/examples
+  RESPONSE_HEADER_EOS
 
-    #{body}
-  RESPONSE
-
-  s.gsub(WEBrick::LF, WEBrick::CRLF)
+  h.gsub(WEBrick::LF, WEBrick::CRLF) + WEBrick::CRLF + body
 end
 
 def recv_http_response(client)
