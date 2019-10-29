@@ -38,10 +38,10 @@ Etc.nprocessors.times do
         begin
           server.accept
           parser << server.read until server.eof?
+          server.close
         rescue StandardError => e
           logger.warn e
         ensure
-          server.close unless server.eof?
           parser.reset!
         end
       end
