@@ -1,7 +1,8 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-Dir[File.dirname(__FILE__) + '/extension/*.rb'].each { |f| require f }
+# signature_algorithms_cert.rb needs signature_algorithms.rb so that `sort`
+Dir[File.dirname(__FILE__) + '/extension/*.rb'].sort.each { |f| require f }
 
 module TTTLS13
   using Refinements

@@ -177,7 +177,7 @@ RSpec.describe Client do
         pid = spawn('docker run ' \
                     + "--volume #{FIXTURES_DIR}:/tmp " \
                     + "--publish #{PORT}:#{PORT} " \
-                    + 'openssl ' + cmd)
+                    + 'thekuwayama/openssl ' + cmd)
         Process.detach(pid)
 
         wait_to_listen('127.0.0.1', PORT)

@@ -198,7 +198,7 @@ RSpec.describe Server do
               + opt
         'docker run ' \
         + "--volume #{FIXTURES_DIR}:/tmp " \
-        + "--add-host=local:#{ip} -it openssl " \
+        + "--add-host=local:#{ip} thekuwayama/openssl " \
         + "sh -c \"#{cmd}\" 2>&1 >/dev/null"
       end
 

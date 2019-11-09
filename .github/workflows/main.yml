@@ -1,3 +1,5 @@
+name: workflow
+
 on:
   push:
     branches:
@@ -12,9 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-ruby@v1
+      - uses: thekuwayama/openssl@master
         with:
           ruby-version: '2.6.x'
+      - run: gem install bundler
       - run: bundle install
-      - run: docker build -t openssl interop/
+      - run: docker pull thekuwayama/openssl
       - run: bundle exec rake
-      - run: bundle exec rake interop
+      - run: bundle exec rake interop:client
+      - run: bundle exec rake interop:server
