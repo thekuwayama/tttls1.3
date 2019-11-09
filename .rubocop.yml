@@ -21,3 +21,7 @@ Metrics/BlockLength:
     - 'Rakefile'
     - 'spec/*.rb'
     - 'interop/*.rb'
+
+Metrics/LineLength:
+  Exclude:
+    - 'tttls1.3.gemspec'

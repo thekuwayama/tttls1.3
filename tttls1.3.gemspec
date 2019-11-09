@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.version       = TTTLS13::VERSION
   spec.authors       = ['thekuwayama']
   spec.email         = ['thekuwayama@gmail.com']
-  spec.summary       = 'TLS 1.3 implementation in Ruby'
+  spec.summary       = 'TLS 1.3 implementation in Ruby (Tiny Trial TLS1.3 aka tttls1.3)'
   spec.description   = spec.summary
   spec.homepage      = 'https://github.com/thekuwayama/tttls1.3'
   spec.license       = 'MIT'
