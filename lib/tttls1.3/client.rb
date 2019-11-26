@@ -519,6 +519,9 @@ module TTTLS13
       exs << Message::Extension::Alpn.new(@settings[:alpn].reject(&:empty?)) \
         if !@settings[:alpn].nil? && !@settings[:alpn].empty?
 
+      # status_request
+      exs << Message::Extension::StatusRequest.new
+
       [Message::Extensions.new(exs), priv_keys]
     end
     # rubocop: enable Metrics/AbcSize
