@@ -110,12 +110,23 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extension::$Object, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
+        # rubocop: disable Metrics/MethodLength
+        # rubocop: disable Metrics/PerceivedComplexity
         def deserialize_extension(binary, extension_type, msg_type)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           case extension_type
           when ExtensionType::SERVER_NAME
             Extension::ServerName.deserialize(binary)
+          when ExtensionType::STATUS_REQUEST
+            if msg_type == HandshakeType::CLIENT_HELLO # ||
+              # msg_type == HandshakeType::CERTIFICATE_REQUEST
+              Extension::OCSPStatusRequest.deserialize(binary)
+            elsif msg_type == HandshakeType::CERTIFICATE
+              Extension::OCSPResponse.deserialize(binary)
+            else
+              return nil
+            end
           when ExtensionType::SUPPORTED_GROUPS
             Extension::SupportedGroups.deserialize(binary)
           when ExtensionType::SIGNATURE_ALGORITHMS
@@ -143,6 +154,8 @@ module TTTLS13
           end
         end
         # rubocop: enable Metrics/CyclomaticComplexity
+        # rubocop: enable Metrics/MethodLength
+        # rubocop: enable Metrics/PerceivedComplexity
       end
     end
   end

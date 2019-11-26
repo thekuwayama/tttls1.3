@@ -520,7 +520,7 @@ module TTTLS13
         if !@settings[:alpn].nil? && !@settings[:alpn].empty?
 
       # status_request
-      exs << Message::Extension::StatusRequest.new
+      exs << Message::Extension::OCSPStatusRequest.new
 
       [Message::Extensions.new(exs), priv_keys]
     end

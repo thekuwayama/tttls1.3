@@ -9,7 +9,7 @@ module TTTLS13
         OCSP = "\x01"
       end
 
-      class StatusRequest
+      class OCSPStatusRequest
         attr_reader :extension_type
         attr_reader :responder_id_list
         attr_reader :request_extensions
@@ -18,7 +18,7 @@ module TTTLS13
         # @param request_extensions [Array of OpenSSL::ASN1::ASN1Data]
         #
         # @example
-        #   StatusRequest.new
+        #   OCSPStatusRequest.new
         def initialize(responder_id_list: [], request_extensions: [])
           @extension_type = ExtensionType::STATUS_REQUEST
           @responder_id_list = responder_id_list || []
@@ -42,7 +42,7 @@ module TTTLS13
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
-        # @return [TTTLS13::Message::Extension::StatusRequest, nil]
+        # @return [TTTLS13::Message::Extension::OCSPStatusRequest, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
@@ -71,8 +71,8 @@ module TTTLS13
           i += re_len
           return nil unless i == binary.length
 
-          StatusRequest.new(responder_id_list: responder_id_list,
-                            request_extensions: request_extensions)
+          OCSPStatusRequest.new(responder_id_list: responder_id_list,
+                                request_extensions: request_extensions)
         end
         # rubocop: enable Metrics/CyclomaticComplexity
         # rubocop: enable Metrics/PerceivedComplexity
@@ -107,6 +107,54 @@ module TTTLS13
 
             request_ids
           end
+        end
+      end
+
+      class OCSPResponse
+        attr_reader :extension_type
+        attr_reader :ocsp_response
+
+        # @param ocsp_response [OpenSSL::OCSP::Response]
+        #
+        # @example
+        #   OCSPResponse.new(
+        #     OpenSSL::OCSP::Response.create(status, basic_resp)
+        #   )
+        def initialize(ocsp_response)
+          @extension_type = ExtensionType::STATUS_REQUEST
+          @ocsp_response = ocsp_response
+        end
+
+        # @return [String]
+        def serialize
+          binary = ''
+          binary += CertificateStatusType::OCSP
+          binary += @ocsp_response.to_der.prefix_uint24_length
+
+          @extension_type + binary.prefix_uint16_length
+        end
+
+        # @param binary [String]
+        #
+        # @raise [TTTLS13::Error::ErrorAlerts]
+        #
+        # @return [TTTLS13::Message::Extension::OCSPResponse, nil]
+        def self.deserialize(binary)
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
+          return nil if binary.length < 4 ||
+                        binary[0] != CertificateStatusType::OCSP
+
+          res_len = Convert.bin2i(binary.slice(1, 3))
+          res = binary.slice(4, res_len)
+          ocsp_response = nil
+          begin
+            ocsp_response = OpenSSL::OCSP::Response.new(res)
+          rescue OpenSSL::OCSP::OCSPError
+            return nil
+          end
+          return nil if 4 + res_len != binary.length
+
+          OCSPResponse.new(ocsp_response)
         end
       end
     end
