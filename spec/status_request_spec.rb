@@ -55,7 +55,7 @@ RSpec.describe OCSPStatusRequest do
 
   context 'valid OCSPStatusRequest binary' do
     let(:extension) do
-      OCSPStatusRequest.deserialize(TESTBINARY_STATUS_REQUEST)
+      OCSPStatusRequest.deserialize(TESTBINARY_OCSP_STATUS_REQUEST)
     end
 
     it 'should generate valid object' do
@@ -67,7 +67,7 @@ RSpec.describe OCSPStatusRequest do
     it 'should generate serializable object' do
       expect(extension.serialize)
         .to eq ExtensionType::STATUS_REQUEST \
-               + TESTBINARY_STATUS_REQUEST.prefix_uint16_length
+               + TESTBINARY_OCSP_STATUS_REQUEST.prefix_uint16_length
     end
   end
 end
@@ -89,10 +89,17 @@ RSpec.describe OCSPResponse do
       )
 
       br = OpenSSL::OCSP::BasicResponse.new
-      cid = OpenSSL::OCSP::CertificateId.new(server_crt, ca_crt,
-                                             OpenSSL::Digest::SHA1.new)
-      br.add_status(cid, OpenSSL::OCSP::V_CERTSTATUS_GOOD, 0, nil, 0, 500, [])
-      br.sign(ocsp_crt, ocsp_key, [])
+      cid = OpenSSL::OCSP::CertificateId.new(server_crt, ca_crt)
+      br.add_status(
+        cid,
+        OpenSSL::OCSP::V_CERTSTATUS_GOOD,
+        0,
+        nil,
+        Time.now,
+        DateTime.now.next_day(1).to_time,
+        []
+      )
+      br.sign(ocsp_crt, ocsp_key)
       br
     end
 
@@ -118,6 +125,16 @@ RSpec.describe OCSPResponse do
 
       expect(extension.serialize).to eq ExtensionType::STATUS_REQUEST \
                                         + binary.prefix_uint16_length
+    end
+  end
+
+  context 'valid OCSPResponse binary' do
+    let(:extension) do
+      OCSPResponse.deserialize(TESTBINARY_OCSP_RESPONSE)
+    end
+
+    it 'should generate valid object' do
+      expect(extension.extension_type).to eq ExtensionType::STATUS_REQUEST
     end
   end
 end
