@@ -23,7 +23,7 @@ RSpec.describe StatusRequest do
 
   context 'valid status_request' do
     let(:extension) do
-      StatusRequest.new(responder_id_list: [], request_extensions: '')
+      StatusRequest.new(responder_id_list: [], request_extensions: [])
     end
 
     it 'should be generated' do

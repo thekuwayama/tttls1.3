@@ -14,18 +14,15 @@ module TTTLS13
         attr_reader :responder_id_list
         attr_reader :request_extensions
 
-        # @param responder_id_list [Array of String]
-        # @param request_extensions [String]
+        # @param responder_id_list [Array of OpenSSL::ASN1::ASN1Data]
+        # @param request_extensions [Array of OpenSSL::ASN1::ASN1Data]
         #
         # @example
-        #   StatusRequest.new(
-        #       responder_id_list: [],
-        #       request_extensions: []
-        #   )
-        def initialize(responder_id_list: [], request_extensions: '')
+        #   StatusRequest.new
+        def initialize(responder_id_list: [], request_extensions: [])
           @extension_type = ExtensionType::STATUS_REQUEST
           @responder_id_list = responder_id_list || []
-          @request_extensions = request_extensions || ''
+          @request_extensions = request_extensions || []
         end
 
         # @return [String]
@@ -34,9 +31,9 @@ module TTTLS13
           binary += CertificateStatusType::OCSP
           binary += @responder_id_list.length.to_uint16
           binary += @responder_id_list.map do |id|
-            id.length.to_uint16 + id
+            id.to_der.prefix_uint16_length
           end.join
-          binary += @request_extensions.prefix_uint16_length
+          binary += @request_extensions.map(&:to_der).join.prefix_uint16_length
 
           @extension_type + binary.prefix_uint16_length
         end
@@ -47,6 +44,7 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extension::StatusRequest, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
+        # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
           return nil if binary.length < 5 ||
@@ -64,7 +62,12 @@ module TTTLS13
 
           re_len = Convert.bin2i(binary.slice(i, 2))
           i += 2
-          request_extensions = binary.slice(i, re_len)
+          exs_bin = binary.slice(i, re_len)
+          begin
+            request_extensions = OpenSSL::ASN1.decode_all(exs_bin)
+          rescue OpenSSL::ASN1::ASN1Error
+            return nil
+          end
           i += re_len
           return nil unless i == binary.length
 
@@ -72,6 +75,7 @@ module TTTLS13
                             request_extensions: request_extensions)
         end
         # rubocop: enable Metrics/CyclomaticComplexity
+        # rubocop: enable Metrics/PerceivedComplexity
 
         class << self
           private
@@ -80,7 +84,7 @@ module TTTLS13
           #
           # @raise [TTTLS13::Error::ErrorAlerts]
           #
-          # @return [Array of String, nil] received unparsable binary, nil
+          # @return [Array of ASN1Data, nil] received unparsable binary, nil
           def deserialize_request_ids(binary)
             raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -92,7 +96,11 @@ module TTTLS13
               id_len = Convert.bin2i(binary.slice(i, 2))
               i += 2
               id = binary.slice(i, id_len)
-              request_ids += id
+              begin
+                request_ids += OpenSSL::ASN1.decode(id)
+              rescue OpenSSL::ASN1::ASN1Error
+                return nil
+              end
               i += id_len
             end
             return nil if i != binary.length
