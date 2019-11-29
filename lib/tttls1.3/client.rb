@@ -59,6 +59,7 @@ module TTTLS13
     ticket_age_add: nil,
     ticket_timestamp: nil,
     record_size_limit: nil,
+    check_certificate_status: nil,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -300,7 +301,8 @@ module TTTLS13
           message = recv_message(receivable_ccs: true, cipher: hs_rcipher)
           if message.msg_type == Message::HandshakeType::CERTIFICATE
             ct = transcript[CT] = message
-            terminate_invalid_certificate(ct, transcript[CH])
+            alert = check_invalid_certificate(ct, transcript[CH])
+            terminate(alert) unless alert.nil?
 
             @state = ClientState::WAIT_CV
           elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
@@ -314,7 +316,8 @@ module TTTLS13
           logger.debug('ClientState::WAIT_CERT')
 
           ct = transcript[CT] = recv_certificate(hs_rcipher)
-          terminate_invalid_certificate(ct, transcript[CH])
+          alert = check_invalid_certificate(ct, transcript[CH])
+          terminate(alert) unless alert.nil?
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
@@ -390,6 +393,23 @@ module TTTLS13
     # @return [Boolean]
     def succeed_early_data?
       @succeed_early_data
+    end
+
+    # @param basic [OpenSSL::OCSP::Response]
+    # @param cid [OpenSSL::OCSP::CertificateId] CertID in OCSPStatusRequest
+    #
+    # @return [Boolean]
+    def self.default_check_certificate_status(ocsp_response, cid)
+      if ocsp_response.status != OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+        return false
+      end
+
+      basic = ocsp_response.basic.find { |br| br[0].cmp(cid) }
+      now = Time.now
+      return false if basic[1] != OpenSSL::OCSP::V_CERTSTATUS_GOOD
+      return false if !basic[3].nil? && basic[3] < now
+
+      basic.verify([], OpenSSL::X509::Store.new)
     end
 
     private
@@ -520,7 +540,8 @@ module TTTLS13
         if !@settings[:alpn].nil? && !@settings[:alpn].empty?
 
       # status_request
-      exs << Message::Extension::OCSPStatusRequest.new
+      exs << Message::Extension::OCSPStatusRequest.new \
+        unless @settings[:check_certificate_status].nil?
 
       [Message::Extensions.new(exs), priv_keys]
     end
@@ -756,16 +777,21 @@ module TTTLS13
 
     # @param ct [TTTLS13::Message::Certificate]
     # @param ch [TTTLS13::Message::ClientHello]
-    def terminate_invalid_certificate(ct, ch)
-      terminate(:illegal_parameter) unless ct.appearable_extensions?
+    #
+    # @return [Symbol, nil] return key of ALERT_DESCRIPTION, if invalid
+    def check_invalid_certificate(ct, ch)
+      return :illegal_parameter unless ct.appearable_extensions?
 
-      terminate(:unsupported_extension) \
+      return :unsupported_extension \
         unless ct.certificate_list.map(&:extensions)
                  .all? { |e| (e.keys - ch.extensions.keys).empty? }
 
-      terminate(:certificate_unknown) \
-        unless trusted_certificate?(ct.certificate_list,
-                                    @settings[:ca_file], @hostname)
+      return :certificate_unknown unless trusted_certificate?(
+        ct.certificate_list,
+        @settings[:ca_file], @hostname
+      )
+
+      nil
     end
 
     # @param ct [TTTLS13::Message::Certificate]
@@ -785,6 +811,14 @@ module TTTLS13
         context: 'TLS 1.3, server CertificateVerify',
         hash: hash
       )
+    end
+
+    # @param ocsp_response [OpenSSL::OCSP::Response]
+    # @param cid [OpenSSL::OCSP::CertificateId] CertID in OCSPStatusRequest
+    #
+    # @return [Boolean]
+    def satisfactory_certificate_status?(ocsp_response, cid)
+      @settings[:check_certificate_status]&.call(ocsp_response, cid)
     end
 
     # @param nst [TTTLS13::Message::NewSessionTicket]
