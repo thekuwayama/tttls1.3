@@ -395,21 +395,35 @@ module TTTLS13
       @succeed_early_data
     end
 
-    # @param basic [OpenSSL::OCSP::Response]
-    # @param cid [OpenSSL::OCSP::CertificateId] CertID in OCSPStatusRequest
+    # @param ocsp_response [OpenSSL::OCSP::Response]
+    # @param cert [OpenSSL::X509::Certificate]
+    # @param chain [Array of OpenSSL::X509::Certificate, nil]
     #
     # @return [Boolean]
-    def self.default_check_certificate_status(ocsp_response, cid)
-      if ocsp_response.status != OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+    #
+    # @example
+    #   meth = Client.method(:default_check_certificate_status)
+    #   Client.new(
+    #     socket,
+    #     hostname,
+    #     check_certificate_status: meth
+    #   )
+    def self.default_check_certificate_status(ocsp_response, cert, chain)
+      if ocsp_response.nil? ||
+         ocsp_response.status != OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
         return false
       end
 
-      basic = ocsp_response.basic.find { |br| br[0].cmp(cid) }
-      now = Time.now
-      return false if basic[1] != OpenSSL::OCSP::V_CERTSTATUS_GOOD
-      return false if !basic[3].nil? && basic[3] < now
+      store = OpenSSL::X509::Store.new
+      store.set_default_paths
+      context = OpenSSL::X509::StoreContext.new(store, cert, chain)
+      context.verify
+      cid = OpenSSL::OCSP::CertificateId.new(cert, context.chain[1])
+      status = ocsp_response.basic.status.find { |res| res.first.cmp(cid) }
+      return false if status[1] != OpenSSL::OCSP::V_CERTSTATUS_GOOD
+      return false if !status[3].nil? && status[3] < Time.now
 
-      basic.verify([], OpenSSL::X509::Store.new)
+      ocsp_response.basic.verify(chain, store)
     end
 
     private
@@ -491,6 +505,7 @@ module TTTLS13
     # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/MethodLength
     # rubocop: disable Metrics/PerceivedComplexity
     def gen_ch_extensions
       exs = []
@@ -547,6 +562,7 @@ module TTTLS13
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/MethodLength
     # rubocop: enable Metrics/PerceivedComplexity
 
     # @param extensions [TTTLS13::Message::Extensions]
@@ -791,6 +807,16 @@ module TTTLS13
         @settings[:ca_file], @hostname
       )
 
+      unless @settings[:check_certificate_status].nil?
+        ee = ct.certificate_list.first
+        ocsp_response = ee.extensions[Message::ExtensionType::STATUS_REQUEST]
+                         &.ocsp_response
+        cert = ee.cert_data
+        chain = ct.certificate_list[1..]&.map(&:cert_data)
+        return :bad_certificate_status_response \
+          unless satisfactory_certificate_status?(ocsp_response, cert, chain)
+      end
+
       nil
     end
 
@@ -814,11 +840,12 @@ module TTTLS13
     end
 
     # @param ocsp_response [OpenSSL::OCSP::Response]
-    # @param cid [OpenSSL::OCSP::CertificateId] CertID in OCSPStatusRequest
+    # @param cert [OpenSSL::X509::Certificate]
+    # @param chain [Array of OpenSSL::X509::Certificate, nil]
     #
     # @return [Boolean]
-    def satisfactory_certificate_status?(ocsp_response, cid)
-      @settings[:check_certificate_status]&.call(ocsp_response, cid)
+    def satisfactory_certificate_status?(ocsp_response, cert, chain)
+      @settings[:check_certificate_status]&.call(ocsp_response, cert, chain)
     end
 
     # @param nst [TTTLS13::Message::NewSessionTicket]
