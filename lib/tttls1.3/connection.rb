@@ -539,6 +539,31 @@ module TTTLS13
         end
       end
     end
+
+    class << self
+      # @param cid [OpenSSL::OCSP::CertificateId]
+      # @param uri [URI Object]
+      #
+      # @return [OpenSSL::OCSP::Response]
+      def send_ocsp_request(cid, uri)
+        # generate OCSPRequest
+        ocsp_request = OpenSSL::OCSP::Request.new
+        ocsp_request.add_certid(cid)
+        ocsp_request.add_nonce
+        # send HTTP POST
+        path = uri.path
+        path = '/' if path.nil? || path.empty?
+        http_response = Net::HTTP.start uri.host, uri.port do |http|
+          http.post(
+            path,
+            ocsp_request.to_der,
+            'content-type' => 'application/ocsp-request'
+          )
+        end
+
+        OpenSSL::OCSP::Response.new(http_response.body)
+      end
+    end
   end
   # rubocop: enable Metrics/ClassLength
 end

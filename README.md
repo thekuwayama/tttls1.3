@@ -100,7 +100,8 @@ tttls1.3 client is configurable using keyword arguments.
 | `:ticket_age_add` | String | nil | The ticket\_age\_add for PSK. |
 | `:ticket_timestamp` | Integer | nil | The ticket\_timestamp for PSK. |
 | `:record_size_limit` | Integer | nil | The record\_size\_limit offerd in ClientHello extensions. If not needed to be present, set nil. |
-| `:check_certificate_status` | Proc | nil | Proc that checks received OCSPResponse. Its 3 arguments are OpenSSL::OCSP::Response, a server certificate and certificates chain used for verification. |
+| `:check_certificate_status` | Boolean | false | If needed to check certificate status, set true. |
+| `:process_certificate_status` | Method | `TTTLS13::Client.method(:softfail_validate_certificate_status)` | Method(or Proc) that checks received OCSPResponse. Its 3 arguments are OpenSSL::OCSP::Response, end-entity certificate(OpenSSL::X509::Certificate) and certificates chain(Array of Certificate) used for verification and it returns Boolean. |
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
 | `:loglevel` | Logger constant | Logger::WARN | If needed to print verbose, set Logger::DEBUG. |
 

@@ -59,7 +59,8 @@ module TTTLS13
     ticket_age_add: nil,
     ticket_timestamp: nil,
     record_size_limit: nil,
-    check_certificate_status: nil,
+    check_certificate_status: false,
+    process_check_certificate_status: nil,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -395,36 +396,58 @@ module TTTLS13
       @succeed_early_data
     end
 
-    # @param ocsp_response [OpenSSL::OCSP::Response]
+    # @param res [OpenSSL::OCSP::Response]
     # @param cert [OpenSSL::X509::Certificate]
     # @param chain [Array of OpenSSL::X509::Certificate, nil]
     #
     # @return [Boolean]
     #
     # @example
-    #   meth = Client.method(:default_check_certificate_status)
+    #   meth = Client.method(:softfail_validate_certificate_status)
     #   Client.new(
     #     socket,
     #     hostname,
-    #     check_certificate_status: meth
+    #     check_certificate_status: true,
+    #     process_certificate_status: meth
     #   )
-    def self.default_check_certificate_status(ocsp_response, cert, chain)
-      if ocsp_response.nil? ||
-         ocsp_response.status != OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
-        return false
-      end
-
+    # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/PerceivedComplexity
+    def self.softfail_validate_certificate_status(res, cert, chain)
+      ocsp_response = res
       store = OpenSSL::X509::Store.new
       store.set_default_paths
       context = OpenSSL::X509::StoreContext.new(store, cert, chain)
       context.verify
       cid = OpenSSL::OCSP::CertificateId.new(cert, context.chain[1])
-      status = ocsp_response.basic.status.find { |res| res.first.cmp(cid) }
+
+      # When NOT received OCSPResponse in TLS handshake, this method will
+      # send OCSPRequest. If ocsp_uri is NOT presented in Certificate, return
+      # true. Also, if it sends OCSPRequest and does NOT receive a HTTPresponse
+      # within 2 seconds, return true.
+      if ocsp_response.nil?
+        ocsp = cert.ocsp_uris.find { |u| URI::DEFAULT_PARSER.make_regexp =~ u }
+        return true if ocsp.nil?
+
+        uri = URI.parse(ocsp)
+        begin
+          Timeout.timeout(2) { ocsp_response = send_ocsp_request(cid, uri) }
+        rescue Timeout::Error
+          return true
+        end
+      end
+      return false \
+        if ocsp_response.status != OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+
+      status = ocsp_response.basic.status.find { |s| s.first.cmp(cid) }
       return false if status[1] != OpenSSL::OCSP::V_CERTSTATUS_GOOD
       return false if !status[3].nil? && status[3] < Time.now
 
       ocsp_response.basic.verify(chain, store)
     end
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/PerceivedComplexity
 
     private
 
@@ -556,7 +579,7 @@ module TTTLS13
 
       # status_request
       exs << Message::Extension::OCSPStatusRequest.new \
-        unless @settings[:check_certificate_status].nil?
+        if @settings[:check_certificate_status]
 
       [Message::Extensions.new(exs), priv_keys]
     end
@@ -807,7 +830,7 @@ module TTTLS13
         @settings[:ca_file], @hostname
       )
 
-      unless @settings[:check_certificate_status].nil?
+      if @settings[:check_certificate_status]
         ee = ct.certificate_list.first
         ocsp_response = ee.extensions[Message::ExtensionType::STATUS_REQUEST]
                          &.ocsp_response
@@ -845,7 +868,7 @@ module TTTLS13
     #
     # @return [Boolean]
     def satisfactory_certificate_status?(ocsp_response, cert, chain)
-      @settings[:check_certificate_status]&.call(ocsp_response, cert, chain)
+      @settings[:process_certificate_status]&.call(ocsp_response, cert, chain)
     end
 
     # @param nst [TTTLS13::Message::NewSessionTicket]
