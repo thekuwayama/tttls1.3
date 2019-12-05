@@ -60,7 +60,7 @@ module TTTLS13
     ticket_timestamp: nil,
     record_size_limit: nil,
     check_certificate_status: false,
-    process_check_certificate_status: nil,
+    process_certificate_status: nil,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
