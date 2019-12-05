@@ -46,6 +46,7 @@ module TTTLS13
 
   DEFAULT_SERVER_SETTINGS = {
     crt_file: nil,
+    chain_files: nil,
     key_file: nil,
     cipher_suites: DEFAULT_SP_CIPHER_SUITES,
     signature_algorithms: DEFAULT_SP_SIGNATURE_ALGORITHMS,
@@ -75,6 +76,13 @@ module TTTLS13
       klass = @crt.public_key.class
       @key = klass.new(File.read(@settings[:key_file]))
       raise Error::ConfigError unless @crt.check_private_key(@key)
+
+      @chain = @settings[:chain_files]&.map do |f|
+        OpenSSL::X509::Certificate.new(File.read(f))
+      end
+      store = OpenSSL::X509::Store.new
+      store.set_default_paths
+      raise Error::ConfigError unless store.verify(@crt, @chain)
     end
 
     # NOTE:
@@ -230,7 +238,7 @@ module TTTLS13
             unless ch.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT].nil?
           ee = transcript[EE] = gen_encrypted_extensions(ch, @alpn, rsl)
           # TODO: [Send CertificateRequest]
-          ct = transcript[CT] = gen_certificate(@crt)
+          ct = transcript[CT] = gen_certificate(@crt, @chain)
           digest = CipherSuite.digest(@cipher_suite)
           cv = transcript[CV] = gen_certificate_verify(
             @key,
@@ -394,11 +402,13 @@ module TTTLS13
     end
 
     # @param crt [OpenSSL::X509::Certificate]
+    # @param chain [Array of OpenSSL::X509::Certificate]
     #
     # @return [TTTLS13::Message::Certificate, nil]
-    def gen_certificate(crt)
-      ce = Message::CertificateEntry.new(crt)
-      Message::Certificate.new(certificate_list: [ce])
+    def gen_certificate(crt, chain = [])
+      ces = [crt] + (chain || [])
+      ces.map! { |c| Message::CertificateEntry.new(c) }
+      Message::Certificate.new(certificate_list: ces)
     end
 
     # @param key [OpenSSL::PKey::PKey]
