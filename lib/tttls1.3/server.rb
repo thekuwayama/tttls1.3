@@ -62,7 +62,6 @@ module TTTLS13
   class Server < Connection
     # @param socket [Socket]
     # @param settings [Hash]
-    # rubocop: disable Metrics/AbcSize
     def initialize(socket, **settings)
       super(socket)
 
@@ -82,17 +81,11 @@ module TTTLS13
       @chain = @settings[:chain_files]&.map do |f|
         OpenSSL::X509::Certificate.new(File.read(f))
       end
-      store = OpenSSL::X509::Store.new
-      if @settings[:ca_file].nil?
-        store.set_default_paths
-      else
-        store.add_cert(
-          OpenSSL::X509::Certificate.new(File.read(@settings[:ca_file]))
-        )
+      @chain ||= []
+      ([@crt] + @chain).each_cons(2) do |cert, sign|
+        raise Error::ConfigError unless cert.verify(sign.public_key)
       end
-      raise Error::ConfigError unless store.verify(@crt, @chain)
     end
-    # rubocop: enable Metrics/AbcSize
 
     # NOTE:
     #                              START <-----+
