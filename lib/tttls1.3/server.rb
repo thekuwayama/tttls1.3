@@ -48,7 +48,6 @@ module TTTLS13
     crt_file: nil,
     chain_files: nil,
     key_file: nil,
-    ca_file: nil,
     cipher_suites: DEFAULT_SP_CIPHER_SUITES,
     signature_algorithms: DEFAULT_SP_SIGNATURE_ALGORITHMS,
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
