@@ -48,6 +48,7 @@ module TTTLS13
     crt_file: nil,
     chain_files: nil,
     key_file: nil,
+    ca_file: nil,
     cipher_suites: DEFAULT_SP_CIPHER_SUITES,
     signature_algorithms: DEFAULT_SP_SIGNATURE_ALGORITHMS,
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
@@ -61,6 +62,7 @@ module TTTLS13
   class Server < Connection
     # @param socket [Socket]
     # @param settings [Hash]
+    # rubocop: disable Metrics/AbcSize
     def initialize(socket, **settings)
       super(socket)
 
@@ -81,9 +83,16 @@ module TTTLS13
         OpenSSL::X509::Certificate.new(File.read(f))
       end
       store = OpenSSL::X509::Store.new
-      store.set_default_paths
+      if @settings[:ca_file].nil?
+        store.set_default_paths
+      else
+        store.add_cert(
+          OpenSSL::X509::Certificate.new(File.read(@settings[:ca_file]))
+        )
+      end
       raise Error::ConfigError unless store.verify(@crt, @chain)
     end
+    # rubocop: enable Metrics/AbcSize
 
     # NOTE:
     #                              START <-----+
