@@ -182,7 +182,6 @@ RSpec.describe Server do
         end
         settings[:crt_file] = crt
         settings[:key_file] = key
-        settings[:ca_file] = FIXTURES_DIR + '/rsa_ca.crt'
         Server.new(@socket, settings)
       end
 

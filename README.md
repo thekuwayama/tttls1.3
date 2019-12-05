@@ -113,7 +113,6 @@ tttls1.3 server is configurable using keyword arguments.
 | `:crt_file` | String | nil | Path to the certificate file. This is a required setting. |
 | `:chain_files` | Array of OpenSSL::X509::Certificate | nil | Paths to the itermediate certificate files. |
 | `:key_file` | String | nil | Path to the private key file. This is a required setting. |
-| `:ca_file` | String | nil | Path to the additional root CA certificate files. If not needed to add, set nil. |
 | `:cipher_suites` | Array of TTTLS13::CipherSuite constant | `TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256`, `TLS_AES_128_GCM_SHA256` | List of supported cipher suites. |
 | `:signature_algorithms` | Array of TTTLS13::SignatureScheme constant | `ECDSA_SECP256R1_SHA256`, `ECDSA_SECP384R1_SHA384`, `ECDSA_SECP521R1_SHA512`, `RSA_PSS_RSAE_SHA256`, `RSA_PSS_RSAE_SHA384`, `RSA_PSS_RSAE_SHA512`, `RSA_PKCS1_SHA256`, `RSA_PKCS1_SHA384`, `RSA_PKCS1_SHA512` | List of supported signature algorithms. |
 | `:supported_groups` | Array of TTTLS13::NamedGroup constant | `SECP256R1`, `SECP384R1`, `SECP521R1` | List of supported named groups. |
