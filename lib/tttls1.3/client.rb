@@ -403,7 +403,7 @@ module TTTLS13
     # @return [Boolean]
     #
     # @example
-    #   meth = Client.method(:softfail_validate_certificate_status)
+    #   meth = Client.method(:softfail_check_certificate_status)
     #   Client.new(
     #     socket,
     #     hostname,
@@ -413,7 +413,7 @@ module TTTLS13
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/PerceivedComplexity
-    def self.softfail_validate_certificate_status(res, cert, chain)
+    def self.softfail_check_certificate_status(res, cert, chain)
       ocsp_response = res
       store = OpenSSL::X509::Store.new
       store.set_default_paths
@@ -426,10 +426,15 @@ module TTTLS13
       # true. Also, if it sends OCSPRequest and does NOT receive a HTTPresponse
       # within 2 seconds, return true.
       if ocsp_response.nil?
-        ocsp = cert.ocsp_uris.find { |u| URI::DEFAULT_PARSER.make_regexp =~ u }
-        return true if ocsp.nil?
+        if cert.respond_to?(:ocsp_uris)
+          ocsp_uris = cert.ocsp_uris
+        else
+          ocsp_uris = Convert.cert2ocsp_uris(cert)
+        end
+        ocsp_uri = ocsp_uris&.find { |u| URI::DEFAULT_PARSER.make_regexp =~ u }
+        return true if ocsp_uri.nil?
 
-        uri = URI.parse(ocsp)
+        uri = URI.parse(ocsp_uri)
         begin
           Timeout.timeout(2) { ocsp_response = send_ocsp_request(cid, uri) }
         rescue Timeout::Error

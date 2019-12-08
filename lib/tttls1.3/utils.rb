@@ -68,6 +68,17 @@ module TTTLS13
       def bin2i(binary)
         OpenSSL::BN.new(binary, 2).to_i
       end
+
+      def cert2ocsp_uris(cert)
+        aia = cert.extensions.find { |ex| ex.oid == 'authorityInfoAccess' }
+        return nil if aia.nil?
+
+        ostr = OpenSSL::ASN1.decode(aia.to_der).value.last
+        ocsp = OpenSSL::ASN1.decode(ostr.value)
+                            .map(&:value)
+                            .select { |des| des.first.value == 'OCSP' }
+        ocsp&.map { |o| o[1].value }
+      end
     end
   end
 end

@@ -1,10 +1,13 @@
 AllCops:
   TargetRubyVersion: 2.6
 
-Style/NumericLiterals:
+Style/ConditionalAssignment:
   Enabled: false
 
 Style/Documentation:
+  Enabled: false
+
+Style/NumericLiterals:
   Enabled: false
 
 Metrics/AbcSize:
