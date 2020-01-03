@@ -431,7 +431,7 @@ module TTTLS13
 
         begin
           Timeout.timeout(2) { ocsp_response = send_ocsp_request(cid, uri) }
-        rescue Timeout::Error
+        rescue StandardError
           return true
         end
       end
