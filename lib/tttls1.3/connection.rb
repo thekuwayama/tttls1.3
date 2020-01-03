@@ -273,7 +273,7 @@ module TTTLS13
 
       # Received a protected ccs, peer MUST abort the handshake.
       if record.type == Message::ContentType::APPLICATION_DATA &&
-         record.messages.first.is_a?(Message::ChangeCipherSpec)
+         record.messages.any? { |m| m.is_a?(Message::ChangeCipherSpec) }
         terminate(:unexpected_message)
       end
 
