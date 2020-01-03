@@ -426,15 +426,9 @@ module TTTLS13
       # true. Also, if it sends OCSPRequest and does NOT receive a HTTPresponse
       # within 2 seconds, return true.
       if ocsp_response.nil?
-        if cert.respond_to?(:ocsp_uris)
-          ocsp_uris = cert.ocsp_uris
-        else
-          ocsp_uris = Convert.cert2ocsp_uris(cert)
-        end
-        ocsp_uri = ocsp_uris&.find { |u| URI::DEFAULT_PARSER.make_regexp =~ u }
-        return true if ocsp_uri.nil?
+        uri = cert.ocsp_uris&.find { |u| URI::DEFAULT_PARSER.make_regexp =~ u }
+        return true if uri.nil?
 
-        uri = URI.parse(ocsp_uri)
         begin
           Timeout.timeout(2) { ocsp_response = send_ocsp_request(cid, uri) }
         rescue Timeout::Error

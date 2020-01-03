@@ -61,15 +61,9 @@ module TTTLS13
         length.to_uint64 + self
       end
     end
-  end
 
-  module Convert
-    class << self
-      def bin2i(binary)
-        OpenSSL::BN.new(binary, 2).to_i
-      end
-
-      def cert2ocsp_uris(cert)
+    refine OpenSSL::X509::Certificate do
+      def ocsp_uris
         aia = cert.extensions.find { |ex| ex.oid == 'authorityInfoAccess' }
         return nil if aia.nil?
 
@@ -78,6 +72,14 @@ module TTTLS13
                             .map(&:value)
                             .select { |des| des.first.value == 'OCSP' }
         ocsp&.map { |o| o[1].value }
+      end
+    end
+  end
+
+  module Convert
+    class << self
+      def bin2i(binary)
+        OpenSSL::BN.new(binary, 2).to_i
       end
     end
   end

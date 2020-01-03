@@ -542,7 +542,7 @@ module TTTLS13
 
     class << self
       # @param cid [OpenSSL::OCSP::CertificateId]
-      # @param uri [URI Object]
+      # @param uri [String]
       #
       # @return [OpenSSL::OCSP::Response]
       def send_ocsp_request(cid, uri)
@@ -551,6 +551,7 @@ module TTTLS13
         ocsp_request.add_certid(cid)
         ocsp_request.add_nonce
         # send HTTP POST
+        uri = URI.parse(uri)
         path = uri.path
         path = '/' if path.nil? || path.empty?
         http_response = Net::HTTP.start uri.host, uri.port do |http|
