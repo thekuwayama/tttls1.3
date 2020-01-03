@@ -22,7 +22,7 @@ process_new_session_ticket = proc do |nst, rms, cs|
   settings_2nd[:ticket_timestamp] = nst.timestamp
 end
 settings_1st = {
-  ca_file: FileTest.exists?(ca_file) ? ca_file : nil,
+  ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1'],
   process_new_session_ticket: process_new_session_ticket
 }

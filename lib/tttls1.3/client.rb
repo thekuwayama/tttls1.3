@@ -826,7 +826,8 @@ module TTTLS13
 
       return :certificate_unknown unless trusted_certificate?(
         ct.certificate_list,
-        @settings[:ca_file], @hostname
+        @settings[:ca_file],
+        @hostname
       )
 
       if @settings[:check_certificate_status]

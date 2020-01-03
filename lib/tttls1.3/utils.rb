@@ -65,7 +65,7 @@ module TTTLS13
     refine OpenSSL::X509::Certificate do
       unless method_defined?(:ocsp_uris)
         define_method(:ocsp_uris) do
-          aia = cert.extensions.find { |ex| ex.oid == 'authorityInfoAccess' }
+          aia = extensions.find { |ex| ex.oid == 'authorityInfoAccess' }
           return nil if aia.nil?
 
           ostr = OpenSSL::ASN1.decode(aia.to_der).value.last
