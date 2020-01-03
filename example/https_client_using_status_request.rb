@@ -7,13 +7,20 @@ hostname, port = (ARGV[0] || 'localhost:4433').split(':')
 ca_file = __dir__ + '/../tmp/ca.crt'
 req = simple_http_request(hostname)
 
+process_certificate_status = proc do |res, cert, chain|
+  puts "\n" + '-' * 10
+  print "stapled OCSPResponse: #{res.basic.status.pretty_inspect}"
+  puts '-' * 10 + "\n"
+
+  TTTLS13::Client.softfail_check_certificate_status(res, cert, chain)
+end
+
 socket = TCPSocket.new(hostname, port)
 settings = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1'],
   check_certificate_status: true,
-  process_certificate_status:
-    TTTLS13::Client.method(:softfail_check_certificate_status)
+  process_certificate_status: process_certificate_status
 }
 client = TTTLS13::Client.new(socket, hostname, settings)
 client.connect
