@@ -9,9 +9,11 @@ require 'fileutils'
 TMP_DIR    = __dir__ + '/tmp'
 CA_KEY     = TMP_DIR + '/ca.key'
 CA_CRT     = TMP_DIR + '/ca.crt'
+INTER_KEY  = TMP_DIR + '/intermediate.key'
+INTER_CRT  = TMP_DIR + '/intermediate.crt'
 SERVER_KEY = TMP_DIR + '/server.key'
 SERVER_CRT = TMP_DIR + '/server.crt'
-certs = [CA_KEY, CA_CRT, SERVER_KEY, SERVER_CRT]
+certs = [CA_KEY, CA_CRT, INTER_KEY, INTER_CRT, SERVER_KEY, SERVER_CRT]
 
 directory TMP_DIR
 
@@ -64,15 +66,66 @@ file CA_CRT => [TMP_DIR, CA_KEY] do
   File.write(CA_CRT, ca_crt.to_pem)
 end
 
+file INTER_KEY => TMP_DIR do
+  puts "generate #{INTER_KEY}..."
+  inter_key = OpenSSL::PKey::RSA.generate(2048)
+  File.write(INTER_KEY, inter_key.to_pem)
+end
+
+file INTER_CRT => [TMP_DIR, INTER_KEY] do
+  ca_key = OpenSSL::PKey::RSA.new(File.read(CA_KEY))
+  ca_crt = OpenSSL::X509::Certificate.new(File.read(CA_CRT))
+  inter_key = OpenSSL::PKey::RSA.new(File.read(INTER_KEY))
+
+  puts "generate #{INTER_CRT}..."
+  sub = OpenSSL::X509::Name.new
+  sub.add_entry('CN', 'test-intermediate')
+
+  inter_crt = OpenSSL::X509::Certificate.new
+  inter_crt.not_before = Time.now
+  inter_crt.not_after = Time.now + (60 * 60 * 24 * 365 * 10)
+  inter_crt.public_key = inter_key.public_key
+  inter_crt.serial = OpenSSL::BN.rand(64)
+  inter_crt.version = 2
+  inter_crt.issuer = ca_crt.subject
+  inter_crt.subject = sub
+
+  factory = OpenSSL::X509::ExtensionFactory.new
+  factory.subject_certificate = inter_crt
+  factory.issuer_certificate = ca_crt
+  inter_crt.add_extension(
+    factory.create_extension(
+      'keyUsage',
+      'critical, cRLSign, keyCertSign'
+    )
+  )
+  inter_crt.add_extension(
+    factory.create_extension(
+      'basicConstraints',
+      'critical, CA:true'
+    )
+  )
+  inter_crt.add_extension(
+    factory.create_extension(
+      'subjectKeyIdentifier',
+      'hash'
+    )
+  )
+
+  digest = OpenSSL::Digest::SHA256.new
+  inter_crt.sign(ca_key, digest)
+  File.write(INTER_CRT, inter_crt.to_pem)
+end
+
 file SERVER_KEY => TMP_DIR do
   puts "generate #{SERVER_KEY}..."
   server_key = OpenSSL::PKey::RSA.generate(2048)
   File.write(SERVER_KEY, server_key.to_pem)
 end
 
-file SERVER_CRT => [TMP_DIR, CA_CRT, SERVER_KEY] do
-  ca_key = OpenSSL::PKey::RSA.new(File.read(CA_KEY))
-  ca_crt = OpenSSL::X509::Certificate.new(File.read(CA_CRT))
+file SERVER_CRT => [TMP_DIR, INTER_CRT, SERVER_KEY] do
+  inter_key = OpenSSL::PKey::RSA.new(File.read(INTER_KEY))
+  inter_crt = OpenSSL::X509::Certificate.new(File.read(INTER_CRT))
   server_key = OpenSSL::PKey::RSA.new(File.read(SERVER_KEY))
 
   puts "generate #{SERVER_CRT}..."
@@ -85,12 +138,12 @@ file SERVER_CRT => [TMP_DIR, CA_CRT, SERVER_KEY] do
   server_crt.public_key = server_key.public_key
   server_crt.serial = OpenSSL::BN.rand(64)
   server_crt.version = 2
-  server_crt.issuer = ca_crt.issuer
+  server_crt.issuer = inter_crt.subject
   server_crt.subject = sub
 
   factory = OpenSSL::X509::ExtensionFactory.new
   factory.subject_certificate = server_crt
-  factory.issuer_certificate = ca_crt
+  factory.issuer_certificate = inter_crt
   server_crt.add_extension(
     factory.create_extension(
       'basicConstraints',
@@ -109,9 +162,15 @@ file SERVER_CRT => [TMP_DIR, CA_CRT, SERVER_KEY] do
       'DNS:localhost'
     )
   )
+  server_crt.add_extension(
+    factory.create_extension(
+      'authorityInfoAccess',
+      'caIssuers;URI:http://localhost:8080,OCSP;URI:http://localhost:8080'
+    )
+  )
 
   digest = OpenSSL::Digest::SHA256.new
-  server_crt.sign(ca_key, digest)
+  server_crt.sign(inter_key, digest)
   File.write(SERVER_CRT, server_crt.to_pem)
 end
 
