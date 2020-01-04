@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'openssl'
+require 'net/http'
 require 'pp'
 require 'logger'
 

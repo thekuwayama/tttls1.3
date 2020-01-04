@@ -474,8 +474,10 @@ module TTTLS13
     #
     # @return [Boolean]
     def trusted_certificate?(certificate_list, ca_file = nil, hostname = nil)
-      cert_bin = certificate_list.first.cert_data
-      cert = OpenSSL::X509::Certificate.new(cert_bin)
+      chain = certificate_list.map(&:cert_data).map do |c|
+        OpenSSL::X509::Certificate.new(c)
+      end
+      cert = chain.shift
 
       # not support CN matching, only support SAN matching
       return false if !hostname.nil? && !matching_san?(cert, hostname)
@@ -483,9 +485,6 @@ module TTTLS13
       store = OpenSSL::X509::Store.new
       store.set_default_paths
       store.add_file(ca_file) unless ca_file.nil?
-      chain = certificate_list[1..].map(&:cert_data).map do |c|
-        OpenSSL::X509::Certificate.new(c)
-      end
       # TODO: parse authorityInfoAccess::CA Issuers
       ctx = OpenSSL::X509::StoreContext.new(store, cert, chain)
       now = Time.now
@@ -537,6 +536,32 @@ module TTTLS13
           # messages
           false
         end
+      end
+    end
+
+    class << self
+      # @param cid [OpenSSL::OCSP::CertificateId]
+      # @param uri [String]
+      #
+      # @return [OpenSSL::OCSP::Response]
+      def send_ocsp_request(cid, uri)
+        # generate OCSPRequest
+        ocsp_request = OpenSSL::OCSP::Request.new
+        ocsp_request.add_certid(cid)
+        ocsp_request.add_nonce
+        # send HTTP POST
+        uri = URI.parse(uri)
+        path = uri.path
+        path = '/' if path.nil? || path.empty?
+        http_response = Net::HTTP.start uri.host, uri.port do |http|
+          http.post(
+            path,
+            ocsp_request.to_der,
+            'content-type' => 'application/ocsp-request'
+          )
+        end
+
+        OpenSSL::OCSP::Response.new(http_response.body)
       end
     end
   end

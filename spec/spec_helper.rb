@@ -4,6 +4,7 @@
 RSpec.configure(&:disable_monkey_patching!)
 
 # rubocop: disable Style/MixinUsage
+require 'date'
 require 'tttls1.3'
 include TTTLS13
 include TTTLS13::Error
@@ -41,8 +42,41 @@ TESTBINARY_SERVER_NAME = <<BIN.split.map(&:hex).map(&:chr).join
   00 0d 00 00 0a 67 69 74     68 75 62 2e 63 6f 6d
 BIN
 
-TESTBINARY_STATUS_REQUEST = <<BIN.split.map(&:hex).map(&:chr).join
+TESTBINARY_OCSP_STATUS_REQUEST = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 00 00 00
+BIN
+
+TESTBINARY_OCSP_RESPONSE = <<BIN.split.map(&:hex).map(&:chr).join
+  01 00 01 d0 30 82 01 cc     0a 01 00 a0 82 01 c5 30
+  82 01 c1 06 09 2b 06 01     05 05 07 30 01 01 04 82
+  01 b2 30 82 01 ae 30 81     97 a1 16 30 14 31 12 30
+  10 06 03 55 04 03 0c 09     74 65 73 74 2d 6f 63 73
+  70 18 0f 32 30 31 39 31     31 32 38 32 30 34 32 32
+  38 5a 30 6c 30 6a 30 42     30 09 06 05 2b 0e 03 02
+  1a 05 00 04 14 71 02 ca     0e ca 3e be d8 31 e6 37
+  40 80 9e 37 f6 da 9f a5     27 04 14 ac c2 63 89 fe
+  4d c6 08 1f 1f 4d 77 9e     12 7a bf 32 b6 d6 12 02
+  09 00 cf 1a 4c 8a cc cc     78 33 80 00 18 0f 32 30
+  31 39 31 31 32 38 32 30     34 32 32 38 5a a0 11 18
+  0f 32 30 32 39 31 31 32     38 32 30 34 32 32 38 5a
+  30 0d 06 09 2a 86 48 86     f7 0d 01 01 05 05 00 03
+  82 01 01 00 42 90 e2 2f     f0 25 3b cf 11 75 56 83
+  c2 dc 10 d1 e8 d3 74 67     9e df db 0e 03 36 9f 64
+  48 61 8b 50 ca 2c dd fc     82 5b 52 d5 9b 06 64 86
+  70 08 c2 0b ca c9 50 b8     42 42 19 80 8f 6e f0 42
+  92 ac 67 4f 74 fa 2a d2     f4 2f 82 15 11 71 4b bd
+  54 d0 21 fb 0a 91 d3 ba     67 5e cb 7d b2 e6 a2 da
+  30 3d b3 92 3d a9 4e 2c     f6 4a 0b 22 96 b2 1d 06
+  c3 0a c7 41 5f 9e 22 c0     e0 3f 52 cc ff be dd 52
+  80 3f 68 36 ce c0 02 df     ae ab 96 a9 be d8 51 b2
+  bd ec f9 e7 98 5e 8a 77     69 b6 f1 60 19 49 f0 58
+  26 70 2f 7b 19 cc d0 13     9e 9c ed 8a 5c 87 34 4c
+  fd bd 0f 41 3f 5c d8 1e     26 ce bb dd 17 a7 a4 37
+  8f d8 19 39 5b c9 17 18     ca c3 7a eb 5d e7 ba a1
+  12 23 d6 cb 22 0e e1 bf     9e 40 9b e3 5c b5 6b e3
+  aa 6e 93 56 4f da da a1     c6 79 13 9d 5c d6 87 2b
+  f7 6a 0f fc 2c 03 b2 41     c4 90 b8 3d 50 1c 8a 9b
+  11 1b 41 83
 BIN
 
 TESTBINARY_SUPPORTED_GROUPS = <<BIN.split.map(&:hex).map(&:chr).join

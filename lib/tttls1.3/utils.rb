@@ -61,6 +61,21 @@ module TTTLS13
         length.to_uint64 + self
       end
     end
+
+    refine OpenSSL::X509::Certificate do
+      unless method_defined?(:ocsp_uris)
+        define_method(:ocsp_uris) do
+          aia = extensions.find { |ex| ex.oid == 'authorityInfoAccess' }
+          return nil if aia.nil?
+
+          ostr = OpenSSL::ASN1.decode(aia.to_der).value.last
+          ocsp = OpenSSL::ASN1.decode(ostr.value)
+                              .map(&:value)
+                              .select { |des| des.first.value == 'OCSP' }
+          ocsp&.map { |o| o[1].value }
+        end
+      end
+    end
   end
 
   module Convert

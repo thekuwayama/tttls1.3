@@ -10,6 +10,7 @@ port = ARGV[0] || 4433
 
 settings = {
   crt_file: __dir__ + '/../tmp/server.crt',
+  chain_files: [__dir__ + '/../tmp/intermediate.crt'],
   key_file: __dir__ + '/../tmp/server.key',
   alpn: ['http/1.1']
 }
