@@ -124,9 +124,8 @@ module TTTLS13
               Extension::OCSPStatusRequest.deserialize(binary)
             elsif msg_type == HandshakeType::CERTIFICATE
               Extension::OCSPResponse.deserialize(binary)
-            else
-              return nil
             end
+            nil
           when ExtensionType::SUPPORTED_GROUPS
             Extension::SupportedGroups.deserialize(binary)
           when ExtensionType::SIGNATURE_ALGORITHMS

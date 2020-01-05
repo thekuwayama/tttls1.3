@@ -8,7 +8,7 @@ module TTTLS13
       FATAL   = "\x02"
     end
 
-    # rubocop: disable Layout/AlignHash
+    # rubocop: disable Layout/HashAlignment
     ALERT_DESCRIPTION = {
       close_notify:                    "\x00",
       unexpected_message:              "\x0a",
@@ -38,7 +38,7 @@ module TTTLS13
       certificate_required:            "\x74",
       no_application_protocol:         "\x78"
     }.freeze
-    # rubocop: enable Layout/AlignHash
+    # rubocop: enable Layout/HashAlignment
 
     class Alert
       attr_reader :level
