@@ -11,15 +11,20 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['2.6.x']
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-ruby@v1
       - uses: thekuwayama/openssl@master
-        with:
-          ruby-version: '2.6.x'
-      - run: gem install bundler
-      - run: bundle install
-      - run: docker pull thekuwayama/openssl
-      - run: bundle exec rake
-      - run: bundle exec rake interop:client
-      - run: bundle exec rake interop:server
+      - name: Set up Ruby
+        uses: actions/setup-ruby@v1
+      - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: |
+          gem install bundler
+          bundle install
+      - name: Run test
+        run: |
+          bundle exec rake
+          bundle exec rake interop:client
+          bundle exec rake interop:server
