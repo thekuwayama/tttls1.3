@@ -235,9 +235,11 @@ module TTTLS13
           logger.debug('ServerState::WAIT_FLIGHT2')
 
           ch = transcript[CH]
-          rsl = @send_record_size \
-            unless ch.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT].nil?
-          ee = transcript[EE] = gen_encrypted_extensions(ch, @alpn, rsl)
+          ee = transcript[EE] = gen_encrypted_extensions(
+            ch,
+            @alpn,
+            @send_record_size
+          )
           # TODO: [Send CertificateRequest]
           ct = transcript[CT] = gen_certificate(@crt, @chain)
           digest = CipherSuite.digest(@cipher_suite)
