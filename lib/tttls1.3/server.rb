@@ -350,7 +350,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ServerHello]
     def send_hello_retry_request(ch1, cipher_suite)
-      exs = []
+      exs = Message::Extensions.new
       # supported_versions
       exs << Message::Extension::SupportedVersions.new(
         msg_type: Message::HandshakeType::SERVER_HELLO
@@ -372,7 +372,7 @@ module TTTLS13
         random: Message::HRR_RANDOM,
         legacy_session_id_echo: ch1.legacy_session_id,
         cipher_suite: cipher_suite,
-        extensions: Message::Extensions.new(exs)
+        extensions: exs
       )
       send_handshakes(Message::ContentType::HANDSHAKE, [sh],
                       Cryptograph::Passer.new)
@@ -444,7 +444,7 @@ module TTTLS13
     # @return [TTTLS13::Message::Extensions]
     # @return [OpenSSL::PKey::EC.$Object]
     def gen_sh_extensions(named_group)
-      exs = []
+      exs = Message::Extensions.new
       # supported_versions: only TLS 1.3
       exs << Message::Extension::SupportedVersions.new(
         msg_type: Message::HandshakeType::SERVER_HELLO
@@ -455,7 +455,7 @@ module TTTLS13
                  = Message::Extension::KeyShare.gen_sh_key_share(named_group)
       exs << key_share
 
-      [Message::Extensions.new(exs), priv_key]
+      [exs, priv_key]
     end
 
     # @param ch [TTTLS13::Message::ClientHello]
@@ -464,15 +464,16 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::Extensions]
     def gen_ee_extensions(ch, alpn, record_size_limit)
-      exs = []
+      exs = Message::Extensions.new
 
       # server_name
       exs << Message::Extension::ServerName.new('') \
         if ch.extensions.include?(Message::ExtensionType::SERVER_NAME)
 
       # supported_groups
-      exs \
-      << Message::Extension::SupportedGroups.new(@settings[:supported_groups])
+      exs << Message::Extension::SupportedGroups.new(
+        @settings[:supported_groups]
+      )
 
       # alpn
       exs << Message::Extension::Alpn.new([alpn]) unless alpn.nil?
@@ -481,7 +482,7 @@ module TTTLS13
       exs << Message::Extension::RecordSizeLimit.new(record_size_limit) \
         unless record_size_limit.nil?
 
-      Message::Extensions.new(exs)
+      exs
     end
 
     # @param key [OpenSSL::PKey::PKey]

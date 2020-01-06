@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require_relative 'spec_helper'
+using Refinements
 
 RSpec.describe Extensions do
   context 'empty extensions' do
@@ -165,6 +166,21 @@ RSpec.describe Extensions do
       expect(extensions).to include ExtensionType::SIGNATURE_ALGORITHMS
       expect(extensions).to include ExtensionType::PSK_KEY_EXCHANGE_MODES
       expect(extensions).to include ExtensionType::RECORD_SIZE_LIMIT
+    end
+  end
+
+  context 'duplicated extension_type' do
+    let(:server_name) do
+      ServerName.new('example.com')
+    end
+
+    let(:testbinary) do
+      server_name.serialize * 2
+    end
+
+    it 'should raise error, if extension_type get duplicated' do
+      expect { Extensions.deserialize(testbinary, HandshakeType::CLIENT_HELLO) }
+        .to raise_error(ErrorAlerts)
     end
   end
 end

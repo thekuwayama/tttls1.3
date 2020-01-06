@@ -44,10 +44,11 @@ module TTTLS13
       #
       # @return [TTTLS13::Message::Extensions]
       # rubocop: disable Metrics/CyclomaticComplexity
+      # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, msg_type)
         raise Error::ErrorAlerts, :internal_error if binary.nil?
 
-        extensions = []
+        exs = Extensions.new
         i = 0
         while i < binary.length
           raise Error::ErrorAlerts, :decode_error if i + 4 > binary.length
@@ -66,23 +67,21 @@ module TTTLS13
             ex = Extension::UnknownExtension.new(extension_type: extension_type,
                                                  extension_data: ex_bin)
           end
-          extensions << ex
+
+          # There MUST NOT be more than one extension of the same type in a
+          # given extension block.
+          raise Error::ErrorAlerts, :unsupported_extension \
+            if exs.include?(extension_type)
+
+          exs[extension_type] = ex
           i += ex_len
         end
         raise Error::ErrorAlerts, :decode_error unless i == binary.length
 
-        Extensions.new(extensions)
+        exs
       end
       # rubocop: enable Metrics/CyclomaticComplexity
-
-      # @param key [TTTLS13::Message::ExtensionType]
-      #
-      # @return [TTTLS13::Message::Extension::$Object]
-      def [](key)
-        return nil if super_fetch(key, nil).is_a?(Extension::UnknownExtension)
-
-        super_fetch(key, nil)
-      end
+      # rubocop: enable Metrics/PerceivedComplexity
 
       # @param key [TTTLS13::Message::ExtensionType]
       # @param default
@@ -92,6 +91,17 @@ module TTTLS13
         return nil if super_fetch(key, nil).is_a?(Extension::UnknownExtension)
 
         super_fetch(key, default)
+      end
+
+      def [](key)
+        fetch(key)
+      end
+
+      # @param ex [TTTLS13::Message::Extension::$Object]
+      #
+      # @return [TTTLS13::Message::Extension::$Object]
+      def <<(ex)
+        store(ex.extension_type, ex)
       end
 
       class << self
