@@ -187,7 +187,7 @@ RSpec.describe ServerHello do
     let(:message) do
       sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
       extensions = sh.instance_variable_get(:@extensions)
-      extensions[ExtensionType::SUPPORTED_VERSIONS] = nil
+      extensions.delete(ExtensionType::SUPPORTED_VERSIONS)
       sh.instance_variable_set(:@extensions, extensions)
       sh
     end

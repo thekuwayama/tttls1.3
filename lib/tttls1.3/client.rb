@@ -530,7 +530,7 @@ module TTTLS13
     # rubocop: disable Metrics/MethodLength
     # rubocop: disable Metrics/PerceivedComplexity
     def gen_ch_extensions
-      exs = []
+      exs = Message::Extensions.new
       # server_name
       exs << Message::Extension::ServerName.new(@hostname)
 
@@ -580,7 +580,7 @@ module TTTLS13
       exs << Message::Extension::OCSPStatusRequest.new \
         if @settings[:check_certificate_status]
 
-      [Message::Extensions.new(exs), priv_keys]
+      [exs, priv_keys]
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
@@ -673,7 +673,7 @@ module TTTLS13
     # @return [TTTLS13::Message::Extensions]
     # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
     def gen_newch_extensions(ch1, hrr)
-      exs = []
+      exs = Message::Extensions.new
       # key_share
       if hrr.extensions.include?(Message::ExtensionType::KEY_SHARE)
         group = hrr.extensions[Message::ExtensionType::KEY_SHARE]
@@ -695,7 +695,7 @@ module TTTLS13
         if hrr.extensions.include?(Message::ExtensionType::COOKIE)
 
       # early_data
-      new_exs = ch1.extensions.merge(Message::Extensions.new(exs))
+      new_exs = ch1.extensions.merge(exs)
       new_exs.delete(Message::ExtensionType::EARLY_DATA)
 
       [new_exs, priv_keys]
