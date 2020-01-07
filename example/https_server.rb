@@ -26,7 +26,7 @@ Etc.nprocessors.times do
         server = TTTLS13::Server.new(s, settings)
         parser = HTTP::Parser.new
 
-        parser.on_message_complete = proc do
+        parser.on_message_complete = lambda do
           if !parser.http_method.nil?
             logger.info 'Receive Request'
             server.write(simple_http_response('TEST'))

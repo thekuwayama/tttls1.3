@@ -541,19 +541,27 @@ module TTTLS13
 
     class << self
       # @param cid [OpenSSL::OCSP::CertificateId]
-      # @param uri [String]
       #
-      # @return [OpenSSL::OCSP::Response]
-      def send_ocsp_request(cid, uri)
-        # generate OCSPRequest
+      # @return [OpenSSL::OCSP::Request]
+      def gen_ocsp_request(cid)
         ocsp_request = OpenSSL::OCSP::Request.new
         ocsp_request.add_certid(cid)
         ocsp_request.add_nonce
+        ocsp_request
+      end
+
+      # @param ocsp_request [OpenSSL::OCSP::Request]
+      # @param uri_string [String]
+      #
+      # @raise [Net::OpenTimeout, OpenSSL::OCSP::OCSPError, URI::$Exception]
+      #
+      # @return [OpenSSL::OCSP::Response, n
+      def send_ocsp_request(ocsp_request, uri_string)
         # send HTTP POST
-        uri = URI.parse(uri)
+        uri = URI.parse(uri_string)
         path = uri.path
         path = '/' if path.nil? || path.empty?
-        http_response = Net::HTTP.start uri.host, uri.port do |http|
+        http_response = Net::HTTP.start(uri.host, uri.port) do |http|
           http.post(
             path,
             ocsp_request.to_der,

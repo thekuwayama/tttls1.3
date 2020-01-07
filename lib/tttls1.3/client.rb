@@ -403,23 +403,16 @@ module TTTLS13
     # @return [Boolean]
     #
     # @example
-    #   meth = Client.method(:softfail_check_certificate_status)
+    #   m = Client.method(:softfail_check_certificate_status)
     #   Client.new(
     #     socket,
     #     hostname,
     #     check_certificate_status: true,
-    #     process_certificate_status: meth
+    #     process_certificate_status: m
     #   )
-    # rubocop: disable Metrics/AbcSize
-    # rubocop: disable Metrics/CyclomaticComplexity
-    # rubocop: disable Metrics/PerceivedComplexity
     def self.softfail_check_certificate_status(res, cert, chain)
       ocsp_response = res
-      store = OpenSSL::X509::Store.new
-      store.set_default_paths
-      context = OpenSSL::X509::StoreContext.new(store, cert, chain)
-      context.verify
-      cid = OpenSSL::OCSP::CertificateId.new(cert, context.chain[1])
+      cid = OpenSSL::OCSP::CertificateId.new(cert, chain.first)
 
       # When NOT received OCSPResponse in TLS handshake, this method will
       # send OCSPRequest. If ocsp_uri is NOT presented in Certificate, return
@@ -430,23 +423,25 @@ module TTTLS13
         return true if uri.nil?
 
         begin
-          Timeout.timeout(2) { ocsp_response = send_ocsp_request(cid, uri) }
+          # send OCSP::Request
+          ocsp_request = gen_ocsp_request(cid)
+          Timeout.timeout(2) do
+            ocsp_response = send_ocsp_request(ocsp_request, uri)
+          end
+
+          # check nonce of OCSP::Response
+          check_nonce = ocsp_request.check_nonce(ocsp_response.basic)
+          return true unless [-1, 1].include?(check_nonce)
         rescue StandardError
           return true
         end
       end
-      return false \
+      return true \
         if ocsp_response.status != OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
 
       status = ocsp_response.basic.status.find { |s| s.first.cmp(cid) }
-      return false if status[1] != OpenSSL::OCSP::V_CERTSTATUS_GOOD
-      return false if !status[3].nil? && status[3] < Time.now
-
-      ocsp_response.basic.verify(chain, store)
+      status[1] != OpenSSL::OCSP::V_CERTSTATUS_REVOKED
     end
-    # rubocop: enable Metrics/AbcSize
-    # rubocop: enable Metrics/CyclomaticComplexity
-    # rubocop: enable Metrics/PerceivedComplexity
 
     private
 

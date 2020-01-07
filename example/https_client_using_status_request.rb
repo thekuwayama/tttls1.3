@@ -7,7 +7,7 @@ hostname, port = (ARGV[0] || 'localhost:4433').split(':')
 ca_file = __dir__ + '/../tmp/ca.crt'
 req = simple_http_request(hostname)
 
-process_certificate_status = proc do |res, cert, chain|
+process_certificate_status = lambda do |res, cert, chain|
   puts 'stapled OCSPResponse: '
   puts res.basic.status.pretty_inspect unless res.nil?
   puts '-' * 10
