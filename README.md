@@ -119,6 +119,7 @@ tttls1.3 server is configurable using keyword arguments.
 | `:signature_algorithms` | Array of TTTLS13::SignatureScheme constant | `ECDSA_SECP256R1_SHA256`, `ECDSA_SECP384R1_SHA384`, `ECDSA_SECP521R1_SHA512`, `RSA_PSS_RSAE_SHA256`, `RSA_PSS_RSAE_SHA384`, `RSA_PSS_RSAE_SHA512`, `RSA_PKCS1_SHA256`, `RSA_PKCS1_SHA384`, `RSA_PKCS1_SHA512` | List of supported signature algorithms. |
 | `:supported_groups` | Array of TTTLS13::NamedGroup constant | `SECP256R1`, `SECP384R1`, `SECP521R1` | List of supported named groups. |
 | `:alpn` | Array of String | nil | List of supported application protocols. If not needed to check this extension, set nil. |
+| `:process_ocsp_response` | Proc | nil | Proc that gets OpenSSL::OCSP::Response. If not needed to staple OCSP::Response, set nil. |
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
 | `:loglevel` | Logger constant | Logger::WARN | If needed to print verbose, set Logger::DEBUG. |
 
