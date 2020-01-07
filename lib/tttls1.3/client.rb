@@ -479,6 +479,9 @@ module TTTLS13
       rsl = @settings[:record_size_limit]
       return false if !rsl.nil? && (rsl < 64 || rsl > 2**14 + 1)
 
+      return false if @settings[:check_certificate_status] &&
+                      @settings[:process_certificate_status].nil?
+
       true
     end
     # rubocop: enable Metrics/AbcSize
