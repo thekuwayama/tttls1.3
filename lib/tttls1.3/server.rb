@@ -52,6 +52,7 @@ module TTTLS13
     signature_algorithms: DEFAULT_SP_SIGNATURE_ALGORITHMS,
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
     alpn: nil,
+    process_ocsp_response: nil,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -239,7 +240,11 @@ module TTTLS13
             if ch.extensions.include?(Message::ExtensionType::RECORD_SIZE_LIMIT)
           ee = transcript[EE] = gen_encrypted_extensions(ch, @alpn, rsl)
           # TODO: [Send CertificateRequest]
-          ct = transcript[CT] = gen_certificate(@crt, @chain)
+
+          # status_request
+          ocsp_response = fetch_ocsp_response \
+            if ch.extensions.include?(Message::ExtensionType::STATUS_REQUEST)
+          ct = transcript[CT] = gen_certificate(@crt, @chain, ocsp_response)
           digest = CipherSuite.digest(@cipher_suite)
           cv = transcript[CV] = gen_certificate_verify(
             @key,
@@ -404,11 +409,16 @@ module TTTLS13
 
     # @param crt [OpenSSL::X509::Certificate]
     # @param chain [Array of OpenSSL::X509::Certificate]
+    # @param ocsp_response [OpenSSL::OCSP::Response]
     #
     # @return [TTTLS13::Message::Certificate, nil]
-    def gen_certificate(crt, chain = [])
-      ces = [crt] + (chain || [])
-      ces.map! { |c| Message::CertificateEntry.new(c) }
+    def gen_certificate(crt, chain = [], ocsp_response = nil)
+      exs = Message::Extensions.new
+      # status_request
+      exs << Message::Extension::OCSPResponse.new(ocsp_response) \
+        unless ocsp_response.nil?
+      ces = [Message::CertificateEntry.new(crt, exs)] \
+            + (chain || []).map { |c| Message::CertificateEntry.new(c) }
       Message::Certificate.new(certificate_list: ces)
     end
 
@@ -543,6 +553,11 @@ module TTTLS13
       return true if server_name.nil?
 
       matching_san?(crt, server_name)
+    end
+
+    # @return [OpenSSL::OCSP::Response, nil]
+    def fetch_ocsp_response
+      @settings[:process_ocsp_response]&.call
     end
   end
   # rubocop: enable Metrics/ClassLength

@@ -36,7 +36,7 @@ def recv_http_response(client)
   parser = HTTP::Parser.new
   buf = nil
 
-  parser.on_headers_complete = proc do |headers|
+  parser.on_headers_complete = lambda do |headers|
     buf =
       [
         'HTTP/' + parser.http_version.join('.'),
@@ -47,11 +47,11 @@ def recv_http_response(client)
       + WEBrick::CRLF
   end
 
-  parser.on_body = proc do |chunk|
+  parser.on_body = lambda do |chunk|
     buf += chunk
   end
 
-  parser.on_message_complete = proc do
+  parser.on_message_complete = lambda do
     client.close
   end
 
