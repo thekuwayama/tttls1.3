@@ -15,7 +15,7 @@ jobs:
       matrix:
         ruby-version: ['2.6.x']
     steps:
-      - uses: thekuwayama/openssl@master
+      - uses: docker://thekuwayama/openssl:latest
       - name: Set up Ruby
         uses: actions/setup-ruby@v1
       - uses: actions/checkout@v1
