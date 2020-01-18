@@ -1,4 +1,4 @@
-name: workflow
+name: CI
 
 on:
   push:
@@ -21,7 +21,9 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install dependencies
         run: |
+          gem --version
           gem install bundler
+          bundle --version
           bundle install
       - name: Run test
         run: |
