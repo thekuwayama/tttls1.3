@@ -9,14 +9,13 @@ PORT = 4433
 tcpserver = TCPServer.open(PORT)
 
 RSpec.describe Server do
-  # testcases
   # normal [Boolean] Is this nominal scenarios?
   # opt [String] openssl s_client options
   # crt [String] server crt file path
   # key [String] server key file path
   # settings [Hash] TTTLS13::Client settins
-  [
-    # rubocop: disable Metrics/LineLength
+  # rubocop: disable Layout/LineLength
+  testcases = [
     [
       true,
       '-groups P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384',
@@ -172,8 +171,9 @@ RSpec.describe Server do
       FIXTURES_DIR + '/rsa_rsa.key',
       compatibility_mode: false
     ]
-    # rubocop: enable Metrics/LineLength
-  ].each do |normal, opt, crt, key, settings|
+  ]
+  # rubocop: enable Layout/LineLength
+  testcases.each do |normal, opt, crt, key, settings|
     context 'server interop' do
       let(:server) do
         loop do

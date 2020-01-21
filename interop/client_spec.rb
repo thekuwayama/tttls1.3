@@ -7,14 +7,13 @@ FIXTURES_DIR = __dir__ + '/../spec/fixtures'
 PORT = 4433
 
 RSpec.describe Client do
-  # testcases
   # normal [Boolean] Is this nominal scenarios?
   # opt [String] openssl s_server options
   # crt [String] server crt file path
   # key [String] server key file path
   # settings [Hash] TTTLS13::Server settings
-  [
-    # rubocop: disable Metrics/LineLength
+  # rubocop: disable Layout/LineLength
+  testcases = [
     [
       true,
       '-ciphersuites TLS_AES_256_GCM_SHA384',
@@ -163,8 +162,9 @@ RSpec.describe Client do
       'rsa_rsa.key',
       compatibility_mode: false
     ]
-    # rubocop: enable Metrics/LineLength
-  ].each do |normal, opt, crt, key, settings|
+  ]
+  # rubocop: enable Layout/LineLength
+  testcases.each do |normal, opt, crt, key, settings|
     context 'client interop' do
       before do
         cmd = 'openssl s_server ' \

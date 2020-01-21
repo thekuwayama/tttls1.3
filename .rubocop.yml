@@ -25,6 +25,6 @@ Metrics/BlockLength:
     - 'spec/*.rb'
     - 'interop/*.rb'
 
-Metrics/LineLength:
+Layout/LineLength:
   Exclude:
     - 'tttls1.3.gemspec'
