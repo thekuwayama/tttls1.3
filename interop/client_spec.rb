@@ -187,7 +187,7 @@ RSpec.describe Client do
         hostname = 'localhost'
         @socket = TCPSocket.new(hostname, PORT)
         settings[:ca_file] = FIXTURES_DIR + '/rsa_ca.crt'
-        Client.new(@socket, hostname, settings)
+        Client.new(@socket, hostname, **settings)
       end
 
       after do

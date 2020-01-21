@@ -22,7 +22,7 @@ settings = {
   check_certificate_status: true,
   process_certificate_status: process_certificate_status
 }
-client = TTTLS13::Client.new(socket, hostname, settings)
+client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect
 client.write(req)
 

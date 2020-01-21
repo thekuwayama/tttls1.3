@@ -12,7 +12,7 @@ settings = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1']
 }
-client = TTTLS13::Client.new(socket, hostname, settings)
+client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect
 client.write(req)
 

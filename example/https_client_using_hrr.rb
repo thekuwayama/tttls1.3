@@ -13,7 +13,7 @@ settings = {
   key_share_groups: [], # empty KeyShareClientHello.client_shares
   alpn: ['http/1.1']
 }
-client = TTTLS13::Client.new(socket, hostname, settings)
+client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect
 client.write(req)
 print recv_http_response(client)

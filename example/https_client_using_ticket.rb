@@ -34,7 +34,7 @@ settings_1st = {
   settings_2nd
 ].each do |settings|
   socket = TCPSocket.new(hostname, port)
-  client = TTTLS13::Client.new(socket, hostname, settings)
+  client = TTTLS13::Client.new(socket, hostname, **settings)
   client.connect
   client.write(req)
   print recv_http_response(client)

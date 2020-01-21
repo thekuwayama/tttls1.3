@@ -23,7 +23,7 @@ Etc.nprocessors.times do
     loop do
       s = q.pop
       Timeout.timeout(1) do
-        server = TTTLS13::Server.new(s, settings)
+        server = TTTLS13::Server.new(s, **settings)
         parser = HTTP::Parser.new
 
         parser.on_message_complete = lambda do

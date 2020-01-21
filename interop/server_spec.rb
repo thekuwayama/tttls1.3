@@ -182,7 +182,7 @@ RSpec.describe Server do
         end
         settings[:crt_file] = crt
         settings[:key_file] = key
-        Server.new(@socket, settings)
+        Server.new(@socket, **settings)
       end
 
       let(:client) do
