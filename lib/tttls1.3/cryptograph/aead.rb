@@ -44,8 +44,7 @@ module TTTLS13
       #
       # @return [String]
       def encrypt(content, type)
-        reset_cipher
-        cipher = @cipher.encrypt
+        cipher = reset_cipher
         plaintext = content + type + "\x00" * @length_of_padding
         cipher.auth_data = additional_data(plaintext.length)
         encrypted_data = cipher.update(plaintext) + cipher.final
@@ -66,8 +65,7 @@ module TTTLS13
       # @return [String]
       # @return [TTTLS13::Message::ContentType]
       def decrypt(encrypted_record, auth_data)
-        reset_cipher
-        decipher = @cipher.decrypt
+        decipher = reset_decipher
         auth_tag = encrypted_record[-@auth_tag_len..-1]
         decipher.auth_tag = auth_tag
         decipher.auth_data = auth_data # record header of TLSCiphertext
@@ -105,11 +103,26 @@ module TTTLS13
         + ciphertext_len.to_uint16
       end
 
+      # @return [OpenSSL::Cipher]
       def reset_cipher
-        @cipher.reset
-        @cipher.key = @write_key
+        cipher = @cipher.encrypt
+        cipher.reset
+        cipher.key = @write_key
         iv_len = CipherSuite.iv_len(@cipher_suite)
-        @cipher.iv = @sequence_number.xor(@write_iv, iv_len)
+        cipher.iv = @sequence_number.xor(@write_iv, iv_len)
+
+        cipher
+      end
+
+      # @return [OpenSSL::Cipher]
+      def reset_decipher
+        decipher = @cipher.decrypt
+        decipher.reset
+        decipher.key = @write_key
+        iv_len = CipherSuite.iv_len(@cipher_suite)
+        decipher.iv = @sequence_number.xor(@write_iv, iv_len)
+
+        decipher
       end
 
       # @param clear [String]
