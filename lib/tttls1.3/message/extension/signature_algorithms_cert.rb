@@ -16,8 +16,7 @@ module TTTLS13
         # @return [TTTLS13::Message::Extensions::SignatureAlgorithmsCert]
         def self.deserialize(binary)
           extension = SignatureAlgorithms.deserialize(binary)
-          extension.extension_type = ExtensionType::SIGNATURE_ALGORITHMS_CERT
-          extension
+          SignatureAlgorithmsCert.new(extension.supported_signature_algorithms)
         end
       end
     end
