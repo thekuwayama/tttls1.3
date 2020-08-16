@@ -44,8 +44,8 @@ module TTTLS13
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
-        # @return [TTTLS13::Message::Extensions::SignatureAlgorithms, nil]
-        def self.deserialize(binary)
+        # @return [Array of SignatureScheme]
+        def self.deserialize_supported_signature_algorithms(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           return nil if binary.length < 2
@@ -61,7 +61,17 @@ module TTTLS13
           end
           return nil unless ssa_len + 2 == binary.length
 
-          SignatureAlgorithms.new(supported_signature_algorithms)
+          supported_signature_algorithms
+        end
+
+        # @param binary [String]
+        #
+        # @return [TTTLS13::Message::Extensions::SignatureAlgorithms, nil]
+        def self.deserialize(binary)
+          ssa = deserialize_supported_signature_algorithms(binary)
+          return nil if ssa.nil?
+
+          SignatureAlgorithms.new(ssa)
         end
       end
     end
