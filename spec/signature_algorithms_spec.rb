@@ -24,6 +24,8 @@ RSpec.describe SignatureAlgorithms do
     end
 
     it 'should be generated' do
+      expect(extension).to be_a(SignatureAlgorithms)
+
       expect(extension.extension_type).to eq ExtensionType::SIGNATURE_ALGORITHMS
       expect(extension.supported_signature_algorithms)
         .to eq supported_signature_algorithms
@@ -76,6 +78,8 @@ RSpec.describe SignatureAlgorithms do
     end
 
     it 'should generate valid object' do
+      expect(extension).to be_a(SignatureAlgorithms)
+
       expect(extension.extension_type).to eq ExtensionType::SIGNATURE_ALGORITHMS
       expect(extension.supported_signature_algorithms)
         .to eq supported_signature_algorithms
