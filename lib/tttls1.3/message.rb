@@ -56,6 +56,7 @@ module TTTLS13
       CLIENT_CERTIFICATE_TYPE                = "\x00\x13"
       SERVER_CERTIFICATE_TYPE                = "\x00\x14"
       PADDING                                = "\x00\x15"
+      COMPRESS_CERTIFICATE                   = "\x00\x1b"
       RECORD_SIZE_LIMIT                      = "\x00\x1c"
       PWD_PROTECT                            = "\x00\x1d"
       PWD_CLEAR                              = "\x00\x1e"
