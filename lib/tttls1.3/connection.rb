@@ -264,8 +264,12 @@ module TTTLS13
 
       begin
         buffer = @binary_buffer
-        record = Message::Record.deserialize(binary, cipher, buffer,
-                                             @recv_record_size)
+        record = Message::Record.deserialize(
+          binary,
+          cipher,
+          buffer,
+          @recv_record_size
+        )
         @binary_buffer = record.surplus_binary
       rescue Error::ErrorAlerts => e
         terminate(e.message.to_sym)
@@ -500,11 +504,10 @@ module TTTLS13
       return false if san.nil?
 
       ostr = OpenSSL::ASN1.decode(san.to_der).value.last
-      matching = OpenSSL::ASN1.decode(ostr.value).map(&:value)
-                              .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
-                              .any? { |s| name.match(/#{s}/) }
-
-      matching
+      OpenSSL::ASN1.decode(ostr.value)
+                   .map(&:value)
+                   .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
+                   .any? { |s| name.match(/#{s}/) }
     end
 
     # @param signature_algorithms [Array of SignatureAlgorithms]

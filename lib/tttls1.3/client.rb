@@ -61,7 +61,9 @@ module TTTLS13
     record_size_limit: nil,
     check_certificate_status: false,
     process_certificate_status: nil,
-    compress_certificate_algorithms: [],
+    compress_certificate_algorithms: [
+      Message::Extension::CertificateCompressionAlgorithm::ZLIB
+    ],
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -156,7 +158,6 @@ module TTTLS13
           extensions, priv_keys = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
           transcript[CH] = send_client_hello(extensions, binder_key)
-
           send_ccs if @settings[:compatibility_mode]
           if use_early_data?
             e_wcipher = gen_cipher(
@@ -213,6 +214,7 @@ module TTTLS13
           # handling HRR
           if sh.hrr?
             terminate(:unexpected_message) if transcript.include?(HRR)
+
             ch1 = transcript[CH1] = transcript.delete(CH)
             hrr = transcript[HRR] = transcript.delete(SH)
 
@@ -287,27 +289,34 @@ module TTTLS13
 
           rsl = ee.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
           @recv_record_size = rsl.record_size_limit unless rsl.nil?
-
           @succeed_early_data = true \
             if ee.extensions.include?(Message::ExtensionType::EARLY_DATA)
-
           @alpn = ee.extensions[
             Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
           ]&.protocol_name_list&.first
-
           @state = ClientState::WAIT_CERT_CR
           @state = ClientState::WAIT_FINISHED unless psk.nil?
         when ClientState::WAIT_CERT_CR
           logger.debug('ClientState::WAIT_CERT_CR')
 
           message = recv_message(receivable_ccs: true, cipher: hs_rcipher)
-          if message.msg_type == Message::HandshakeType::CERTIFICATE
+          case message.msg_type
+          when Message::HandshakeType::CERTIFICATE,
+               Message::HandshakeType::COMPRESSED_CERTIFICATE
             ct = transcript[CT] = message
+            if ct.is_a?(Message::CompressedCertificate) &&
+               !@settings[:compress_certificate_algorithms]
+               .include?(ct.algorithm)
+              terminate(:bad_certificate)
+            elsif ct.is_a?(Message::CompressedCertificate)
+              ct = ct.certificate_message
+            end
+
             alert = check_invalid_certificate(ct, transcript[CH])
             terminate(alert) unless alert.nil?
 
             @state = ClientState::WAIT_CV
-          elsif message.msg_type == Message::HandshakeType::CERTIFICATE_REQUEST
+          when Message::HandshakeType::CERTIFICATE_REQUEST
             transcript[CR] = message
             # TODO: client authentication
             @state = ClientState::WAIT_CERT
@@ -318,6 +327,13 @@ module TTTLS13
           logger.debug('ClientState::WAIT_CERT')
 
           ct = transcript[CT] = recv_certificate(hs_rcipher)
+          if ct.is_a?(Message::CompressedCertificate) &&
+             !@settings[:compress_certificate_algorithms].include?(ct.algorithm)
+            terminate(:bad_certificate)
+          elsif ct.is_a?(Message::CompressedCertificate)
+            ct = ct.certificate_message
+          end
+
           alert = check_invalid_certificate(ct, transcript[CH])
           terminate(alert) unless alert.nil?
 
@@ -328,24 +344,25 @@ module TTTLS13
           cv = transcript[CV] = recv_certificate_verify(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
           hash = transcript.hash(digest, CT)
+          ct = transcript[CT]
+          ct = ct.certificate_message \
+            if ct.is_a?(Message::CompressedCertificate)
           terminate(:decrypt_error) \
-            unless verified_certificate_verify?(transcript[CT], cv, hash)
+            unless verified_certificate_verify?(ct, cv, hash)
 
           @signature_scheme = cv.signature_scheme
-
           @state = ClientState::WAIT_FINISHED
         when ClientState::WAIT_FINISHED
           logger.debug('ClientState::WAIT_FINISHED')
 
           sf = transcript[SF] = recv_finished(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
-          verified = verified_finished?(
+          terminate(:decrypt_error) unless verified_finished?(
             finished: sf,
             digest: digest,
             finished_key: key_schedule.server_finished_key,
             hash: transcript.hash(digest, CV)
           )
-          terminate(:decrypt_error) unless verified
 
           transcript[EOED] = send_eoed(e_wcipher) \
             if use_early_data? && succeed_early_data?
@@ -771,8 +788,6 @@ module TTTLS13
     # @return [TTTLS13::Message::Certificate]
     def recv_certificate(cipher)
       ct = recv_message(receivable_ccs: true, cipher: cipher)
-      ct = ct.certificate_message \
-        if ct.is_a?(Message::CompressedCertificate)
       terminate(:unexpected_message) unless ct.is_a?(Message::Certificate)
 
       ct

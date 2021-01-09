@@ -19,10 +19,6 @@ module TTTLS13
   CF   = 12
 
   class Transcript < Hash
-    def initialize
-      super
-    end
-
     alias super_include? include?
 
     # @param digest [String] name of digest algorithm
