@@ -6,9 +6,9 @@ module TTTLS13
   module Message
     module Extension
       module CertificateCompressionAlgorithm
-        ZLIB   = "\x00\x01"
-        BROTLI = "\x00\x02"
-        ZSTD   = "\x00\x03"
+        ZLIB = "\x00\x01"
+        # BROTLI = "\x00\x02" # UNSUPPORTED
+        # ZSTD   = "\x00\x03" # UNSUPPORTED
       end
 
       # https://tools.ietf.org/html/rfc8879
@@ -16,7 +16,7 @@ module TTTLS13
         attr_reader :extension_type
         attr_reader :algorithms
 
-        # @param algorithms [Array of String]
+        # @param algorithms [Array of CertificateCompressionAlgorithm]
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
         #

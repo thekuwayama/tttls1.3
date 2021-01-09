@@ -164,7 +164,7 @@ BIN
 TESTBINARY_EARLY_DATA_INDICATION_CH = ''
 
 TESTBINARY_COMPRESS_CERTIFICATE = <<BIN.split.map(&:hex).map(&:chr).join
-  04 00 01 00 02
+  02 00 01
 BIN
 
 # https://tools.ietf.org/html/rfc8448#section-3

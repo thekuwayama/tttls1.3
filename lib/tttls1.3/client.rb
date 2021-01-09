@@ -61,6 +61,7 @@ module TTTLS13
     record_size_limit: nil,
     check_certificate_status: false,
     process_certificate_status: nil,
+    compress_certificate_algorithms: [],
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -578,6 +579,14 @@ module TTTLS13
       exs << Message::Extension::OCSPStatusRequest.new \
         if @settings[:check_certificate_status]
 
+      # compress_certificate
+      if !@settings[:compress_certificate_algorithms].nil? &&
+         !@settings[:compress_certificate_algorithms].empty?
+        exs << Message::Extension::CompressCertificate.new(
+          @settings[:compress_certificate_algorithms]
+        )
+      end
+
       [exs, priv_keys]
     end
     # rubocop: enable Metrics/AbcSize
@@ -762,6 +771,8 @@ module TTTLS13
     # @return [TTTLS13::Message::Certificate]
     def recv_certificate(cipher)
       ct = recv_message(receivable_ccs: true, cipher: cipher)
+      ct = ct.certificate_message \
+        if ct.is_a?(Message::CompressedCertificate)
       terminate(:unexpected_message) unless ct.is_a?(Message::Certificate)
 
       ct

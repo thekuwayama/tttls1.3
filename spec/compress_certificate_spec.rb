@@ -7,10 +7,7 @@ using Refinements
 RSpec.describe Alpn do
   context 'valid compress_certificate' do
     let(:algorithms) do
-      [
-        CertificateCompressionAlgorithm::ZLIB,
-        CertificateCompressionAlgorithm::BROTLI
-      ]
+      [CertificateCompressionAlgorithm::ZLIB]
     end
 
     let(:extension) do
@@ -26,10 +23,9 @@ RSpec.describe Alpn do
     it 'should be serialized' do
       expect(extension.serialize)
         .to eq ExtensionType::COMPRESS_CERTIFICATE \
-               + 5.to_uint16 \
-               + 4.to_uint8 \
-               + "\x00\x01" \
-               + "\x00\x02"
+               + 3.to_uint16 \
+               + 2.to_uint8 \
+               + "\x00\x01"
     end
   end
 
@@ -52,8 +48,7 @@ RSpec.describe Alpn do
       expect(extension.extension_type)
         .to eq ExtensionType::COMPRESS_CERTIFICATE
       expect(extension.algorithms)
-        .to eq [CertificateCompressionAlgorithm::ZLIB,
-                CertificateCompressionAlgorithm::BROTLI]
+        .to eq [CertificateCompressionAlgorithm::ZLIB]
     end
   end
 end
