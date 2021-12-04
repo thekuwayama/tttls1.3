@@ -14,7 +14,7 @@ RSpec.describe Server do
                         + msg_len.to_uint16 \
                         + TESTBINARY_CLIENT_HELLO)
       server = Server.new(mock_socket)
-      server.send(:recv_client_hello, true)
+      server.send(:recv_client_hello, true).first
     end
 
     it 'should receive ClientHello' do
@@ -119,12 +119,15 @@ RSpec.describe Server do
     end
 
     let(:transcript) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
       transcript = Transcript.new
       transcript.merge!(
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
-        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => ct
+        CH => [ch, TESTBINARY_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_SERVER_HELLO],
+        EE => [ee, TESTBINARY_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_CERTIFICATE]
       )
     end
 
@@ -168,13 +171,18 @@ RSpec.describe Server do
     end
 
     let(:transcript) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
+      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
+      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
       transcript = Transcript.new
       transcript.merge!(
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
-        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
-        CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+        CH => [ch, TESTBINARY_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_SERVER_HELLO],
+        EE => [ee, TESTBINARY_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_CERTIFICATE],
+        CV => [cv, TESTBINARY_CERTIFICATE_VERIFY]
       )
       transcript
     end

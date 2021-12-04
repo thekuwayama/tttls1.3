@@ -58,12 +58,12 @@ module TTTLS13
         exc_prefix = Message::HandshakeType::MESSAGE_HASH \
                      + "\x00\x00" \
                      + OpenSSL::Digest.new(digest).digest_length.to_uint8 \
-                     + OpenSSL::Digest.digest(digest, self[CH1].serialize) \
-                     + self[HRR].serialize
+                     + OpenSSL::Digest.digest(digest, self[CH1].last) \
+                     + self[HRR].last
       end
 
       messages = (CH..end_index).to_a.map do |m|
-        include?(m) ? self[m].serialize : ''
+        include?(m) ? self[m].last : ''
       end
       exc_prefix + messages.join
     end

@@ -32,15 +32,18 @@ RSpec.describe Connection do
     end
 
     let(:transcript) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
       transcript = Transcript.new
       transcript.merge!(
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
-        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => ct,
-        CV => cv,
-        CF => cf,
-        SF => sf
+        CH => [ch, TESTBINARY_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_SERVER_HELLO],
+        EE => [ee, TESTBINARY_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_CERTIFICATE],
+        CV => [cv, TESTBINARY_CERTIFICATE_VERIFY],
+        CF => [cf, TESTBINARY_CLIENT_FINISHED],
+        SF => [sf, TESTBINARY_SERVER_FINISHED]
       )
     end
 
@@ -115,16 +118,20 @@ RSpec.describe Connection do
     end
 
     let(:transcript) do
+      ch1 = ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO1)
+      hrr = ServerHello.deserialize(TESTBINARY_HRR_HELLO_RETRY_REQUEST)
+      ch = ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_HRR_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_HRR_ENCRYPTED_EXTENSIONS)
       transcript = Transcript.new
       transcript.merge!(
-        CH1 => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO1),
-        HRR => ServerHello.deserialize(TESTBINARY_HRR_HELLO_RETRY_REQUEST),
-        CH => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_HRR_SERVER_HELLO),
-        EE =>
-        EncryptedExtensions.deserialize(TESTBINARY_HRR_ENCRYPTED_EXTENSIONS),
-        CT => ct,
-        CV => cv
+        CH1 => [ch1, TESTBINARY_HRR_CLIENT_HELLO1],
+        HRR => [hrr, TESTBINARY_HRR_HELLO_RETRY_REQUEST],
+        CH => [ch, TESTBINARY_HRR_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_HRR_SERVER_HELLO],
+        EE => [ee, TESTBINARY_HRR_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_HRR_CERTIFICATE],
+        CV => [cv, TESTBINARY_HRR_CERTIFICATE_VERIFY]
       )
     end
 

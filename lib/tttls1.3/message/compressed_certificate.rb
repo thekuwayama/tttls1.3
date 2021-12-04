@@ -26,7 +26,7 @@ module TTTLS13
         case @algorithm
         when Extension::CertificateCompressionAlgorithm::ZLIB
           binary += Zlib::Deflate.deflate(ct_bin).prefix_uint24_length
-        else # TODO: BROTLI, ZSTD
+        else # TODO: orig_msgs, ZSTD
           raise Error::ErrorAlerts, :internal_error
         end
 

@@ -11,7 +11,7 @@ RSpec.describe Client do
       client = Client.new(mock_socket, 'localhost')
       extensions, _priv_keys = client.send(:gen_ch_extensions)
       client.send(:send_client_hello, extensions)
-      Record.deserialize(mock_socket.read, Cryptograph::Passer.new)
+      Record.deserialize(mock_socket.read, Cryptograph::Passer.new).first
     end
 
     it 'should send default ClientHello' do
@@ -37,7 +37,7 @@ RSpec.describe Client do
                         + msg_len.to_uint16 \
                         + TESTBINARY_SERVER_HELLO)
       client = Client.new(mock_socket, 'localhost')
-      client.send(:recv_server_hello)
+      client.send(:recv_server_hello).first
     end
 
     it 'should receive ServerHello' do
@@ -65,20 +65,20 @@ RSpec.describe Client do
     end
 
     it 'should receive EncryptedExtensions' do
-      message = client.send(:recv_encrypted_extensions, cipher)
+      message, = client.send(:recv_encrypted_extensions, cipher)
       expect(message.msg_type).to eq HandshakeType::ENCRYPTED_EXTENSIONS
     end
 
     it 'should receive Certificate' do
       client.send(:recv_encrypted_extensions, cipher) # to skip
-      message = client.send(:recv_certificate, cipher)
+      message, = client.send(:recv_certificate, cipher)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE
     end
 
     it 'should receive CertificateVerify' do
       client.send(:recv_encrypted_extensions, cipher) # to skip
       client.send(:recv_certificate, cipher)          # to skip
-      message = client.send(:recv_certificate_verify, cipher)
+      message, = client.send(:recv_certificate_verify, cipher)
       expect(message.msg_type).to eq HandshakeType::CERTIFICATE_VERIFY
     end
 
@@ -86,7 +86,7 @@ RSpec.describe Client do
       client.send(:recv_encrypted_extensions, cipher) # to skip
       client.send(:recv_certificate, cipher)          # to skip
       client.send(:recv_certificate_verify, cipher)   # to skip
-      message = client.send(:recv_finished, cipher)
+      message, = client.send(:recv_finished, cipher)
       expect(message.msg_type).to eq HandshakeType::FINISHED
     end
   end
@@ -97,14 +97,20 @@ RSpec.describe Client do
     end
 
     let(:transcript) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
+      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
+      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+      sf = Finished.deserialize(TESTBINARY_SERVER_FINISHED)
       transcript = Transcript.new
       transcript.merge!(
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
-        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
-        CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED)
+        CH => [ch, TESTBINARY_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_SERVER_HELLO],
+        EE => [ee, TESTBINARY_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_CERTIFICATE],
+        CV => [cv, TESTBINARY_CERTIFICATE_VERIFY],
+        SF => [sf, TESTBINARY_SERVER_FINISHED]
       )
       transcript
     end
@@ -140,7 +146,7 @@ RSpec.describe Client do
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new
       )
-      Record.deserialize(mock_socket.read, hs_rcipher)
+      Record.deserialize(mock_socket.read, hs_rcipher).first
     end
 
     it 'should send Finished' do
@@ -170,14 +176,17 @@ RSpec.describe Client do
     end
 
     let(:transcript) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
       transcript = Transcript.new
       transcript.merge!(
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
-        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => ct,
-        CV => cv,
-        SF => sf
+        CH => [ch, TESTBINARY_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_SERVER_HELLO],
+        EE => [ee, TESTBINARY_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_CERTIFICATE],
+        CV => [cv, TESTBINARY_CERTIFICATE_VERIFY],
+        SF => [sf, TESTBINARY_SERVER_FINISHED]
       )
     end
 

@@ -4,7 +4,6 @@ require 'openssl'
 require 'net/http'
 require 'pp'
 require 'logger'
-require 'zlib'
 
 require 'tttls1.3/version'
 require 'tttls1.3/utils'

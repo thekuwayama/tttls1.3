@@ -6,15 +6,22 @@ require_relative 'spec_helper'
 RSpec.describe KeySchedule do
   context 'key_schedule, Simple 1-RTT Handshake,' do
     let(:key_schedule) do
+      ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS)
+      ct = Certificate.deserialize(TESTBINARY_CERTIFICATE)
+      cv = CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY)
+      sf = Finished.deserialize(TESTBINARY_SERVER_FINISHED)
+      cf = Finished.deserialize(TESTBINARY_CLIENT_FINISHED)
       transcript = Transcript.new
       transcript.merge!(
-        CH => ClientHello.deserialize(TESTBINARY_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_SERVER_HELLO),
-        EE => EncryptedExtensions.deserialize(TESTBINARY_ENCRYPTED_EXTENSIONS),
-        CT => Certificate.deserialize(TESTBINARY_CERTIFICATE),
-        CV => CertificateVerify.deserialize(TESTBINARY_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_SERVER_FINISHED),
-        CF => Finished.deserialize(TESTBINARY_CLIENT_FINISHED)
+        CH => [ch, TESTBINARY_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_SERVER_HELLO],
+        EE => [ee, TESTBINARY_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_CERTIFICATE],
+        CV => [cv, TESTBINARY_CERTIFICATE_VERIFY],
+        SF => [sf, TESTBINARY_SERVER_FINISHED],
+        CF => [cf, TESTBINARY_CLIENT_FINISHED]
       )
       KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
                       cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
@@ -77,15 +84,22 @@ RSpec.describe KeySchedule do
 
   context 'key_schedule, Resumed 0-RTT Handshake,' do
     let(:key_schedule) do
+      ch = ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_0_RTT_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(
+        TESTBINARY_0_RTT_ENCRYPTED_EXTENSIONS
+      )
+      sf = Finished.deserialize(TESTBINARY_0_RTT_SERVER_FINISHED)
+      eoed = EndOfEarlyData.deserialize(TESTBINARY_0_RTT_END_OF_EARLY_DATA)
+      cf = Finished.deserialize(TESTBINARY_0_RTT_CLIENT_FINISHED)
       transcript = Transcript.new
       transcript.merge!(
-        CH => ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_0_RTT_SERVER_HELLO),
-        EE =>
-        EncryptedExtensions.deserialize(TESTBINARY_0_RTT_ENCRYPTED_EXTENSIONS),
-        SF => Finished.deserialize(TESTBINARY_0_RTT_SERVER_FINISHED),
-        EOED => EndOfEarlyData.deserialize(TESTBINARY_0_RTT_END_OF_EARLY_DATA),
-        CF => Finished.deserialize(TESTBINARY_0_RTT_CLIENT_FINISHED)
+        CH => [ch, TESTBINARY_0_RTT_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_0_RTT_SERVER_HELLO],
+        EE => [ee, TESTBINARY_0_RTT_ENCRYPTED_EXTENSIONS],
+        SF => [sf, TESTBINARY_0_RTT_SERVER_FINISHED],
+        EOED => [eoed, TESTBINARY_0_RTT_END_OF_EARLY_DATA],
+        CF => [cf, TESTBINARY_0_RTT_CLIENT_FINISHED]
       )
       KeySchedule.new(psk: TESTBINARY_0_RTT_PSK,
                       shared_secret: TESTBINARY_0_RTT_SHARED_SECRET,
@@ -111,8 +125,9 @@ RSpec.describe KeySchedule do
   context 'key_schedule, Resumed 0-RTT Handshake, ' \
           'not negotiated shared_secret yet,' do
     let(:key_schedule) do
+      ch = ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO)
       transcript = Transcript.new
-      transcript[CH] = ClientHello.deserialize(TESTBINARY_0_RTT_CLIENT_HELLO)
+      transcript[CH] = [ch, TESTBINARY_0_RTT_CLIENT_HELLO]
       KeySchedule.new(psk: TESTBINARY_0_RTT_PSK,
                       shared_secret: nil,
                       cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
@@ -139,18 +154,26 @@ RSpec.describe KeySchedule do
 
   context 'key_schedule, HelloRetryRequest,' do
     let(:key_schedule) do
+      ch1 = ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO1)
+      hrr = ServerHello.deserialize(TESTBINARY_HRR_HELLO_RETRY_REQUEST)
+      ch = ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO)
+      sh = ServerHello.deserialize(TESTBINARY_HRR_SERVER_HELLO)
+      ee = EncryptedExtensions.deserialize(TESTBINARY_HRR_ENCRYPTED_EXTENSIONS)
+      ct = Certificate.deserialize(TESTBINARY_HRR_CERTIFICATE)
+      cv = CertificateVerify.deserialize(TESTBINARY_HRR_CERTIFICATE_VERIFY)
+      sf = Finished.deserialize(TESTBINARY_HRR_SERVER_FINISHED)
+      cf = Finished.deserialize(TESTBINARY_HRR_CLIENT_FINISHED)
       transcript = Transcript.new
       transcript.merge!(
-        CH1 => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO1),
-        HRR => ServerHello.deserialize(TESTBINARY_HRR_HELLO_RETRY_REQUEST),
-        CH => ClientHello.deserialize(TESTBINARY_HRR_CLIENT_HELLO),
-        SH => ServerHello.deserialize(TESTBINARY_HRR_SERVER_HELLO),
-        EE =>
-        EncryptedExtensions.deserialize(TESTBINARY_HRR_ENCRYPTED_EXTENSIONS),
-        CT => Certificate.deserialize(TESTBINARY_HRR_CERTIFICATE),
-        CV => CertificateVerify.deserialize(TESTBINARY_HRR_CERTIFICATE_VERIFY),
-        SF => Finished.deserialize(TESTBINARY_HRR_SERVER_FINISHED),
-        CF => Finished.deserialize(TESTBINARY_HRR_CLIENT_FINISHED)
+        CH1 => [ch1, TESTBINARY_HRR_CLIENT_HELLO1],
+        HRR => [hrr, TESTBINARY_HRR_HELLO_RETRY_REQUEST],
+        CH => [ch, TESTBINARY_HRR_CLIENT_HELLO],
+        SH => [sh, TESTBINARY_HRR_SERVER_HELLO],
+        EE => [ee, TESTBINARY_HRR_ENCRYPTED_EXTENSIONS],
+        CT => [ct, TESTBINARY_HRR_CERTIFICATE],
+        CV => [cv, TESTBINARY_HRR_CERTIFICATE_VERIFY],
+        SF => [sf, TESTBINARY_HRR_SERVER_FINISHED],
+        CF => [cf, TESTBINARY_HRR_CLIENT_FINISHED]
       )
       KeySchedule.new(shared_secret: TESTBINARY_HRR_SHARED_SECRET,
                       cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
