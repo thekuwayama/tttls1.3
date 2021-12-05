@@ -43,6 +43,11 @@ module TTTLS13
   ].freeze
   private_constant :DEFAULT_CH_NAMED_GROUP_LIST
 
+  DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS = [
+    Message::Extension::CertificateCompressionAlgorithm::ZLIB
+  ].freeze
+  private_constant :DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS
+
   DEFAULT_CLIENT_SETTINGS = {
     ca_file: nil,
     cipher_suites: DEFAULT_CH_CIPHER_SUITES,
@@ -61,9 +66,7 @@ module TTTLS13
     record_size_limit: nil,
     check_certificate_status: false,
     process_certificate_status: nil,
-    compress_certificate_algorithms: [
-      Message::Extension::CertificateCompressionAlgorithm::ZLIB
-    ],
+    compress_certificate_algorithms: DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -309,14 +312,13 @@ module TTTLS13
           when Message::HandshakeType::CERTIFICATE,
                Message::HandshakeType::COMPRESSED_CERTIFICATE
             ct, = transcript[CT] = [message, orig_msg]
-            if ct.is_a?(Message::CompressedCertificate) &&
-               !@settings[:compress_certificate_algorithms]
-               .include?(ct.algorithm)
-              terminate(:bad_certificate)
-            elsif ct.is_a?(Message::CompressedCertificate)
-              ct = ct.certificate_message
-            end
+            terminate(:bad_certificate) \
+              if ct.is_a?(Message::CompressedCertificate) &&
+                 !@settings[:compress_certificate_algorithms]
+                 .include?(ct.algorithm)
 
+            ct = ct.certificate_message \
+              if ct.is_a?(Message::CompressedCertificate)
             alert = check_invalid_certificate(ct, transcript[CH].first)
             terminate(alert) unless alert.nil?
 

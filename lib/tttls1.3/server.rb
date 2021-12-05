@@ -44,6 +44,11 @@ module TTTLS13
   ].freeze
   private_constant :DEFAULT_SP_NAMED_GROUP_LIST
 
+  DEFAULT_SP_COMPRESS_CERTIFICATE_ALGORITHMS = [
+    Message::Extension::CertificateCompressionAlgorithm::ZLIB
+  ].freeze
+  private_constant :DEFAULT_SP_COMPRESS_CERTIFICATE_ALGORITHMS
+
   DEFAULT_SERVER_SETTINGS = {
     crt_file: nil,
     chain_files: nil,
@@ -53,9 +58,7 @@ module TTTLS13
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
     alpn: nil,
     process_ocsp_response: nil,
-    compress_certificate_algorithms: [
-      Message::Extension::CertificateCompressionAlgorithm::ZLIB
-    ],
+    compress_certificate_algorithms: DEFAULT_SP_COMPRESS_CERTIFICATE_ALGORITHMS,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -253,7 +256,6 @@ module TTTLS13
           ocsp_response = fetch_ocsp_response \
             if ch.extensions.include?(Message::ExtensionType::STATUS_REQUEST)
           ct = gen_certificate(@crt, ch, @chain, ocsp_response)
-
           transcript[CT] = [ct, ct.serialize]
           digest = CipherSuite.digest(@cipher_suite)
           hash = transcript.hash(digest, CT)
@@ -443,7 +445,7 @@ module TTTLS13
         end
 
         unless cca.nil?
-          return Message::CompressedCertificate.new(
+          ct = Message::CompressedCertificate.new(
             certificate_message: ct,
             algorithm: cca
           )
