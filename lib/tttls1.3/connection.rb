@@ -16,7 +16,7 @@ module TTTLS13
       @ap_wcipher = Cryptograph::Passer.new
       @ap_rcipher = Cryptograph::Passer.new
       @alert_wcipher = Cryptograph::Passer.new
-      @message_queue = [] # Array of TTTLS13::Message::$Object
+      @message_queue = [] # Array of [TTTLS13::Message::$Object, String]
       @binary_buffer = '' # deposit Record.surplus_binary
       @cipher_suite = nil # TTTLS13::CipherSuite
       @named_group = nil # TTTLS13::NamedGroup
@@ -42,7 +42,7 @@ module TTTLS13
 
       message = nil
       loop do
-        message = recv_message(receivable_ccs: false, cipher: @ap_rcipher)
+        message, = recv_message(receivable_ccs: false, cipher: @ap_rcipher)
         # At any time after the server has received the client Finished
         # message, it MAY send a NewSessionTicket message.
         break unless message.is_a?(Message::NewSessionTicket)
@@ -220,13 +220,15 @@ module TTTLS13
     # @raise [TTTLS13::Error::ErrorAlerts
     #
     # @return [TTTLS13::Message::$Object]
+    # @return [String]
     # rubocop: disable Metrics/CyclomaticComplexity
     def recv_message(receivable_ccs:, cipher:)
       return @message_queue.shift unless @message_queue.empty?
 
       messages = nil
+      orig_msgs = []
       loop do
-        record = recv_record(cipher)
+        record, orig_msgs = recv_record(cipher)
         case record.type
         when Message::ContentType::HANDSHAKE,
              Message::ContentType::APPLICATION_DATA
@@ -243,20 +245,22 @@ module TTTLS13
         end
       end
 
-      @message_queue += messages[1..]
+      @message_queue += messages[1..].zip(orig_msgs[1..])
       message = messages.first
+      orig_msg = orig_msgs.first
       if message.is_a?(Message::Alert)
         handle_received_alert(message)
         return nil
       end
 
-      message
+      [message, orig_msg]
     end
     # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param cipher [TTTLS13::Cryptograph::Aead, Passer]
     #
     # @return [TTTLS13::Message::Record]
+    # @return [Array of String]
     def recv_record(cipher)
       binary = @socket.read(5)
       record_len = Convert.bin2i(binary.slice(3, 2))
@@ -264,9 +268,13 @@ module TTTLS13
 
       begin
         buffer = @binary_buffer
-        record = Message::Record.deserialize(binary, cipher, buffer,
-                                             @recv_record_size)
-        @binary_buffer = record.surplus_binary
+        record, orig_msgs, surplus_binary = Message::Record.deserialize(
+          binary,
+          cipher,
+          buffer,
+          @recv_record_size
+        )
+        @binary_buffer = surplus_binary
       rescue Error::ErrorAlerts => e
         terminate(e.message.to_sym)
       end
@@ -278,7 +286,7 @@ module TTTLS13
       end
 
       logger.debug("receive \n" + record.pretty_inspect)
-      record
+      [record, orig_msgs]
     end
 
     # @param ch1 [TTTLS13::Message::ClientHello]
@@ -292,11 +300,9 @@ module TTTLS13
       # TODO: ext binder
       hash_len = OpenSSL::Digest.new(digest).digest_length
       tt = Transcript.new
-      tt.merge!(
-        CH1 => ch1,
-        HRR => hrr,
-        CH => ch
-      )
+      tt[CH1] = [ch1, ch1.serialize] unless ch1.nil?
+      tt[HRR] = [hrr, hrr.serialize] unless hrr.nil?
+      tt[CH] = [ch, ch.serialize]
       # transcript-hash (CH1 + HRR +) truncated-CH
       hash = tt.truncate_hash(digest, CH, hash_len + 3)
       OpenSSL::HMAC.digest(digest, binder_key, hash)
@@ -500,11 +506,10 @@ module TTTLS13
       return false if san.nil?
 
       ostr = OpenSSL::ASN1.decode(san.to_der).value.last
-      matching = OpenSSL::ASN1.decode(ostr.value).map(&:value)
-                              .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
-                              .any? { |s| name.match(/#{s}/) }
-
-      matching
+      OpenSSL::ASN1.decode(ostr.value)
+                   .map(&:value)
+                   .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
+                   .any? { |s| name.match(/#{s}/) }
     end
 
     # @param signature_algorithms [Array of SignatureAlgorithms]

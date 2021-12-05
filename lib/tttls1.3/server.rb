@@ -140,7 +140,6 @@ module TTTLS13
       transcript = Transcript.new
       key_schedule = nil # TTTLS13::KeySchedule
       priv_key = nil # OpenSSL::PKey::$Object
-
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
 
@@ -151,7 +150,7 @@ module TTTLS13
           logger.debug('ServerState::START')
 
           receivable_ccs = transcript.include?(CH1)
-          ch = transcript[CH] = recv_client_hello(receivable_ccs)
+          ch, = transcript[CH] = recv_client_hello(receivable_ccs)
 
           # support only TLS 1.3
           terminate(:protocol_version) unless ch.negotiated_tls_1_3?
@@ -183,7 +182,7 @@ module TTTLS13
           logger.debug('ServerState::RECVD_CH')
 
           # select parameters
-          ch = transcript[CH]
+          ch, = transcript[CH]
           @cipher_suite = select_cipher_suite(ch)
           @named_group = select_named_group(ch)
           @signature_scheme = select_signature_scheme(ch, @crt)
@@ -192,8 +191,9 @@ module TTTLS13
 
           # send HRR
           if @named_group.nil?
-            ch1 = transcript[CH1] = transcript.delete(CH)
-            transcript[HRR] = send_hello_retry_request(ch1, @cipher_suite)
+            ch1, = transcript[CH1] = transcript.delete(CH)
+            hrr = send_hello_retry_request(ch1, @cipher_suite)
+            transcript[HRR] = [hrr, hrr.serialize]
             @state = ServerState::START
             next
           end
@@ -201,10 +201,14 @@ module TTTLS13
         when ServerState::NEGOTIATED
           logger.debug('ServerState::NEGOTIATED')
 
-          ch = transcript[CH]
+          ch, = transcript[CH]
           extensions, priv_key = gen_sh_extensions(@named_group)
-          transcript[SH] = send_server_hello(extensions, @cipher_suite,
-                                             ch.legacy_session_id)
+          sh = send_server_hello(
+            extensions,
+            @cipher_suite,
+            ch.legacy_session_id
+          )
+          transcript[SH] = [sh, sh.serialize]
           send_ccs if @settings[:compatibility_mode]
 
           # generate shared secret
@@ -235,29 +239,30 @@ module TTTLS13
         when ServerState::WAIT_FLIGHT2
           logger.debug('ServerState::WAIT_FLIGHT2')
 
-          ch = transcript[CH]
+          ch, = transcript[CH]
           rsl = @send_record_size \
             if ch.extensions.include?(Message::ExtensionType::RECORD_SIZE_LIMIT)
-          ee = transcript[EE] = gen_encrypted_extensions(ch, @alpn, rsl)
+          ee = gen_encrypted_extensions(ch, @alpn, rsl)
+          transcript[EE] = [ee, ee.serialize]
           # TODO: [Send CertificateRequest]
 
           # status_request
           ocsp_response = fetch_ocsp_response \
             if ch.extensions.include?(Message::ExtensionType::STATUS_REQUEST)
-          ct = transcript[CT] = gen_certificate(@crt, @chain, ocsp_response)
+          ct = gen_certificate(@crt, @chain, ocsp_response)
+          transcript[CT] = [ct, ct.serialize]
           digest = CipherSuite.digest(@cipher_suite)
-          cv = transcript[CV] = gen_certificate_verify(
-            @key,
-            @signature_scheme,
-            transcript.hash(digest, CT)
-          )
+          hash = transcript.hash(digest, CT)
+          cv = gen_certificate_verify(@key, @signature_scheme, hash)
+          transcript[CV] = [cv, cv.serialize]
           finished_key = key_schedule.server_finished_key
           signature = sign_finished(
             digest: digest,
             finished_key: finished_key,
             hash: transcript.hash(digest, CV)
           )
-          sf = transcript[SF] = Message::Finished.new(signature)
+          sf = Message::Finished.new(signature)
+          transcript[SF] = [sf, sf.serialize]
           send_server_parameters([ee, ct, cv, sf], hs_wcipher)
           @state = ServerState::WAIT_FINISHED
         when ServerState::WAIT_CERT
@@ -267,7 +272,7 @@ module TTTLS13
         when ServerState::WAIT_FINISHED
           logger.debug('ServerState::WAIT_FINISHED')
 
-          cf = transcript[CF] = recv_finished(hs_rcipher)
+          cf, = transcript[CF] = recv_finished(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
           verified = verified_finished?(
             finished: cf,
@@ -325,12 +330,15 @@ module TTTLS13
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::ClientHello]
+    # @return [String]
     def recv_client_hello(receivable_ccs)
-      ch = recv_message(receivable_ccs: receivable_ccs,
-                        cipher: Cryptograph::Passer.new)
+      ch, orig_msg = recv_message(
+        receivable_ccs: receivable_ccs,
+        cipher: Cryptograph::Passer.new
+      )
       terminate(:unexpected_message) unless ch.is_a?(Message::ClientHello)
 
-      ch
+      [ch, orig_msg]
     end
 
     # @param extensions [TTTLS13::Message::Extensions]
@@ -442,11 +450,12 @@ module TTTLS13
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [TTTLS13::Message::Finished]
+    # @return [String]
     def recv_finished(cipher)
-      cf = recv_message(receivable_ccs: true, cipher: cipher)
+      cf, orig_msg = recv_message(receivable_ccs: true, cipher: cipher)
       terminate(:unexpected_message) unless cf.is_a?(Message::Finished)
 
-      cf
+      [cf, orig_msg]
     end
 
     # @param named_group [TTTLS13::NamedGroup]

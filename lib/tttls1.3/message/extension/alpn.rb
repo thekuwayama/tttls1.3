@@ -27,9 +27,12 @@ module TTTLS13
 
         # @return [String]
         def serialize
-          binary = @protocol_name_list.map(&:prefix_uint8_length).join
+          binary = @protocol_name_list
+                   .map(&:prefix_uint8_length)
+                   .join
+                   .prefix_uint16_length
 
-          @extension_type + binary.prefix_uint16_length.prefix_uint16_length
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]

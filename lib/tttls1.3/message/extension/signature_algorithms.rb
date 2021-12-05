@@ -35,9 +35,9 @@ module TTTLS13
 
         # @return [String]
         def serialize
-          binary = @supported_signature_algorithms.join
+          binary = @supported_signature_algorithms.join.prefix_uint16_length
 
-          @extension_type + binary.prefix_uint16_length.prefix_uint16_length
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]

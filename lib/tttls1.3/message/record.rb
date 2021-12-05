@@ -11,23 +11,19 @@ module TTTLS13
       attr_reader :type
       attr_reader :legacy_record_version
       attr_reader :messages
-      attr_reader :surplus_binary
       attr_reader :cipher
 
       # @param type [TTTLS13::Message::ContentType]
       # @param legacy_record_version [TTTLS13::Message::ProtocolVersion]
       # @param messages [Array of TTTLS13::Message::$Object]
-      # @param surplus_binary [String]
       # @param cipher [TTTLS13::Cryptograph::$Object]
       def initialize(type:,
                      legacy_record_version: ProtocolVersion::TLS_1_2,
                      messages:,
-                     surplus_binary: '',
                      cipher:)
         @type = type
         @legacy_record_version = legacy_record_version
         @messages = messages
-        @surplus_binary = surplus_binary
         @cipher = cipher
       end
 
@@ -40,7 +36,7 @@ module TTTLS13
       #
       # @return [String]
       def serialize(record_size_limit = DEFAULT_RECORD_SIZE_LIMIT)
-        tlsplaintext = @messages.map(&:serialize).join + @surplus_binary
+        tlsplaintext = @messages.map(&:serialize).join
         if @cipher.is_a?(Cryptograph::Aead)
           max = @cipher.tlsplaintext_length_limit(record_size_limit)
           fragments = tlsplaintext.scan(/.{1,#{max}}/m)
@@ -66,6 +62,8 @@ module TTTLS13
       # @raise [TTTLS13::Error::ErrorAlerts]
       #
       # @return [TTTLS13::Message::Record]
+      # @return [Array of String]
+      # @return [String]
       # rubocop: disable Metrics/AbcSize
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
@@ -93,13 +91,17 @@ module TTTLS13
           fragment, inner_type = cipher.decrypt(fragment, binary.slice(0, 5))
         end
 
-        messages, surplus_binary = deserialize_fragment(buffered + fragment,
-                                                        inner_type || type)
-        Record.new(type: type,
-                   legacy_record_version: legacy_record_version,
-                   messages: messages,
-                   surplus_binary: surplus_binary,
-                   cipher: cipher)
+        messages, orig_msgs, surplus_binary = deserialize_fragment(
+          buffered + fragment,
+          inner_type || type
+        )
+        record = Record.new(
+          type: type,
+          legacy_record_version: legacy_record_version,
+          messages: messages,
+          cipher: cipher
+        )
+        [record, orig_msgs, surplus_binary]
       end
       # rubocop: enable Metrics/AbcSize
       # rubocop: enable Metrics/CyclomaticComplexity
@@ -152,20 +154,24 @@ module TTTLS13
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           surplus_binary = ''
+          orig_msgs = []
           case type
           when ContentType::HANDSHAKE
-            messages, surplus_binary = deserialize_handshake(binary)
+            messages, orig_msgs, surplus_binary = deserialize_handshake(binary)
           when ContentType::CCS
             messages = [ChangeCipherSpec.deserialize(binary)]
+            orig_msgs = [binary]
           when ContentType::APPLICATION_DATA
             messages = [ApplicationData.deserialize(binary)]
+            orig_msgs = [binary]
           when ContentType::ALERT
             messages = [Alert.deserialize(binary)]
+            orig_msgs = [binary]
           else
             raise Error::ErrorAlerts, :unexpected_message
           end
 
-          [messages, surplus_binary]
+          [messages, orig_msgs, surplus_binary]
         end
 
         # @param binary [String]
@@ -173,11 +179,13 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [Array of TTTLS13::Message::$Object]
+        # @return [Array of String]
         # @return [String]
         def deserialize_handshake(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
           handshakes = []
+          orig_msgs = []
           i = 0
           while i < binary.length
             # Handshake.length is kind of uint24 and Record.length is kind of
@@ -185,18 +193,19 @@ module TTTLS13
             if binary.length < 4 + i ||
                binary.length < 4 + i + Convert.bin2i(binary.slice(i + 1, 3))
               surplus_binary = binary[i..]
-              return [handshakes, surplus_binary]
+              return [handshakes, orig_msgs, surplus_binary]
             end
 
             msg_len = Convert.bin2i(binary.slice(i + 1, 3))
             msg_bin = binary.slice(i, msg_len + 4)
+            orig_msgs << msg_bin
             message = do_deserialize_handshake(msg_bin)
             i += msg_len + 4
             handshakes << message
           end
 
           surplus_binary = binary[i..]
-          [handshakes, surplus_binary]
+          [handshakes, orig_msgs, surplus_binary]
         end
 
         # @param binary [String]
@@ -226,6 +235,8 @@ module TTTLS13
             NewSessionTicket.deserialize(binary)
           when HandshakeType::END_OF_EARLY_DATA
             EndOfEarlyData.deserialize(binary)
+          when HandshakeType::COMPRESSED_CERTIFICATE
+            CompressedCertificate.deserialize(binary)
           else
             raise Error::ErrorAlerts, :unexpected_message
           end

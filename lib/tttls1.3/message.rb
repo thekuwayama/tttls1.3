@@ -21,26 +21,27 @@ module TTTLS13
     DEFAULT_VERSIONS = [ProtocolVersion::TLS_1_3].freeze
 
     module HandshakeType
-      HELLO_REQUEST        = "\x00" # RESERVED
-      CLIENT_HELLO         = "\x01"
-      SERVER_HELLO         = "\x02"
-      HELLO_VERIFY_REQUEST = "\x03" # RESERVED
-      NEW_SESSION_TICKET   = "\x04"
-      END_OF_EARLY_DATA    = "\x05"
-      HELLO_RETRY_REQUEST  = "\x06" # RESERVED
-      ENCRYPTED_EXTENSIONS = "\x08"
-      CERTIFICATE          = "\x0b"
-      SERVER_KEY_EXCHANGE  = "\x0c" # RESERVED
-      CERTIFICATE_REQUEST  = "\x0d"
-      SERVER_HELLO_DONE    = "\x0e" # RESERVED
-      CERTIFICATE_VERIFY   = "\x0f"
-      CLIENT_KEY_EXCHANGE  = "\x10" # RESERVED
-      FINISHED             = "\x14"
-      CERTIFICATE_URL      = "\x15" # RESERVED
-      CERTIFICATE_STATUS   = "\x16" # RESERVED
-      SUPPLEMENTAL_DATA    = "\x17" # RESERVED
-      KEY_UPDATE           = "\x18"
-      MESSAGE_HASH         = "\xfe"
+      HELLO_REQUEST          = "\x00" # RESERVED
+      CLIENT_HELLO           = "\x01"
+      SERVER_HELLO           = "\x02"
+      HELLO_VERIFY_REQUEST   = "\x03" # RESERVED
+      NEW_SESSION_TICKET     = "\x04"
+      END_OF_EARLY_DATA      = "\x05"
+      HELLO_RETRY_REQUEST    = "\x06" # RESERVED
+      ENCRYPTED_EXTENSIONS   = "\x08"
+      CERTIFICATE            = "\x0b"
+      SERVER_KEY_EXCHANGE    = "\x0c" # RESERVED
+      CERTIFICATE_REQUEST    = "\x0d"
+      SERVER_HELLO_DONE      = "\x0e" # RESERVED
+      CERTIFICATE_VERIFY     = "\x0f"
+      CLIENT_KEY_EXCHANGE    = "\x10" # RESERVED
+      FINISHED               = "\x14"
+      CERTIFICATE_URL        = "\x15" # RESERVED
+      CERTIFICATE_STATUS     = "\x16" # RESERVED
+      SUPPLEMENTAL_DATA      = "\x17" # RESERVED
+      KEY_UPDATE             = "\x18"
+      COMPRESSED_CERTIFICATE = "\x19"
+      MESSAGE_HASH           = "\xfe"
     end
 
     module ExtensionType
@@ -56,6 +57,7 @@ module TTTLS13
       CLIENT_CERTIFICATE_TYPE                = "\x00\x13"
       SERVER_CERTIFICATE_TYPE                = "\x00\x14"
       PADDING                                = "\x00\x15"
+      COMPRESS_CERTIFICATE                   = "\x00\x1b"
       RECORD_SIZE_LIMIT                      = "\x00\x1c"
       PWD_PROTECT                            = "\x00\x1d"
       PWD_CLEAR                              = "\x00\x1e"

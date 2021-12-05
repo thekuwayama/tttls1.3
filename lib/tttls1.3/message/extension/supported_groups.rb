@@ -21,9 +21,9 @@ module TTTLS13
 
         # @return [String]
         def serialize
-          binary = @named_group_list.join
+          binary = @named_group_list.join.prefix_uint16_length
 
-          @extension_type + binary.prefix_uint16_length.prefix_uint16_length
+          @extension_type + binary.prefix_uint16_length
         end
 
         # @param binary [String]

@@ -121,6 +121,7 @@ module TTTLS13
         # @return [TTTLS13::Message::Extension::$Object, nil]
         # rubocop: disable Metrics/CyclomaticComplexity
         # rubocop: disable Metrics/MethodLength
+        # rubocop: disable Metrics/PerceivedComplexity
         def deserialize_extension(binary, extension_type, msg_type)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -143,6 +144,8 @@ module TTTLS13
             Extension::SignatureAlgorithms.deserialize(binary)
           when ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
             Extension::Alpn.deserialize(binary)
+          when ExtensionType::COMPRESS_CERTIFICATE
+            Extension::CompressCertificate.deserialize(binary)
           when ExtensionType::RECORD_SIZE_LIMIT
             Extension::RecordSizeLimit.deserialize(binary)
           when ExtensionType::PRE_SHARED_KEY
@@ -165,6 +168,7 @@ module TTTLS13
         end
         # rubocop: enable Metrics/CyclomaticComplexity
         # rubocop: enable Metrics/MethodLength
+        # rubocop: enable Metrics/PerceivedComplexity
       end
     end
   end

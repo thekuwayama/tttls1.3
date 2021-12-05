@@ -30,7 +30,7 @@ RSpec.describe Record do
 
   context 'valid record binary' do
     let(:record) do
-      Record.deserialize(TESTBINARY_RECORD_CCS, Passer.new)
+      Record.deserialize(TESTBINARY_RECORD_CCS, Passer.new).first
     end
 
     it 'should generate valid record header and ChangeCipherSpec' do
@@ -75,7 +75,7 @@ RSpec.describe Record do
         write_iv: TESTBINARY_SERVER_PARAMETERS_WRITE_IV,
         sequence_number: SequenceNumber.new
       )
-      Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD, cipher)
+      Record.deserialize(TESTBINARY_SERVER_PARAMETERS_RECORD, cipher).first
     end
 
     it 'should generate valid record header' do
