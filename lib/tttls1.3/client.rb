@@ -369,9 +369,10 @@ module TTTLS13
             hash: transcript.hash(digest, CV)
           )
 
-          transcript[EOED] = send_eoed(e_wcipher) \
-            if use_early_data? && succeed_early_data?
-
+          if use_early_data? && succeed_early_data?
+            eoed = send_eoed(e_wcipher)
+            transcript[EOED] = [eoed, eoed.serialize]
+          end
           # TODO: Send Certificate [+ CertificateVerify]
           signature = sign_finished(
             digest: digest,
