@@ -90,12 +90,16 @@ RSpec.describe Server do
       )
     end
 
+    let(:ch) do
+      ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+    end
+
     let(:server) do
       Server.new(nil)
     end
 
     it 'should generate Certificate' do
-      ct = server.send(:gen_certificate, crt)
+      ct = server.send(:gen_certificate, crt, ch)
       expect(ct).to be_a_kind_of(Certificate)
 
       certificate_entry = ct.certificate_list.first

@@ -44,6 +44,11 @@ module TTTLS13
   ].freeze
   private_constant :DEFAULT_SP_NAMED_GROUP_LIST
 
+  DEFAULT_SP_COMPRESS_CERTIFICATE_ALGORITHMS = [
+    Message::Extension::CertificateCompressionAlgorithm::ZLIB
+  ].freeze
+  private_constant :DEFAULT_SP_COMPRESS_CERTIFICATE_ALGORITHMS
+
   DEFAULT_SERVER_SETTINGS = {
     crt_file: nil,
     chain_files: nil,
@@ -53,6 +58,7 @@ module TTTLS13
     supported_groups: DEFAULT_SP_NAMED_GROUP_LIST,
     alpn: nil,
     process_ocsp_response: nil,
+    compress_certificate_algorithms: DEFAULT_SP_COMPRESS_CERTIFICATE_ALGORITHMS,
     compatibility_mode: true,
     loglevel: Logger::WARN
   }.freeze
@@ -249,7 +255,7 @@ module TTTLS13
           # status_request
           ocsp_response = fetch_ocsp_response \
             if ch.extensions.include?(Message::ExtensionType::STATUS_REQUEST)
-          ct = gen_certificate(@crt, @chain, ocsp_response)
+          ct = gen_certificate(@crt, ch, @chain, ocsp_response)
           transcript[CT] = [ct, ct.serialize]
           digest = CipherSuite.digest(@cipher_suite)
           hash = transcript.hash(digest, CT)
@@ -416,19 +422,39 @@ module TTTLS13
     end
 
     # @param crt [OpenSSL::X509::Certificate]
+    # @param ch [TTTLS13::Message::ClientHell]
     # @param chain [Array of OpenSSL::X509::Certificate]
     # @param ocsp_response [OpenSSL::OCSP::Response]
     #
-    # @return [TTTLS13::Message::Certificate, nil]
-    def gen_certificate(crt, chain = [], ocsp_response = nil)
+    # @return [TTTLS13::Message::Certificate, CompressedCertificate, nil]
+    # rubocop: disable Metrics/CyclomaticComplexity
+    def gen_certificate(crt, ch, chain = [], ocsp_response = nil)
       exs = Message::Extensions.new
       # status_request
       exs << Message::Extension::OCSPResponse.new(ocsp_response) \
         unless ocsp_response.nil?
       ces = [Message::CertificateEntry.new(crt, exs)] \
             + (chain || []).map { |c| Message::CertificateEntry.new(c) }
-      Message::Certificate.new(certificate_list: ces)
+      ct = Message::Certificate.new(certificate_list: ces)
+
+      # compress_certificate
+      cc = ch.extensions[Message::ExtensionType::COMPRESS_CERTIFICATE]
+      if !cc.nil? && !cc.algorithms.empty?
+        cca = (@settings[:compress_certificate_algorithms] || []).find do |a|
+          cc.algorithms.include?(a)
+        end
+
+        unless cca.nil?
+          ct = Message::CompressedCertificate.new(
+            certificate_message: ct,
+            algorithm: cca
+          )
+        end
+      end
+
+      ct
     end
+    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param key [OpenSSL::PKey::PKey]
     # @param signature_scheme [TTTLS13::SignatureScheme]
