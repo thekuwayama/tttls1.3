@@ -18,6 +18,7 @@ module TTTLS13
       ExtensionType::CLIENT_CERTIFICATE_TYPE,
       ExtensionType::SERVER_CERTIFICATE_TYPE,
       ExtensionType::PADDING,
+      ExtensionType::COMPRESS_CERTIFICATE,
       ExtensionType::RECORD_SIZE_LIMIT,
       ExtensionType::PWD_PROTECT,
       ExtensionType::PWD_CLEAR,

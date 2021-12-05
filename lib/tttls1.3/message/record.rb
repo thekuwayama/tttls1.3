@@ -118,6 +118,7 @@ module TTTLS13
               Message::ServerHello,
               Message::EncryptedExtensions,
               Message::Certificate,
+              Message::CompressedCertificate,
               Message::CertificateVerify,
               Message::Finished,
               Message::EndOfEarlyData,
