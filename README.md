@@ -74,7 +74,7 @@ server.write(YOUR_MESSAGE)
 server.close
 ```
 
-[Here](https://github.com/thekuwayama/tttls1.3/tree/master/example) are some examples of HTTPS.
+[Here](https://github.com/thekuwayama/tttls1.3/tree/main/example) are some examples of HTTPS.
 
 
 ## Settings
