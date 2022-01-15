@@ -87,8 +87,11 @@ module TTTLS13
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
       # NOTE: backward compatibility
-      @settings[:resumption_main_secret] = @settings.delete(:resumption_master_secret) \
-        if @settings[:resumption_main_secret].nil && !@settings[:resumption_master_secret].nil?
+      if @settings[:resumption_main_secret].nil? &&
+         !@settings[:resumption_master_secret].nil?
+        @settings[:resumption_main_secret] =
+          @settings.delete(:resumption_master_secret) \
+      end
       logger.level = @settings[:loglevel]
 
       @early_data = ''
