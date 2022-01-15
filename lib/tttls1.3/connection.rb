@@ -25,7 +25,7 @@ module TTTLS13
       @send_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
       @recv_record_size = Message::DEFAULT_RECORD_SIZE_LIMIT
       @alpn = nil # String
-      @exporter_master_secret = nil # String
+      @exporter_main_secret = nil # String
     end
 
     # @raise [TTTLS13::Error::ConfigError]
@@ -109,15 +109,15 @@ module TTTLS13
     #
     # @return [String, nil]
     def exporter(label, context, key_length)
-      return nil if @exporter_master_secret.nil? || @cipher_suite.nil?
+      return nil if @exporter_main_secret.nil? || @cipher_suite.nil?
 
       digest = CipherSuite.digest(@cipher_suite)
-      do_exporter(@exporter_master_secret, digest, label, context, key_length)
+      do_exporter(@exporter_main_secret, digest, label, context, key_length)
     end
 
     private
 
-    # @param secret [String] (early_)exporter_master_secret
+    # @param secret [String] (early_)exporter_main_secret
     # @param digest [String] name of digest algorithm
     # @param label [String]
     # @param context [String]

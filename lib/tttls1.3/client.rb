@@ -58,7 +58,7 @@ module TTTLS13
     alpn: nil,
     process_new_session_ticket: nil,
     ticket: nil,
-    resumption_master_secret: nil,
+    resumption_main_secret: nil,
     psk_cipher_suite: nil,
     ticket_nonce: nil,
     ticket_age_add: nil,
@@ -137,7 +137,7 @@ module TTTLS13
       priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       if use_psk?
         psk = gen_psk_from_nst(
-          @settings[:resumption_master_secret],
+          @settings[:resumption_main_secret],
           @settings[:ticket_nonce],
           CipherSuite.digest(@settings[:psk_cipher_suite])
         )
@@ -423,8 +423,8 @@ module TTTLS13
             transcript[CH].first.random,
             key_schedule.server_application_traffic_secret
           )
-          @exporter_master_secret = key_schedule.exporter_master_secret
-          @resumption_master_secret = key_schedule.resumption_master_secret
+          @exporter_main_secret = key_schedule.exporter_main_secret
+          @resumption_main_secret = key_schedule.resumption_main_secret
           @state = ClientState::CONNECTED
         when ClientState::CONNECTED
           logger.debug('ClientState::CONNECTED')
@@ -544,7 +544,7 @@ module TTTLS13
     # @return [Boolean]
     def use_psk?
       !@settings[:ticket].nil? &&
-        !@settings[:resumption_master_secret].nil? &&
+        !@settings[:resumption_main_secret].nil? &&
         !@settings[:psk_cipher_suite].nil? &&
         !@settings[:ticket_nonce].nil? &&
         !@settings[:ticket_age_add].nil? &&
@@ -568,14 +568,14 @@ module TTTLS13
       send_record(ap_record)
     end
 
-    # @param resumption_master_secret [String]
+    # @param resumption_main_secret [String]
     # @param ticket_nonce [String]
     # @param digest [String] name of digest algorithm
     #
     # @return [String]
-    def gen_psk_from_nst(resumption_master_secret, ticket_nonce, digest)
+    def gen_psk_from_nst(resumption_main_secret, ticket_nonce, digest)
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      KeySchedule.hkdf_expand_label(resumption_master_secret, 'resumption',
+      KeySchedule.hkdf_expand_label(resumption_main_secret, 'resumption',
                                     ticket_nonce, hash_len, digest)
     end
 
@@ -949,7 +949,7 @@ module TTTLS13
     def process_new_session_ticket(nst)
       super(nst)
 
-      rms = @resumption_master_secret
+      rms = @resumption_main_secret
       cs = @cipher_suite
       @settings[:process_new_session_ticket]&.call(nst, rms, cs)
     end
