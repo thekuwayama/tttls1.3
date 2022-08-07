@@ -839,7 +839,13 @@ module TTTLS13
     # @return [TTTLS13::Message::Finished]
     def send_finished(signature, cipher)
       cf = Message::Finished.new(signature)
-      send_handshakes(Message::ContentType::APPLICATION_DATA, [cf], cipher)
+
+      unless use_psk?
+        # PSK-based authentication happens as a side effect of key exchange.
+        # @see https://datatracker.ietf.org/doc/html/draft-ietf-tls-rfc8446bis-04#section-2
+        # @see https://github.com/thekuwayama/tttls1.3/issues/48
+        send_handshakes(Message::ContentType::APPLICATION_DATA, [cf], cipher)
+      end
 
       cf
     end
