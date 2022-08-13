@@ -28,3 +28,6 @@ Metrics/BlockLength:
 Layout/LineLength:
   Exclude:
     - 'tttls1.3.gemspec'
+
+Layout/BlockAlignment:
+  Enabled: false
