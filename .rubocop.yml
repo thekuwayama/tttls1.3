@@ -28,3 +28,7 @@ Metrics/BlockLength:
 Layout/LineLength:
   Exclude:
     - 'tttls1.3.gemspec'
+
+# https://github.com/rubocop/rubocop/issues/10258
+Layout/BlockAlignment:
+  Enabled: false

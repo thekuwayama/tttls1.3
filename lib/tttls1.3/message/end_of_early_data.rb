@@ -2,11 +2,18 @@
 # frozen_string_literal: true
 
 module TTTLS13
+  using Refinements
   module Message
     class EndOfEarlyData
+      attr_reader :msg_type
+
+      def initialize
+        @msg_type = HandshakeType::END_OF_EARLY_DATA
+      end
+
       # @return [String]
       def serialize
-        ''
+        @msg_type + ''.prefix_uint24_length
       end
 
       # @param binary [String]
