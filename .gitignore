@@ -14,3 +14,4 @@ Gemfile.lock
 /coverage/
 /spec/reports/
 /tmp/
+.DS_Store
