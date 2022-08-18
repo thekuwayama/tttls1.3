@@ -68,7 +68,7 @@ module TTTLS13
       end
 
       def close
-        @file.close
+        @file&.close
       end
 
       private
