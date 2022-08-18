@@ -893,11 +893,11 @@ module TTTLS13
         unless ct.certificate_list.map(&:extensions)
                  .all? { |e| (e.keys - ch.extensions.keys).empty? }
 
-      # return :certificate_unknown unless trusted_certificate?(
-      # ct.certificate_list,
-      #        @settings[:ca_file],
-      # @hostname
-      # )
+      return :certificate_unknown unless trusted_certificate?(
+        ct.certificate_list,
+        @settings[:ca_file],
+        @hostname
+      )
 
       if @settings[:check_certificate_status]
         ee = ct.certificate_list.first
