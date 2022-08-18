@@ -158,7 +158,7 @@ module TTTLS13
           sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
         rescue SystemCallError => e
           msg = "\"#{@settings[:sslkeylogfile]}\" file can NOT open: #{e}"
-          logger.info(msg)
+          logger.warn(msg)
         end
       end
 
