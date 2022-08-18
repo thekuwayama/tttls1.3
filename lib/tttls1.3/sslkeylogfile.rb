@@ -13,6 +13,8 @@ module TTTLS13
 
     class Writer
       # @param path [String]
+      #
+      # @raise [SystemCallError]
       def initialize(path)
         @file = File.new(path, 'a+')
       end
