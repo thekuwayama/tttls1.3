@@ -68,8 +68,8 @@ module TTTLS13
     process_certificate_status: nil,
     compress_certificate_algorithms: DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS,
     compatibility_mode: true,
-    loglevel: Logger::WARN,
-    sslkeylogfile: nil
+    sslkeylogfile: nil,
+    loglevel: Logger::WARN
   }.freeze
   private_constant :DEFAULT_CLIENT_SETTINGS
 
@@ -432,7 +432,6 @@ module TTTLS13
           break
         end
       end
-
       sslkeylogfile&.close
     end
     # rubocop: enable Metrics/AbcSize

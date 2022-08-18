@@ -124,6 +124,7 @@ tttls1.3 server is configurable using keyword arguments.
 | `:process_ocsp_response` | Proc | nil | Proc that gets OpenSSL::OCSP::Response. If not needed to staple OCSP::Response, set nil. |
 | `:compress_certificate_algorithms` | Array of TTTLS13::Message::Extension::CertificateCompressionAlgorithm constant | `ZLIB` | The compression algorithms are supported for compressing the Certificate message. |
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
+| `:sslkeylogfile` | String | nil | If needed to log SSLKEYLOGFILE, set the file path. |
 | `:loglevel` | Logger constant | Logger::WARN | If needed to print verbose, set Logger::DEBUG. |
 
 

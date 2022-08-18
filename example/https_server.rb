@@ -12,7 +12,8 @@ settings = {
   crt_file: __dir__ + '/../tmp/server.crt',
   chain_files: [__dir__ + '/../tmp/intermediate.crt'],
   key_file: __dir__ + '/../tmp/server.key',
-  alpn: ['http/1.1']
+  alpn: ['http/1.1'],
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 
 q = Queue.new

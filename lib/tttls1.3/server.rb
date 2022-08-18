@@ -60,6 +60,7 @@ module TTTLS13
     process_ocsp_response: nil,
     compress_certificate_algorithms: DEFAULT_SP_COMPRESS_CERTIFICATE_ALGORITHMS,
     compatibility_mode: true,
+    sslkeylogfile: nil,
     loglevel: Logger::WARN
   }.freeze
   private_constant :DEFAULT_SERVER_SETTINGS
@@ -148,6 +149,15 @@ module TTTLS13
       priv_key = nil # OpenSSL::PKey::$Object
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
+      sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      unless @settings[:sslkeylogfile].nil?
+        begin
+          sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
+        rescue SystemCallError => e
+          msg = "\"#{@settings[:sslkeylogfile]}\" file can NOT open: #{e}"
+          logger.warn(msg)
+        end
+      end
 
       @state = ServerState::START
       loop do
@@ -220,7 +230,7 @@ module TTTLS13
           # generate shared secret
           ke = ch.extensions[Message::ExtensionType::KEY_SHARE]
                 &.key_share_entry
-                &.find { |e| e.group == @named_group }
+                &.find { |kse| kse.group == @named_group }
                 &.key_exchange
           shared_secret = gen_shared_secret(ke, priv_key, @named_group)
           key_schedule = KeySchedule.new(
@@ -234,10 +244,18 @@ module TTTLS13
             key_schedule.server_handshake_write_key,
             key_schedule.server_handshake_write_iv
           )
+          sslkeylogfile&.write_server_handshake_traffic_secret(
+            transcript[CH].first.random,
+            key_schedule.server_handshake_traffic_secret
+          )
           hs_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,
             key_schedule.client_handshake_write_iv
+          )
+          sslkeylogfile&.write_client_handshake_traffic_secret(
+            transcript[CH].first.random,
+            key_schedule.client_handshake_traffic_secret
           )
           @state = ServerState::WAIT_FLIGHT2
         when ServerState::WAIT_EOED
@@ -292,10 +310,18 @@ module TTTLS13
             key_schedule.server_application_write_key,
             key_schedule.server_application_write_iv
           )
+          sslkeylogfile&.write_server_traffic_secret_0(
+            transcript[CH].first.random,
+            key_schedule.server_application_traffic_secret
+          )
           @ap_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_application_write_key,
             key_schedule.client_application_write_iv
+          )
+          sslkeylogfile&.write_client_traffic_secret_0(
+            transcript[CH].first.random,
+            key_schedule.client_application_traffic_secret
           )
           @exporter_master_secret = key_schedule.exporter_master_secret
           @state = ServerState::CONNECTED
@@ -305,6 +331,7 @@ module TTTLS13
           break
         end
       end
+      sslkeylogfile&.close
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/BlockLength
