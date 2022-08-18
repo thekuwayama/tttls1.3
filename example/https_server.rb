@@ -49,7 +49,7 @@ Etc.nprocessors.times do
     rescue Timeout::Error
       logger.warn 'Timeout'
     ensure
-      s.close
+      s&.close
     end
   end
 end
