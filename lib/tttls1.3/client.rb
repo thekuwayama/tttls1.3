@@ -68,7 +68,8 @@ module TTTLS13
     process_certificate_status: nil,
     compress_certificate_algorithms: DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS,
     compatibility_mode: true,
-    loglevel: Logger::WARN
+    loglevel: Logger::WARN,
+    sslkeylogfile: nil
   }.freeze
   private_constant :DEFAULT_CLIENT_SETTINGS
 
@@ -151,6 +152,8 @@ module TTTLS13
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
+      sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile]) \
+        unless @settings[:sslkeylogfile].nil?
 
       @state = ClientState::START
       loop do
@@ -169,6 +172,10 @@ module TTTLS13
               key_schedule.early_data_write_key,
               key_schedule.early_data_write_iv
             )
+            sslkeylogfile.write_client_early_traffic_secret(
+              transcript[CH].first.random,
+              key_schedule.client_early_traffic_secret
+            ) unless sslkeylogfile.nil?
             send_early_data(e_wcipher)
           end
 
@@ -276,11 +283,19 @@ module TTTLS13
             key_schedule.client_handshake_write_key,
             key_schedule.client_handshake_write_iv
           )
+          sslkeylogfile.write_client_handshake_traffic_secret(
+            transcript[CH].first.random,
+            key_schedule.client_handshake_traffic_secret
+          ) unless sslkeylogfile.nil?
           hs_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.server_handshake_write_key,
             key_schedule.server_handshake_write_iv
           )
+          sslkeylogfile.write_client_handshake_traffic_secret(
+            transcript[CH].first.random,
+            key_schedule.server_handshake_traffic_secret
+          ) unless sslkeylogfile.nil?
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           logger.debug('ClientState::WAIT_EE')
@@ -388,11 +403,19 @@ module TTTLS13
             key_schedule.client_application_write_key,
             key_schedule.client_application_write_iv
           )
+          sslkeylogfile.write_client_traffic_secret_0(
+            transcript[CH].first.random,
+            key_schedule.client_application_traffic_secret
+          ) unless sslkeylogfile.nil?
           @ap_rcipher = gen_cipher(
             @cipher_suite,
             key_schedule.server_application_write_key,
             key_schedule.server_application_write_iv
           )
+          sslkeylogfile.write_server_traffic_secret_0(
+            transcript[CH].first.random,
+            key_schedule.server_application_traffic_secret
+          ) unless sslkeylogfile.nil?
           @exporter_master_secret = key_schedule.exporter_master_secret
           @resumption_master_secret = key_schedule.resumption_master_secret
           @state = ClientState::CONNECTED
@@ -402,6 +425,8 @@ module TTTLS13
           break
         end
       end
+
+      sslkeylogfile.close
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/BlockLength
