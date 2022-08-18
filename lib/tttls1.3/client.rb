@@ -92,6 +92,9 @@ module TTTLS13
         @settings[:resumption_main_secret] =
           @settings.delete(:resumption_master_secret) \
       end
+      raise Error::ConfigError if @settings[:resumption_main_secret] !=
+                                  @settings[:resumption_master_secret]
+
       logger.level = @settings[:loglevel]
 
       @early_data = ''
