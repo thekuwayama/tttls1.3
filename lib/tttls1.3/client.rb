@@ -152,11 +152,15 @@ module TTTLS13
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
-      logger.info("\"#{@settings[:sslkeylogfile]}\" file not found") \
-        if !@settings[:sslkeylogfile].nil? &&
-           !File.exist?(@settings[:sslkeylogfile])
-      sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile]) \
-        unless @settings[:sslkeylogfile].nil?
+      sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      unless @settings[:sslkeylogfile].nil?
+        begin
+          sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
+        rescue SystemCallError => e
+          msg = "\"#{@settings[:sslkeylogfile]}\" file can NOT open: #{e}"
+          logger.info(msg)
+        end
+      end
 
       @state = ClientState::START
       loop do

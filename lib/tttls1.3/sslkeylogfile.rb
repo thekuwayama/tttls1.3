@@ -78,7 +78,7 @@ module TTTLS13
       # @param secret [String]
       def write_key_log(label, client_random, secret)
         s = "#{label} #{client_random.unpack1('H*')} #{secret.unpack1('H*')}\n"
-        @file.print(s)
+        @file&.print(s)
       end
     end
   end
