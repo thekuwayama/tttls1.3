@@ -10,7 +10,8 @@ req = simple_http_request(hostname)
 socket = TCPSocket.new(hostname, port)
 settings = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
-  alpn: ['http/1.1']
+  alpn: ['http/1.1'],
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect

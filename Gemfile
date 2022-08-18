@@ -6,10 +6,12 @@ gem 'logger'
 gem 'openssl'
 gem 'rake'
 
-group :test do
+group :development do
   gem 'byebug'
+  gem 'http_parser.rb'
   gem 'rspec', '3.9.0'
   gem 'rubocop', '0.78.0'
+  gem 'webrick'
 end
 
 gemspec
