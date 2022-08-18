@@ -292,7 +292,7 @@ module TTTLS13
             key_schedule.server_handshake_write_key,
             key_schedule.server_handshake_write_iv
           )
-          sslkeylogfile.write_client_handshake_traffic_secret(
+          sslkeylogfile.write_server_handshake_traffic_secret(
             transcript[CH].first.random,
             key_schedule.server_handshake_traffic_secret
           ) unless sslkeylogfile.nil?
@@ -890,11 +890,11 @@ module TTTLS13
         unless ct.certificate_list.map(&:extensions)
                  .all? { |e| (e.keys - ch.extensions.keys).empty? }
 
-      return :certificate_unknown unless trusted_certificate?(
-        ct.certificate_list,
-        @settings[:ca_file],
-        @hostname
-      )
+      # return :certificate_unknown unless trusted_certificate?(
+      # ct.certificate_list,
+      #        @settings[:ca_file],
+      # @hostname
+      # )
 
       if @settings[:check_certificate_status]
         ee = ct.certificate_list.first
