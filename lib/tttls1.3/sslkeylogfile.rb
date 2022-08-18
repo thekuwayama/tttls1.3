@@ -20,31 +20,51 @@ module TTTLS13
       # @param client_random [String]
       # @param secret [String]
       def write_client_early_traffic_secret(client_random, secret)
-        write_key_log(Label::CLIENT_EARLY_TRAFFIC_SECRET, client_random, secret)
+        write_key_log(
+          Label::CLIENT_EARLY_TRAFFIC_SECRET,
+          client_random,
+          secret
+        )
       end
 
       # @param client_random [String]
       # @param secret [String]
       def write_client_handshake_traffic_secret(client_random, secret)
-        write_key_log(Label::CLIENT_HANDSHAKE_TRAFFIC_SECRET, client_random, secret)
+        write_key_log(
+          Label::CLIENT_HANDSHAKE_TRAFFIC_SECRET,
+          client_random,
+          secret
+        )
       end
 
       # @param client_random [String]
       # @param secret [String]
       def write_server_handshake_traffic_secret(client_random, secret)
-        write_key_log(Label::SERVER_HANDSHAKE_TRAFFIC_SECRET, client_random, secret)
+        write_key_log(
+          Label::SERVER_HANDSHAKE_TRAFFIC_SECRET,
+          client_random,
+          secret
+        )
       end
 
       # @param client_random [String]
       # @param secret [String]
       def write_client_traffic_secret_0(client_random, secret)
-        write_key_log(Label::CLIENT_TRAFFIC_SECRET_0, client_random, secret)
+        write_key_log(
+          Label::CLIENT_TRAFFIC_SECRET_0,
+          client_random,
+          secret
+        )
       end
 
       # @param client_random [String]
       # @param secret [String]
       def write_server_traffic_secret_0(client_random, secret)
-        write_key_log(Label::SERVER_TRAFFIC_SECRET_0, client_random, secret)
+        write_key_log(
+          Label::SERVER_TRAFFIC_SECRET_0,
+          client_random,
+          secret
+        )
       end
 
       def close
@@ -57,7 +77,8 @@ module TTTLS13
       # @param client_random [String]
       # @param secret [String]
       def write_key_log(label, client_random, secret)
-        @file.print("#{label} #{client_random.unpack1('H*')} #{secret.unpack1('H*')}\n")
+        s = "#{label} #{client_random.unpack1('H*')} #{secret.unpack1('H*')}\n"
+        @file.print(s)
       end
     end
   end
