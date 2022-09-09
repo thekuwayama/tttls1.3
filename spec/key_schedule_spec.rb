@@ -37,9 +37,9 @@ RSpec.describe KeySchedule do
         .to eq TESTBINARY_C_AP_TRAFFIC
       expect(key_schedule.server_application_traffic_secret)
         .to eq TESTBINARY_S_AP_TRAFFIC
-      expect(key_schedule.exporter_main_secret)
+      expect(key_schedule.exporter_secret)
         .to eq TESTBINARY_EXP_MASTER
-      expect(key_schedule.resumption_main_secret)
+      expect(key_schedule.resumption_secret)
         .to eq TESTBINARY_RES_MASTER
     end
 

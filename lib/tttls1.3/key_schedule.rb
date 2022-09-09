@@ -61,15 +61,15 @@ module TTTLS13
       self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
-    # @deprecated Please use `early_exporter_main_secret` instead
+    # @deprecated Please use `early_exporter_secret` instead
     #
     # @return [String]
     def early_exporter_master_secret
-      early_exporter_main_secret
+      early_exporter_secret
     end
 
     # @return [String]
-    def early_exporter_main_secret
+    def early_exporter_secret
       hash = OpenSSL::Digest.digest(@digest, '')
       derive_secret(early_secret, 'e exp master', hash)
     end
@@ -195,28 +195,28 @@ module TTTLS13
       self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
-    # @deprecated Please use `exporter_main_secret` instead
+    # @deprecated Please use `exporter_secret` instead
     #
     # @return [String]
     def exporter_master_secret
-      exporter_main_secret
+      exporter_secret
     end
 
     # @return [String]
-    def exporter_main_secret
+    def exporter_secret
       hash = @transcript.hash(@digest, SF)
       derive_secret(main_secret, 'exp master', hash)
     end
 
-    # @deprecated Please use `resumption_main_secret` instead
+    # @deprecated Please use `resumption_secret` instead
     #
     # @return [String]
     def resumption_master_secret
-      resumption_main_secret
+      resumption_secret
     end
 
     # @return [String]
-    def resumption_main_secret
+    def resumption_secret
       hash = @transcript.hash(@digest, CF)
       derive_secret(main_secret, 'res master', hash)
     end

@@ -323,7 +323,7 @@ module TTTLS13
             transcript[CH].first.random,
             key_schedule.client_application_traffic_secret
           )
-          @exporter_main_secret = key_schedule.exporter_main_secret
+          @exporter_secret = key_schedule.exporter_secret
           @state = ServerState::CONNECTED
         when ServerState::CONNECTED
           logger.debug('ServerState::CONNECTED')
