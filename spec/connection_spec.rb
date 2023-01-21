@@ -6,13 +6,28 @@ require_relative 'spec_helper'
 RSpec.describe Connection do
   context 'connection, Simple 1-RTT Handshake,' do
     let(:key) do
-      rsa = OpenSSL::PKey::RSA.new
-      rsa.set_key(OpenSSL::BN.new(TESTBINARY_PKEY_MODULUS, 2),
-                  OpenSSL::BN.new(TESTBINARY_PKEY_PUBLIC_EXPONENT, 2),
-                  OpenSSL::BN.new(TESTBINARY_PKEY_PRIVATE_EXPONENT, 2))
-      rsa.set_factors(OpenSSL::BN.new(TESTBINARY_PKEY_PRIME1, 2),
-                      OpenSSL::BN.new(TESTBINARY_PKEY_PRIME2, 2))
-      rsa
+      n = OpenSSL::BN.new(TESTBINARY_PKEY_MODULUS, 2)
+      e = OpenSSL::BN.new(TESTBINARY_PKEY_PUBLIC_EXPONENT, 2)
+      d = OpenSSL::BN.new(TESTBINARY_PKEY_PRIVATE_EXPONENT, 2)
+      p = OpenSSL::BN.new(TESTBINARY_PKEY_PRIME1, 2)
+      q = OpenSSL::BN.new(TESTBINARY_PKEY_PRIME2, 2)
+      dmp1 = d % (p - 1.to_bn)
+      dmq1 = d % (q - 1.to_bn)
+      iqmp = q**-1.to_bn % p
+      asn1 = OpenSSL::ASN1::Sequence(
+        [
+          OpenSSL::ASN1::Integer(0),
+          OpenSSL::ASN1::Integer(n),
+          OpenSSL::ASN1::Integer(e),
+          OpenSSL::ASN1::Integer(d),
+          OpenSSL::ASN1::Integer(p),
+          OpenSSL::ASN1::Integer(q),
+          OpenSSL::ASN1::Integer(dmp1),
+          OpenSSL::ASN1::Integer(dmq1),
+          OpenSSL::ASN1::Integer(iqmp)
+        ]
+      )
+      OpenSSL::PKey::RSA.new(asn1)
     end
 
     let(:ct) do
