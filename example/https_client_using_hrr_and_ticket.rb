@@ -16,7 +16,7 @@ process_new_session_ticket = lambda do |nst, rms, cs|
 
   settings_2nd[:key_share_groups] = [] # empty KeyShareClientHello.client_shares
   settings_2nd[:ticket] = nst.ticket
-  settings_2nd[:resumption_master_secret] = rms
+  settings_2nd[:resumption_main_secret] = rms
   settings_2nd[:psk_cipher_suite] = cs
   settings_2nd[:ticket_nonce] = nst.ticket_nonce
   settings_2nd[:ticket_age_add] = nst.ticket_age_add

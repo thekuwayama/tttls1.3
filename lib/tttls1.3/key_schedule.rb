@@ -61,8 +61,15 @@ module TTTLS13
       self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
+    # @deprecated Please use `early_exporter_secret` instead
+    #
     # @return [String]
     def early_exporter_master_secret
+      early_exporter_secret
+    end
+
+    # @return [String]
+    def early_exporter_secret
       hash = OpenSSL::Digest.digest(@digest, '')
       derive_secret(early_secret, 'e exp master', hash)
     end
@@ -126,22 +133,36 @@ module TTTLS13
       self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
+    # @deprecated Please use `main_salt` instead
+    #
     # @return [String]
     def master_salt
+      main_salt
+    end
+
+    # @return [String]
+    def main_salt
       hash = OpenSSL::Digest.digest(@digest, '')
       derive_secret(handshake_secret, 'derived', hash)
     end
 
+    # @deprecated Please use `main_secret` instead
+    #
     # @return [String]
     def master_secret
+      main_secret
+    end
+
+    # @return [String]
+    def main_secret
       ikm = "\x00" * @hash_len
-      hkdf_extract(ikm, master_salt)
+      hkdf_extract(ikm, main_salt)
     end
 
     # @return [String]
     def client_application_traffic_secret
       hash = @transcript.hash(@digest, SF)
-      derive_secret(master_secret, 'c ap traffic', hash)
+      derive_secret(main_secret, 'c ap traffic', hash)
     end
 
     # @return [String]
@@ -159,7 +180,7 @@ module TTTLS13
     # @return [String]
     def server_application_traffic_secret
       hash = @transcript.hash(@digest, SF)
-      derive_secret(master_secret, 's ap traffic', hash)
+      derive_secret(main_secret, 's ap traffic', hash)
     end
 
     # @return [String]
@@ -174,16 +195,30 @@ module TTTLS13
       self.class.hkdf_expand_label(secret, 'iv', '', @iv_len, @digest)
     end
 
+    # @deprecated Please use `exporter_secret` instead
+    #
     # @return [String]
     def exporter_master_secret
-      hash = @transcript.hash(@digest, SF)
-      derive_secret(master_secret, 'exp master', hash)
+      exporter_secret
     end
 
     # @return [String]
+    def exporter_secret
+      hash = @transcript.hash(@digest, SF)
+      derive_secret(main_secret, 'exp master', hash)
+    end
+
+    # @deprecated Please use `resumption_secret` instead
+    #
+    # @return [String]
     def resumption_master_secret
+      resumption_secret
+    end
+
+    # @return [String]
+    def resumption_secret
       hash = @transcript.hash(@digest, CF)
-      derive_secret(master_secret, 'res master', hash)
+      derive_secret(main_secret, 'res master', hash)
     end
 
     # @param ikm [String]

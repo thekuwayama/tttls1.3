@@ -92,9 +92,9 @@ tttls1.3 client is configurable using keyword arguments.
 | `:supported_groups` | Array of TTTLS13::NamedGroup constant | `SECP256R1`, `SECP384R1`, `SECP521R1` | List of named groups offered in ClientHello extensions. |
 | `:key_share_groups` | Array of TTTLS13::NamedGroup constant | nil | List of named groups offered in KeyShareClientHello. In default, KeyShareClientHello has only a KeyShareEntry of most preferred named group in `:supported_groups`. You can set this to send KeyShareClientHello that has multiple KeyShareEntry. |
 | `:alpn` | Array of String | nil | List of application protocols offered in ClientHello extensions. If not needed to be present, set nil. |
-| `:process_new_session_ticket` | Proc | nil | Proc that processes received NewSessionTicket. Its 3 arguments are TTTLS13::Message::NewSessionTicket, resumption master secret and cipher suite. If not needed to process NewSessionTicket, set nil. |
+| `:process_new_session_ticket` | Proc | nil | Proc that processes received NewSessionTicket. Its 3 arguments are TTTLS13::Message::NewSessionTicket, resumption main secret and cipher suite. If not needed to process NewSessionTicket, set nil. |
 | `:ticket` | String | nil | The ticket for PSK. |
-| `:resumption_master_secret` | String | nil | The resumption master secret. |
+| `:resumption_secret` | String | nil | The resumption main secret. |
 | `:psk_cipher_suite` | TTTLS13::CipherSuite constant | nil | The cipher suite for PSK. |
 | `:ticket_nonce` | String | nil | The ticket\_nonce for PSK. |
 | `:ticket_age_add` | String | nil | The ticket\_age\_add for PSK. |
