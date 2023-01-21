@@ -517,10 +517,8 @@ module TTTLS13
     #
     # @return [Array of TTTLS13::Message::Extension::SignatureAlgorithms]
     def do_select_signature_algorithms(signature_algorithms, crt)
-      spki = OpenSSL::Netscape::SPKI.new
-      spki.public_key = crt.public_key
-      pka = OpenSSL::ASN1.decode(spki.to_der)
-                         .value.first.value.first.value.first.value.first.value
+      pka = OpenSSL::ASN1.decode(crt.public_key.to_der)
+                         .value.first.value.first.value
       signature_algorithms.select do |sa|
         case sa
         when SignatureScheme::ECDSA_SECP256R1_SHA256,

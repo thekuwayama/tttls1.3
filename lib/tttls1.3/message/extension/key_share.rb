@@ -91,8 +91,7 @@ module TTTLS13
           priv_keys = {}
           kse = groups.map do |group|
             curve = NamedGroup.curve_name(group)
-            ec = OpenSSL::PKey::EC.new(curve)
-            ec.generate_key!
+            ec = OpenSSL::PKey::EC.generate(curve)
             # store private key to do the key-exchange
             priv_keys.store(group, ec)
             KeyShareEntry.new(
@@ -115,8 +114,7 @@ module TTTLS13
         # @return [OpenSSL::PKey::EC.$Object]
         def self.gen_sh_key_share(group)
           curve = NamedGroup.curve_name(group)
-          ec = OpenSSL::PKey::EC.new(curve)
-          ec.generate_key!
+          ec = OpenSSL::PKey::EC.generate(curve)
 
           key_share = KeyShare.new(
             msg_type: HandshakeType::SERVER_HELLO,

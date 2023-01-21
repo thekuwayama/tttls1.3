@@ -35,8 +35,7 @@ RSpec.describe Extensions do
   end
 
   let(:key_share) do
-    ec = OpenSSL::PKey::EC.new('prime256v1')
-    ec.generate_key!
+    ec = OpenSSL::PKey::EC.generate('prime256v1')
     KeyShare.new(
       msg_type: HandshakeType::CLIENT_HELLO,
       key_share_entry: [
