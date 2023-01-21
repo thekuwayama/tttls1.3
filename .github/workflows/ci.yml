@@ -16,7 +16,7 @@ jobs:
         ruby-version: ['2.7.x', '3.0.x', '3.1.x']
     steps:
       - uses: actions/checkout@v3
-      - uses: docker://thekuwayama/openssl:latest
+      - uses: docker://thekuwayama/openssl:3.0.7-x86_64
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
