@@ -1,7 +1,7 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-require_relative 'helper'
+require_relative 'spec_helper'
 
 FIXTURES_DIR = __dir__ + '/../spec/fixtures'
 PORT = 4433
