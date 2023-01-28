@@ -4,7 +4,7 @@
 require_relative 'spec_helper'
 
 FIXTURES_DIR = __dir__ + '/../spec/fixtures'
-PORT = 4433
+PORT = 24433
 
 tcpserver = TCPServer.open(PORT)
 
