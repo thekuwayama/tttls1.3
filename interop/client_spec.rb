@@ -173,6 +173,7 @@ RSpec.describe Client do
               + '-tls1_3 ' \
               + '-www ' \
               + '-quiet ' \
+              + "-accept #{PORT} " \
               + opt
         pid = spawn('docker run ' \
                     + "--volume #{FIXTURES_DIR}:/tmp " \
