@@ -13,13 +13,20 @@ include TTTLS13::Error
 # rubocop: enable Style/MixinUsage
 
 def wait_to_listen(host, port)
-  loop do
-    s = TCPSocket.open(host, port) # check by TCP handshake
-  rescue # rubocop: disable Style/RescueStandardError
-    sleep(0.2)
+  10.times do
+    soc = TCPSocket.open(host, port)
+    ctx = OpenSSL::SSL::SSLContext.new
+    ctx.max_version = OpenSSL::SSL::TLS1_3_VERSION
+    ssl = OpenSSL::SSL::SSLSocket.new(soc, ctx)
+    ssl.sync_close = true
+    ssl.connect
+  rescue => e # rubocop: disable Style/RescueStandardError
+    p e
+    soc&.close
+    sleep(0.5)
     next
   else
-    s.close
+    ssl.close
     break
   end
 end

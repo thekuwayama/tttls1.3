@@ -1,7 +1,7 @@
 # encoding: ascii-8bit
 # frozen_string_literal: true
 
-require_relative 'helper'
+require_relative 'spec_helper'
 
 FIXTURES_DIR = __dir__ + '/../spec/fixtures'
 PORT = 4433
@@ -187,8 +187,6 @@ RSpec.describe Server do
 
       let(:client) do
         ip = Socket.ip_address_list.find(&:ipv4_private?).ip_address
-        wait_to_listen(ip, PORT)
-
         cmd = 'echo -n ping | openssl s_client ' \
               + "-connect local:#{PORT} " \
               + '-tls1_3 ' \
