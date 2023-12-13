@@ -5,6 +5,8 @@ require 'net/http'
 require 'pp'
 require 'logger'
 
+require 'ech_config'
+
 require 'tttls1.3/version'
 require 'tttls1.3/utils'
 require 'tttls1.3/logging'

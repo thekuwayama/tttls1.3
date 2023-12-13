@@ -209,6 +209,24 @@ TESTBINARY_PKEY_PRIVATE_EXPONENT = <<BIN.split.map(&:hex).map(&:chr).join
   c3 08 8d f2 5a e6 79 23     3d f8 a3 bd a2 ff 99 41
 BIN
 
+# FIXME:
+TESTBINARY_ECH_CHO = <<BIN.split.map(&:hex).map(&:chr).join
+  00 00 01 00 01 20 00 20     9a 2b bd 96 11 cc 25 ee
+  a5 9d 6a 78 cd df 06 b4     99 55 97 5e 12 18 0f bf
+  93 7c 53 a5 74 87 4d 1a     00 af 9d b4 cf 81 34 9a
+  e9 de 38 d2 a5 b9 5a 02     ac 6a 20 b6 d6 ec d6 c2
+  98 d6 c6 3e 4d bb d2 3f     7f c2 38 ac 2f 24 44 6b
+  bc 0c 1b a6 26 a1 58 2b     2a e3 d9 9d 6d c6 39 69
+  cf ff 80 5b 44 99 c1 d3     32 62 f9 68 74 5b 52 30
+  68 67 45 bd 76 d8 c9 2c     6b 20 2e be 7e ef b4 1a
+  2c 2c 14 60 b7 97 03 69     be 32 d3 47 f8 12 eb 76
+  b2 10 c1 da 32 f9 cd eb     e3 59 3c 91 4e 00 f6 69
+  68 7f 4a 1c 35 b3 22 d4     82 e0 83 3e 45 d7 41 6a
+  4f bc 73 22 9c f0 36 b4     39 21 89 f5 f3 cb 86 59
+  d5 a6 fa da 2a 54 13 a6     34 bd 05 c9 32 07 d9 6a
+  6c 4a b8 95 03 3a f8 61     63
+BIN
+
 # https://tools.ietf.org/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
