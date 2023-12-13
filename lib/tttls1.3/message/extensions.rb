@@ -162,6 +162,8 @@ module TTTLS13
             Extension::SignatureAlgorithmsCert.deserialize(binary)
           when ExtensionType::KEY_SHARE
             Extension::KeyShare.deserialize(binary, msg_type)
+          when ExtensionType::ENCRYPTED_CLIENT_HELLO
+            Extension::ECHClientHello.deserialize(binary, msg_type)
           else
             Extension::UnknownExtension.deserialize(binary, extension_type)
           end

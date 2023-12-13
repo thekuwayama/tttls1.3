@@ -69,6 +69,7 @@ module TTTLS13
     check_certificate_status: false,
     process_certificate_status: nil,
     compress_certificate_algorithms: DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS,
+    ech_config: nil,
     compatibility_mode: true,
     sslkeylogfile: nil,
     loglevel: Logger::WARN
@@ -567,6 +568,11 @@ module TTTLS13
       !(@early_data.nil? || @early_data.empty?)
     end
 
+    # @return [Boolean]
+    def use_ech?
+      !@settings[:ech_config].nil?
+    end
+
     # @param cipher [TTTLS13::Cryptograph::Aead]
     def send_early_data(cipher)
       ap = Message::ApplicationData.new(@early_data)
@@ -690,10 +696,18 @@ module TTTLS13
         )
       end
 
+      if use_ech? # FIXME: && psk
+        inner = ch
+        inner_ech = Message::Extension::ECHClientHello.new_inner
+        inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
+          = inner_ech
+        ch = offer_ech(inner, @settings[:ech_config])
+      end
+
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 
-      ch
+      inner.nil? ? ch : inner
     end
 
     # @param ch1 [TTTLS13::Message::ClientHello]
@@ -732,6 +746,112 @@ module TTTLS13
         binder_key: binder_key,
         digest: digest
       )
+    end
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param ech_config [ECHConfig]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    def offer_ech(inner, ech_config)
+      # FIXME: support GREASE ECH
+      # FIXME: support GREASE PSK
+
+      # EncodedClientHelloInner
+      encoded = encode_ch_inner(inner, ech_config.echconfig_contents.maximum_name_length)
+
+      # encrypting a ClientHello
+      # FIXME: version check
+      public_name = ech_config.echconfig_contents.public_name
+      key_config = ech_config.echconfig_contents.key_config
+      public_key = key_config.public_key.opaque
+      config_id = key_config.config_id
+      cipher_suite = key_config.cipher_suites[0] # FIXME: select preferred cipher_suite
+      case cipher_suite.aead_id.uint16
+      when 0x0001, 0x0002, 0x003
+        overhead_len = 16
+      end
+
+      # https://www.iana.org/assignments/hpke/hpke.xhtml
+      # KEM ID : 32 => DHKEM(X25519, HKDF-SHA256)
+      # KDF ID :  1 => HKDF-SHA256
+      # AEAD ID:  1 => AES-128-GCM
+      pkr = HPKE::DHKEM::X25519.new(:sha256).deserialize_public_key(public_key)
+      hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm) # FIMXE: setup using key_config
+
+      # ClientHelloOuterAAD
+      ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
+      aad_ech = Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: config_id,
+        enc: ctx[:enc],
+        payload: "\x00" * (encoded.length + overhead_len)
+      )
+      aad = Message::ClientHello.new(
+        legacy_version: inner.legacy_version,
+        legacy_session_id: inner.legacy_session_id,
+        cipher_suites: inner.cipher_suites,
+        legacy_compression_methods: inner.legacy_compression_methods,
+        extensions: inner.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => aad_ech,
+          Message::ExtensionType::SERVER_NAME => Message::Extension::ServerName.new(public_name)
+        )
+      )
+
+      # ClientHello outer
+      outer_ech = Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: config_id,
+        enc: ctx[:enc],
+        payload: ctx[:context_s].seal(aad.serialize[4..], encoded)
+      )
+      Message::ClientHello.new(
+        legacy_version: aad.legacy_version,
+        random: aad.random,
+        legacy_session_id: aad.legacy_session_id,
+        cipher_suites: aad.cipher_suites,
+        legacy_compression_methods: aad.legacy_compression_methods,
+        extensions: aad.extensions.merge(Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => outer_ech)
+      )
+    end
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param maximum_name_length [Integer]
+    #
+    # @return [String] EncodedClientHelloInner
+    def encode_ch_inner(inner, maximum_name_length)
+      # TODO: ech_outer_extensions
+      encoded = Message::ClientHello.new(
+        legacy_version: inner.legacy_version,
+        random: inner.random,
+        legacy_session_id: '',
+        cipher_suites: inner.cipher_suites,
+        legacy_compression_methods: inner.legacy_compression_methods,
+        extensions: inner.extensions
+      )
+
+      server_name_length = inner.extensions[Message::ExtensionType::SERVER_NAME].server_name.length
+      padding_encoded_ch_inner(
+        encoded.serialize[4..],
+        server_name_length,
+        maximum_name_length
+      )
+    end
+
+    # @param s [String]
+    # @param server_name_length [Integer]
+    # @param maximum_name_length [Integer]
+    #
+    # @return [String]
+    def padding_encoded_ch_inner(s, server_name_length, maximum_name_length)
+      padding_len = \
+        if server_name_length.positive?
+          [maximum_name_length - server_name_length, 0].max
+        else
+          9 + maximum_name_length
+        end
+
+      padding_len = 31 - ((s.length + padding_len - 1) % 32)
+      s + "\x00" * padding_len
     end
 
     # @return [Integer]

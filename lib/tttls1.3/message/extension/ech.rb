@@ -54,7 +54,8 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extensions::ECHClientHello]
         def self.deserialize(binary, msg_type)
-          raise Error::ErrorAlerts, :internal_error if binary.nil? || binary.empty?
+          raise Error::ErrorAlerts, :internal_error \
+            if binary.nil? || binary.empty?
 
           case binary[0]
           when ECHClientHelloType::OUTER
@@ -82,7 +83,8 @@ module TTTLS13
           #
           # @return [TTTLS13::Message::Extensions::ECHClientHello]
           def deserialize_outer_ech(binary)
-            raise Error::ErrorAlerts, :internal_error if binary.nil? || binary.length < 5
+            raise Error::ErrorAlerts, :internal_error \
+              if binary.nil? || binary.length < 5
 
             kdf_id = ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite::HpkeKdfId.decode(binary.slice(0, 2))
             aead_id = ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite::HpkeAeadId.decode(binary.slice(2, 2))
@@ -90,14 +92,17 @@ module TTTLS13
             cid = Convert.bin2i(binary.slice(4, 1))
             enc_len = Convert.bin2i(binary.slice(5, 2))
             i = 7
-            raise Error::ErrorAlerts, :internal_error if i + enc_len > binary.length
+            raise Error::ErrorAlerts, :internal_error \
+              if i + enc_len > binary.length
 
             enc = binary.slice(i, enc_len)
             i += enc_len
-            raise Error::ErrorAlerts, :internal_error if i + 2 > binary.length
+            raise Error::ErrorAlerts, :internal_error \
+              if i + 2 > binary.length
 
             payload_len = Convert.bin2i(binary.slice(i, 2))
-            raise Error::ErrorAlerts, :internal_error if i + payload_len > binary.length
+            raise Error::ErrorAlerts, :internal_error \
+              if i + payload_len > binary.length
 
             payload = binary.slice(i, payload_len)
             ECHClientHello.new(

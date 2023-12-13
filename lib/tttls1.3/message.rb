@@ -72,6 +72,8 @@ module TTTLS13
       POST_HANDSHAKE_AUTH                    = "\x00\x31"
       SIGNATURE_ALGORITHMS_CERT              = "\x00\x32"
       KEY_SHARE                              = "\x00\x33"
+      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-16.html#section-5-2
+      ENCRYPTED_CLIENT_HELLO                 = "\xfe\x0d"
     end
 
     DEFINED_EXTENSIONS = ExtensionType.constants.map do |c|
