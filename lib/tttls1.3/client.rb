@@ -756,10 +756,8 @@ module TTTLS13
       # FIXME: support GREASE ECH
       # FIXME: support GREASE PSK
 
-      # EncodedClientHelloInner
       encoded = encode_ch_inner(inner, ech_config.echconfig_contents.maximum_name_length)
 
-      # encrypting a ClientHello
       # FIXME: version check
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
@@ -777,41 +775,10 @@ module TTTLS13
       # AEAD ID:  1 => AES-128-GCM
       pkr = HPKE::DHKEM::X25519.new(:sha256).deserialize_public_key(public_key)
       hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm) # FIMXE: setup using key_config
-
-      # ClientHelloOuterAAD
       ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
-      aad_ech = Message::Extension::ECHClientHello.new_outer(
-        cipher_suite: cipher_suite,
-        config_id: config_id,
-        enc: ctx[:enc],
-        payload: "\x00" * (encoded.length + overhead_len)
-      )
-      aad = Message::ClientHello.new(
-        legacy_version: inner.legacy_version,
-        legacy_session_id: inner.legacy_session_id,
-        cipher_suites: inner.cipher_suites,
-        legacy_compression_methods: inner.legacy_compression_methods,
-        extensions: inner.extensions.merge(
-          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => aad_ech,
-          Message::ExtensionType::SERVER_NAME => Message::Extension::ServerName.new(public_name)
-        )
-      )
 
-      # ClientHello outer
-      outer_ech = Message::Extension::ECHClientHello.new_outer(
-        cipher_suite: cipher_suite,
-        config_id: config_id,
-        enc: ctx[:enc],
-        payload: ctx[:context_s].seal(aad.serialize[4..], encoded)
-      )
-      Message::ClientHello.new(
-        legacy_version: aad.legacy_version,
-        random: aad.random,
-        legacy_session_id: aad.legacy_session_id,
-        cipher_suites: aad.cipher_suites,
-        legacy_compression_methods: aad.legacy_compression_methods,
-        extensions: aad.extensions.merge(Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => outer_ech)
-      )
+      aad = new_ch_outer_aad(inner, cipher_suite, config_id, ctx[:enc], encoded.length + overhead_len, public_name)
+      new_ch_outer(aad, cipher_suite, config_id, ctx[:enc], ctx[:context_s].seal(aad.serialize[4..], encoded))
     end
 
     # @param inner [TTTLS13::Message::ClientHello]
@@ -843,7 +810,7 @@ module TTTLS13
     #
     # @return [String]
     def padding_encoded_ch_inner(s, server_name_length, maximum_name_length)
-      padding_len = \
+      padding_len =
         if server_name_length.positive?
           [maximum_name_length - server_name_length, 0].max
         else
@@ -852,6 +819,57 @@ module TTTLS13
 
       padding_len = 31 - ((s.length + padding_len - 1) % 32)
       s + "\x00" * padding_len
+    end
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param cipher_suite [ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite]
+    # @param config_id [Integer]
+    # @param enc [String]
+    # @param payload_len [Integer]
+    # @param server_name [String]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    def new_ch_outer_aad(inner, cipher_suite, config_id, enc, payload_len, server_name)
+      aad_ech = Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: config_id,
+        enc: enc,
+        payload: "\x00" * payload_len
+      )
+      Message::ClientHello.new(
+        legacy_version: inner.legacy_version,
+        legacy_session_id: inner.legacy_session_id,
+        cipher_suites: inner.cipher_suites,
+        legacy_compression_methods: inner.legacy_compression_methods,
+        extensions: inner.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => aad_ech,
+          Message::ExtensionType::SERVER_NAME => Message::Extension::ServerName.new(server_name)
+        )
+      )
+    end
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param cipher_suite [ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite]
+    # @param config_id [Integer]
+    # @param enc [String]
+    # @param payload [String]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    def new_ch_outer(aad, cipher_suite, config_id, enc, payload)
+      outer_ech = Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: config_id,
+        enc: enc,
+        payload: payload
+      )
+      Message::ClientHello.new(
+        legacy_version: aad.legacy_version,
+        random: aad.random,
+        legacy_session_id: aad.legacy_session_id,
+        cipher_suites: aad.cipher_suites,
+        legacy_compression_methods: aad.legacy_compression_methods,
+        extensions: aad.extensions.merge(Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => outer_ech)
+      )
     end
 
     # @return [Integer]
