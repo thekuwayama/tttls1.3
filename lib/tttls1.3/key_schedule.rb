@@ -14,14 +14,14 @@ module TTTLS13
       @hash_len = CipherSuite.hash_len(cipher_suite)
       @key_len = CipherSuite.key_len(cipher_suite)
       @iv_len = CipherSuite.iv_len(cipher_suite)
-      @psk = psk || "\x00" * @hash_len
+      @psk = psk || @hash_len.zeros
       @shared_secret = shared_secret
       @transcript = transcript
     end
 
     # @return [String]
     def early_salt
-      "\x00" * @hash_len
+      @hash_len.zeros
     end
 
     # @return [String]
@@ -155,7 +155,7 @@ module TTTLS13
 
     # @return [String]
     def main_secret
-      ikm = "\x00" * @hash_len
+      ikm = @hash_len.zeros
       hkdf_extract(ikm, main_salt)
     end
 
@@ -280,7 +280,7 @@ module TTTLS13
       ss = @transcript[SH].last.clone
       transcript = @transcript.clone
       # NOTE: sh message is not required to compute transcript_ech_conf
-      transcript[SH] = [nil, ss[...30] + ("\x00" * 8) + ss[38..]]
+      transcript[SH] = [nil, ss[...30] + 8.zeros + ss[38..]]
       transcript_ech_conf = transcript.hash(@digest, SH)
 
       self.class.hkdf_expand_label(

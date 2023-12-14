@@ -732,7 +732,7 @@ module TTTLS13
       # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      dummy_binders = ["\x00" * hash_len]
+      dummy_binders = [hash_len.zeros]
       psk = Message::Extension::PreSharedKey.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         offered_psks: Message::Extension::OfferedPsks.new(
@@ -824,7 +824,7 @@ module TTTLS13
         end
 
       padding_len = 31 - ((s.length + padding_len - 1) % 32)
-      s + "\x00" * padding_len
+      s + padding_len.zeros
     end
 
     # @param inner [TTTLS13::Message::ClientHello]
@@ -840,7 +840,7 @@ module TTTLS13
         cipher_suite: cipher_suite,
         config_id: config_id,
         enc: enc,
-        payload: "\x00" * payload_len
+        payload: payload_len.zeros
       )
       Message::ClientHello.new(
         legacy_version: inner.legacy_version,
