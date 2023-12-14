@@ -315,6 +315,12 @@ module TTTLS13
             transcript[CH].first.random,
             key_schedule.server_handshake_traffic_secret
           )
+
+          if use_ech?
+            accept_ech = \
+            key_schedule.accept_confirmation == transcript[SH].first.random[-8..]
+          end
+
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           logger.debug('ClientState::WAIT_EE')

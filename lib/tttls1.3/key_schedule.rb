@@ -273,6 +273,24 @@ module TTTLS13
     def derive_secret(secret, label, context)
       self.class.hkdf_expand_label(secret, label, context, @hash_len, @digest)
     end
+
+    # @return [String]
+    def accept_confirmation
+      ch_inner_random = @transcript[CH].first.random
+      ss = @transcript[SH].last.clone
+      transcript = @transcript.clone
+      # NOTE: sh message is not required to compute transcript_ech_conf
+      transcript[SH] = [nil, ss[...30] + ("\x00" * 8) + ss[38..]]
+      transcript_ech_conf = transcript.hash(@digest, SH)
+
+      self.class.hkdf_expand_label(
+        hkdf_extract(ch_inner_random, ''),
+        'ech accept confirmation',
+        transcript_ech_conf,
+        8,
+        @digest
+      )
+    end
   end
   # rubocop: enable Metrics/ClassLength
 end
