@@ -165,6 +165,7 @@ module TTTLS13
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      ch_outer = nil # TTTLS13::Message::ClientHello
       unless @settings[:sslkeylogfile].nil?
         begin
           sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
@@ -182,8 +183,10 @@ module TTTLS13
 
           extensions, priv_keys = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
-          ch = send_client_hello(extensions, binder_key)
+          ch, inner = send_client_hello(extensions, binder_key)
+          ch = inner.nil? ? ch : inner
           transcript[CH] = [ch, ch.serialize]
+          ch_outer = ch
           send_ccs if @settings[:compatibility_mode]
           if use_early_data?
             e_wcipher = gen_cipher(
@@ -297,6 +300,9 @@ module TTTLS13
             cipher_suite: @cipher_suite,
             transcript: transcript
           )
+          if use_ech? && key_schedule.accept_confirmation != transcript[SH].first.random[-8..]
+            transcript[CH] = [ch_outer, ch_outer.serialize]
+          end
           @alert_wcipher = hs_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,
@@ -315,11 +321,6 @@ module TTTLS13
             transcript[CH].first.random,
             key_schedule.server_handshake_traffic_secret
           )
-
-          if use_ech?
-            accept_ech = \
-            key_schedule.accept_confirmation == transcript[SH].first.random[-8..]
-          end
 
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
@@ -677,7 +678,8 @@ module TTTLS13
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
     #
-    # @return [TTTLS13::Message::ClientHello]
+    # @return [TTTLS13::Message::ClientHello] outer
+    # @return [TTTLS13::Message::ClientHello] inner
     def send_client_hello(extensions, binder_key = nil)
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
@@ -702,6 +704,7 @@ module TTTLS13
         )
       end
 
+      inner = nil # TTTLS13::Message::ClientHello
       if use_ech? # FIXME: && psk
         inner = ch
         inner_ech = Message::Extension::ECHClientHello.new_inner
@@ -713,7 +716,7 @@ module TTTLS13
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 
-      inner.nil? ? ch : inner
+      [ch, inner]
     end
 
     # @param ch1 [TTTLS13::Message::ClientHello]
