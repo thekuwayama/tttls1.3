@@ -277,10 +277,15 @@ module TTTLS13
     # @return [String]
     def accept_confirmation
       ch_inner_random = @transcript[CH].first.random
-      ss = @transcript[SH].last.clone
+      sh = @transcript[SH].first
+      sh = Message::ServerHello.new(
+        random: sh.random[...-8] + 8.zeros + sh.random[-8..],
+        legacy_session_id_echo: sh.legacy_session_id_echo,
+        cipher_suite: sh.cipher_suite,
+        extensions: sh.extensions
+      )
       transcript = @transcript.clone
-      # NOTE: sh message is not required to compute transcript_ech_conf
-      transcript[SH] = [nil, ss[...30] + 8.zeros + ss[38..]]
+      transcript[SH] = [sh, sh.serialize]
       transcript_ech_conf = transcript.hash(@digest, SH)
 
       self.class.hkdf_expand_label(
