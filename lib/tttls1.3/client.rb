@@ -300,9 +300,8 @@ module TTTLS13
             cipher_suite: @cipher_suite,
             transcript: transcript
           )
-          if use_ech? && key_schedule.accept_confirmation != transcript[SH].first.random[-8..]
-            transcript[CH] = [ch_outer, ch_outer.serialize]
-          end
+          transcript[CH] = [ch_outer, ch_outer.serialize] \
+            if use_ech? && !key_schedule.accept_ech?
           @alert_wcipher = hs_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,

@@ -291,6 +291,11 @@ module TTTLS13
         @digest
       )
     end
+
+    # @return [Bool]
+    def accept_ech?
+      accept_confirmation == @transcript[SH].first.random[-8..]
+    end
   end
   # rubocop: enable Metrics/ClassLength
 end
