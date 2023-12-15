@@ -761,14 +761,17 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
       # FIXME: support GREASE ECH
+      abort('GREASE ECH') \
+        unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
+
       # FIXME: support GREASE PSK
 
       mnl = ech_config.echconfig_contents.maximum_name_length
       encoded = encode_ch_inner(inner, mnl)
 
-      # FIXME: version check
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
       public_key = key_config.public_key.opaque
@@ -805,6 +808,8 @@ module TTTLS13
         ctx[:context_s].seal(aad.serialize[4..], encoded)
       )
     end
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/MethodLength
 
     # @param inner [TTTLS13::Message::ClientHello]
     # @param maximum_name_length [Integer]
@@ -829,7 +834,6 @@ module TTTLS13
         maximum_name_length
       )
     end
-    # rubocop: enable Metrics/AbcSize
 
     # @param s [String]
     # @param server_name_length [Integer]
