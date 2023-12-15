@@ -760,18 +760,21 @@ module TTTLS13
     # @param ech_config [ECHConfig]
     #
     # @return [TTTLS13::Message::ClientHello]
+    # rubocop: disable Metrics/AbcSize
     def offer_ech(inner, ech_config)
       # FIXME: support GREASE ECH
       # FIXME: support GREASE PSK
 
-      encoded = encode_ch_inner(inner, ech_config.echconfig_contents.maximum_name_length)
+      mnl = ech_config.echconfig_contents.maximum_name_length
+      encoded = encode_ch_inner(inner, mnl)
 
       # FIXME: version check
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
       public_key = key_config.public_key.opaque
       config_id = key_config.config_id
-      cipher_suite = key_config.cipher_suites[0] # FIXME: select preferred cipher_suite
+      # FIXME: select preferred cipher_suite
+      cipher_suite = key_config.cipher_suites[0]
       case cipher_suite.aead_id.uint16
       when 0x0001, 0x0002, 0x003
         overhead_len = 16
@@ -782,11 +785,25 @@ module TTTLS13
       # KDF ID :  1 => HKDF-SHA256
       # AEAD ID:  1 => AES-128-GCM
       pkr = HPKE::DHKEM::X25519.new(:sha256).deserialize_public_key(public_key)
-      hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm) # FIMXE: setup using key_config
+      # FIMXE: setup using key_config
+      hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm)
       ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
 
-      aad = new_ch_outer_aad(inner, cipher_suite, config_id, ctx[:enc], encoded.length + overhead_len, public_name)
-      new_ch_outer(aad, cipher_suite, config_id, ctx[:enc], ctx[:context_s].seal(aad.serialize[4..], encoded))
+      aad = new_ch_outer_aad(
+        inner,
+        cipher_suite,
+        config_id,
+        ctx[:enc],
+        encoded.length + overhead_len,
+        public_name
+      )
+      new_ch_outer(
+        aad,
+        cipher_suite,
+        config_id,
+        ctx[:enc],
+        ctx[:context_s].seal(aad.serialize[4..], encoded)
+      )
     end
 
     # @param inner [TTTLS13::Message::ClientHello]
@@ -804,13 +821,15 @@ module TTTLS13
         extensions: inner.extensions
       )
 
-      server_name_length = inner.extensions[Message::ExtensionType::SERVER_NAME].server_name.length
+      server_name_length = \
+        inner.extensions[Message::ExtensionType::SERVER_NAME].server_name.length
       padding_encoded_ch_inner(
         encoded.serialize[4..],
         server_name_length,
         maximum_name_length
       )
     end
+    # rubocop: enable Metrics/AbcSize
 
     # @param s [String]
     # @param server_name_length [Integer]
@@ -830,14 +849,20 @@ module TTTLS13
     end
 
     # @param inner [TTTLS13::Message::ClientHello]
-    # @param cipher_suite [ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite]
+    # @param cipher_suite [HpkeSymmetricCipherSuite]
     # @param config_id [Integer]
     # @param enc [String]
     # @param payload_len [Integer]
     # @param server_name [String]
     #
     # @return [TTTLS13::Message::ClientHello]
-    def new_ch_outer_aad(inner, cipher_suite, config_id, enc, payload_len, server_name)
+    # rubocop: disable Metrics/ParameterLists
+    def new_ch_outer_aad(inner,
+                         cipher_suite,
+                         config_id,
+                         enc,
+                         payload_len,
+                         server_name)
       aad_ech = Message::Extension::ECHClientHello.new_outer(
         cipher_suite: cipher_suite,
         config_id: config_id,
@@ -851,13 +876,15 @@ module TTTLS13
         legacy_compression_methods: inner.legacy_compression_methods,
         extensions: inner.extensions.merge(
           Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => aad_ech,
-          Message::ExtensionType::SERVER_NAME => Message::Extension::ServerName.new(server_name)
+          Message::ExtensionType::SERVER_NAME => \
+            Message::Extension::ServerName.new(server_name)
         )
       )
     end
+    # rubocop: enable Metrics/ParameterLists
 
     # @param inner [TTTLS13::Message::ClientHello]
-    # @param cipher_suite [ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite]
+    # @param cipher_suite [HpkeSymmetricCipherSuite]
     # @param config_id [Integer]
     # @param enc [String]
     # @param payload [String]
@@ -876,7 +903,9 @@ module TTTLS13
         legacy_session_id: aad.legacy_session_id,
         cipher_suites: aad.cipher_suites,
         legacy_compression_methods: aad.legacy_compression_methods,
-        extensions: aad.extensions.merge(Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => outer_ech)
+        extensions: aad.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => outer_ech
+        )
       )
     end
 

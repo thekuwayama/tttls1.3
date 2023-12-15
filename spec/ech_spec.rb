@@ -7,11 +7,15 @@ using Refinements
 RSpec.describe ECHClientHello do
   context 'valid ech outer binary' do
     let(:extension) do
-      ECHClientHello.deserialize(TESTBINARY_ECH_CHO, HandshakeType::CLIENT_HELLO)
+      ECHClientHello.deserialize(
+        TESTBINARY_ECH_CHO,
+        HandshakeType::CLIENT_HELLO
+      )
     end
 
     it 'should generate valid object' do
-      expect(extension.extension_type).to eq ExtensionType::ENCRYPTED_CLIENT_HELLO
+      expect(extension.extension_type).to eq \
+        ExtensionType::ENCRYPTED_CLIENT_HELLO
       expect(extension.type).to eq ECHClientHelloType::OUTER
       expect(extension.cipher_suite.kdf_id.uint16).to eq 1
       expect(extension.cipher_suite.aead_id.uint16).to eq 1
@@ -35,11 +39,15 @@ RSpec.describe ECHClientHello do
 
   context 'valid ech inner binary' do
     let(:extension) do
-      ECHClientHello.deserialize(TESTBINARY_ECH_CHI, HandshakeType::CLIENT_HELLO)
+      ECHClientHello.deserialize(
+        TESTBINARY_ECH_CHI,
+        HandshakeType::CLIENT_HELLO
+      )
     end
 
     it 'should generate valid object' do
-      expect(extension.extension_type).to eq ExtensionType::ENCRYPTED_CLIENT_HELLO
+      expect(extension.extension_type).to eq \
+        ExtensionType::ENCRYPTED_CLIENT_HELLO
       expect(extension.type).to eq ECHClientHelloType::INNER
     end
 

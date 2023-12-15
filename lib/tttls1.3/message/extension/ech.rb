@@ -3,6 +3,8 @@
 
 module TTTLS13
   using Refinements
+  HpkeSymmetricCipherSuite = \
+    ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
   module Message
     module Extension
       module ECHClientHelloType
@@ -19,16 +21,21 @@ module TTTLS13
         attr_accessor :payload
 
         # @param type [TTTLS13::Message::Extension::ECHClientHelloType]
-        # @param cipher_suite [ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite]
+        # @param cipher_suite [HpkeSymmetricCipherSuite]
         # @param config_id [Integer]
         # @param enc [String]
         # @param payload [String]
-        def initialize(type:, cipher_suite: nil, config_id: nil, enc: nil, payload: nil)
+        def initialize(type:,
+                       cipher_suite: nil,
+                       config_id: nil,
+                       enc: nil,
+                       payload: nil)
           @extension_type = ExtensionType::ENCRYPTED_CLIENT_HELLO
           @type = type
           @cipher_suite = cipher_suite
           raise Error::ErrorAlerts, :internal_error \
-            if @type == ECHClientHelloType::OUTER && !@cipher_suite.is_a?(ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite)
+            if @type == ECHClientHelloType::OUTER && \
+               !@cipher_suite.is_a?(HpkeSymmetricCipherSuite)
 
           @config_id = config_id
           @enc = enc
@@ -41,7 +48,8 @@ module TTTLS13
         def serialize
           case @type
           when ECHClientHelloType::OUTER
-            binary = @type + @cipher_suite.encode + @config_id.to_uint8 + @enc.prefix_uint16_length + @payload.prefix_uint16_length
+            binary = @type + @cipher_suite.encode + @config_id.to_uint8 \
+                     + @enc.prefix_uint16_length + @payload.prefix_uint16_length
           when ECHClientHelloType::INNER
             binary = @type
           else
@@ -62,14 +70,14 @@ module TTTLS13
 
           case binary[0]
           when ECHClientHelloType::OUTER
-            if msg_type == HandshakeType::CLIENT_HELLO
-              deserialize_outer_ech(binary[1..])
-            else
-              # FIXME: deserialize_retry_configs
-              #   struct {
-              #      ECHConfigList retry_configs;
-              #   } ECHEncryptedExtensions;
-            end
+            deserialize_outer_ech(binary[1..]) \
+              if msg_type == HandshakeType::CLIENT_HELLO
+            # else
+            #   FIXME: deserialize_retry_configs
+            #     struct {
+            #        ECHConfigList retry_configs;
+            #     } ECHEncryptedExtensions;
+            # end
           when ECHClientHelloType::INNER
             deserialize_inner_ech(binary[1..])
           else
@@ -89,9 +97,11 @@ module TTTLS13
             raise Error::ErrorAlerts, :internal_error \
               if binary.nil? || binary.length < 5
 
-            kdf_id = ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite::HpkeKdfId.decode(binary.slice(0, 2))
-            aead_id = ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite::HpkeAeadId.decode(binary.slice(2, 2))
-            cs = ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite.new(kdf_id, aead_id)
+            kdf_id = \
+              HpkeSymmetricCipherSuite::HpkeKdfId.decode(binary.slice(0, 2))
+            aead_id = \
+              HpkeSymmetricCipherSuite::HpkeAeadId.decode(binary.slice(2, 2))
+            cs = HpkeSymmetricCipherSuite.new(kdf_id, aead_id)
             cid = Convert.bin2i(binary.slice(4, 1))
             enc_len = Convert.bin2i(binary.slice(5, 2))
             i = 7
@@ -134,7 +144,7 @@ module TTTLS13
           ECHClientHello.new(type: ECHClientHelloType::INNER)
         end
 
-        # @param cipher_suite [ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite]
+        # @param cipher_suite [HpkeSymmetricCipherSuite]
         # @param config_id [Integer]
         # @param enc [String]
         # @param payload [String]
