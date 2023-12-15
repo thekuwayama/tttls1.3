@@ -209,22 +209,29 @@ TESTBINARY_PKEY_PRIVATE_EXPONENT = <<BIN.split.map(&:hex).map(&:chr).join
   c3 08 8d f2 5a e6 79 23     3d f8 a3 bd a2 ff 99 41
 BIN
 
-# FIXME:
 TESTBINARY_ECH_CHO = <<BIN.split.map(&:hex).map(&:chr).join
-  00 00 01 00 01 20 00 20     9a 2b bd 96 11 cc 25 ee
-  a5 9d 6a 78 cd df 06 b4     99 55 97 5e 12 18 0f bf
-  93 7c 53 a5 74 87 4d 1a     00 af 9d b4 cf 81 34 9a
-  e9 de 38 d2 a5 b9 5a 02     ac 6a 20 b6 d6 ec d6 c2
-  98 d6 c6 3e 4d bb d2 3f     7f c2 38 ac 2f 24 44 6b
-  bc 0c 1b a6 26 a1 58 2b     2a e3 d9 9d 6d c6 39 69
-  cf ff 80 5b 44 99 c1 d3     32 62 f9 68 74 5b 52 30
-  68 67 45 bd 76 d8 c9 2c     6b 20 2e be 7e ef b4 1a
-  2c 2c 14 60 b7 97 03 69     be 32 d3 47 f8 12 eb 76
-  b2 10 c1 da 32 f9 cd eb     e3 59 3c 91 4e 00 f6 69
-  68 7f 4a 1c 35 b3 22 d4     82 e0 83 3e 45 d7 41 6a
-  4f bc 73 22 9c f0 36 b4     39 21 89 f5 f3 cb 86 59
-  d5 a6 fa da 2a 54 13 a6     34 bd 05 c9 32 07 d9 6a
-  6c 4a b8 95 03 3a f8 61     63
+  00 00 01 00 01 20 00 20     00 01 02 03 04 05 06 07
+  08 09 0a 0b 0c 0d 0e 0f     10 11 12 13 14 15 16 17
+  18 19 1a 1b 1c 1d 1e 1f     00 ef 00 01 02 03 04 05
+  06 07 08 09 0a 0b 0c 0d     0e 0f 10 11 12 13 14 15
+  16 17 18 19 1a 1b 1c 1d     1e 1f 20 21 22 23 24 25
+  26 27 28 29 2a 2b 2c 2d     2e 2f 30 31 32 33 34 35
+  36 37 38 39 3a 3b 3c 3d     3e 3f 40 41 42 43 44 45
+  46 47 48 49 4a 4b 4c 4d     4e 4f 50 51 52 53 54 55
+  56 57 58 59 5a 5b 5c 5d     5e 5f 60 61 62 63 64 65
+  66 67 68 69 6a 6b 6c 6d     6e 6f 70 71 72 73 74 75
+  76 77 78 79 7a 7b 7c 7d     7e 7f 80 81 82 83 84 85
+  86 87 88 89 8a 8b 8c 8d     8e 8f 90 91 92 93 94 95
+  96 97 98 99 9a 9b 9c 9d     9e 9f a0 a1 a2 a3 a4 a5
+  a6 a7 a8 a9 aa ab ac ad     ae af b0 b1 b2 b3 b4 b5
+  b6 b7 b8 b9 ba bb bc bd     be bf c0 c1 c2 c3 c4 c5
+  c6 c7 c8 c9 ca cb cc cd     ce cf d0 d1 d2 d3 d4 d5
+  d6 d7 d8 d9 da db dc dd     de df e0 e1 e2 e3 e4 e5
+  e6 e7 e8 e9 ea eb ec ed     ee
+BIN
+
+TESTBINARY_ECH_CHI = <<BIN.split.map(&:hex).map(&:chr).join
+  01
 BIN
 
 # https://tools.ietf.org/html/rfc8448#section-3

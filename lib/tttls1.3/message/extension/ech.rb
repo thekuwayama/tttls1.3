@@ -26,7 +26,10 @@ module TTTLS13
         def initialize(type:, cipher_suite: nil, config_id: nil, enc: nil, payload: nil)
           @extension_type = ExtensionType::ENCRYPTED_CLIENT_HELLO
           @type = type
-          @cipher_suite = cipher_suite # FIXME: raise error using ech_config
+          @cipher_suite = cipher_suite
+          raise Error::ErrorAlerts, :internal_error \
+            if @type == ECHClientHelloType::OUTER && !@cipher_suite.is_a?(ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite)
+
           @config_id = config_id
           @enc = enc
           @payload = payload
