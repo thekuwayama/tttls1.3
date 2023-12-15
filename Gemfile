@@ -2,6 +2,7 @@
 
 source 'https://rubygems.org'
 
+gem 'ech_config', git: 'https://github.com/thekuwayama/ech_config.git', branch: 'main'
 gem 'logger'
 gem 'openssl'
 gem 'rake'

@@ -70,6 +70,7 @@ module TTTLS13
     process_certificate_status: nil,
     compress_certificate_algorithms: DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS,
     ech_config: nil,
+    ech_hpke_cipher_suites: nil,
     compatibility_mode: true,
     sslkeylogfile: nil,
     loglevel: Logger::WARN
@@ -761,13 +762,13 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
       # FIXME: support GREASE ECH
+      # FIXME: support GREASE PSK
       abort('GREASE ECH') \
         unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
-
-      # FIXME: support GREASE PSK
 
       mnl = ech_config.echconfig_contents.maximum_name_length
       encoded = encode_ch_inner(inner, mnl)
@@ -775,21 +776,40 @@ module TTTLS13
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
       public_key = key_config.public_key.opaque
-      config_id = key_config.config_id
-      # FIXME: select preferred cipher_suite
-      cipher_suite = key_config.cipher_suites[0]
-      case cipher_suite.aead_id.uint16
-      when 0x0001, 0x0002, 0x003
-        overhead_len = 16
-      end
 
-      # https://www.iana.org/assignments/hpke/hpke.xhtml
-      # KEM ID : 32 => DHKEM(X25519, HKDF-SHA256)
-      # KDF ID :  1 => HKDF-SHA256
-      # AEAD ID:  1 => AES-128-GCM
-      pkr = HPKE::DHKEM::X25519.new(:sha256).deserialize_public_key(public_key)
-      # FIMXE: setup using key_config
-      hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm)
+      config_id = key_config.config_id
+      cipher_suite = select_ech_hpke_cipher_suite(key_config)
+      overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
+      abort('GREASE ECH') if overhead_len.nil?
+
+      aead_cipher = Hpke.aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
+      abort('GREASE ECH') if aead_cipher.nil?
+
+      kdf_hash = Hpke.kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
+      abort('GREASE ECH') if kdf_hash.nil?
+
+      kem_id = key_config.kem_id.uint16
+      kem_curve_name, kem_hash = Hpke.kem_id2dhkem(kem_id)
+      case kem_curve_name
+      when :p_256
+        pkr = HPKE::DHKEM::EC::P_256.new(kem_hash)
+                                    .deserialize_public_key(public_key)
+      when :p_384
+        pkr = HPKE::DHKEM::EC::P_384.new(kem_hash)
+                                    .deserialize_public_key(public_key)
+      when :p_521
+        pkr = HPKE::DHKEM::EC::P_521.new(kem_hash)
+                                    .deserialize_public_key(public_key)
+      when :x25519
+        pkr = HPKE::DHKEM::X25519.new(kem_hash)
+                                 .deserialize_public_key(public_key)
+      when :x448
+        pkr = HPKE::DHKEM::X448.new(kem_hash)
+                               .deserialize_public_key(public_key)
+      else
+        abort('GREASE ECH')
+      end
+      hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
       ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
 
       aad = new_ch_outer_aad(
@@ -809,6 +829,7 @@ module TTTLS13
       )
     end
     # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/MethodLength
 
     # @param inner [TTTLS13::Message::ClientHello]
@@ -911,6 +932,15 @@ module TTTLS13
           Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => outer_ech
         )
       )
+    end
+
+    # @param conf [Array of HpkeKeyConfig]
+    #
+    # @return [HpkeSymmetricCipherSuite, nil]
+    def select_ech_hpke_cipher_suite(conf)
+      @settings[:ech_hpke_cipher_suites].find do |cs|
+        conf.cipher_suites.include?(cs) # FIXME: equality
+      end
     end
 
     # @return [Integer]
