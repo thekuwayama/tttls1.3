@@ -69,6 +69,8 @@ module TTTLS13
     check_certificate_status: false,
     process_certificate_status: nil,
     compress_certificate_algorithms: DEFALUT_CH_COMPRESS_CERTIFICATE_ALGORITHMS,
+    ech_config: nil,
+    ech_hpke_cipher_suites: nil,
     compatibility_mode: true,
     sslkeylogfile: nil,
     loglevel: Logger::WARN
@@ -164,6 +166,7 @@ module TTTLS13
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      ch_outer = nil # TTTLS13::Message::ClientHello
       unless @settings[:sslkeylogfile].nil?
         begin
           sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
@@ -181,8 +184,10 @@ module TTTLS13
 
           extensions, priv_keys = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
-          ch = send_client_hello(extensions, binder_key)
+          ch, inner = send_client_hello(extensions, binder_key)
+          ch = inner.nil? ? ch : inner
           transcript[CH] = [ch, ch.serialize]
+          ch_outer = ch
           send_ccs if @settings[:compatibility_mode]
           if use_early_data?
             e_wcipher = gen_cipher(
@@ -296,6 +301,11 @@ module TTTLS13
             cipher_suite: @cipher_suite,
             transcript: transcript
           )
+
+          # rejected ECH
+          transcript[CH] = [ch_outer, ch_outer.serialize] \
+            if use_ech? && !key_schedule.accept_ech?
+
           @alert_wcipher = hs_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,
@@ -567,6 +577,11 @@ module TTTLS13
       !(@early_data.nil? || @early_data.empty?)
     end
 
+    # @return [Boolean]
+    def use_ech?
+      !@settings[:ech_config].nil?
+    end
+
     # @param cipher [TTTLS13::Cryptograph::Aead]
     def send_early_data(cipher)
       ap = Message::ApplicationData.new(@early_data)
@@ -665,7 +680,8 @@ module TTTLS13
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
     #
-    # @return [TTTLS13::Message::ClientHello]
+    # @return [TTTLS13::Message::ClientHello] outer
+    # @return [TTTLS13::Message::ClientHello] inner
     def send_client_hello(extensions, binder_key = nil)
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
@@ -690,10 +706,19 @@ module TTTLS13
         )
       end
 
+      inner = nil # TTTLS13::Message::ClientHello
+      if use_ech? # FIXME: && psk
+        inner = ch
+        inner_ech = Message::Extension::ECHClientHello.new_inner
+        inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
+          = inner_ech
+        ch = offer_ech(inner, @settings[:ech_config])
+      end
+
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 
-      ch
+      [ch, inner]
     end
 
     # @param ch1 [TTTLS13::Message::ClientHello]
@@ -712,7 +737,7 @@ module TTTLS13
       # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      dummy_binders = ["\x00" * hash_len]
+      dummy_binders = [hash_len.zeros]
       psk = Message::Extension::PreSharedKey.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         offered_psks: Message::Extension::OfferedPsks.new(
@@ -732,6 +757,185 @@ module TTTLS13
         binder_key: binder_key,
         digest: digest
       )
+    end
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param ech_config [ECHConfig]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/CyclomaticComplexity
+    # rubocop: disable Metrics/MethodLength
+    def offer_ech(inner, ech_config)
+      # FIXME: support GREASE ECH
+      # FIXME: support GREASE PSK
+      abort('GREASE ECH') \
+        unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
+
+      public_name = ech_config.echconfig_contents.public_name
+      key_config = ech_config.echconfig_contents.key_config
+      public_key = key_config.public_key.opaque
+      kem_id = key_config&.kem_id&.uint16
+      config_id = key_config.config_id
+      cipher_suite = select_ech_hpke_cipher_suite(key_config)
+      overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
+      aead_cipher = Hpke.aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
+      kdf_hash = Hpke.kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
+      abort('GREASE ECH') \
+        if [kem_id, overhead_len, aead_cipher, kdf_hash].any?(&:nil?)
+
+      kem_curve_name, kem_hash = Hpke.kem_id2dhkem(kem_id)
+      dhkem = case kem_curve_name
+              when :p_256
+                HPKE::DHKEM::EC::P_256
+              when :p_384
+                HPKE::DHKEM::EC::P_384
+              when :p_521
+                HPKE::DHKEM::EC::P_521
+              when :x25519
+                HPKE::DHKEM::X25519
+              when :x448
+                HPKE::DHKEM::X448
+              end
+      pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
+      abort('GREASE ECH') if pkr.nil?
+
+      hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
+      ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
+
+      mnl = ech_config.echconfig_contents.maximum_name_length
+      encoded = encode_ch_inner(inner, mnl)
+      aad = new_ch_outer_aad(
+        inner,
+        cipher_suite,
+        config_id,
+        ctx[:enc],
+        encoded.length + overhead_len,
+        public_name
+      )
+      # which does not include the Handshake structure's four byte header.
+      new_ch_outer(
+        aad,
+        cipher_suite,
+        config_id,
+        ctx[:enc],
+        ctx[:context_s].seal(aad.serialize[4..], encoded)
+      )
+    end
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/CyclomaticComplexity
+    # rubocop: enable Metrics/MethodLength
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param maximum_name_length [Integer]
+    #
+    # @return [String] EncodedClientHelloInner
+    def encode_ch_inner(inner, maximum_name_length)
+      # TODO: ech_outer_extensions
+      encoded = Message::ClientHello.new(
+        legacy_version: inner.legacy_version,
+        random: inner.random,
+        legacy_session_id: '',
+        cipher_suites: inner.cipher_suites,
+        legacy_compression_methods: inner.legacy_compression_methods,
+        extensions: inner.extensions
+      )
+      server_name_length = \
+        inner.extensions[Message::ExtensionType::SERVER_NAME].server_name.length
+
+      # which does not include the Handshake structure's four byte header.
+      padding_encoded_ch_inner(
+        encoded.serialize[4..],
+        server_name_length,
+        maximum_name_length
+      )
+    end
+
+    # @param s [String]
+    # @param server_name_length [Integer]
+    # @param maximum_name_length [Integer]
+    #
+    # @return [String]
+    def padding_encoded_ch_inner(s, server_name_length, maximum_name_length)
+      padding_len =
+        if server_name_length.positive?
+          [maximum_name_length - server_name_length, 0].max
+        else
+          9 + maximum_name_length
+        end
+
+      padding_len = 31 - ((s.length + padding_len - 1) % 32)
+      s + padding_len.zeros
+    end
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param cipher_suite [HpkeSymmetricCipherSuite]
+    # @param config_id [Integer]
+    # @param enc [String]
+    # @param payload_len [Integer]
+    # @param server_name [String]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    # rubocop: disable Metrics/ParameterLists
+    def new_ch_outer_aad(inner,
+                         cipher_suite,
+                         config_id,
+                         enc,
+                         payload_len,
+                         server_name)
+      aad_ech = Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: config_id,
+        enc: enc,
+        payload: payload_len.zeros
+      )
+      Message::ClientHello.new(
+        legacy_version: inner.legacy_version,
+        legacy_session_id: inner.legacy_session_id,
+        cipher_suites: inner.cipher_suites,
+        legacy_compression_methods: inner.legacy_compression_methods,
+        extensions: inner.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => aad_ech,
+          Message::ExtensionType::SERVER_NAME => \
+            Message::Extension::ServerName.new(server_name)
+        )
+      )
+    end
+    # rubocop: enable Metrics/ParameterLists
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param cipher_suite [HpkeSymmetricCipherSuite]
+    # @param config_id [Integer]
+    # @param enc [String]
+    # @param payload [String]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    def new_ch_outer(aad, cipher_suite, config_id, enc, payload)
+      outer_ech = Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: config_id,
+        enc: enc,
+        payload: payload
+      )
+      Message::ClientHello.new(
+        legacy_version: aad.legacy_version,
+        random: aad.random,
+        legacy_session_id: aad.legacy_session_id,
+        cipher_suites: aad.cipher_suites,
+        legacy_compression_methods: aad.legacy_compression_methods,
+        extensions: aad.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => outer_ech
+        )
+      )
+    end
+
+    # @param conf [Array of HpkeKeyConfig]
+    #
+    # @return [HpkeSymmetricCipherSuite, nil]
+    def select_ech_hpke_cipher_suite(conf)
+      @settings[:ech_hpke_cipher_suites].find do |cs|
+        conf.cipher_suites.include?(cs)
+      end
     end
 
     # @return [Integer]
@@ -754,7 +958,7 @@ module TTTLS13
         group = hrr.extensions[Message::ExtensionType::KEY_SHARE]
                    .key_share_entry.first.group
         key_share, priv_keys \
-                   = Message::Extension::KeyShare.gen_ch_key_share([group])
+          = Message::Extension::KeyShare.gen_ch_key_share([group])
         exs << key_share
       end
 
