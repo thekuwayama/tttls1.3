@@ -772,48 +772,39 @@ module TTTLS13
       abort('GREASE ECH') \
         unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
-      mnl = ech_config.echconfig_contents.maximum_name_length
-      encoded = encode_ch_inner(inner, mnl)
-
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
       public_key = key_config.public_key.opaque
-
+      kem_id = key_config&.kem_id&.uint16
       config_id = key_config.config_id
       cipher_suite = select_ech_hpke_cipher_suite(key_config)
       overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
-      abort('GREASE ECH') if overhead_len.nil?
-
       aead_cipher = Hpke.aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
-      abort('GREASE ECH') if aead_cipher.nil?
-
       kdf_hash = Hpke.kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
-      abort('GREASE ECH') if kdf_hash.nil?
+      abort('GREASE ECH') \
+        if [kem_id, overhead_len, aead_cipher, kdf_hash].any?(&:nil?)
 
-      kem_id = key_config.kem_id.uint16
       kem_curve_name, kem_hash = Hpke.kem_id2dhkem(kem_id)
-      case kem_curve_name
-      when :p_256
-        pkr = HPKE::DHKEM::EC::P_256.new(kem_hash)
-                                    .deserialize_public_key(public_key)
-      when :p_384
-        pkr = HPKE::DHKEM::EC::P_384.new(kem_hash)
-                                    .deserialize_public_key(public_key)
-      when :p_521
-        pkr = HPKE::DHKEM::EC::P_521.new(kem_hash)
-                                    .deserialize_public_key(public_key)
-      when :x25519
-        pkr = HPKE::DHKEM::X25519.new(kem_hash)
-                                 .deserialize_public_key(public_key)
-      when :x448
-        pkr = HPKE::DHKEM::X448.new(kem_hash)
-                               .deserialize_public_key(public_key)
-      else
-        abort('GREASE ECH')
-      end
+      dhkem = case kem_curve_name
+              when :p_256
+                HPKE::DHKEM::EC::P_256
+              when :p_384
+                HPKE::DHKEM::EC::P_384
+              when :p_521
+                HPKE::DHKEM::EC::P_521
+              when :x25519
+                HPKE::DHKEM::X25519
+              when :x448
+                HPKE::DHKEM::X448
+              end
+      pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
+      abort('GREASE ECH') if pkr.nil?
+
       hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
       ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
 
+      mnl = ech_config.echconfig_contents.maximum_name_length
+      encoded = encode_ch_inner(inner, mnl)
       aad = new_ch_outer_aad(
         inner,
         cipher_suite,
@@ -967,7 +958,7 @@ module TTTLS13
         group = hrr.extensions[Message::ExtensionType::KEY_SHARE]
                    .key_share_entry.first.group
         key_share, priv_keys \
-                   = Message::Extension::KeyShare.gen_ch_key_share([group])
+          = Message::Extension::KeyShare.gen_ch_key_share([group])
         exs << key_share
       end
 
