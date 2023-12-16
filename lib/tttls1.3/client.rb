@@ -301,8 +301,11 @@ module TTTLS13
             cipher_suite: @cipher_suite,
             transcript: transcript
           )
+
+          # rejected ECH
           transcript[CH] = [ch_outer, ch_outer.serialize] \
             if use_ech? && !key_schedule.accept_ech?
+
           @alert_wcipher = hs_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,
@@ -321,7 +324,6 @@ module TTTLS13
             transcript[CH].first.random,
             key_schedule.server_handshake_traffic_secret
           )
-
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           logger.debug('ClientState::WAIT_EE')
@@ -820,6 +822,7 @@ module TTTLS13
         encoded.length + overhead_len,
         public_name
       )
+      # which does not include the Handshake structure's four byte header.
       new_ch_outer(
         aad,
         cipher_suite,
@@ -846,9 +849,10 @@ module TTTLS13
         legacy_compression_methods: inner.legacy_compression_methods,
         extensions: inner.extensions
       )
-
       server_name_length = \
         inner.extensions[Message::ExtensionType::SERVER_NAME].server_name.length
+
+      # which does not include the Handshake structure's four byte header.
       padding_encoded_ch_inner(
         encoded.serialize[4..],
         server_name_length,
@@ -939,7 +943,7 @@ module TTTLS13
     # @return [HpkeSymmetricCipherSuite, nil]
     def select_ech_hpke_cipher_suite(conf)
       @settings[:ech_hpke_cipher_suites].find do |cs|
-        conf.cipher_suites.include?(cs) # FIXME: equality
+        conf.cipher_suites.include?(cs)
       end
     end
 
