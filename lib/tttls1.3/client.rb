@@ -104,6 +104,7 @@ module TTTLS13
 
       @early_data = ''
       @succeed_early_data = false
+      @retry_configs = []
       raise Error::ConfigError unless valid_settings?
     end
 
@@ -345,6 +346,9 @@ module TTTLS13
           @alpn = ee.extensions[
             Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
           ]&.protocol_name_list&.first
+          @retry_configs = ee.extensions[
+            Message::ExtensionType::ENCRYPTED_CLIENT_HELLO
+          ]&.retry_configs
           @state = ClientState::WAIT_CERT_CR
           @state = ClientState::WAIT_FINISHED unless psk.nil?
         when ClientState::WAIT_CERT_CR
@@ -453,6 +457,8 @@ module TTTLS13
         when ClientState::CONNECTED
           logger.debug('ClientState::CONNECTED')
 
+          send_alert(:ech_required) \
+            if use_ech? && (!@retry_configs.nil? && !@retry_configs.empty?)
           break
         end
       end
@@ -471,6 +477,11 @@ module TTTLS13
       raise Error::ConfigError unless @state == INITIAL && use_psk?
 
       @early_data = binary
+    end
+
+    # @return [Array of ECHConfig]
+    def retry_configs
+      @retry_configs.filter { |c| SUPPORTED_ECHCONFIG_VERSIONS.include?(c) }
     end
 
     # @return [Boolean]
@@ -559,6 +570,9 @@ module TTTLS13
       return false if @settings[:check_certificate_status] &&
                       @settings[:process_certificate_status].nil?
 
+      ehcs = @settings[:ech_hpke_cipher_suites] || []
+      return false if !@settings[:ech_config].nil? && ehcs.empty?
+
       true
     end
     # rubocop: enable Metrics/AbcSize
@@ -582,7 +596,8 @@ module TTTLS13
 
     # @return [Boolean]
     def use_ech?
-      !@settings[:ech_config].nil?
+      !@settings[:ech_hpke_cipher_suites].nil? &&
+        !@settings[:ech_hpke_cipher_suites].empty?
     end
 
     # @param cipher [TTTLS13::Cryptograph::Aead]
@@ -772,7 +787,8 @@ module TTTLS13
     def offer_ech(inner, ech_config)
       # FIXME: support GREASE PSK
       return [new_greased_ch(inner, new_grease_ech), nil] \
-        unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
+        if ech_config.nil? ||
+           !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
       # Encrypted ClientHello Configuration
       public_name = ech_config.echconfig_contents.public_name
