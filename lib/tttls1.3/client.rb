@@ -481,7 +481,9 @@ module TTTLS13
 
     # @return [Array of ECHConfig]
     def retry_configs
-      @retry_configs.filter { |c| SUPPORTED_ECHCONFIG_VERSIONS.include?(c) }
+      @retry_configs.filter do |c|
+        SUPPORTED_ECHCONFIG_VERSIONS.include?(c.version)
+      end
     end
 
     # @return [Boolean]
