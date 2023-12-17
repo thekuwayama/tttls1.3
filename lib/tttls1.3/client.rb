@@ -471,6 +471,20 @@ module TTTLS13
     # rubocop: enable Metrics/PerceivedComplexity
 
     # @param binary [String]
+    def write(binary)
+      # the client can regard ECH as securely disabled by the server, and it
+      # SHOULD retry the handshake with a new transport connection and ECH
+      # disabled.
+      if !@retry_configs.nil? && !@retry_configs.empty?
+        msg = 'SHOULD retry the handshake with a new transport connection'
+        logger.warn(msg)
+        return
+      end
+
+      super.write(binary)
+    end
+
+    # @param binary [String]
     #
     # @raise [TTTLS13::Error::ConfigError]
     def early_data(binary)
