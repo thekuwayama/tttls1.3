@@ -7,6 +7,7 @@ Dir[File.dirname(__FILE__) + '/extension/*.rb'].sort.each { |f| require f }
 module TTTLS13
   using Refinements
   module Message
+    # rubocop: disable Metrics/ClassLength
     class Extensions < Hash
       # @param extensions [Array of TTTLS13::Message::Extension::$Object]
       #
@@ -119,6 +120,7 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [TTTLS13::Message::Extension::$Object, nil]
+        # rubocop: disable Metrics/AbcSize
         # rubocop: disable Metrics/CyclomaticComplexity
         # rubocop: disable Metrics/MethodLength
         # rubocop: disable Metrics/PerceivedComplexity
@@ -130,14 +132,12 @@ module TTTLS13
             Extension::ServerName.deserialize(binary)
           when ExtensionType::STATUS_REQUEST
             if msg_type == HandshakeType::CLIENT_HELLO
-              return Extension::OCSPStatusRequest.deserialize(binary)
+              Extension::OCSPStatusRequest.deserialize(binary)
+            elsif msg_type == HandshakeType::CERTIFICATE
+              Extension::OCSPResponse.deserialize(binary)
+            else
+              Extension::UnknownExtension.deserialize(binary, extension_type)
             end
-
-            if msg_type == HandshakeType::CERTIFICATE
-              return Extension::OCSPResponse.deserialize(binary)
-            end
-
-            Extension::UnknownExtension.deserialize(binary, extension_type)
           when ExtensionType::SUPPORTED_GROUPS
             Extension::SupportedGroups.deserialize(binary)
           when ExtensionType::SIGNATURE_ALGORITHMS
@@ -163,15 +163,25 @@ module TTTLS13
           when ExtensionType::KEY_SHARE
             Extension::KeyShare.deserialize(binary, msg_type)
           when ExtensionType::ENCRYPTED_CLIENT_HELLO
-            Extension::ECHClientHello.deserialize(binary, msg_type)
+            if msg_type == HandshakeType::CLIENT_HELLO
+              Extension::ECHClientHello.deserialize(binary)
+            elsif msg_type == HandshakeType::ENCRYPTED_EXTENSIONS
+              Extension::ECHEncryptedExtensions.deserialize(binary)
+            # elsif msg_type == HandshakeType::SERVER_HELLO
+            #   Extension::ECHHelloRetryRequest.deserialize(binary)
+            else
+              Extension::UnknownExtension.deserialize(binary, extension_type)
+            end
           else
             Extension::UnknownExtension.deserialize(binary, extension_type)
           end
         end
+        # rubocop: enable Metrics/AbcSize
         # rubocop: enable Metrics/CyclomaticComplexity
         # rubocop: enable Metrics/MethodLength
         # rubocop: enable Metrics/PerceivedComplexity
       end
     end
+    # rubocop: enable Metrics/ClassLength
   end
 end

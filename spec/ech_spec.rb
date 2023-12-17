@@ -5,12 +5,9 @@ require_relative 'spec_helper'
 using Refinements
 
 RSpec.describe ECHClientHello do
-  context 'valid ech outer binary' do
+  context 'valid ECHClientHello outer binary' do
     let(:extension) do
-      ECHClientHello.deserialize(
-        TESTBINARY_ECH_CHO,
-        HandshakeType::CLIENT_HELLO
-      )
+      ECHClientHello.deserialize(TESTBINARY_ECH_OUTER)
     end
 
     it 'should generate valid object' do
@@ -37,12 +34,9 @@ RSpec.describe ECHClientHello do
     end
   end
 
-  context 'valid ech inner binary' do
+  context 'valid ECHClientHello inner binary' do
     let(:extension) do
-      ECHClientHello.deserialize(
-        TESTBINARY_ECH_CHI,
-        HandshakeType::CLIENT_HELLO
-      )
+      ECHClientHello.deserialize(TESTBINARY_ECH_INNER)
     end
 
     it 'should generate valid object' do
@@ -59,12 +53,9 @@ RSpec.describe ECHClientHello do
     end
   end
 
-  context 'valid ech ee binary' do
+  context 'valid ECHEncryptedExtensions binary' do
     let(:extension) do
-      ECHClientHello.deserialize(
-        TESTBINARY_ECH_EE,
-        HandshakeType::ENCRYPTED_EXTENSIONS
-      )
+      ECHEncryptedExtensions.deserialize(TESTBINARY_ECH_EE)
     end
 
     it 'should generate valid object' do
