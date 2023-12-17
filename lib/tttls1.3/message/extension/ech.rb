@@ -60,7 +60,10 @@ module TTTLS13
           when ECHClientHelloType::INNER
             binary = @type
           else
-            raise Error::ErrorAlerts, :internal_error
+            unless @retry_configs.nil?
+              @retry_configs.map(&:encode).join.prefix_uint16_length
+            end
+            # FIXME: ECHHelloRetryRequest
           end
           @extension_type + binary.prefix_uint16_length
         end
