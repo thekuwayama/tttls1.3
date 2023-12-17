@@ -40,6 +40,8 @@ module TTTLS13
         HPKE::DHKEM::X25519
       when :x448
         HPKE::DHKEM::X448
+      end
+    end
 
     def self.kem_id2enc_len(kem_id)
       case kem_id

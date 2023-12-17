@@ -3,9 +3,9 @@
 
 require_relative 'helper'
 require 'svcb_rr_patch'
-
-HpkeSymmetricCipherSuite = \
+self.class.include \
   ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
+
 hostname = 'crypto.cloudflare.com'
 port = 443
 ca_file = __dir__ + '/../tmp/ca.crt'

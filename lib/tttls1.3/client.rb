@@ -933,11 +933,13 @@ module TTTLS13
       # C is the ciphertext expansion of the selected AEAD scheme and L is the
       # size of the EncodedClientHelloInner the client would compute when
       # offering ECH, padded according to Section 6.1.3.
-      cipher_suite = ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite.new(
-        ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite::HpkeKdfId.new(
+      self.class.include \
+        ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuit
+      cipher_suite = HpkeSymmetricCipherSuite.new(
+        HpkeSymmetricCipherSuite::HpkeKdfId.new(
           TTTLS13::Hpke::KdfId::HKDF_SHA256
         ),
-        ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite::HpkeAeadId.new(
+        HpkeSymmetricCipherSuite::HpkeAeadId.new(
           TTTLS13::Hpke::AeadId::AES_128_GCM
         )
       )
