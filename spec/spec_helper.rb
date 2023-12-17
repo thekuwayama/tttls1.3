@@ -209,7 +209,7 @@ TESTBINARY_PKEY_PRIVATE_EXPONENT = <<BIN.split.map(&:hex).map(&:chr).join
   c3 08 8d f2 5a e6 79 23     3d f8 a3 bd a2 ff 99 41
 BIN
 
-TESTBINARY_ECH_CHO = <<BIN.split.map(&:hex).map(&:chr).join
+TESTBINARY_ECH_OUTER = <<BIN.split.map(&:hex).map(&:chr).join
   00 00 01 00 01 20 00 20     00 01 02 03 04 05 06 07
   08 09 0a 0b 0c 0d 0e 0f     10 11 12 13 14 15 16 17
   18 19 1a 1b 1c 1d 1e 1f     00 ef 00 01 02 03 04 05
@@ -230,7 +230,7 @@ TESTBINARY_ECH_CHO = <<BIN.split.map(&:hex).map(&:chr).join
   e6 e7 e8 e9 ea eb ec ed     ee
 BIN
 
-TESTBINARY_ECH_CHI = <<BIN.split.map(&:hex).map(&:chr).join
+TESTBINARY_ECH_INNER = <<BIN.split.map(&:hex).map(&:chr).join
   01
 BIN
 
