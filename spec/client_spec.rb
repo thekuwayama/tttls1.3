@@ -284,13 +284,8 @@ RSpec.describe Client do
       0
     end
 
-    let(:extensions) do
-      extensions, = client.send(:gen_ch_extensions)
-      extensions
-    end
-
     let(:encoded) do
-      extensions
+      extensions, = client.send(:gen_ch_extensions)
       inner_ech = Message::Extension::ECHClientHello.new_inner
       Message::ClientHello.new(
         legacy_session_id: '',
