@@ -938,7 +938,7 @@ module TTTLS13
       )
       hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm)
       ctx = hpke.setup_base_s(public_key, '')[:context_s]
-      payload_len = placeholder_encoded_ch_inner_length \
+      payload_len = placeholder_encoded_ch_inner_len \
                     + Hpke.aead_id2overhead_len(:aes_128_gcm)
 
       Message::Extension::ECHClientHello.new_outer(
@@ -949,7 +949,7 @@ module TTTLS13
       )
     end
 
-    def placeholder_encoded_ch_inner_length
+    def placeholder_encoded_ch_inner_len
       # FIXME
       207
     end
