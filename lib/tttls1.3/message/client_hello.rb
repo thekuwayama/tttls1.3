@@ -31,7 +31,8 @@ module TTTLS13
       ExtensionType::CERTIFICATE_AUTHORITIES,
       ExtensionType::POST_HANDSHAKE_AUTH,
       ExtensionType::SIGNATURE_ALGORITHMS_CERT,
-      ExtensionType::KEY_SHARE
+      ExtensionType::KEY_SHARE,
+      ExtensionType::ENCRYPTED_CLIENT_HELLO
     ].freeze
     private_constant :APPEARABLE_CH_EXTENSIONS
 

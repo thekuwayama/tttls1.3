@@ -79,6 +79,9 @@ module TTTLS13
 
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
+    HpkeSymmetricCipherSuit = \
+      ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
+
     # @param socket [Socket]
     # @param hostname [String]
     # @param settings [Hash]
@@ -712,7 +715,7 @@ module TTTLS13
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = inner_ech
-        ch = offer_ech(inner, @settings[:ech_config])
+        ch, inner = offer_ech(inner, @settings[:ech_config])
       end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
@@ -763,14 +766,15 @@ module TTTLS13
     # @param ech_config [ECHConfig]
     #
     # @return [TTTLS13::Message::ClientHello]
+    # @return [TTTLS13::Message::ClientHello]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
-      # FIXME: support GREASE ECH
       # FIXME: support GREASE PSK
-      abort('GREASE ECH') \
+      return [new_greased_ch(inner, new_grease_ech), nil] \
         unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
+      # Encrypted ClientHello Configuration
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
       public_key = key_config.public_key.opaque
@@ -780,19 +784,20 @@ module TTTLS13
       overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
       aead_cipher = Hpke.aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
       kdf_hash = Hpke.kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
-      abort('GREASE ECH') \
+      return [new_greased_ch(inner, new_grease_ech), nil] \
         if [kem_id, overhead_len, aead_cipher, kdf_hash].any?(&:nil?)
 
       kem_curve_name, kem_hash = Hpke.kem_id2dhkem(kem_id)
       dhkem = Hpke.kem_curve_name2dhkem(kem_curve_name)
       pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
-      abort('GREASE ECH') if pkr.nil?
+      return [new_greased_ch(inner, new_grease_ech), nil] if pkr.nil?
 
       hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
       ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
-
       mnl = ech_config.echconfig_contents.maximum_name_length
       encoded = encode_ch_inner(inner, mnl)
+
+      # Encoding the ClientHelloInner
       aad = new_ch_outer_aad(
         inner,
         cipher_suite,
@@ -801,14 +806,17 @@ module TTTLS13
         encoded.length + overhead_len,
         public_name
       )
+      # Authenticating the ClientHelloOuter
       # which does not include the Handshake structure's four byte header.
-      new_ch_outer(
+      outer = new_ch_outer(
         aad,
         cipher_suite,
         config_id,
         ctx[:enc],
         ctx[:context_s].seal(aad.serialize[4..], encoded)
       )
+
+      [outer, inner]
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/MethodLength
@@ -923,6 +931,58 @@ module TTTLS13
       @settings[:ech_hpke_cipher_suites].find do |cs|
         conf.cipher_suites.include?(cs)
       end
+    end
+
+    # @return [Message::Extension::ECHClientHello]
+    def new_grease_ech
+      # Set the enc field to a randomly-generated valid encapsulated public key
+      # output by the HPKE KEM.
+      # Set the payload field to a randomly-generated string of L+C bytes, where
+      # C is the ciphertext expansion of the selected AEAD scheme and L is the
+      # size of the EncodedClientHelloInner the client would compute when
+      # offering ECH, padded according to Section 6.1.3.
+      cipher_suite = HpkeSymmetricCipherSuite.new(
+        HpkeSymmetricCipherSuite::HpkeKdfId.new(
+          TTTLS13::Hpke::KdfId::HKDF_SHA256
+        ),
+        HpkeSymmetricCipherSuite::HpkeAeadId.new(
+          TTTLS13::Hpke::AeadId::AES_128_GCM
+        )
+      )
+      public_key = OpenSSL::PKey.read(
+        OpenSSL::PKey.generate_key('X25519').public_to_pem
+      )
+      hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm)
+      enc = hpke.setup_base_s(public_key, '')[:enc]
+      payload_len = placeholder_encoded_ch_inner_len \
+                    + Hpke.aead_id2overhead_len(Hpke::AeadId::AES_128_GCM)
+
+      Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: Convert.bin2i(OpenSSL::Random.random_bytes(1)),
+        enc: enc,
+        payload: OpenSSL::Random.random_bytes(payload_len)
+      )
+    end
+
+    # @return [Integer]
+    def placeholder_encoded_ch_inner_len
+      448
+    end
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param ech [Message::Extension::ECHClientHello]
+    def new_greased_ch(inner, ech)
+      Message::ClientHello.new(
+        legacy_version: inner.legacy_version,
+        random: inner.random,
+        legacy_session_id: inner.legacy_session_id,
+        cipher_suites: inner.cipher_suites,
+        legacy_compression_methods: inner.legacy_compression_methods,
+        extensions: inner.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => ech
+        )
+      )
     end
 
     # @return [Integer]

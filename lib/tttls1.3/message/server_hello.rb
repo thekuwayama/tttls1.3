@@ -17,7 +17,8 @@ module TTTLS13
       ExtensionType::COOKIE,
       ExtensionType::PASSWORD_SALT,
       ExtensionType::SUPPORTED_VERSIONS,
-      ExtensionType::KEY_SHARE
+      ExtensionType::KEY_SHARE,
+      ExtensionType::ENCRYPTED_CLIENT_HELLO
     ].freeze
     private_constant :APPEARABLE_HRR_EXTENSIONS
 

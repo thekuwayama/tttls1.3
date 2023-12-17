@@ -3,9 +3,9 @@
 
 require_relative 'helper'
 require 'svcb_rr_patch'
-
 HpkeSymmetricCipherSuite = \
   ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
+
 hostname = 'crypto.cloudflare.com'
 port = 443
 ca_file = __dir__ + '/../tmp/ca.crt'
@@ -30,7 +30,8 @@ settings = {
       )
     )
   ],
-  sslkeylogfile: '/tmp/sslkeylogfile.log'
+  sslkeylogfile: '/tmp/sslkeylogfile.log',
+  loglevel: Logger::DEBUG
 }
 client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect
