@@ -785,18 +785,7 @@ module TTTLS13
         if [kem_id, overhead_len, aead_cipher, kdf_hash].any?(&:nil?)
 
       kem_curve_name, kem_hash = Hpke.kem_id2dhkem(kem_id)
-      dhkem = case kem_curve_name
-              when :p_256
-                HPKE::DHKEM::EC::P_256
-              when :p_384
-                HPKE::DHKEM::EC::P_384
-              when :p_521
-                HPKE::DHKEM::EC::P_521
-              when :x25519
-                HPKE::DHKEM::X25519
-              when :x448
-                HPKE::DHKEM::X448
-              end
+      dhkem = Hpke.kem_curve_name2dhkem(kem_curve_name)
       pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
       abort('GREASE ECH') if pkr.nil?
 

@@ -28,6 +28,21 @@ module TTTLS13
       end
     end
 
+    def self.kem_curve_name2dhkem(kem_curve_name)
+      case kem_curve_name
+      when :p_256
+        HPKE::DHKEM::EC::P_256
+      when :p_384
+        HPKE::DHKEM::EC::P_384
+      when :p_521
+        HPKE::DHKEM::EC::P_521
+      when :x25519
+        HPKE::DHKEM::X25519
+      when :x448
+        HPKE::DHKEM::X448
+      end
+    end
+
     module KdfId
       # https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kdf-ids
       HKDF_SHA256 = 0x0001
