@@ -950,8 +950,7 @@ module TTTLS13
     end
 
     def placeholder_encoded_ch_inner_len
-      # FIXME
-      207
+      448
     end
 
     # @return [Integer]
