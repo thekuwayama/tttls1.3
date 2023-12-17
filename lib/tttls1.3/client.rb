@@ -481,7 +481,7 @@ module TTTLS13
         return
       end
 
-      super.write(binary)
+      super(binary)
     end
 
     # @param binary [String]
