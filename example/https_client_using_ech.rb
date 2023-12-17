@@ -27,7 +27,7 @@ settings = {
       ),
       HpkeSymmetricCipherSuite::HpkeAeadId.new(
         TTTLS13::Hpke::AeadId::AES_128_GCM
-      ),
+      )
     )
   ],
   sslkeylogfile: '/tmp/sslkeylogfile.log'
