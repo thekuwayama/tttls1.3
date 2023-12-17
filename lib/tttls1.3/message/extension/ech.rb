@@ -12,6 +12,7 @@ module TTTLS13
         INNER = "\x01"
       end
 
+      # rubocop: disable Metrics/ClassLength
       class ECHClientHello
         attr_accessor :extension_type
         attr_accessor :type
@@ -19,17 +20,21 @@ module TTTLS13
         attr_accessor :config_id
         attr_accessor :enc
         attr_accessor :payload
+        attr_accessor :retry_configs
 
         # @param type [TTTLS13::Message::Extension::ECHClientHelloType]
         # @param cipher_suite [HpkeSymmetricCipherSuite]
         # @param config_id [Integer]
         # @param enc [String]
         # @param payload [String]
+        # @param retry_configs [Array of ECHConfig]
+        # rubocop: disable Metrics/ParameterLists
         def initialize(type:,
                        cipher_suite: nil,
                        config_id: nil,
                        enc: nil,
-                       payload: nil)
+                       payload: nil,
+                       retry_configs: nil)
           @extension_type = ExtensionType::ENCRYPTED_CLIENT_HELLO
           @type = type
           @cipher_suite = cipher_suite
@@ -40,7 +45,9 @@ module TTTLS13
           @config_id = config_id
           @enc = enc
           @payload = payload
+          @retry_configs = retry_configs
         end
+        # rubocop: enable Metrics/ParameterLists
 
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
@@ -64,26 +71,45 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [TTTLS13::Message::Extensions::ECHClientHello]
+        # rubocop: disable Metrics/CyclomaticComplexity
+        # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary, msg_type)
           raise Error::ErrorAlerts, :internal_error \
             if binary.nil? || binary.empty?
 
-          case binary[0]
-          when ECHClientHelloType::OUTER
-            deserialize_outer_ech(binary[1..]) \
-              if msg_type == HandshakeType::CLIENT_HELLO
-            # else
-            #   FIXME: deserialize_retry_configs
+          if msg_type == HandshakeType::CLIENT_HELLO
+            # NOTE:
             #     struct {
-            #        ECHConfigList retry_configs;
-            #     } ECHEncryptedExtensions;
-            # end
-          when ECHClientHelloType::INNER
-            deserialize_inner_ech(binary[1..])
-          else
-            raise Error::ErrorAlerts, :internal_error
+            #         ECHClientHelloType type;
+            #         select (ECHClientHello.type) {
+            #             case outer:
+            #                 HpkeSymmetricCipherSuite cipher_suite;
+            #                 uint8 config_id;
+            #                 opaque enc<0..2^16-1>;
+            #                 opaque payload<1..2^16-1>;
+            #             case inner:
+            #                 Empty;
+            #         };
+            #     } ECHClientHello;
+            case binary[0]
+            when ECHClientHelloType::OUTER
+              return deserialize_outer_ech(binary[1..])
+            when ECHClientHelloType::INNER
+              return deserialize_inner_ech(binary[1..])
+            end
+          elsif msg_type == HandshakeType::SERVER_HELLO
+            nil
+            #     struct {
+            #         opaque confirmation[8];
+            #     } ECHHelloRetryRequest;
+          elsif msg_type == HandshakeType::ENCRYPTED_EXTENSIONS
+            return deserialize_ee_ech(binary)
           end
+
+          raise Error::ErrorAlerts, :internal_error
         end
+        # rubocop: enable Metrics/CyclomaticComplexity
+        # rubocop: enable Metrics/PerceivedComplexity
 
         class << self
           private
@@ -137,6 +163,27 @@ module TTTLS13
 
             ECHClientHello.new(type: ECHClientHelloType::INNER)
           end
+
+          # NOTE:
+          #     struct {
+          #         ECHConfigList retry_configs;
+          #     } ECHEncryptedExtensions;
+          #
+          # @param binary [String]
+          #
+          # @raise [TTTLS13::Error::ErrorAlerts]
+          #
+          # @return [TTTLS13::Message::Extensions::ECHClientHello]
+          def deserialize_ee_ech(binary)
+            raise Error::ErrorAlerts, :internal_error \
+              if binary.nil? ||
+                 binary.length != binary.slice(0, 2).unpack1('n') + 2
+
+            ECHClientHello.new(
+              type: nil,
+              retry_configs: ECHConfig.decode_vectors(binary.slice(2..))
+            )
+          end
         end
 
         # @return [TTTLS13::Message::Extensions::ECHClientHello]
@@ -162,4 +209,5 @@ module TTTLS13
       end
     end
   end
+  # rubocop: enable Metrics/ClassLength
 end
