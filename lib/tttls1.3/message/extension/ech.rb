@@ -60,7 +60,6 @@ module TTTLS13
         end
 
         # @param binary [String]
-        # @param msg_type [TTTLS13::Message::HandshakeType]
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
@@ -194,7 +193,7 @@ module TTTLS13
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
-        # @return [TTTLS13::Message::Extensions::ECHEncryptedExtensions.new]
+        # @return [TTTLS13::Message::Extensions::ECHEncryptedExtensions]
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error \
             if binary.nil? ||
