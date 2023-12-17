@@ -22,8 +22,12 @@ settings = {
   ech_config: rr.first.svc_params['ech'].echconfiglist.first,
   ech_hpke_cipher_suites: [
     HpkeSymmetricCipherSuite.new(
-      HpkeSymmetricCipherSuite::HpkeKdfId.new(1),
-      HpkeSymmetricCipherSuite::HpkeAeadId.new(1)
+      HpkeSymmetricCipherSuite::HpkeKdfId.new(
+        TTTLS13::Hpke::KdfId::HKDF_SHA256
+      ),
+      HpkeSymmetricCipherSuite::HpkeAeadId.new(
+        TTTLS13::Hpke::AeadId::AES_128_GCM
+      ),
     )
   ],
   sslkeylogfile: '/tmp/sslkeylogfile.log'
