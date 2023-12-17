@@ -28,8 +28,7 @@ settings = {
 client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect
 
-puts "\n" + '-' * 10
-p client.retry_configs
+print client.retry_configs
 
 client.close unless client.eof?
 socket.close

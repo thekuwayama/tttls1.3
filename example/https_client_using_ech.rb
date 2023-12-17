@@ -30,8 +30,7 @@ settings = {
       )
     )
   ],
-  sslkeylogfile: '/tmp/sslkeylogfile.log',
-  loglevel: Logger::DEBUG
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect
