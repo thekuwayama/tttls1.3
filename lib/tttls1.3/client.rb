@@ -766,11 +766,11 @@ module TTTLS13
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
-      # FIXME: support GREASE ECH
       # FIXME: support GREASE PSK
       return new_greased_ch(inner, new_grease_ech) \
         unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
+      # Encrypted ClientHello Configuration
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
       public_key = key_config.public_key.opaque
@@ -790,9 +790,10 @@ module TTTLS13
 
       hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
       ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
-
       mnl = ech_config.echconfig_contents.maximum_name_length
       encoded = encode_ch_inner(inner, mnl)
+
+      # Encoding the ClientHelloInner
       aad = new_ch_outer_aad(
         inner,
         cipher_suite,
@@ -801,6 +802,7 @@ module TTTLS13
         encoded.length + overhead_len,
         public_name
       )
+      # Authenticating the ClientHelloOuter
       # which does not include the Handshake structure's four byte header.
       new_ch_outer(
         aad,
