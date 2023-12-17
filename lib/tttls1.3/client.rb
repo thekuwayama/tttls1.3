@@ -79,6 +79,9 @@ module TTTLS13
 
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
+    HpkeSymmetricCipherSuit = \
+      ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
+
     # @param socket [Socket]
     # @param hostname [String]
     # @param settings [Hash]
@@ -712,7 +715,7 @@ module TTTLS13
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = inner_ech
-        ch = offer_ech(inner, @settings[:ech_config])
+        ch, inner = offer_ech(inner, @settings[:ech_config])
       end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
@@ -763,11 +766,12 @@ module TTTLS13
     # @param ech_config [ECHConfig]
     #
     # @return [TTTLS13::Message::ClientHello]
+    # @return [TTTLS13::Message::ClientHello]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
       # FIXME: support GREASE PSK
-      return new_greased_ch(inner, new_grease_ech) \
+      return [new_greased_ch(inner, new_grease_ech), nil] \
         unless SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
       # Encrypted ClientHello Configuration
@@ -780,13 +784,13 @@ module TTTLS13
       overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
       aead_cipher = Hpke.aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
       kdf_hash = Hpke.kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
-      return new_greased_ch(inner, new_grease_ech) \
+      return [new_greased_ch(inner, new_grease_ech), nil] \
         if [kem_id, overhead_len, aead_cipher, kdf_hash].any?(&:nil?)
 
       kem_curve_name, kem_hash = Hpke.kem_id2dhkem(kem_id)
       dhkem = Hpke.kem_curve_name2dhkem(kem_curve_name)
       pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
-      return new_greased_ch(inner, new_grease_ech) if pkr.nil?
+      return [new_greased_ch(inner, new_grease_ech), nil] if pkr.nil?
 
       hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
       ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
@@ -804,13 +808,15 @@ module TTTLS13
       )
       # Authenticating the ClientHelloOuter
       # which does not include the Handshake structure's four byte header.
-      new_ch_outer(
+      outer = new_ch_outer(
         aad,
         cipher_suite,
         config_id,
         ctx[:enc],
         ctx[:context_s].seal(aad.serialize[4..], encoded)
       )
+
+      [outer, inner]
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/MethodLength
@@ -935,8 +941,6 @@ module TTTLS13
       # C is the ciphertext expansion of the selected AEAD scheme and L is the
       # size of the EncodedClientHelloInner the client would compute when
       # offering ECH, padded according to Section 6.1.3.
-      self.class.include \
-        ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuit
       cipher_suite = HpkeSymmetricCipherSuite.new(
         HpkeSymmetricCipherSuite::HpkeKdfId.new(
           TTTLS13::Hpke::KdfId::HKDF_SHA256

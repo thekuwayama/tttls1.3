@@ -15,7 +15,8 @@ module TTTLS13
       ExtensionType::CLIENT_CERTIFICATE_TYPE,
       ExtensionType::SERVER_CERTIFICATE_TYPE,
       ExtensionType::RECORD_SIZE_LIMIT,
-      ExtensionType::EARLY_DATA
+      ExtensionType::EARLY_DATA,
+      ExtensionType::ENCRYPTED_CLIENT_HELLO
     ].freeze
     private_constant :APPEARABLE_EE_EXTENSIONS
 
