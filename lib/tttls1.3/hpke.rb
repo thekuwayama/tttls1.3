@@ -2,20 +2,28 @@
 # frozen_string_literal: true
 
 module TTTLS13
-  # NOTE: Hpke module is the adapter for ech_config to use hpke-rb.
+  # NOTE: Hpke module is the adapter for ech_config using hpke-rb.
   module Hpke
-    def self.kem_id2dhkem(kem_id)
+    module KemId
       # https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kem-ids
+      P_256_SHA256  = 0x0010
+      P_384_SHA384  = 0x0011
+      P_521_SHA512  = 0x0012
+      X25519_SHA256 = 0x0020
+      X448_SHA512   = 0x0021
+    end
+
+    def self.kem_id2dhkem(kem_id)
       case kem_id
-      when 0x0010
+      when KemId::P_256_SHA256
         %i[p_256 sha256]
-      when 0x0011
+      when KemId::P_384_SHA384
         %i[p_384 sha384]
-      when 0x0012
+      when KemId::P_521_SHA512
         %i[p_521 sha512]
-      when 0x0020
+      when KemId::X25519_SHA256
         %i[x25519 sha256]
-      when 0x0021
+      when KemId::X448_SHA512
         %i[x448 sha512]
       end
     end
