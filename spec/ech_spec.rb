@@ -14,8 +14,8 @@ RSpec.describe ECHClientHello do
     end
 
     it 'should generate valid object' do
-      expect(extension.extension_type).to eq \
-        ExtensionType::ENCRYPTED_CLIENT_HELLO
+      expect(extension.extension_type)
+        .to eq ExtensionType::ENCRYPTED_CLIENT_HELLO
       expect(extension.type).to eq ECHClientHelloType::OUTER
       expect(extension.cipher_suite.kdf_id.uint16).to eq 1
       expect(extension.cipher_suite.aead_id.uint16).to eq 1
@@ -46,8 +46,8 @@ RSpec.describe ECHClientHello do
     end
 
     it 'should generate valid object' do
-      expect(extension.extension_type).to eq \
-        ExtensionType::ENCRYPTED_CLIENT_HELLO
+      expect(extension.extension_type)
+        .to eq ExtensionType::ENCRYPTED_CLIENT_HELLO
       expect(extension.type).to eq ECHClientHelloType::INNER
     end
 
@@ -56,6 +56,23 @@ RSpec.describe ECHClientHello do
         .to eq ExtensionType::ENCRYPTED_CLIENT_HELLO \
                + 1.to_uint16 \
                + ECHClientHelloType::INNER \
+    end
+  end
+
+  context 'valid ech ee binary' do
+    let(:extension) do
+      ECHClientHello.deserialize(
+        TESTBINARY_ECH_EE,
+        HandshakeType::ENCRYPTED_EXTENSIONS
+      )
+    end
+
+    it 'should generate valid object' do
+      expect(extension.extension_type)
+        .to eq ExtensionType::ENCRYPTED_CLIENT_HELLO
+      expect(extension.retry_configs.is_a?(Array)).to be_truthy
+      expect(extension.retry_configs.length).to eq 1
+      expect(extension.retry_configs.first.is_a?(ECHConfig)).to be_truthy
     end
   end
 end

@@ -234,6 +234,13 @@ TESTBINARY_ECH_CHI = <<BIN.split.map(&:hex).map(&:chr).join
   01
 BIN
 
+TESTBINARY_ECH_EE = <<BIN.split.map(&:hex).map(&:chr).join
+  00 3a fe 0d 00 36 00 00     20 00 1e 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 00 00 00 00 00 00
+  00 00 00 00 00 00 00 00     00 00 04 00 01 00 01 00
+  09 6c 6f 63 61 6c 68 6f     73 74 00 00
+BIN
+
 # https://tools.ietf.org/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
