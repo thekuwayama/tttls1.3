@@ -925,6 +925,35 @@ module TTTLS13
       end
     end
 
+    # @return [Message::Extension::ECHClientHello]
+    def new_grease_ech
+      # Set the enc field to a randomly-generated valid encapsulated public key
+      # output by the HPKE KEM.
+      # Set the payload field to a randomly-generated string of L+C bytes, where
+      # C is the ciphertext expansion of the selected AEAD scheme and L is the
+      # size of the EncodedClientHelloInner the client would compute when
+      # offering ECH, padded according to Section 6.1.3.
+      public_key = OpenSSL::PKey.read(
+        OpenSSL::PKey.generate_key('X25519').public_to_pem
+      )
+      hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm)
+      ctx = hpke.setup_base_s(public_key, '')[:context_s]
+      payload_len = placeholder_encoded_ch_inner_length \
+                    + Hpke.aead_id2overhead_len(:aes_128_gcm)
+
+      Message::Extension::ECHClientHello.new_outer(
+        cipher_suite: cipher_suite,
+        config_id: OpenSSL::Random.random_bytes(1),
+        enc: ctx[:enc],
+        payload: OpenSSL::Random.random_bytes(payload_len)
+      )
+    end
+
+    def placeholder_encoded_ch_inner_length
+      # FIXME
+      207
+    end
+
     # @return [Integer]
     def calc_obfuscated_ticket_age
       # the "ticket_lifetime" field in the NewSessionTicket message is
