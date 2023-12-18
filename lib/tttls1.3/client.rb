@@ -786,7 +786,7 @@ module TTTLS13
       # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      dummy_binders = [hash_len.zeros]
+      placeholder_binders = [hash_len.zeros]
       psk = Message::Extension::PreSharedKey.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         offered_psks: Message::Extension::OfferedPsks.new(
@@ -794,7 +794,7 @@ module TTTLS13
             identity: @settings[:ticket],
             obfuscated_ticket_age: calc_obfuscated_ticket_age
           )],
-          binders: dummy_binders
+          binders: placeholder_binders
         )
       )
       ch.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
@@ -822,7 +822,7 @@ module TTTLS13
                                binder_key:)
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      dummy_binders = [hash_len.zeros]
+      placeholder_binders = [hash_len.zeros]
       # For each PSK identity advertised in the ClientHelloInner, the client
       # generates a random PSK identity with the same length. It also generates
       # a random, 32-bit, unsigned integer to use as the obfuscated_ticket_age.
@@ -842,7 +842,7 @@ module TTTLS13
             identity: identity,
             obfuscated_ticket_age: ota
           )],
-          binders: dummy_binders
+          binders: placeholder_binders
         )
       )
       ch_outer.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
