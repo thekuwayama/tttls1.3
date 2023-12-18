@@ -3,10 +3,13 @@
 $LOAD_PATH << __dir__ + '/../lib'
 
 require 'socket'
-require 'tttls1.3'
-require 'webrick'
-require 'http/parser'
 require 'time'
+require 'webrick'
+
+require 'http/parser'
+require 'svcb_rr_patch'
+
+require 'tttls1.3'
 
 def simple_http_request(hostname, path = '/')
   s = <<~REQUEST

@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require_relative 'helper'
-require 'svcb_rr_patch'
 HpkeSymmetricCipherSuite = \
   ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
 

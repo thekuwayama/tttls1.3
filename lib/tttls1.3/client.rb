@@ -716,32 +716,16 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
+    # rubocop: disable Metrics/MethodLength
     def send_client_hello(extensions, binder_key = nil)
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
         extensions: extensions
       )
 
-      if use_psk?
-        # pre_shared_key && psk_key_exchange_modes
-        #
-        # In order to use PSKs, clients MUST also send a
-        # "psk_key_exchange_modes" extension.
-        #
-        # https://tools.ietf.org/html/rfc8446#section-4.2.9
-        pkem = Message::Extension::PskKeyExchangeModes.new(
-          [Message::Extension::PskKeyExchangeMode::PSK_DHE_KE]
-        )
-        ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
-        # at the end, sign PSK binder
-        sign_psk_binder(
-          ch: ch,
-          binder_key: binder_key
-        )
-      end
-
+      # encrypted_client_hello
       inner = nil # TTTLS13::Message::ClientHello
-      if use_ech? # FIXME: && psk
+      if use_ech?
         inner = ch
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
@@ -749,11 +733,42 @@ module TTTLS13
         ch, inner = offer_ech(inner, @settings[:ech_config])
       end
 
+      # psk_key_exchange_modes
+      # In order to use PSKs, clients MUST also send a
+      # "psk_key_exchange_modes" extension.
+      #
+      # https://tools.ietf.org/html/rfc8446#section-4.2.9
+      if use_psk?
+        pkem = Message::Extension::PskKeyExchangeModes.new(
+          [Message::Extension::PskKeyExchangeMode::PSK_DHE_KE]
+        )
+        ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] = pkem
+      end
+
+      # pre_shared_key
+      # at the end, sign PSK binder
+      if use_psk? && use_ech?
+        sign_psk_binder(
+          ch: inner,
+          binder_key: binder_key
+        )
+        sign_grease_psk_binder(
+          ch_outer: ch,
+          inner_pks: inner.extensions[Message::ExtensionType::PRE_SHARED_KEY]
+        )
+      elsif use_psk?
+        sign_psk_binder(
+          ch: ch,
+          binder_key: binder_key
+        )
+      end
+
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 
       [ch, inner]
     end
+    # rubocop: enable Metrics/MethodLength
 
     # @param ch1 [TTTLS13::Message::ClientHello]
     # @param hrr [TTTLS13::Message::ServerHello]
@@ -771,7 +786,7 @@ module TTTLS13
       # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       hash_len = OpenSSL::Digest.new(digest).digest_length
-      dummy_binders = [hash_len.zeros]
+      placeholder_binders = [hash_len.zeros]
       psk = Message::Extension::PreSharedKey.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         offered_psks: Message::Extension::OfferedPsks.new(
@@ -779,7 +794,7 @@ module TTTLS13
             identity: @settings[:ticket],
             obfuscated_ticket_age: calc_obfuscated_ticket_age
           )],
-          binders: dummy_binders
+          binders: placeholder_binders
         )
       )
       ch.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
@@ -793,6 +808,56 @@ module TTTLS13
       )
     end
 
+    # @param ch1 [TTTLS13::Message::ClientHello]
+    # @param hrr [TTTLS13::Message::ServerHello]
+    # @param ch_outer [TTTLS13::Message::ClientHello]
+    # @param inner_psk [Message::Extension::PreSharedKey]
+    # @param binder_key [String]
+    #
+    # @return [String]
+    def sign_grease_psk_binder(ch1: nil,
+                               hrr: nil,
+                               ch_outer:,
+                               inner_psk:,
+                               binder_key:)
+      digest = CipherSuite.digest(@settings[:psk_cipher_suite])
+      hash_len = OpenSSL::Digest.new(digest).digest_length
+      placeholder_binders = [hash_len.zeros]
+      # For each PSK identity advertised in the ClientHelloInner, the client
+      # generates a random PSK identity with the same length. It also generates
+      # a random, 32-bit, unsigned integer to use as the obfuscated_ticket_age.
+      # Likewise, for each inner PSK binder, the client generates a random
+      # string of the same length.
+      #
+      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.1.2-2
+      identity = inner_psk.offered_psks
+                          .identities
+                          .first
+                          .identity
+                          .length
+                          .then { |len| OpenSSL::Random.random_bytes(len) }
+      ota = OpenSSL::Random.random_bytes(4)
+      psk = Message::Extension::PreSharedKey.new(
+        msg_type: Message::HandshakeType::CLIENT_HELLO,
+        offered_psks: Message::Extension::OfferedPsks.new(
+          identities: [Message::Extension::PskIdentity.new(
+            identity: identity,
+            obfuscated_ticket_age: ota
+          )],
+          binders: placeholder_binders
+        )
+      )
+      ch_outer.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
+
+      psk.offered_psks.binders[0] = do_sign_psk_binder(
+        ch1: ch1,
+        hrr: hrr,
+        ch: ch_outer,
+        binder_key: binder_key,
+        digest: digest
+      )
+    end
+
     # @param inner [TTTLS13::Message::ClientHello]
     # @param ech_config [ECHConfig]
     #
@@ -801,7 +866,6 @@ module TTTLS13
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
-      # FIXME: support GREASE PSK
       return [new_greased_ch(inner, new_grease_ech), nil] \
         if ech_config.nil? ||
            !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
@@ -1069,6 +1133,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     def send_new_client_hello(ch1, hrr, extensions, binder_key = nil)
+      # FIXME: use_psk? && use_ech?
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
