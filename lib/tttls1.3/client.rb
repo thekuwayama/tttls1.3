@@ -864,7 +864,6 @@ module TTTLS13
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
-      # FIXME: support GREASE PSK
       return [new_greased_ch(inner, new_grease_ech), nil] \
         if ech_config.nil? ||
            !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
@@ -1132,6 +1131,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     def send_new_client_hello(ch1, hrr, extensions, binder_key = nil)
+      # FIXME: use_psk? && use_ech?
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
