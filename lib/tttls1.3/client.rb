@@ -262,7 +262,7 @@ module TTTLS13
               unless (diff_sets - [Message::ExtensionType::COOKIE]).empty?
 
             # validate key_share
-            # TODO: pre_shared_key
+            # TODO: validate pre_shared_key
             ngl = ch1.extensions[Message::ExtensionType::SUPPORTED_GROUPS]
                      .named_group_list
             kse = ch1.extensions[Message::ExtensionType::KEY_SHARE]
@@ -284,8 +284,11 @@ module TTTLS13
           end
 
           # generate shared secret
-          psk = nil unless sh.extensions
-                             .include?(Message::ExtensionType::PRE_SHARED_KEY)
+          if sh.extensions.include?(Message::ExtensionType::PRE_SHARED_KEY)
+          # TODO: validate pre_shared_key
+          else
+            psk = nil
+          end
           ch_ks = ch.extensions[Message::ExtensionType::KEY_SHARE]
                     .key_share_entry.map(&:group)
           sh_ks = sh.extensions[Message::ExtensionType::KEY_SHARE]
