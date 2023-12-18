@@ -19,7 +19,7 @@ module TTTLS13
         # https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
         def initialize(protocol_name_list)
           @extension_type \
-          = ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
+            = ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
           @protocol_name_list = protocol_name_list || []
           raise Error::ErrorAlerts, :internal_error \
             if @protocol_name_list.empty?
@@ -27,10 +27,9 @@ module TTTLS13
 
         # @return [String]
         def serialize
-          binary = @protocol_name_list
-                   .map(&:prefix_uint8_length)
-                   .join
-                   .prefix_uint16_length
+          binary = @protocol_name_list.map(&:prefix_uint8_length)
+                                      .join
+                                      .prefix_uint16_length
 
           @extension_type + binary.prefix_uint16_length
         end
