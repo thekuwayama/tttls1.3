@@ -833,7 +833,7 @@ module TTTLS13
                           .first
                           .identity
                           .length
-                          .tap { |len| OpenSSL::Random.random_bytes(len) }
+                          .then { |len| OpenSSL::Random.random_bytes(len) }
       ota = OpenSSL::Random.random_bytes(4)
       psk = Message::Extension::PreSharedKey.new(
         msg_type: Message::HandshakeType::CLIENT_HELLO,
