@@ -62,7 +62,6 @@ module TTTLS13
         @cipher_suite = cipher_suite
         @legacy_compression_method = legacy_compression_method
         @extensions = extensions
-        @hrr = (random == HRR_RANDOM)
       end
       # rubocop: enable Metrics/ParameterLists
 
@@ -109,10 +108,8 @@ module TTTLS13
         exs_bin = binary.slice(i, exs_len)
         if random == HRR_RANDOM
           msg_type = HandshakeType::HELLO_RETRY_REQUEST
-          @hrr = true
         else
           msg_type = HandshakeType::SERVER_HELLO
-          @hrr = false
         end
         extensions = Extensions.deserialize(exs_bin, msg_type)
         i += exs_len
@@ -133,7 +130,7 @@ module TTTLS13
 
       # @return [Boolean]
       def hrr?
-        @hrr
+        @random == HRR_RANDOM
       end
 
       # @return [Boolean]
