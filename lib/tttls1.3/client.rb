@@ -828,6 +828,8 @@ module TTTLS13
       # a random, 32-bit, unsigned integer to use as the obfuscated_ticket_age.
       # Likewise, for each inner PSK binder, the client generates a random
       # string of the same length.
+      #
+      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.1.2-2
       identity = inner_psk.offered_psks
                           .identities
                           .first
