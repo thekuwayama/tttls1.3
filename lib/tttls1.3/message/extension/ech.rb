@@ -231,11 +231,9 @@ module TTTLS13
         # @return [TTTLS13::Message::Extensions::ECHHelloRetryRequest]
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error \
-            if binary.nil? ||
-               Convert.bin2i(binary.slice(0, 2)) != 8 ||
-               binary.length != 10
+            if binary.nil? || binary.length != 8
 
-          ECHHelloRetryRequest.new(binary.slice(2..))
+          ECHHelloRetryRequest.new(binary)
         end
       end
     end

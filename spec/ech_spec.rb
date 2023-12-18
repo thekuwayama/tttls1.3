@@ -66,4 +66,16 @@ RSpec.describe ECHClientHello do
       expect(extension.retry_configs.first.is_a?(ECHConfig)).to be_truthy
     end
   end
+
+  context 'valid ECHHelloRetryRequest binary' do
+    let(:extension) do
+      ECHHelloRetryRequest.deserialize(TESTBINARY_ECH_HRR)
+    end
+
+    it 'should generate valid object' do
+      expect(extension.extension_type)
+        .to eq ExtensionType::ENCRYPTED_CLIENT_HELLO
+      expect(extension.confirmation).to eq "\x00" * 8
+    end
+  end
 end
