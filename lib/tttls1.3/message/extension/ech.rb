@@ -181,6 +181,7 @@ module TTTLS13
           @retry_configs = retry_configs
         end
 
+        # @return [String]
         def serialize
           @extension_type + @retry_configs.map(&:encode)
                                           .join
@@ -201,6 +202,40 @@ module TTTLS13
           ECHEncryptedExtensions.new(
             ECHConfig.decode_vectors(binary.slice(2..))
           )
+        end
+      end
+
+      # NOTE:
+      #     struct {
+      #         opaque confirmation[8];
+      #     } ECHHelloRetryRequest;
+      class ECHHelloRetryRequest
+        attr_accessor :extension_type
+        attr_accessor :confirmation
+
+        # @param confirmation [String]
+        def initialize(confirmation)
+          @extension_type = ExtensionType::ENCRYPTED_CLIENT_HELLO
+          @confirmation = confirmation
+        end
+
+        # @return [String]
+        def serialize
+          @extension_type + @confirmation.prefix_uint16_length
+        end
+
+        # @param binary [String]
+        #
+        # @raise [TTTLS13::Error::ErrorAlerts]
+        #
+        # @return [TTTLS13::Message::Extensions::ECHHelloRetryRequest]
+        def self.deserialize(binary)
+          raise Error::ErrorAlerts, :internal_error \
+            if binary.nil? ||
+               Convert.bin2i(binary.slice(0, 2)) != 8 ||
+               binary.length != 10
+
+          ECHHelloRetryRequest.new(binary.slice(2..))
         end
       end
     end

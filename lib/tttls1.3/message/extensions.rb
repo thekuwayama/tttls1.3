@@ -163,12 +163,13 @@ module TTTLS13
           when ExtensionType::KEY_SHARE
             Extension::KeyShare.deserialize(binary, msg_type)
           when ExtensionType::ENCRYPTED_CLIENT_HELLO
-            if msg_type == HandshakeType::CLIENT_HELLO
+            case msg_type
+            when HandshakeType::CLIENT_HELLO
               Extension::ECHClientHello.deserialize(binary)
-            elsif msg_type == HandshakeType::ENCRYPTED_EXTENSIONS
+            when HandshakeType::ENCRYPTED_EXTENSIONS
               Extension::ECHEncryptedExtensions.deserialize(binary)
-            # elsif msg_type == HandshakeType::SERVER_HELLO
-            #   Extension::ECHHelloRetryRequest.deserialize(binary)
+            when HandshakeType::SERVER_HELLO
+              Extension::ECHHelloRetryRequest.deserialize(binary)
             else
               Extension::UnknownExtension.deserialize(binary, extension_type)
             end
