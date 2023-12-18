@@ -12,6 +12,19 @@ module TTTLS13
         INNER = "\x01"
       end
 
+      # NOTE:
+      #     struct {
+      #         ECHClientHelloType type;
+      #         select (ECHClientHello.type) {
+      #             case outer:
+      #                 HpkeSymmetricCipherSuite cipher_suite;
+      #                 uint8 config_id;
+      #                 opaque enc<0..2^16-1>;
+      #                 opaque payload<1..2^16-1>;
+      #             case inner:
+      #                 Empty;
+      #         };
+      #     } ECHClientHello;
       class ECHClientHello
         attr_accessor :extension_type
         attr_accessor :type
@@ -68,19 +81,6 @@ module TTTLS13
           raise Error::ErrorAlerts, :internal_error \
             if binary.nil? || binary.empty?
 
-          # NOTE:
-          #     struct {
-          #         ECHClientHelloType type;
-          #         select (ECHClientHello.type) {
-          #             case outer:
-          #                 HpkeSymmetricCipherSuite cipher_suite;
-          #                 uint8 config_id;
-          #                 opaque enc<0..2^16-1>;
-          #                 opaque payload<1..2^16-1>;
-          #             case inner:
-          #                 Empty;
-          #         };
-          #     } ECHClientHello;
           case binary[0]
           when ECHClientHelloType::OUTER
             return deserialize_outer_ech(binary[1..])
@@ -167,6 +167,10 @@ module TTTLS13
         end
       end
 
+      # NOTE:
+      #     struct {
+      #         ECHConfigList retry_configs;
+      #     } ECHEncryptedExtensions;
       class ECHEncryptedExtensions
         attr_accessor :extension_type
         attr_accessor :retry_configs
@@ -184,11 +188,6 @@ module TTTLS13
                                           .prefix_uint16_length
         end
 
-        # NOTE:
-        #     struct {
-        #         ECHConfigList retry_configs;
-        #     } ECHEncryptedExtensions;
-        #
         # @param binary [String]
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
