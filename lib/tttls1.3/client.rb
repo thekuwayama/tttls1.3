@@ -170,7 +170,8 @@ module TTTLS13
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
-      ch_outer = nil # TTTLS13::Message::ClientHello
+      ch_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
+      ctx = nil # HPKE::ContextS
       unless @settings[:sslkeylogfile].nil?
         begin
           sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
@@ -188,7 +189,7 @@ module TTTLS13
 
           extensions, priv_keys = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
-          ch, inner = send_client_hello(extensions, binder_key)
+          ch, inner, ctx = send_client_hello(extensions, binder_key)
           ch_outer = ch
           ch = inner.nil? ? ch : inner
           transcript[CH] = [ch, ch.serialize]
@@ -276,7 +277,9 @@ module TTTLS13
             extensions, pk = gen_newch_extensions(ch1, hrr)
             priv_keys = pk.merge(priv_keys)
             binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
-            ch = send_new_client_hello(ch1, hrr, extensions, binder_key)
+            ch, inner \
+              = send_new_client_hello(ch1, hrr, extensions, binder_key, ctx)
+            ch = inner.nil? ? ch : inner
             transcript[CH] = [ch, ch.serialize]
 
             @state = ClientState::WAIT_SH
@@ -719,6 +722,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
+    # @return [HPKE::ContextS]
     # rubocop: disable Metrics/MethodLength
     def send_client_hello(extensions, binder_key = nil)
       ch = Message::ClientHello.new(
@@ -733,7 +737,7 @@ module TTTLS13
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = inner_ech
-        ch, inner = offer_ech(inner, @settings[:ech_config])
+        ch, inner, ctx = offer_ech(inner, @settings[:ech_config])
       end
 
       # psk_key_exchange_modes
@@ -750,26 +754,24 @@ module TTTLS13
 
       # pre_shared_key
       # at the end, sign PSK binder
-      if use_psk? && use_ech?
-        sign_psk_binder(
-          ch: inner,
-          binder_key: binder_key
-        )
-        sign_grease_psk_binder(
-          ch_outer: ch,
-          inner_pks: inner.extensions[Message::ExtensionType::PRE_SHARED_KEY]
-        )
-      elsif use_psk?
+      if use_psk?
         sign_psk_binder(
           ch: ch,
           binder_key: binder_key
         )
+
+        if use_ech?
+          sign_grease_psk_binder(
+            ch_outer: ch,
+            inner_pks: inner.extensions[Message::ExtensionType::PRE_SHARED_KEY]
+          )
+        end
       end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 
-      [ch, inner]
+      [ch, inner, ctx]
     end
     # rubocop: enable Metrics/MethodLength
 
@@ -866,10 +868,11 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello]
+    # @return [HPKE::ContextS]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
-      return [new_greased_ch(inner, new_grease_ech), nil] \
+      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
         if ech_config.nil? ||
            !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
@@ -883,16 +886,18 @@ module TTTLS13
       overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
       aead_cipher = Hpke.aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
       kdf_hash = Hpke.kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
-      return [new_greased_ch(inner, new_grease_ech), nil] \
+      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
         if [kem_id, overhead_len, aead_cipher, kdf_hash].any?(&:nil?)
 
       kem_curve_name, kem_hash = Hpke.kem_id2dhkem(kem_id)
       dhkem = Hpke.kem_curve_name2dhkem(kem_curve_name)
       pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
-      return [new_greased_ch(inner, new_grease_ech), nil] if pkr.nil?
+      return [new_greased_ch(inner, new_grease_ech), nil, nil] if pkr.nil?
 
       hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
-      ctx = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
+      base_s = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
+      enc = base_s[:enc]
+      ctx = base_s[:context_s]
       mnl = ech_config.echconfig_contents.maximum_name_length
       encoded = encode_ch_inner(inner, mnl)
 
@@ -901,7 +906,7 @@ module TTTLS13
         inner,
         cipher_suite,
         config_id,
-        ctx[:enc],
+        enc,
         encoded.length + overhead_len,
         public_name
       )
@@ -911,14 +916,57 @@ module TTTLS13
         aad,
         cipher_suite,
         config_id,
-        ctx[:enc],
-        ctx[:context_s].seal(aad.serialize[4..], encoded)
+        enc,
+        ctx.seal(aad.serialize[4..], encoded)
+      )
+
+      [outer, inner, ctx]
+    end
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/MethodLength
+
+    # @param inner [TTTLS13::Message::ClientHello]
+    # @param ech_config [ECHConfig]
+    # @return [HPKE::ContextS]
+    #
+    # @return [TTTLS13::Message::ClientHello]
+    # @return [TTTLS13::Message::ClientHello]
+    def offer_ech_hrr(inner, ech_config, ctx)
+      public_name = ech_config.echconfig_contents.public_name
+      key_config = ech_config.echconfig_contents.key_config
+      config_id = key_config.config_id
+      cipher_suite = select_ech_hpke_cipher_suite(key_config)
+      overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
+
+      mnl = ech_config.echconfig_contents.maximum_name_length
+      encoded = encode_ch_inner(inner, mnl)
+
+      # It encrypts EncodedClientHelloInner as described in Section 6.1.1, using
+      # the second partial ClientHelloOuterAAD, to obtain a second
+      # ClientHelloOuter. It reuses the original HPKE encryption context
+      # computed in Section 6.1 and uses the empty string for enc.
+      #
+      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.1.5-4.4.1
+      aad = new_ch_outer_aad(
+        inner,
+        cipher_suite,
+        config_id,
+        '',
+        encoded.length + overhead_len,
+        public_name
+      )
+      # Authenticating the ClientHelloOuter
+      # which does not include the Handshake structure's four byte header.
+      outer = new_ch_outer(
+        aad,
+        cipher_suite,
+        config_id,
+        '',
+        ctx.seal(aad.serialize[4..], encoded)
       )
 
       [outer, inner]
     end
-    # rubocop: enable Metrics/AbcSize
-    # rubocop: enable Metrics/MethodLength
 
     # @param inner [TTTLS13::Message::ClientHello]
     # @param maximum_name_length [Integer]
@@ -1133,10 +1181,11 @@ module TTTLS13
     # @param hrr [TTTLS13::Message::ServerHello]
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
+    # @param ctx [HPKE::ContextS]
     #
-    # @return [TTTLS13::Message::ClientHello]
-    def send_new_client_hello(ch1, hrr, extensions, binder_key = nil)
-      # FIXME: use_psk? && use_ech?
+    # @return [TTTLS13::Message::ClientHello] outer
+    # @return [TTTLS13::Message::ClientHello] inner
+    def send_new_client_hello(ch1, hrr, extensions, binder_key = nil, ctx = nil)
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
@@ -1146,18 +1195,31 @@ module TTTLS13
         extensions: extensions
       )
 
+      # encrypted_client_hello
+      ch, inner = offer_ech_hrr(ch, @settings[:ech_config], ctx) if use_ech?
+
       # pre_shared_key
       #
       # Updating the "pre_shared_key" extension if present by recomputing
       # the "obfuscated_ticket_age" and binder values.
       if ch1.extensions.include?(Message::ExtensionType::PRE_SHARED_KEY)
         sign_psk_binder(ch1: ch1, hrr: hrr, ch: ch, binder_key: binder_key)
+
+        if use_ech?
+          sign_grease_psk_binder(
+            ch1: ch1,
+            hrr: hrr,
+            ch_outer: ch,
+            inner_psk: inner.extensions[Message::ExtensionType::PRE_SHARED_KEY],
+            binder_key: binder_key
+          )
+        end
       end
 
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 
-      ch
+      [ch, inner]
     end
 
     # @raise [TTTLS13::Error::ErrorAlerts]
