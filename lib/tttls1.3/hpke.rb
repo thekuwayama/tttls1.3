@@ -43,21 +43,6 @@ module TTTLS13
       end
     end
 
-    def self.kem_id2enc_len(kem_id)
-      case kem_id
-      when KemId::P_256_SHA256
-        65
-      when KemId::P_384_SHA384
-        97
-      when KemId::P_521_SHA512
-        133
-      when KemId::X25519_SHA256
-        32
-      when KemId::X448_SHA512
-        56
-      end
-    end
-
     module KdfId
       # https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kdf-ids
       HKDF_SHA256 = 0x0001
