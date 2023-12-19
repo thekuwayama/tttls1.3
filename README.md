@@ -22,6 +22,7 @@ tttls1.3 provides client API with the following features:
 * Simple 1-RTT Handshake
 * HelloRetryRequest
 * Resumed 0-RTT Handshake (with PSK from NST)
+* [ECH](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/)
 
 **NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
 
@@ -106,6 +107,8 @@ tttls1.3 client is configurable using keyword arguments.
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
 | `:sslkeylogfile` | String | nil | If needed to log SSLKEYLOGFILE, set the file path. |
 | `:loglevel` | Logger constant | Logger::WARN | If needed to print verbose, set Logger::DEBUG. |
+| `:ech_config` | ECHConfig | nil | ECHConfig to use ECH |
+| `:ech_hpke_cipher_suites` | Array of ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite | nil | If needed to use ECH, set client preference HPKE cipher suites. |
 
 
 ### Server
