@@ -77,6 +77,16 @@ module TTTLS13
   }.freeze
   private_constant :DEFAULT_CLIENT_SETTINGS
 
+  STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES = [
+    HpkeSymmetricCipherSuite.new(
+      HpkeSymmetricCipherSuite::HpkeKdfId.new(
+        Hpke::KdfId::HKDF_SHA256
+      ),
+      HpkeSymmetricCipherSuite::HpkeAeadId.new(
+        Hpke::AeadId::AES_128_GCM
+      )
+    )
+  ].freeze
   # rubocop: disable Metrics/ClassLength
   class Client < Connection
     HpkeSymmetricCipherSuit = \
@@ -1082,7 +1092,7 @@ module TTTLS13
       )
     end
 
-    # @param conf [Array of HpkeKeyConfig]
+    # @param conf [HpkeKeyConfig]
     #
     # @return [HpkeSymmetricCipherSuite, nil]
     def select_ech_hpke_cipher_suite(conf)

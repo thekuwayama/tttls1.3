@@ -18,16 +18,8 @@ settings_2nd = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1'],
   ech_config: rr.first.svc_params['ech'].echconfiglist.first,
-  ech_hpke_cipher_suites: [
-    HpkeSymmetricCipherSuite.new(
-      HpkeSymmetricCipherSuite::HpkeKdfId.new(
-        TTTLS13::Hpke::KdfId::HKDF_SHA256
-      ),
-      HpkeSymmetricCipherSuite::HpkeAeadId.new(
-        TTTLS13::Hpke::AeadId::AES_128_GCM
-      )
-    )
-  ],
+  ech_hpke_cipher_suites:
+    TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
   sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 process_new_session_ticket = lambda do |nst, rms, cs|
