@@ -45,7 +45,7 @@ module TTTLS13
       # @return [String]
       def encrypt(content, type)
         cipher = reset_cipher
-        plaintext = content + type + "\x00" * @length_of_padding
+        plaintext = content + type + @length_of_padding.zeros
         cipher.auth_data = additional_data(plaintext.length)
         encrypted_data = cipher.update(plaintext) + cipher.final
         @sequence_number.succ

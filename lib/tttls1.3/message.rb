@@ -27,7 +27,7 @@ module TTTLS13
       HELLO_VERIFY_REQUEST   = "\x03" # RESERVED
       NEW_SESSION_TICKET     = "\x04"
       END_OF_EARLY_DATA      = "\x05"
-      HELLO_RETRY_REQUEST    = "\x06" # RESERVED
+      HELLO_RETRY_REQUEST    = "\x06"
       ENCRYPTED_EXTENSIONS   = "\x08"
       CERTIFICATE            = "\x0b"
       SERVER_KEY_EXCHANGE    = "\x0c" # RESERVED
@@ -72,6 +72,8 @@ module TTTLS13
       POST_HANDSHAKE_AUTH                    = "\x00\x31"
       SIGNATURE_ALGORITHMS_CERT              = "\x00\x32"
       KEY_SHARE                              = "\x00\x33"
+      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-16.html#section-5-2
+      ENCRYPTED_CLIENT_HELLO                 = "\xfe\x0d"
     end
 
     DEFINED_EXTENSIONS = ExtensionType.constants.map do |c|

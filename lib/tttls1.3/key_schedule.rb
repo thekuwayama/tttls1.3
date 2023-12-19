@@ -14,14 +14,14 @@ module TTTLS13
       @hash_len = CipherSuite.hash_len(cipher_suite)
       @key_len = CipherSuite.key_len(cipher_suite)
       @iv_len = CipherSuite.iv_len(cipher_suite)
-      @psk = psk || "\x00" * @hash_len
+      @psk = psk || @hash_len.zeros
       @shared_secret = shared_secret
       @transcript = transcript
     end
 
     # @return [String]
     def early_salt
-      "\x00" * @hash_len
+      @hash_len.zeros
     end
 
     # @return [String]
@@ -155,7 +155,7 @@ module TTTLS13
 
     # @return [String]
     def main_secret
-      ikm = "\x00" * @hash_len
+      ikm = @hash_len.zeros
       hkdf_extract(ikm, main_salt)
     end
 
@@ -272,6 +272,68 @@ module TTTLS13
     # @return [String]
     def derive_secret(secret, label, context)
       self.class.hkdf_expand_label(secret, label, context, @hash_len, @digest)
+    end
+
+    # @return [String]
+    def accept_confirmation
+      ch_inner_random = @transcript[CH].first.random
+      sh = @transcript[SH].first
+      sh = Message::ServerHello.new(
+        random: sh.random[...-8] + 8.zeros,
+        legacy_session_id_echo: sh.legacy_session_id_echo,
+        cipher_suite: sh.cipher_suite,
+        extensions: sh.extensions
+      )
+      transcript = @transcript.clone
+      transcript[SH] = [sh, sh.serialize]
+      transcript_ech_conf = transcript.hash(@digest, SH)
+
+      self.class.hkdf_expand_label(
+        hkdf_extract(ch_inner_random, ''),
+        'ech accept confirmation',
+        transcript_ech_conf,
+        8,
+        @digest
+      )
+    end
+
+    # @return [Boolean]
+    def accept_ech?
+      accept_confirmation == @transcript[SH].first.random[-8..]
+    end
+
+    # @return [String]
+    def hrr_accept_confirmation
+      ch1_inner_random = @transcript[CH1].first.random
+      hrr = @transcript[HRR].first
+      ech = Message::Extension::ECHHelloRetryRequest.new("\x00" * 8)
+      hrr = Message::ServerHello.new(
+        random: hrr.random,
+        legacy_session_id_echo: hrr.legacy_session_id_echo,
+        cipher_suite: hrr.cipher_suite,
+        extensions: hrr.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => ech
+        )
+      )
+      transcript = @transcript.clone
+      transcript[HRR] = [hrr, hrr.serialize]
+      transcript_hrr_ech_conf = transcript.hash(@digest, HRR)
+
+      self.class.hkdf_expand_label(
+        hkdf_extract(ch1_inner_random, ''),
+        'hrr ech accept confirmation',
+        transcript_hrr_ech_conf,
+        8,
+        @digest
+      )
+    end
+
+    # @return [Boolean]
+    def hrr_accept_ech?
+      hrr_ech = @transcript[HRR]
+                .first
+                .extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
+      hrr_accept_confirmation == hrr_ech.confirmation
     end
   end
   # rubocop: enable Metrics/ClassLength

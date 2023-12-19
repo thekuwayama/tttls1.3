@@ -38,6 +38,14 @@ module TTTLS13
 
         [self >> 32, self].pack('N2')
       end
+
+      def zeros
+        if positive?
+          "\x00" * self
+        else
+          ''
+        end
+      end
     end
 
     refine String do

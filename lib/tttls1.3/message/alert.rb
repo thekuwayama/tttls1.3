@@ -36,7 +36,8 @@ module TTTLS13
       bad_certificate_status_response: "\x71",
       unknown_psk_identity:            "\x73",
       certificate_required:            "\x74",
-      no_application_protocol:         "\x78"
+      no_application_protocol:         "\x78",
+      ech_required:                    "\x79"
     }.freeze
     # rubocop: enable Layout/HashAlignment
 
