@@ -27,7 +27,7 @@ module TTTLS13
       HELLO_VERIFY_REQUEST   = "\x03" # RESERVED
       NEW_SESSION_TICKET     = "\x04"
       END_OF_EARLY_DATA      = "\x05"
-      HELLO_RETRY_REQUEST    = "\x06" # RESERVED
+      HELLO_RETRY_REQUEST    = "\x06"
       ENCRYPTED_EXTENSIONS   = "\x08"
       CERTIFICATE            = "\x0b"
       SERVER_KEY_EXCHANGE    = "\x0c" # RESERVED
