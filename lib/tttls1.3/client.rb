@@ -170,6 +170,7 @@ module TTTLS13
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      ch1_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
       ch_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
       ech_state = nil # TTTLS13::Client::EchState for ECH with HRR
       unless @settings[:sslkeylogfile].nil?
@@ -256,6 +257,8 @@ module TTTLS13
             terminate(:unexpected_message) if transcript.include?(HRR)
 
             ch1, = transcript[CH1] = transcript.delete(CH)
+            ch1_outer = ch1
+            ch_outer = nil
             hrr, = transcript[HRR] = transcript.delete(SH)
 
             # validate cookie
@@ -320,8 +323,14 @@ module TTTLS13
           )
 
           # rejected ECH
-          transcript[CH] = [ch_outer, ch_outer.serialize] \
-            if use_ech? && !key_schedule.accept_ech?
+          if use_ech?
+            if !transcript.include?(HRR) && !key_schedule.accept_ech?
+              transcript[CH] = [ch_outer, ch_outer.serialize]
+            elsif transcript.include?(HRR) && !key_schedule.hrr_accept_ech?
+              transcript[CH1] = [ch1_outer, ch1_outer.serialize]
+              transcript[CH] = [ch_outer, ch_outer.serialize]
+            end
+          end
 
           @alert_wcipher = hs_wcipher = gen_cipher(
             @cipher_suite,
