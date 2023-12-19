@@ -189,9 +189,9 @@ module TTTLS13
           extensions, priv_keys = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
           ch, inner = send_client_hello(extensions, binder_key)
+          ch_outer = ch
           ch = inner.nil? ? ch : inner
           transcript[CH] = [ch, ch.serialize]
-          ch_outer = ch
           send_ccs if @settings[:compatibility_mode]
           if use_early_data?
             e_wcipher = gen_cipher(

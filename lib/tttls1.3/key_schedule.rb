@@ -279,7 +279,7 @@ module TTTLS13
       ch_inner_random = @transcript[CH].first.random
       sh = @transcript[SH].first
       sh = Message::ServerHello.new(
-        random: sh.random[...-8] + 8.zeros + sh.random[-8..],
+        random: sh.random[...-8] + 8.zeros,
         legacy_session_id_echo: sh.legacy_session_id_echo,
         cipher_suite: sh.cipher_suite,
         extensions: sh.extensions
