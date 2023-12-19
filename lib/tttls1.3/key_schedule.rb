@@ -297,9 +297,43 @@ module TTTLS13
       )
     end
 
-    # @return [Bool]
+    # @return [Boolean]
     def accept_ech?
       accept_confirmation == @transcript[SH].first.random[-8..]
+    end
+
+    # @return [String]
+    def hrr_accept_confirmation
+      ch1_inner_random = @transcript[CH1].first.random
+      hrr = @transcript[HRR].first
+      ech = Message::Extension::ECHHelloRetryRequest.new("\x00" * 8)
+      hrr = Message::ServerHello.new(
+        random: hrr.random,
+        legacy_session_id_echo: hrr.legacy_session_id_echo,
+        cipher_suite: hrr.cipher_suite,
+        extensions: hrr.extensions.merge(
+          Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => ech
+        )
+      )
+      transcript = @transcript.clone
+      transcript[HRR] = [hrr, hrr.serialize]
+      transcript_hrr_ech_conf = transcript.hash(@digest, HRR)
+
+      self.class.hkdf_expand_label(
+        hkdf_extract(ch1_inner_random, ''),
+        'hrr ech accept confirmation',
+        transcript_hrr_ech_conf,
+        8,
+        @digest
+      )
+    end
+
+    # @return [Boolean]
+    def hrr_accept_ech?
+      hrr_ech = @transcript[HRR]
+                .first
+                .extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
+      hrr_accept_confirmation == hrr_ech.confirmation
     end
   end
   # rubocop: enable Metrics/ClassLength
