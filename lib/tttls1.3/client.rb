@@ -171,7 +171,7 @@ module TTTLS13
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
       ch_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
-      ctx = nil # HPKE::ContextS
+      ech_state = nil # TTTLS13::Client::EchState
       unless @settings[:sslkeylogfile].nil?
         begin
           sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
@@ -189,7 +189,7 @@ module TTTLS13
 
           extensions, priv_keys = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
-          ch, inner, ctx = send_client_hello(extensions, binder_key)
+          ch, inner, ech_state = send_client_hello(extensions, binder_key)
           ch_outer = ch
           ch = inner.nil? ? ch : inner
           transcript[CH] = [ch, ch.serialize]
@@ -277,8 +277,13 @@ module TTTLS13
             extensions, pk = gen_newch_extensions(ch1, hrr)
             priv_keys = pk.merge(priv_keys)
             binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
-            ch, inner \
-              = send_new_client_hello(ch1, hrr, extensions, binder_key, ctx)
+            ch, inner = send_new_client_hello(
+              ch1,
+              hrr,
+              extensions,
+              binder_key,
+              ech_state
+            )
             ch = inner.nil? ? ch : inner
             transcript[CH] = [ch, ch.serialize]
 
@@ -722,7 +727,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
-    # @return [HPKE::ContextS]
+    # @return [TTTLS13::Client::EchState]
     # rubocop: disable Metrics/MethodLength
     def send_client_hello(extensions, binder_key = nil)
       ch = Message::ClientHello.new(
@@ -737,7 +742,7 @@ module TTTLS13
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = inner_ech
-        ch, inner, ctx = offer_ech(inner, @settings[:ech_config])
+        ch, inner, ech_state = offer_ech(inner, @settings[:ech_config])
       end
 
       # psk_key_exchange_modes
@@ -771,7 +776,7 @@ module TTTLS13
       send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                       Cryptograph::Passer.new)
 
-      [ch, inner, ctx]
+      [ch, inner, ech_state]
     end
     # rubocop: enable Metrics/MethodLength
 
@@ -868,7 +873,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello]
-    # @return [HPKE::ContextS]
+    # @return [TTTLS13::Client::EchState]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
     def offer_ech(inner, ech_config)
@@ -920,26 +925,21 @@ module TTTLS13
         ctx.seal(aad.serialize[4..], encoded)
       )
 
-      [outer, inner, ctx]
+      ech_state = EchState.new(mnl, config_id, cipher_suite, public_name, ctx)
+      [outer, inner, ech_state]
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/MethodLength
 
     # @param inner [TTTLS13::Message::ClientHello]
-    # @param ech_config [ECHConfig]
-    # @return [HPKE::ContextS]
+    # @param ech_state [TTTLS13::Client::EchState]
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello]
-    def offer_ech_hrr(inner, ech_config, ctx)
-      public_name = ech_config.echconfig_contents.public_name
-      key_config = ech_config.echconfig_contents.key_config
-      config_id = key_config.config_id
-      cipher_suite = select_ech_hpke_cipher_suite(key_config)
-      overhead_len = Hpke.aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
-
-      mnl = ech_config.echconfig_contents.maximum_name_length
-      encoded = encode_ch_inner(inner, mnl)
+    def offer_ech_hrr(inner, ech_state)
+      encoded = encode_ch_inner(inner, ech_state.maximum_name_length)
+      overhead_len \
+        = Hpke.aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
 
       # It encrypts EncodedClientHelloInner as described in Section 6.1.1, using
       # the second partial ClientHelloOuterAAD, to obtain a second
@@ -949,20 +949,20 @@ module TTTLS13
       # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.1.5-4.4.1
       aad = new_ch_outer_aad(
         inner,
-        cipher_suite,
-        config_id,
+        ech_state.cipher_suite,
+        ech_state.config_id,
         '',
         encoded.length + overhead_len,
-        public_name
+        ech_state.public_name
       )
       # Authenticating the ClientHelloOuter
       # which does not include the Handshake structure's four byte header.
       outer = new_ch_outer(
         aad,
-        cipher_suite,
-        config_id,
+        ech_state.cipher_suite,
+        ech_state.config_id,
         '',
-        ctx.seal(aad.serialize[4..], encoded)
+        ech_state.ctx.seal(aad.serialize[4..], encoded)
       )
 
       [outer, inner]
@@ -1181,11 +1181,15 @@ module TTTLS13
     # @param hrr [TTTLS13::Message::ServerHello]
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
-    # @param ctx [HPKE::ContextS]
+    # @param ech_state [TTTLS13::Client::EchState]
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
-    def send_new_client_hello(ch1, hrr, extensions, binder_key = nil, ctx = nil)
+    def send_new_client_hello(ch1,
+                              hrr,
+                              extensions,
+                              binder_key = nil,
+                              ech_state = nil)
       ch = Message::ClientHello.new(
         legacy_version: ch1.legacy_version,
         random: ch1.random,
@@ -1196,7 +1200,7 @@ module TTTLS13
       )
 
       # encrypted_client_hello
-      ch, inner = offer_ech_hrr(ch, @settings[:ech_config], ctx) if use_ech?
+      ch, inner = offer_ech_hrr(ch, ech_state) if use_ech?
 
       # pre_shared_key
       #
@@ -1376,6 +1380,31 @@ module TTTLS13
       rms = @resumption_secret
       cs = @cipher_suite
       @settings[:process_new_session_ticket]&.call(nst, rms, cs)
+    end
+
+    class EchState
+      attr_accessor :maximum_name_length
+      attr_accessor :config_id
+      attr_accessor :cipher_suite
+      attr_accessor :public_name
+      attr_accessor :ctx
+
+      # @param maximum_name_length [Integer]
+      # @param config_id [Integer]
+      # @param cipher_suite [HpkeSymmetricCipherSuite]
+      # @param public_name [String]
+      # @param ctx [[HPKE::ContextS]
+      def initialize(maximum_name_length,
+                     config_id,
+                     cipher_suite,
+                     public_name,
+                     ctx)
+        @maximum_name_length = maximum_name_length
+        @config_id = config_id
+        @cipher_suite = cipher_suite
+        @public_name = public_name
+        @ctx = ctx
+      end
     end
   end
   # rubocop: enable Metrics/ClassLength
