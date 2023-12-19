@@ -168,7 +168,7 @@ module TTTLS13
               Extension::ECHClientHello.deserialize(binary)
             when HandshakeType::ENCRYPTED_EXTENSIONS
               Extension::ECHEncryptedExtensions.deserialize(binary)
-            when HandshakeType::SERVER_HELLO
+            when HandshakeType::HELLO_RETRY_REQUEST
               Extension::ECHHelloRetryRequest.deserialize(binary)
             else
               Extension::UnknownExtension.deserialize(binary, extension_type)
