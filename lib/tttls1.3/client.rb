@@ -171,7 +171,7 @@ module TTTLS13
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
       ch_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
-      ech_state = nil # TTTLS13::Client::EchState
+      ech_state = nil # TTTLS13::Client::EchState for ECH with HRR
       unless @settings[:sslkeylogfile].nil?
         begin
           sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
@@ -191,6 +191,7 @@ module TTTLS13
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
           ch, inner, ech_state = send_client_hello(extensions, binder_key)
           ch_outer = ch
+          # use ClientHelloInner messages for the transcript hash
           ch = inner.nil? ? ch : inner
           transcript[CH] = [ch, ch.serialize]
           send_ccs if @settings[:compatibility_mode]
@@ -284,6 +285,7 @@ module TTTLS13
               binder_key,
               ech_state
             )
+            # use ClientHelloInner messages for the transcript hash
             ch = inner.nil? ? ch : inner
             transcript[CH] = [ch, ch.serialize]
 
