@@ -257,9 +257,9 @@ module TTTLS13
             terminate(:unexpected_message) if transcript.include?(HRR)
 
             ch1, = transcript[CH1] = transcript.delete(CH)
-            ch1_outer = ch1
-            ch_outer = nil
             hrr, = transcript[HRR] = transcript.delete(SH)
+            ch1_outer = ch_outer
+            ch_outer = nil
 
             # validate cookie
             diff_sets = sh.extensions.keys - ch1.extensions.keys
