@@ -167,7 +167,7 @@ TESTBINARY_COMPRESS_CERTIFICATE = <<BIN.split.map(&:hex).map(&:chr).join
   02 00 01
 BIN
 
-# https://tools.ietf.org/html/rfc8448#section-3
+# https://datatracker.ietf.org/doc/html/rfc8448#section-3
 # 2.  Private Keys
 TESTBINARY_PKEY_MODULUS = <<BIN.split.map(&:hex).map(&:chr).join
   b4 bb 49 8f 82 79 30 3d     98 08 36 39 9b 36 c6 98
@@ -245,7 +245,7 @@ TESTBINARY_ECH_HRR = <<BIN.split.map(&:hex).map(&:chr).join
   00 00 00 00 00 00 00 00
 BIN
 
-# https://tools.ietf.org/html/rfc8448#section-3
+# https://datatracker.ietf.org/doc/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 00 c0 03 03 cb 34     ec b1 e7 81 63 ba 1c 38
@@ -553,7 +553,7 @@ TESTBINARY_CH_CF_TRANSCRIPT_HASH = <<BIN.split.map(&:hex).map(&:chr).join
   84 65 8d 60 49 e8 64 29     42 6d b8 7c 54 ad 14 3d
 BIN
 
-# https://tools.ietf.org/html/rfc8448#section-4
+# https://datatracker.ietf.org/doc/html/rfc8448#section-4
 # 4.  Resumed 0-RTT Handshake
 TESTBINARY_0_RTT_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 01 fc 03 03 1b c3     ce b6 bb e3 9c ff 93 83
@@ -678,7 +678,7 @@ BIN
 TESTBINARY_0_RTT_CLIENT_APPLICATION_WRITE_IV \
 = testbinary.split.map(&:hex).map(&:chr).join
 
-# https://tools.ietf.org/html/rfc8448#section-5
+# https://datatracker.ietf.org/doc/html/rfc8448#section-5
 # 5.  HelloRetryRequest
 TESTBINARY_HRR_CLIENT_HELLO1 = <<BIN.split.map(&:hex).map(&:chr).join
   01 00 00 b0 03 03 b0 b1     c5 a5 aa 37 c5 91 9f 2e
@@ -975,7 +975,7 @@ TESTBINARY_HRR_CH1_CF_TRANSCRIPT_HASH = <<BIN.split.map(&:hex).map(&:chr).join
   3c aa 6e 48 3c 6c 65 df     53 15 18 88 e5 01 65 f4
 BIN
 
-# https://tools.ietf.org/html/rfc8448#section-7
+# https://datatracker.ietf.org/doc/html/rfc8448#section-7
 # 7.  Compatibility Mode
 TESTBINARY_RECORD_CCS = <<BIN.split.map(&:hex).map(&:chr).join
   14 03 03 00 01 01

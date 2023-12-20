@@ -64,7 +64,7 @@ module TTTLS13
       # secp384r1   |               |   NIST P-384
       # secp521r1   |               |   NIST P-521
       #
-      # https://tools.ietf.org/html/rfc4492#appendix-A
+      # https://datatracker.ietf.org/doc/html/rfc4492#appendix-A
       #
       # @param groups [Array of TTTLS13::Message::Extension::NamedGroup]
       #

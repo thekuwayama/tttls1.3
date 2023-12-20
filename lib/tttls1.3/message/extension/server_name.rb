@@ -15,7 +15,7 @@ module TTTLS13
       #
       # 00 00 00 00
       #
-      # https://tools.ietf.org/html/rfc6066#section-3
+      # https://datatracker.ietf.org/doc/html/rfc6066#section-3
       class ServerName
         attr_reader :extension_type
         attr_reader :server_name

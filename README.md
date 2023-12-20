@@ -4,7 +4,7 @@
 [![Actions Status](https://github.com/thekuwayama/tttls1.3/workflows/CI/badge.svg)](https://github.com/thekuwayama/tttls1.3/actions?workflow=CI)
 [![Maintainability](https://api.codeclimate.com/v1/badges/b5ae1b3a43828142d2fa/maintainability)](https://codeclimate.com/github/thekuwayama/tttls1.3/maintainability)
 
-tttls1.3 is Ruby implementation of [TLS 1.3](https://tools.ietf.org/html/rfc8446) protocol.
+tttls1.3 is Ruby implementation of [TLS 1.3](https://datatracker.ietf.org/doc/rfc8446/) protocol.
 
 tttls1.3 uses [openssl](https://github.com/ruby/openssl) for crypto and X.509 operations.
 

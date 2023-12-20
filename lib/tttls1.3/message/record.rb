@@ -3,7 +3,7 @@
 module TTTLS13
   using Refinements
   module Message
-    # https://tools.ietf.org/html/rfc8449#section-4
+    # https://datatracker.ietf.org/doc/html/rfc8449#section-4
     DEFAULT_RECORD_SIZE_LIMIT = 2**14 + 1
 
     # rubocop: disable Metrics/ClassLength

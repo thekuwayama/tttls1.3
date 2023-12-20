@@ -10,7 +10,7 @@ module TTTLS13
     class ConfigError < Error; end
 
     # Raised on received Error Alerts message or invalid message.
-    # https://tools.ietf.org/html/rfc8446#section-6.2
+    # https://datatracker.ietf.org/doc/html/rfc8446#section-6.2
     # Terminated the connection, so you *cannot* recover from this exception.
     class ErrorAlerts < Error
       # @return [TTTLS13::Message::Alert]

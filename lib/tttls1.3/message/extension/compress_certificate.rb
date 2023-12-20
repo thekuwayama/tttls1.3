@@ -11,7 +11,7 @@ module TTTLS13
         # ZSTD   = "\x00\x03" # UNSUPPORTED
       end
 
-      # https://tools.ietf.org/html/rfc8879
+      # https://datatracker.ietf.org/doc/html/rfc8879
       class CompressCertificate
         attr_reader :extension_type
         attr_reader :algorithms

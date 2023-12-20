@@ -136,7 +136,7 @@ module TTTLS13
     #                                v
     #                            CONNECTED
     #
-    # https://tools.ietf.org/html/rfc8446#appendix-A.2
+    # https://datatracker.ietf.org/doc/html/rfc8446#appendix-A.2
     #
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/BlockLength

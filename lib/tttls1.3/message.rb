@@ -72,7 +72,7 @@ module TTTLS13
       POST_HANDSHAKE_AUTH                    = "\x00\x31"
       SIGNATURE_ALGORITHMS_CERT              = "\x00\x32"
       KEY_SHARE                              = "\x00\x33"
-      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-16.html#section-5-2
+      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-11.1
       ENCRYPTED_CLIENT_HELLO                 = "\xfe\x0d"
     end
 

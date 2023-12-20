@@ -150,7 +150,7 @@ module TTTLS13
     # after here                v
     #                       CONNECTED
     #
-    # https://tools.ietf.org/html/rfc8446#appendix-A.1
+    # https://datatracker.ietf.org/doc/html/rfc8446#appendix-A.1
     #
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/BlockLength
@@ -770,7 +770,7 @@ module TTTLS13
       # In order to use PSKs, clients MUST also send a
       # "psk_key_exchange_modes" extension.
       #
-      # https://tools.ietf.org/html/rfc8446#section-4.2.9
+      # https://datatracker.ietf.org/doc/html/rfc8446#section-4.2.9
       if use_psk?
         pkem = Message::Extension::PskKeyExchangeModes.new(
           [Message::Extension::PskKeyExchangeMode::PSK_DHE_KE]
@@ -814,7 +814,7 @@ module TTTLS13
       # partial ClientHello up to and including the
       # PreSharedKeyExtension.identities field.
       #
-      # https://tools.ietf.org/html/rfc8446#section-4.2.11.2
+      # https://datatracker.ietf.org/doc/html/rfc8446#section-4.2.11.2
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       hash_len = OpenSSL::Digest.new(digest).digest_length
       placeholder_binders = [hash_len.zeros]
@@ -860,7 +860,7 @@ module TTTLS13
       # Likewise, for each inner PSK binder, the client generates a random
       # string of the same length.
       #
-      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.1.2-2
+      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.1.2-2
       identity = inner_psk.offered_psks
                           .identities
                           .first
@@ -967,7 +967,7 @@ module TTTLS13
       # ClientHelloOuter. It reuses the original HPKE encryption context
       # computed in Section 6.1 and uses the empty string for enc.
       #
-      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.1.5-4.4.1
+      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.1.5-4.4.1
       aad = new_ch_outer_aad(
         inner,
         ech_state.cipher_suite,
@@ -1103,7 +1103,7 @@ module TTTLS13
 
     # @return [Message::Extension::ECHClientHello]
     def new_grease_ech
-      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#name-compliance-requirements
+      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#name-compliance-requirements
       cipher_suite = HpkeSymmetricCipherSuite.new(
         HpkeSymmetricCipherSuite::HpkeKdfId.new(
           TTTLS13::Hpke::KdfId::HKDF_SHA256
@@ -1115,7 +1115,7 @@ module TTTLS13
       # Set the enc field to a randomly-generated valid encapsulated public key
       # output by the HPKE KEM.
       #
-      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.2-2.3.1
+      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.3.1
       public_key = OpenSSL::PKey.read(
         OpenSSL::PKey.generate_key('X25519').public_to_pem
       )
@@ -1126,7 +1126,7 @@ module TTTLS13
       # size of the EncodedClientHelloInner the client would compute when
       # offering ECH, padded according to Section 6.1.3.
       #
-      # https://www.ietf.org/archive/id/draft-ietf-tls-esni-17.html#section-6.2-2.4.1
+      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.4.1
       payload_len = placeholder_encoded_ch_inner_len \
                     + Hpke.aead_id2overhead_len(Hpke::AeadId::AES_128_GCM)
 
@@ -1189,7 +1189,7 @@ module TTTLS13
       # MUST copy the contents of the extension received in the
       # HelloRetryRequest into a "cookie" extension in the new ClientHello.
       #
-      # https://tools.ietf.org/html/rfc8446#section-4.2.2
+      # https://datatracker.ietf.org/doc/html/rfc8446#section-4.2.2
       exs << hrr.extensions[Message::ExtensionType::COOKIE] \
         if hrr.extensions.include?(Message::ExtensionType::COOKIE)
 
@@ -1201,7 +1201,7 @@ module TTTLS13
     end
 
     # NOTE:
-    # https://tools.ietf.org/html/rfc8446#section-4.1.2
+    # https://datatracker.ietf.org/doc/html/rfc8446#section-4.1.2
     #
     # @param ch1 [TTTLS13::Message::ClientHello]
     # @param hrr [TTTLS13::Message::ServerHello]
