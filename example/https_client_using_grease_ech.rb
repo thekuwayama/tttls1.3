@@ -20,7 +20,7 @@ settings = {
 client = TTTLS13::Client.new(socket, hostname, **settings)
 client.connect
 
-print client.retry_configs
+print client.retry_configs if client.rejected_ech?
 
 client.close unless client.eof?
 socket.close
