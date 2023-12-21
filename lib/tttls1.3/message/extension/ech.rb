@@ -195,7 +195,7 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extensions::ECHEncryptedExtensions]
         def self.deserialize(binary)
-          raise Error::ErrorAlerts, :internal_error \
+          raise Error::ErrorAlerts, :decode_error \
             if binary.nil? ||
                binary.length != binary.slice(0, 2).unpack1('n') + 2
 
@@ -230,7 +230,7 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extensions::ECHHelloRetryRequest]
         def self.deserialize(binary)
-          raise Error::ErrorAlerts, :internal_error \
+          raise Error::ErrorAlerts, :decode_error \
             if binary.nil? || binary.length != 8
 
           ECHHelloRetryRequest.new(binary)
