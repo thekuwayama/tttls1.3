@@ -315,6 +315,12 @@ module TTTLS13
           Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => ech
         )
       )
+
+      # It then computes the transcript hash for the first ClientHelloInner,
+      # denoted ClientHelloInner1, up to and including the modified
+      # HelloRetryRequest.
+      #
+      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-7.2.1-2
       transcript = @transcript.clone
       transcript[HRR] = [hrr, hrr.serialize]
       transcript_hrr_ech_conf = transcript.hash(@digest, HRR)
