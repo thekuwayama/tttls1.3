@@ -341,6 +341,10 @@ module TTTLS13
               # 1sh SH
               transcript[CH] = [ch_outer, ch_outer.serialize]
               @rejected_ech = true
+            elsif transcript.include?(HRR) &&
+                  key_schedule.hrr_accept_ech? != key_schedule.accept_ech?
+              # 2nd SH
+              terminate(:illegal_parameter)
             elsif transcript.include?(HRR) && !key_schedule.hrr_accept_ech?
               # 2nd SH
               transcript[CH1] = [ch1_outer, ch1_outer.serialize]
