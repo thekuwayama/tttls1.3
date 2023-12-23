@@ -300,6 +300,7 @@ module TTTLS13
               ech_state
             )
             # use ClientHelloInner messages for the transcript hash
+            ch_outer = ch
             ch = inner.nil? ? ch : inner
             transcript[CH] = [ch, ch.serialize]
 
@@ -976,7 +977,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello]
-    def offer_ech_hrr(inner, ech_state)
+    def offer_new_ech(inner, ech_state)
       encoded = encode_ch_inner(inner, ech_state.maximum_name_length)
       overhead_len \
         = Hpke.aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
@@ -1085,7 +1086,7 @@ module TTTLS13
     end
     # rubocop: enable Metrics/ParameterLists
 
-    # @param inner [TTTLS13::Message::ClientHello]
+    # @param aad [TTTLS13::Message::ClientHello]
     # @param cipher_suite [HpkeSymmetricCipherSuite]
     # @param config_id [Integer]
     # @param enc [String]
@@ -1245,7 +1246,18 @@ module TTTLS13
       )
 
       # encrypted_client_hello
-      ch, inner = offer_ech_hrr(ch, ech_state) if use_ech?
+      if use_ech? && ech_state.nil?
+        # If sending a second ClientHello in response to a HelloRetryRequest,
+        # the client copies the entire "encrypted_client_hello" extension from
+        # the first ClientHello.
+        #
+        # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-3
+        inner = ch.clone
+        ch.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
+          = ch1.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
+      elsif use_ech?
+        ch, inner = offer_new_ech(ch, ech_state)
+      end
 
       # pre_shared_key
       #
