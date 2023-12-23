@@ -1231,6 +1231,8 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
+    # rubocop: disable Metrics/AbcSize
+    # rubocop: disable Metrics/MethodLength
     def send_new_client_hello(ch1,
                               hrr,
                               extensions,
@@ -1267,6 +1269,13 @@ module TTTLS13
         sign_psk_binder(ch1: ch1, hrr: hrr, ch: ch, binder_key: binder_key)
 
         if use_ech?
+          # it MUST also copy the "psk_key_exchange_modes" from the
+          # ClientHelloInner into the ClientHelloOuter.
+          ch.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES] \
+            = inner.extensions[Message::ExtensionType::PSK_KEY_EXCHANGE_MODES]
+          # it MUST also include the "early_data" extension in ClientHelloOuter.
+          ch.extensions[Message::ExtensionType::EARLY_DATA] \
+            = inner.extensions[Message::ExtensionType::EARLY_DATA]
           sign_grease_psk_binder(
             ch1: ch1,
             hrr: hrr,
@@ -1282,6 +1291,8 @@ module TTTLS13
 
       [ch, inner]
     end
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/MethodLength
 
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
