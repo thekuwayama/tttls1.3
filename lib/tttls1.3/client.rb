@@ -977,7 +977,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello]
-    def offer_ech_hrr(inner, ech_state)
+    def offer_new_ech(inner, ech_state)
       encoded = encode_ch_inner(inner, ech_state.maximum_name_length)
       overhead_len \
         = Hpke.aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
@@ -1256,7 +1256,7 @@ module TTTLS13
         ch.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = ch1.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
       elsif use_ech?
-        ch, inner = offer_ech_hrr(ch, ech_state)
+        ch, inner = offer_new_ech(ch, ech_state)
       end
 
       # pre_shared_key
