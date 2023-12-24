@@ -104,8 +104,8 @@ tttls1.3 client is configurable using keyword arguments.
 | `:check_certificate_status` | Boolean | false | If needed to check certificate status, set true. |
 | `:process_certificate_status` | Proc | `TTTLS13::Client.method(:softfail_check_certificate_status)` | Proc(or Method) that checks received OCSPResponse. Its 3 arguments are OpenSSL::OCSP::Response, end-entity certificate(OpenSSL::X509::Certificate) and certificates chain(Array of Certificate) used for verification and it returns Boolean. |
 | `:compress_certificate_algorithms` | Array of TTTLS13::Message::Extension::CertificateCompressionAlgorithm constant | `ZLIB` | The compression algorithms are supported for compressing the Certificate message. |
-| `:ech_config` | ECHConfig | nil | ECHConfig to use ECH. If needed to use ECH, set TTTLS13::STANDARD\_CLIENT\_ECH_HPKE\_SYMMETRIC\_CIPHER\_SUITES, for example. See [ech_config](https://github.com/thekuwayama/ech_config). |
-| `:ech_hpke_cipher_suites` | Array of ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite | nil | If needed to use ECH, set client preference HPKE cipher suites. |
+| `:ech_config` | ECHConfig | nil | ECHConfig to use ECH. See [ech_config](https://github.com/thekuwayama/ech_config). |
+| `:ech_hpke_cipher_suites` | Array of ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite | nil | If needed to use ECH, set client preference HPKE cipher suites. For example, you can set TTTLS13::STANDARD\_CLIENT\_ECH_HPKE\_SYMMETRIC\_CIPHER\_SUITES. |
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
 | `:sslkeylogfile` | String | nil | If needed to log SSLKEYLOGFILE, set the file path. |
 | `:loglevel` | Logger constant | Logger::WARN | If needed to print verbose, set Logger::DEBUG. |
