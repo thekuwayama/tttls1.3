@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.description   = spec.summary
   spec.homepage      = 'https://github.com/thekuwayama/tttls1.3'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>=2.7'
+  spec.required_ruby_version = '>=3.1'
 
   spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR)
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
