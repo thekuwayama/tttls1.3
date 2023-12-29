@@ -1,6 +1,9 @@
 AllCops:
   TargetRubyVersion: 2.7
 
+Gemspec/RequiredRubyVersion:
+  Enabled: false
+
 Style/ConditionalAssignment:
   Enabled: false
 
