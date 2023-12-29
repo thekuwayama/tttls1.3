@@ -5,16 +5,15 @@ require_relative 'helper'
 HpkeSymmetricCipherSuite = \
   ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
 
-hostname = 'crypto.cloudflare.com'
-port = 443
+uri = URI.parse(ARGV[0] || 'https://localhost:4433')
 ca_file = __dir__ + '/../tmp/ca.crt'
-req = simple_http_request(hostname, '/cdn-cgi/trace')
+req = simple_http_request(uri.host, uri.path)
 
 rr = Resolv::DNS.new.getresources(
-  hostname,
+  uri.host,
   Resolv::DNS::Resource::IN::HTTPS
 )
-socket = TCPSocket.new(hostname, port)
+socket = TCPSocket.new(uri.host, uri.port)
 settings = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   key_share_groups: [], # empty KeyShareClientHello.client_shares
@@ -24,9 +23,10 @@ settings = {
     TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
   sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
-client = TTTLS13::Client.new(socket, hostname, **settings)
+client = TTTLS13::Client.new(socket, uri.host, **settings)
 client.connect
 client.write(req)
+
 print recv_http_response(client)
 client.close unless client.eof?
 socket.close

@@ -5,13 +5,12 @@ require_relative 'helper'
 HpkeSymmetricCipherSuite = \
   ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
 
-hostname = 'crypto.cloudflare.com'
-port = 443
+uri = URI.parse(ARGV[0] || 'https://localhost:4433')
 ca_file = __dir__ + '/../tmp/ca.crt'
-req = simple_http_request(hostname, '/cdn-cgi/trace')
+req = simple_http_request(uri.host, uri.path)
 
 rr = Resolv::DNS.new.getresources(
-  hostname,
+  uri.host,
   Resolv::DNS::Resource::IN::HTTPS
 )
 settings_2nd = {
@@ -37,16 +36,8 @@ settings_1st = {
   alpn: ['http/1.1'],
   process_new_session_ticket: process_new_session_ticket,
   ech_config: rr.first.svc_params['ech'].echconfiglist.first,
-  ech_hpke_cipher_suites: [
-    HpkeSymmetricCipherSuite.new(
-      HpkeSymmetricCipherSuite::HpkeKdfId.new(
-        TTTLS13::Hpke::KdfId::HKDF_SHA256
-      ),
-      HpkeSymmetricCipherSuite::HpkeAeadId.new(
-        TTTLS13::Hpke::AeadId::AES_128_GCM
-      )
-    )
-  ],
+  ech_hpke_cipher_suites:
+    TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
   sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 
@@ -56,10 +47,11 @@ settings_1st = {
   # Subsequent Handshake:
   settings_2nd
 ].each do |settings|
-  socket = TCPSocket.new(hostname, port)
-  client = TTTLS13::Client.new(socket, hostname, **settings)
+  socket = TCPSocket.new(uri.host, uri.port)
+  client = TTTLS13::Client.new(socket, uri.host, **settings)
   client.connect
   client.write(req)
+
   print recv_http_response(client)
   client.close unless client.eof?
   socket.close

@@ -13,7 +13,7 @@ The examples run as follows:
 ```bash
 $ ruby https_client.rb
 
-$ ruby https_client.rb localhost:4433
+$ ruby https_client.rb https://localhost:4433
 ```
 
 Note that `https_server.rb` requires PEM files of certificate and private key.

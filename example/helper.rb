@@ -4,6 +4,7 @@ $LOAD_PATH << __dir__ + '/../lib'
 
 require 'socket'
 require 'time'
+require 'uri'
 require 'webrick'
 
 require 'http/parser'

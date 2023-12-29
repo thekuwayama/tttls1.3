@@ -3,9 +3,9 @@
 
 require_relative 'helper'
 
-hostname, port = (ARGV[0] || 'localhost:4433').split(':')
+uri = URI.parse(ARGV[0] || 'https://localhost:4433')
 ca_file = __dir__ + '/../tmp/ca.crt'
-req = simple_http_request(hostname)
+req = simple_http_request(uri.host, uri.path)
 
 settings_2nd = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
@@ -35,14 +35,15 @@ succeed_early_data = false
   # Subsequent Handshake:
   settings_2nd
 ].each_with_index do |settings, i|
-  socket = TCPSocket.new(hostname, port)
-  client = TTTLS13::Client.new(socket, hostname, **settings)
+  socket = TCPSocket.new(uri.host, uri.port)
+  client = TTTLS13::Client.new(socket, uri.host, **settings)
 
   # send message using early data; 0-RTT
   client.early_data(req) if i == 1 && settings.include?(:ticket)
   client.connect
   # send message after Simple 1-RTT Handshake
   client.write(req) if i.zero? || !client.succeed_early_data?
+
   print recv_http_response(client)
   client.close unless client.eof?
   socket.close
