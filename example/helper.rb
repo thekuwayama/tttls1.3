@@ -62,3 +62,22 @@ def recv_http_response(client)
   parser << client.read until client.eof?
   buf
 end
+
+def transcript_htmlize(transcript)
+  m = {
+    TTTLS13::CH1 => '<details><summary>ClientHello</summary>%s</details>',
+    TTTLS13::HRR => '<details><summary>HelloRetryRequest</summary>%s</details>',
+    TTTLS13::CH => '<details><summary>ClientHello</summary>%s</details>',
+    TTTLS13::SH => '<details><summary>ServerHello</summary>%s</details>',
+    TTTLS13::EE => '<details><summary>EncryptedExtensions</summary>%s</details>',
+    TTTLS13::CR => '<details><summary>CertificateRequest</summary>%s</details>',
+    TTTLS13::CT => '<details><summary>Certificate</summary>%s</details>',
+    TTTLS13::CV => '<details><summary>CertificateVerify</summary>%s</details>',
+    TTTLS13::SF => '<details><summary>Finished</summary>%s</details>',
+    TTTLS13::EOED => '<details><summary>EndOfEarlyData</summary>%s</details>',
+    TTTLS13::CCT => '<details><summary>Certificate</summary>%s</details>',
+    TTTLS13::CCV => '<details><summary>CertificateVerify</summary>%s</details>',
+    TTTLS13::CF => '<details><summary>Finished</summary>%s</details>'
+  }
+  transcript.map { |k, v| format(m[k], TTTLS13::Convert.obj2html(v.first)) }.join('<br>')
+end
