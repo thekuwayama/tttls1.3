@@ -65,19 +65,21 @@ end
 
 def transcript_htmlize(transcript)
   m = {
-    TTTLS13::CH1 => '<details><summary>ClientHello</summary>%s</details>',
-    TTTLS13::HRR => '<details><summary>HelloRetryRequest</summary>%s</details>',
-    TTTLS13::CH => '<details><summary>ClientHello</summary>%s</details>',
-    TTTLS13::SH => '<details><summary>ServerHello</summary>%s</details>',
-    TTTLS13::EE => '<details><summary>EncryptedExtensions</summary>%s</details>',
-    TTTLS13::CR => '<details><summary>CertificateRequest</summary>%s</details>',
-    TTTLS13::CT => '<details><summary>Certificate</summary>%s</details>',
-    TTTLS13::CV => '<details><summary>CertificateVerify</summary>%s</details>',
-    TTTLS13::SF => '<details><summary>Finished</summary>%s</details>',
-    TTTLS13::EOED => '<details><summary>EndOfEarlyData</summary>%s</details>',
-    TTTLS13::CCT => '<details><summary>Certificate</summary>%s</details>',
-    TTTLS13::CCV => '<details><summary>CertificateVerify</summary>%s</details>',
-    TTTLS13::CF => '<details><summary>Finished</summary>%s</details>'
-  }
-  transcript.map { |k, v| format(m[k], TTTLS13::Convert.obj2html(v.first)) }.join('<br>')
+    TTTLS13::CH1 => 'ClientHello',
+    TTTLS13::HRR => 'HelloRetryRequest',
+    TTTLS13::CH => 'ClientHello',
+    TTTLS13::SH => 'ServerHello',
+    TTTLS13::EE => 'EncryptedExtensions',
+    TTTLS13::CR => 'CertificateRequest',
+    TTTLS13::CT => 'Certificate',
+    TTTLS13::CV => 'CertificateVerify',
+    TTTLS13::SF => 'Finished',
+    TTTLS13::EOED => 'EndOfEarlyData',
+    TTTLS13::CCT => 'Certificate',
+    TTTLS13::CCV => 'CertificateVerify',
+    TTTLS13::CF => 'Finished'
+  }.map { |k, v| [k, '<details><summary>' + v + '</summary>%s</details>'] }.to_h
+  transcript.map do |k, v|
+    format(m[k], TTTLS13::Convert.obj2html(v.first))
+  end.join('<br>')
 end

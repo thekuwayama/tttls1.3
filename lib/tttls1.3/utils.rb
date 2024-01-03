@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 module TTTLS13
-  # rubocop: disable Metrics/ModuleLength
   module Refinements
     refine Integer do
       def to_uint8
@@ -93,6 +92,9 @@ module TTTLS13
         OpenSSL::BN.new(binary, 2).to_i
       end
 
+      # rubocop: disable Metrics/AbcSize
+      # rubocop: disable Metrics/CyclomaticComplexity
+      # rubocop: disable Metrics/PerceivedComplexity
       def obj2html(obj)
         if obj.is_a?(Numeric) || obj.is_a?(TrueClass) || obj.is_a?(FalseClass)
           obj.pretty_print_inspect
@@ -120,7 +122,9 @@ module TTTLS13
           obj.class.name
         end
       end
+      # rubocop: enable Metrics/AbcSize
+      # rubocop: enable Metrics/CyclomaticComplexity
+      # rubocop: enable Metrics/PerceivedComplexity
     end
   end
-  # rubocop: enable Metrics/ModuleLength
 end

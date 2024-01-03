@@ -30,7 +30,9 @@ Etc.nprocessors.times do
         parser.on_message_complete = lambda do
           if !parser.http_method.nil?
             logger.info 'Receive Request'
-            server.write(simple_http_response(transcript_htmlize(server.transcript)))
+            server.write(
+              simple_http_response(transcript_htmlize(server.transcript))
+            )
             server.close
           else
             logger.warn 'Not Request'
