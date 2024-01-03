@@ -96,7 +96,10 @@ module TTTLS13
       # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/PerceivedComplexity
       def obj2html(obj)
-        if obj.is_a?(Numeric) || obj.is_a?(TrueClass) || obj.is_a?(FalseClass)
+        if obj.is_a?(OpenSSL::X509::Certificate)
+          obj.to_pem.gsub("\n", '<br>')
+        elsif obj.is_a?(Numeric) ||
+              obj.is_a?(TrueClass) || obj.is_a?(FalseClass)
           obj.pretty_print_inspect
         elsif obj.is_a?(String) && obj.empty?
           ''
