@@ -159,7 +159,7 @@ module TTTLS13
     # rubocop: disable Metrics/MethodLength
     # rubocop: disable Metrics/PerceivedComplexity
     def connect
-      transcript = Transcript.new
+      @transcript = Transcript.new
       key_schedule = nil # TTTLS13::KeySchedule
       psk = nil
       priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
@@ -173,7 +173,7 @@ module TTTLS13
           psk: psk,
           shared_secret: nil,
           cipher_suite: @settings[:psk_cipher_suite],
-          transcript: transcript
+          transcript: @transcript
         )
       end
 
@@ -205,7 +205,7 @@ module TTTLS13
           ch_outer = ch
           # use ClientHelloInner messages for the transcript hash
           ch = inner.nil? ? ch : inner
-          transcript[CH] = [ch, ch.serialize]
+          @transcript[CH] = [ch, ch.serialize]
           send_ccs if @settings[:compatibility_mode]
           if use_early_data?
             e_wcipher = gen_cipher(
@@ -214,7 +214,7 @@ module TTTLS13
               key_schedule.early_data_write_iv
             )
             sslkeylogfile&.write_client_early_traffic_secret(
-              transcript[CH].first.random,
+              @transcript[CH].first.random,
               key_schedule.client_early_traffic_secret
             )
             send_early_data(e_wcipher)
@@ -224,7 +224,7 @@ module TTTLS13
         when ClientState::WAIT_SH
           logger.debug('ClientState::WAIT_SH')
 
-          sh, = transcript[SH] = recv_server_hello
+          sh, = @transcript[SH] = recv_server_hello
 
           # downgrade protection
           if !sh.negotiated_tls_1_3? && sh.downgraded?
@@ -241,7 +241,7 @@ module TTTLS13
             unless sh.legacy_compression_method == "\x00"
 
           # validate sh using ch
-          ch, = transcript[CH]
+          ch, = @transcript[CH]
           terminate(:illegal_parameter) \
             unless sh.legacy_version == ch.legacy_version
           terminate(:illegal_parameter) \
@@ -252,8 +252,8 @@ module TTTLS13
             unless (sh.extensions.keys - ch.extensions.keys).empty?
 
           # validate sh using hrr
-          if transcript.include?(HRR)
-            hrr, = transcript[HRR]
+          if @transcript.include?(HRR)
+            hrr, = @transcript[HRR]
             terminate(:illegal_parameter) \
               unless sh.cipher_suite == hrr.cipher_suite
 
@@ -265,10 +265,10 @@ module TTTLS13
 
           # handling HRR
           if sh.hrr?
-            terminate(:unexpected_message) if transcript.include?(HRR)
+            terminate(:unexpected_message) if @transcript.include?(HRR)
 
-            ch1, = transcript[CH1] = transcript.delete(CH)
-            hrr, = transcript[HRR] = transcript.delete(SH)
+            ch1, = @transcript[CH1] = @transcript.delete(CH)
+            hrr, = @transcript[HRR] = @transcript.delete(SH)
             ch1_outer = ch_outer
             ch_outer = nil
 
@@ -302,7 +302,7 @@ module TTTLS13
             # use ClientHelloInner messages for the transcript hash
             ch_outer = ch
             ch = inner.nil? ? ch : inner
-            transcript[CH] = [ch, ch.serialize]
+            @transcript[CH] = [ch, ch.serialize]
 
             @state = ClientState::WAIT_SH
             next
@@ -331,25 +331,25 @@ module TTTLS13
             psk: psk,
             shared_secret: shared_secret,
             cipher_suite: @cipher_suite,
-            transcript: transcript
+            transcript: @transcript
           )
 
           # rejected ECH
           # NOTE: It can compute (hrr_)accept_ech until client selects the
           # cipher_suite.
           if !sh.hrr? && use_ech?
-            if !transcript.include?(HRR) && !key_schedule.accept_ech?
+            if !@transcript.include?(HRR) && !key_schedule.accept_ech?
               # 1sh SH
-              transcript[CH] = [ch_outer, ch_outer.serialize]
+              @transcript[CH] = [ch_outer, ch_outer.serialize]
               @rejected_ech = true
-            elsif transcript.include?(HRR) &&
+            elsif @transcript.include?(HRR) &&
                   key_schedule.hrr_accept_ech? != key_schedule.accept_ech?
               # 2nd SH
               terminate(:illegal_parameter)
-            elsif transcript.include?(HRR) && !key_schedule.hrr_accept_ech?
+            elsif @transcript.include?(HRR) && !key_schedule.hrr_accept_ech?
               # 2nd SH
-              transcript[CH1] = [ch1_outer, ch1_outer.serialize]
-              transcript[CH] = [ch_outer, ch_outer.serialize]
+              @transcript[CH1] = [ch1_outer, ch1_outer.serialize]
+              @transcript[CH] = [ch_outer, ch_outer.serialize]
               @rejected_ech = true
             end
           end
@@ -360,7 +360,7 @@ module TTTLS13
             key_schedule.client_handshake_write_iv
           )
           sslkeylogfile&.write_client_handshake_traffic_secret(
-            transcript[CH].first.random,
+            @transcript[CH].first.random,
             key_schedule.client_handshake_traffic_secret
           )
           hs_rcipher = gen_cipher(
@@ -369,17 +369,17 @@ module TTTLS13
             key_schedule.server_handshake_write_iv
           )
           sslkeylogfile&.write_server_handshake_traffic_secret(
-            transcript[CH].first.random,
+            @transcript[CH].first.random,
             key_schedule.server_handshake_traffic_secret
           )
           @state = ClientState::WAIT_EE
         when ClientState::WAIT_EE
           logger.debug('ClientState::WAIT_EE')
 
-          ee, = transcript[EE] = recv_encrypted_extensions(hs_rcipher)
+          ee, = @transcript[EE] = recv_encrypted_extensions(hs_rcipher)
           terminate(:illegal_parameter) unless ee.appearable_extensions?
 
-          ch, = transcript[CH]
+          ch, = @transcript[CH]
           terminate(:unsupported_extension) \
             unless (ee.extensions.keys - ch.extensions.keys).empty?
 
@@ -408,7 +408,7 @@ module TTTLS13
           case message.msg_type
           when Message::HandshakeType::CERTIFICATE,
                Message::HandshakeType::COMPRESSED_CERTIFICATE
-            ct, = transcript[CT] = [message, orig_msg]
+            ct, = @transcript[CT] = [message, orig_msg]
             terminate(:bad_certificate) \
               if ct.is_a?(Message::CompressedCertificate) &&
                  !@settings[:compress_certificate_algorithms]
@@ -416,12 +416,12 @@ module TTTLS13
 
             ct = ct.certificate_message \
               if ct.is_a?(Message::CompressedCertificate)
-            alert = check_invalid_certificate(ct, transcript[CH].first)
+            alert = check_invalid_certificate(ct, @transcript[CH].first)
             terminate(alert) unless alert.nil?
 
             @state = ClientState::WAIT_CV
           when Message::HandshakeType::CERTIFICATE_REQUEST
-            transcript[CR] = [message, orig_msg]
+            @transcript[CR] = [message, orig_msg]
             # TODO: client authentication
             @state = ClientState::WAIT_CERT
           else
@@ -430,7 +430,7 @@ module TTTLS13
         when ClientState::WAIT_CERT
           logger.debug('ClientState::WAIT_CERT')
 
-          ct, = transcript[CT] = recv_certificate(hs_rcipher)
+          ct, = @transcript[CT] = recv_certificate(hs_rcipher)
           if ct.is_a?(Message::CompressedCertificate) &&
              !@settings[:compress_certificate_algorithms].include?(ct.algorithm)
             terminate(:bad_certificate)
@@ -438,17 +438,17 @@ module TTTLS13
             ct = ct.certificate_message
           end
 
-          alert = check_invalid_certificate(ct, transcript[CH].first)
+          alert = check_invalid_certificate(ct, @transcript[CH].first)
           terminate(alert) unless alert.nil?
 
           @state = ClientState::WAIT_CV
         when ClientState::WAIT_CV
           logger.debug('ClientState::WAIT_CV')
 
-          cv, = transcript[CV] = recv_certificate_verify(hs_rcipher)
+          cv, = @transcript[CV] = recv_certificate_verify(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
-          hash = transcript.hash(digest, CT)
-          ct, = transcript[CT]
+          hash = @transcript.hash(digest, CT)
+          ct, = @transcript[CT]
           ct = ct.certificate_message \
             if ct.is_a?(Message::CompressedCertificate)
           terminate(:decrypt_error) \
@@ -459,34 +459,34 @@ module TTTLS13
         when ClientState::WAIT_FINISHED
           logger.debug('ClientState::WAIT_FINISHED')
 
-          sf, = transcript[SF] = recv_finished(hs_rcipher)
+          sf, = @transcript[SF] = recv_finished(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
           terminate(:decrypt_error) unless verified_finished?(
             finished: sf,
             digest: digest,
             finished_key: key_schedule.server_finished_key,
-            hash: transcript.hash(digest, CV)
+            hash: @transcript.hash(digest, CV)
           )
 
           if use_early_data? && succeed_early_data?
             eoed = send_eoed(e_wcipher)
-            transcript[EOED] = [eoed, eoed.serialize]
+            @transcript[EOED] = [eoed, eoed.serialize]
           end
           # TODO: Send Certificate [+ CertificateVerify]
           signature = sign_finished(
             digest: digest,
             finished_key: key_schedule.client_finished_key,
-            hash: transcript.hash(digest, EOED)
+            hash: @transcript.hash(digest, EOED)
           )
           cf = send_finished(signature, hs_wcipher)
-          transcript[CF] = [cf, cf.serialize]
+          @transcript[CF] = [cf, cf.serialize]
           @alert_wcipher = @ap_wcipher = gen_cipher(
             @cipher_suite,
             key_schedule.client_application_write_key,
             key_schedule.client_application_write_iv
           )
           sslkeylogfile&.write_client_traffic_secret_0(
-            transcript[CH].first.random,
+            @transcript[CH].first.random,
             key_schedule.client_application_traffic_secret
           )
           @ap_rcipher = gen_cipher(
@@ -495,7 +495,7 @@ module TTTLS13
             key_schedule.server_application_write_iv
           )
           sslkeylogfile&.write_server_traffic_secret_0(
-            transcript[CH].first.random,
+            @transcript[CH].first.random,
             key_schedule.server_application_traffic_secret
           )
           @exporter_secret = key_schedule.exporter_secret

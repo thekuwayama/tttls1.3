@@ -91,6 +91,43 @@ module TTTLS13
       def bin2i(binary)
         OpenSSL::BN.new(binary, 2).to_i
       end
+
+      # rubocop: disable Metrics/AbcSize
+      # rubocop: disable Metrics/CyclomaticComplexity
+      # rubocop: disable Metrics/PerceivedComplexity
+      def obj2html(obj)
+        if obj.is_a?(OpenSSL::X509::Certificate)
+          obj.to_pem.gsub("\n", '<br>')
+        elsif obj.is_a?(Numeric) ||
+              obj.is_a?(TrueClass) || obj.is_a?(FalseClass)
+          obj.pretty_print_inspect
+        elsif obj.is_a?(String) && obj.empty?
+          ''
+        elsif obj.is_a? String
+          '0x' + obj.unpack1('H*')
+        elsif obj.is_a? NilClass
+          ''
+        elsif obj.is_a? Array
+          '<ul>' + obj.map { |i| '<li>' + obj2html(i) + '</li>' }.join + '</ul>'
+        elsif obj.is_a? Hash
+          obj.map do |k, v|
+            '<details><summary>' + obj2html(k) + '</summary>' \
+            + obj2html(v) \
+            + '</details>'
+          end.join
+        elsif obj.is_a?(Object) && !obj.instance_variables.empty?
+          obj.instance_variables.map do |i|
+            '<details><summary>' + i[1..] + '</summary>' \
+            + obj2html(obj.instance_variable_get(i)) \
+            + '</details>'
+          end.join
+        else
+          obj.class.name
+        end
+      end
+      # rubocop: enable Metrics/AbcSize
+      # rubocop: enable Metrics/CyclomaticComplexity
+      # rubocop: enable Metrics/PerceivedComplexity
     end
   end
 end

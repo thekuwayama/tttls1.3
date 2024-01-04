@@ -62,3 +62,24 @@ def recv_http_response(client)
   parser << client.read until client.eof?
   buf
 end
+
+def transcript_htmlize(transcript)
+  m = {
+    TTTLS13::CH1 => 'ClientHello',
+    TTTLS13::HRR => 'HelloRetryRequest',
+    TTTLS13::CH => 'ClientHello',
+    TTTLS13::SH => 'ServerHello',
+    TTTLS13::EE => 'EncryptedExtensions',
+    TTTLS13::CR => 'CertificateRequest',
+    TTTLS13::CT => 'Certificate',
+    TTTLS13::CV => 'CertificateVerify',
+    TTTLS13::SF => 'Finished',
+    TTTLS13::EOED => 'EndOfEarlyData',
+    TTTLS13::CCT => 'Certificate',
+    TTTLS13::CCV => 'CertificateVerify',
+    TTTLS13::CF => 'Finished'
+  }.map { |k, v| [k, '<details><summary>' + v + '</summary>%s</details>'] }.to_h
+  transcript.map do |k, v|
+    format(m[k], TTTLS13::Convert.obj2html(v.first))
+  end.join('<br>')
+end

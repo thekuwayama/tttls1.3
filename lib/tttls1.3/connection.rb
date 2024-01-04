@@ -11,6 +11,7 @@ module TTTLS13
   # rubocop: disable Metrics/ClassLength
   class Connection
     include Logging
+    attr_reader :transcript
 
     # @param socket [Socket]
     def initialize(socket)
