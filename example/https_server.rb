@@ -30,9 +30,20 @@ Etc.nprocessors.times do
         parser.on_message_complete = lambda do
           if !parser.http_method.nil?
             logger.info 'Receive Request'
-            server.write(
-              simple_http_response(transcript_htmlize(server.transcript))
-            )
+            html = <<HTML
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>tttls1.3 test server</title>
+    </head>
+    <body>
+  %s
+    </body>
+  </html>
+HTML
+            html = format(html, transcript_htmlize(server.transcript))
+            server.write(simple_http_response(html))
             server.close
           else
             logger.warn 'Not Request'
