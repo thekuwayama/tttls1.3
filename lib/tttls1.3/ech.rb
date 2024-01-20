@@ -11,13 +11,14 @@ module TTTLS13
   module Ech
     # @param inner [TTTLS13::Message::ClientHello]
     # @param ech_config [ECHConfig]
+    # @param hpke_cipher_suite_selector [Method]
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::EchState]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/MethodLength
-    def self.offer_ech(inner, ech_config, hpke_cipher_suite_selecter)
+    def self.offer_ech(inner, ech_config, hpke_cipher_suite_selector)
       return [new_greased_ch(inner, new_grease_ech), nil, nil] \
         if ech_config.nil? ||
            !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
@@ -28,7 +29,7 @@ module TTTLS13
       public_key = key_config.public_key.opaque
       kem_id = key_config&.kem_id&.uint16
       config_id = key_config.config_id
-      cipher_suite = hpke_cipher_suite_selecter.call(key_config)
+      cipher_suite = hpke_cipher_suite_selector.call(key_config)
       overhead_len = aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
       aead_cipher = aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
       kdf_hash = kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
