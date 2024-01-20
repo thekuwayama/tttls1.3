@@ -5,9 +5,6 @@ module TTTLS13
   INITIAL = 0
   EOF     = -1
 
-  SUPPORTED_ECHCONFIG_VERSIONS = ["\xfe\x0d"].freeze
-  private_constant :SUPPORTED_ECHCONFIG_VERSIONS
-
   # rubocop: disable Metrics/ClassLength
   class Connection
     include Logging
