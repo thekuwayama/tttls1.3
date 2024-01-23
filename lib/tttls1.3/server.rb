@@ -66,13 +66,15 @@ module TTTLS13
   private_constant :DEFAULT_SERVER_SETTINGS
 
   # rubocop: disable Metrics/ClassLength
-  class Server < Connection
+  class Server
+    include Logging
+
+    attr_reader :transcript
+
     # @param socket [Socket]
     # @param settings [Hash]
     def initialize(socket, **settings)
-      super(socket)
-
-      @endpoint = :server
+      @connection = Connection.new(socket, :server)
       @settings = DEFAULT_SERVER_SETTINGS.merge(settings)
       logger.level = @settings[:loglevel]
 
@@ -159,9 +161,9 @@ module TTTLS13
         end
       end
 
-      @state = ServerState::START
+      @connection.state = ServerState::START
       loop do
-        case @state
+        case @connection.state
         when ServerState::START
           logger.debug('ServerState::START')
 
@@ -169,14 +171,17 @@ module TTTLS13
           ch, = @transcript[CH] = recv_client_hello(receivable_ccs)
 
           # support only TLS 1.3
-          terminate(:protocol_version) unless ch.negotiated_tls_1_3?
+          @connection.terminate(:protocol_version) unless ch.negotiated_tls_1_3?
 
           # validate parameters
-          terminate(:illegal_parameter) unless ch.appearable_extensions?
-          terminamte(:illegal_parameter) \
+          @connection.terminate(:illegal_parameter) \
+            unless ch.appearable_extensions?
+          @connection.terminate(:illegal_parameter) \
             unless ch.legacy_compression_methods == ["\x00"]
-          terminate(:illegal_parameter) unless ch.valid_key_share?
-          terminate(:unrecognized_name) unless recognized_server_name?(ch, @crt)
+          @connection.terminate(:illegal_parameter) \
+            unless ch.valid_key_share?
+          @connection.terminate(:unrecognized_name) \
+            unless recognized_server_name?(ch, @crt)
 
           # alpn
           ch_alpn = ch.extensions[
@@ -186,14 +191,14 @@ module TTTLS13
             @alpn = ch_alpn.protocol_name_list
                            .find { |p| @settings[:alpn].include?(p) }
 
-            terminate(:no_application_protocol) if @alpn.nil?
+            @connection.terminate(:no_application_protocol) if @alpn.nil?
           end
 
           # record_size_limit
           ch_rsl = ch.extensions[Message::ExtensionType::RECORD_SIZE_LIMIT]
           @send_record_size = ch_rsl.record_size_limit unless ch_rsl.nil?
 
-          @state = ServerState::RECVD_CH
+          @connection.state = ServerState::RECVD_CH
         when ServerState::RECVD_CH
           logger.debug('ServerState::RECVD_CH')
 
@@ -202,7 +207,7 @@ module TTTLS13
           @cipher_suite = select_cipher_suite(ch)
           @named_group = select_named_group(ch)
           @signature_scheme = select_signature_scheme(ch, @crt)
-          terminate(:handshake_failure) \
+          @connection.terminate(:handshake_failure) \
             if @cipher_suite.nil? || @signature_scheme.nil?
 
           # send HRR
@@ -210,10 +215,10 @@ module TTTLS13
             ch1, = @transcript[CH1] = @transcript.delete(CH)
             hrr = send_hello_retry_request(ch1, @cipher_suite)
             @transcript[HRR] = [hrr, hrr.serialize]
-            @state = ServerState::START
+            @connection.state = ServerState::START
             next
           end
-          @state = ServerState::NEGOTIATED
+          @connection.state = ServerState::NEGOTIATED
         when ServerState::NEGOTIATED
           logger.debug('ServerState::NEGOTIATED')
 
@@ -225,21 +230,21 @@ module TTTLS13
             ch.legacy_session_id
           )
           @transcript[SH] = [sh, sh.serialize]
-          send_ccs if @settings[:compatibility_mode]
+          @connection.send_ccs if @settings[:compatibility_mode]
 
           # generate shared secret
           ke = ch.extensions[Message::ExtensionType::KEY_SHARE]
                 &.key_share_entry
                 &.find { |kse| kse.group == @named_group }
                 &.key_exchange
-          shared_secret = gen_shared_secret(ke, priv_key, @named_group)
+          shared_secret = Endpoint.gen_shared_secret(ke, priv_key, @named_group)
           key_schedule = KeySchedule.new(
             psk: @psk,
             shared_secret: shared_secret,
             cipher_suite: @cipher_suite,
             transcript: @transcript
           )
-          @alert_wcipher = hs_wcipher = gen_cipher(
+          @connection.alert_wcipher = hs_wcipher = Endpoint.gen_cipher(
             @cipher_suite,
             key_schedule.server_handshake_write_key,
             key_schedule.server_handshake_write_iv
@@ -248,7 +253,7 @@ module TTTLS13
             @transcript[CH].first.random,
             key_schedule.server_handshake_traffic_secret
           )
-          hs_rcipher = gen_cipher(
+          hs_rcipher = Endpoint.gen_cipher(
             @cipher_suite,
             key_schedule.client_handshake_write_key,
             key_schedule.client_handshake_write_iv
@@ -257,7 +262,7 @@ module TTTLS13
             @transcript[CH].first.random,
             key_schedule.client_handshake_traffic_secret
           )
-          @state = ServerState::WAIT_FLIGHT2
+          @connection.state = ServerState::WAIT_FLIGHT2
         when ServerState::WAIT_EOED
           logger.debug('ServerState::WAIT_EOED')
         when ServerState::WAIT_FLIGHT2
@@ -280,7 +285,7 @@ module TTTLS13
           cv = gen_certificate_verify(@key, @signature_scheme, hash)
           @transcript[CV] = [cv, cv.serialize]
           finished_key = key_schedule.server_finished_key
-          signature = sign_finished(
+          signature = Endpoint.sign_finished(
             digest: digest,
             finished_key: finished_key,
             hash: @transcript.hash(digest, CV)
@@ -288,7 +293,7 @@ module TTTLS13
           sf = Message::Finished.new(signature)
           @transcript[SF] = [sf, sf.serialize]
           send_server_parameters([ee, ct, cv, sf], hs_wcipher)
-          @state = ServerState::WAIT_FINISHED
+          @connection.state = ServerState::WAIT_FINISHED
         when ServerState::WAIT_CERT
           logger.debug('ServerState::WAIT_CERT')
         when ServerState::WAIT_CV
@@ -298,23 +303,24 @@ module TTTLS13
 
           cf, = @transcript[CF] = recv_finished(hs_rcipher)
           digest = CipherSuite.digest(@cipher_suite)
-          verified = verified_finished?(
+          verified = Endpoint.verified_finished?(
             finished: cf,
             digest: digest,
             finished_key: key_schedule.client_finished_key,
             hash: @transcript.hash(digest, EOED)
           )
-          terminate(:decrypt_error) unless verified
-          @alert_wcipher = @ap_wcipher = gen_cipher(
+          @connection.terminate(:decrypt_error) unless verified
+          @connection.ap_wcipher = Endpoint.gen_cipher(
             @cipher_suite,
             key_schedule.server_application_write_key,
             key_schedule.server_application_write_iv
           )
+          @connection.alert_wcipher = @connection.ap_wcipher
           sslkeylogfile&.write_server_traffic_secret_0(
             @transcript[CH].first.random,
             key_schedule.server_application_traffic_secret
           )
-          @ap_rcipher = gen_cipher(
+          @connection.ap_rcipher = Endpoint.gen_cipher(
             @cipher_suite,
             key_schedule.client_application_write_key,
             key_schedule.client_application_write_iv
@@ -324,7 +330,7 @@ module TTTLS13
             key_schedule.client_application_traffic_secret
           )
           @exporter_secret = key_schedule.exporter_secret
-          @state = ServerState::CONNECTED
+          @connection.state = ServerState::CONNECTED
         when ServerState::CONNECTED
           logger.debug('ServerState::CONNECTED')
 
@@ -338,6 +344,59 @@ module TTTLS13
     # rubocop: enable Metrics/CyclomaticComplexity
     # rubocop: enable Metrics/MethodLength
     # rubocop: enable Metrics/PerceivedComplexity
+
+    # @raise [TTTLS13::Error::ConfigError]
+    #
+    # @return [String]
+    def read
+      @connection.read(nil)
+    end
+
+    # @param binary [String]
+    def write(binary)
+      @connection.write(binary)
+    end
+
+    # @return [Boolean]
+    def eof?
+      @connection.eof?
+    end
+
+    def close
+      @connection.close
+    end
+
+    # @return [TTTLS13::CipherSuite, nil]
+    def negotiated_cipher_suite
+      @cipher_suite
+    end
+
+    # @return [TTTLS13::NamedGroup, nil]
+    def negotiated_named_group
+      @named_group
+    end
+
+    # @return [TTTLS13::SignatureScheme, nil]
+    def negotiated_signature_scheme
+      @signature_scheme
+    end
+
+    # @return [String]
+    def negotiated_alpn
+      @alpn
+    end
+
+    # @param label [String]
+    # @param context [String]
+    # @param key_length [Integer]
+    #
+    # @return [String, nil]
+    def exporter(label, context, key_length)
+      return nil if @exporter_secret.nil? || @cipher_suite.nil?
+
+      digest = CipherSuite.digest(@cipher_suite)
+      Endpoint.exporter(@exporter_secret, digest, label, context, key_length)
+    end
 
     private
 
@@ -365,11 +424,12 @@ module TTTLS13
     # @return [TTTLS13::Message::ClientHello]
     # @return [String]
     def recv_client_hello(receivable_ccs)
-      ch, orig_msg = recv_message(
+      ch, orig_msg = @connection.recv_message(
         receivable_ccs: receivable_ccs,
         cipher: Cryptograph::Passer.new
       )
-      terminate(:unexpected_message) unless ch.is_a?(Message::ClientHello)
+      @connection.terminate(:unexpected_message) \
+        unless ch.is_a?(Message::ClientHello)
 
       [ch, orig_msg]
     end
@@ -385,8 +445,8 @@ module TTTLS13
         cipher_suite: cipher_suite,
         extensions: extensions
       )
-      send_handshakes(Message::ContentType::HANDSHAKE, [sh],
-                      Cryptograph::Passer.new)
+      @connection.send_handshakes(Message::ContentType::HANDSHAKE, [sh],
+                                  Cryptograph::Passer.new)
 
       sh
     end
@@ -420,8 +480,8 @@ module TTTLS13
         cipher_suite: cipher_suite,
         extensions: exs
       )
-      send_handshakes(Message::ContentType::HANDSHAKE, [sh],
-                      Cryptograph::Passer.new)
+      @connection.send_handshakes(Message::ContentType::HANDSHAKE, [sh],
+                                  Cryptograph::Passer.new)
 
       sh
     end
@@ -431,8 +491,8 @@ module TTTLS13
     #
     # @return [Array of TTTLS13::Message::$Object]
     def send_server_parameters(messages, cipher)
-      send_handshakes(Message::ContentType::APPLICATION_DATA,
-                      messages.reject(&:nil?), cipher)
+      @connection.send_handshakes(Message::ContentType::APPLICATION_DATA,
+                                  messages.reject(&:nil?), cipher)
 
       messages
     end
@@ -505,8 +565,10 @@ module TTTLS13
     # @return [TTTLS13::Message::Finished]
     # @return [String]
     def recv_finished(cipher)
-      cf, orig_msg = recv_message(receivable_ccs: true, cipher: cipher)
-      terminate(:unexpected_message) unless cf.is_a?(Message::Finished)
+      cf, orig_msg \
+        = @connection.recv_message(receivable_ccs: true, cipher: cipher)
+      @connection.terminate(:unexpected_message) \
+        unless cf.is_a?(Message::Finished)
 
       [cf, orig_msg]
     end
@@ -563,7 +625,7 @@ module TTTLS13
     #
     # @return [String]
     def sign_certificate_verify(key:, signature_scheme:, hash:)
-      do_sign_certificate_verify(
+      Endpoint.sign_certificate_verify(
         key: key,
         signature_scheme: signature_scheme,
         context: 'TLS 1.3, server CertificateVerify',
@@ -600,7 +662,7 @@ module TTTLS13
       algorithms = ch.extensions[Message::ExtensionType::SIGNATURE_ALGORITHMS]
                     &.supported_signature_algorithms || []
 
-      do_select_signature_algorithms(algorithms, crt).find do |ss|
+      Endpoint.select_signature_algorithms(algorithms, crt).find do |ss|
         @settings[:signature_algorithms].include?(ss)
       end
     end
@@ -614,7 +676,7 @@ module TTTLS13
                      &.server_name
       return true if server_name.nil?
 
-      matching_san?(crt, server_name)
+      Endpoint.matching_san?(crt, server_name)
     end
 
     # @return [OpenSSL::OCSP::Response, nil]

@@ -174,13 +174,13 @@ RSpec.describe Server do
       signature_scheme = cv.signature_scheme
       signature = cv.signature
       digest = CipherSuite.digest(cipher_suite)
-      expect(server.send(:do_verified_certificate_verify?,
-                         public_key: public_key,
-                         signature_scheme: signature_scheme,
-                         signature: signature,
-                         context: 'TLS 1.3, server CertificateVerify',
-                         hash: transcript.hash(digest, CT)))
-        .to be true
+      expect(Endpoint.verified_certificate_verify?(
+               public_key: public_key,
+               signature_scheme: signature_scheme,
+               signature: signature,
+               context: 'TLS 1.3, server CertificateVerify',
+               hash: transcript.hash(digest, CT)
+             )).to be true
     end
   end
 
@@ -213,12 +213,12 @@ RSpec.describe Server do
     end
 
     let(:signature) do
-      server = Server.new(nil)
       digest = CipherSuite.digest(cipher_suite)
-      server.send(:sign_finished,
-                  digest: digest,
-                  finished_key: key_schedule.server_finished_key,
-                  hash: transcript.hash(digest, CV))
+      Endpoint.sign_finished(
+        digest: digest,
+        finished_key: key_schedule.server_finished_key,
+        hash: transcript.hash(digest, CV)
+      )
     end
 
     let(:sf) do

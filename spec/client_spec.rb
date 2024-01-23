@@ -129,10 +129,11 @@ RSpec.describe Client do
       client = Client.new(mock_socket, 'localhost')
       digest = CipherSuite.digest(cipher_suite)
       hash = transcript.hash(digest, EOED)
-      signature = client.send(:sign_finished,
-                              digest: digest,
-                              finished_key: finished_key,
-                              hash: hash)
+      signature = Endpoint.sign_finished(
+        digest: digest,
+        finished_key: finished_key,
+        hash: hash
+      )
       hs_wcipher = Cryptograph::Aead.new(
         cipher_suite: cipher_suite,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
@@ -215,20 +216,22 @@ RSpec.describe Client do
     it 'should verify server Finished' do
       digest = CipherSuite.digest(cipher_suite)
       hash = transcript.hash(digest, CV)
-      expect(client.send(:verified_finished?,
-                         finished: sf,
-                         digest: digest,
-                         finished_key: key_schedule.server_finished_key,
-                         hash: hash)).to be true
+      expect(Endpoint.verified_finished?(
+               finished: sf,
+               digest: digest,
+               finished_key: key_schedule.server_finished_key,
+               hash: hash
+             )).to be true
     end
 
     it 'should sign client Finished' do
       digest = CipherSuite.digest(cipher_suite)
       hash = transcript.hash(digest, EOED)
-      expect(client.send(:sign_finished,
-                         digest: digest,
-                         finished_key: key_schedule.client_finished_key,
-                         hash: hash)).to eq cf.verify_data
+      expect(Endpoint.sign_finished(
+               digest: digest,
+               finished_key: key_schedule.client_finished_key,
+               hash: hash
+             )).to eq cf.verify_data
     end
   end
 
@@ -240,18 +243,16 @@ RSpec.describe Client do
       Certificate.new(certificate_list: [CertificateEntry.new(server_crt)])
     end
 
-    let(:client) do
-      Client.new(nil, 'localhost')
-    end
-
     it 'should not certify certificate' do
-      expect(client.send(:trusted_certificate?, certificate.certificate_list))
+      expect(Endpoint.trusted_certificate?(certificate.certificate_list))
         .to be false
     end
 
     it 'should certify certificate, received path to private ca.crt' do
-      expect(client.send(:trusted_certificate?, certificate.certificate_list,
-                         __dir__ + '/fixtures/rsa_ca.crt')).to be true
+      expect(Endpoint.trusted_certificate?(
+               certificate.certificate_list,
+               __dir__ + '/fixtures/rsa_ca.crt'
+             )).to be true
     end
   end
 
