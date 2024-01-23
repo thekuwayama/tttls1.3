@@ -58,8 +58,6 @@ module TTTLS13
     alpn: nil,
     process_new_session_ticket: nil,
     ticket: nil,
-    # @deprecated Please use `resumption_secret` instead
-    resumption_master_secret: nil,
     resumption_secret: nil,
     psk_cipher_suite: nil,
     ticket_nonce: nil,
@@ -103,15 +101,6 @@ module TTTLS13
       @connection = Connection.new(socket, :client)
       @hostname = hostname
       @settings = DEFAULT_CLIENT_SETTINGS.merge(settings)
-      # NOTE: backward compatibility
-      if @settings[:resumption_secret].nil? &&
-         !@settings[:resumption_master_secret].nil?
-        @settings[:resumption_secret] =
-          @settings.delete(:resumption_master_secret) \
-      end
-      raise Error::ConfigError if @settings[:resumption_secret] !=
-                                  @settings[:resumption_master_secret]
-
       logger.level = @settings[:loglevel]
 
       @early_data = ''
