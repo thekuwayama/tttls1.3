@@ -554,6 +554,26 @@ module TTTLS13
       @connection.close
     end
 
+    # @return [TTTLS13::CipherSuite, nil]
+    def negotiated_cipher_suite
+      @cipher_suite
+    end
+
+    # @return [TTTLS13::NamedGroup, nil]
+    def negotiated_named_group
+      @named_group
+    end
+
+    # @return [TTTLS13::SignatureScheme, nil]
+    def negotiated_signature_scheme
+      @signature_scheme
+    end
+
+    # @return [String]
+    def negotiated_alpn
+      @alpn
+    end
+
     # @param label [String]
     # @param context [String]
     # @param key_length [Integer]
