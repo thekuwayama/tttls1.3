@@ -4,8 +4,6 @@
 module TTTLS13
   # rubocop: disable Metrics/ClassLength
   class Endpoint
-    include Logging
-
     # @param label [String]
     # @param context [String]
     # @param key_length [Integer]
