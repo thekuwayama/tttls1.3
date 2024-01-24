@@ -15,10 +15,10 @@ module TTTLS13
     attr_accessor :alert_wcipher
 
     # @param socket [Socket]
-    # @param endpoint [:client or :server]
-    def initialize(socket, endpoint)
+    # @param side [:client or :server]
+    def initialize(socket, side)
       @socket = socket
-      @endpoint = endpoint
+      @side = side
       @state = INITIAL
       @ap_wcipher = Cryptograph::Passer.new
       @ap_rcipher = Cryptograph::Passer.new
@@ -39,8 +39,8 @@ module TTTLS13
     def read(nst_process)
       # secure channel has not established yet
       raise Error::ConfigError \
-        unless (@endpoint == :client && @state == ClientState::CONNECTED) ||
-               (@endpoint == :server && @state == ServerState::CONNECTED)
+        unless (@side == :client && @state == ClientState::CONNECTED) ||
+               (@side == :server && @state == ServerState::CONNECTED)
       return '' if @state == EOF
 
       message = nil
@@ -50,7 +50,7 @@ module TTTLS13
         # message, it MAY send a NewSessionTicket message.
         break unless message.is_a?(Message::NewSessionTicket)
 
-        terminate(:unexpected_message) if @endpoint == :server
+        terminate(:unexpected_message) if @side == :server
 
         nst_process.call(message)
       end
@@ -72,8 +72,8 @@ module TTTLS13
     def write(binary)
       # secure channel has not established yet
       raise Error::ConfigError \
-        unless (@endpoint == :client && @state == ClientState::CONNECTED) ||
-               (@endpoint == :server && @state == ServerState::CONNECTED)
+        unless (@side == :client && @state == ClientState::CONNECTED) ||
+               (@side == :server && @state == ServerState::CONNECTED)
 
       ap = Message::ApplicationData.new(binary)
       send_application_data(ap, @ap_wcipher)
