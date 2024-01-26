@@ -17,61 +17,86 @@ module TTTLS13
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::EchState]
     # rubocop: disable Metrics/AbcSize
-    # rubocop: disable Metrics/MethodLength
     def self.offer_ech(inner, ech_config, hpke_cipher_suite_selector)
       return [new_greased_ch(inner, new_grease_ech), nil, nil] \
         if ech_config.nil? ||
            !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
       # Encrypted ClientHello Configuration
+      ech_state, enc = encrypted_ech_config(
+        ech_config,
+        hpke_cipher_suite_selector
+      )
+      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
+        if ech_state.nil? || enc.nil?
+
+      encoded = encode_ch_inner(inner, ech_state.maximum_name_length)
+      overhead_len = aead_id2overhead_len(
+        ech_state.cipher_suite.aead_id.uint16
+      )
+
+      # Encoding the ClientHelloInner
+      aad = new_ch_outer_aad(
+        inner,
+        ech_state.cipher_suite,
+        ech_state.config_id,
+        enc,
+        encoded.length + overhead_len,
+        ech_state.public_name
+      )
+      # Authenticating the ClientHelloOuter
+      # which does not include the Handshake structure's four byte header.
+      outer = new_ch_outer(
+        aad,
+        ech_state.cipher_suite,
+        ech_state.config_id,
+        enc,
+        ech_state.ctx.seal(aad.serialize[4..], encoded)
+      )
+
+      [outer, inner, ech_state]
+    end
+    # rubocop: enable Metrics/AbcSize
+
+    # @param ech_config [ECHConfig]
+    # @param hpke_cipher_suite_selector [Method]
+    #
+    # @return [TTTLS13::EchState or nil]
+    # @return [String or nil]
+    # rubocop: disable Metrics/AbcSize
+    def self.encrypted_ech_config(ech_config, hpke_cipher_suite_selector)
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
       public_key = key_config.public_key.opaque
       kem_id = key_config&.kem_id&.uint16
       config_id = key_config.config_id
       cipher_suite = hpke_cipher_suite_selector.call(key_config)
-      overhead_len = aead_id2overhead_len(cipher_suite&.aead_id&.uint16)
       aead_cipher = aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
       kdf_hash = kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
-      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
-        if [kem_id, overhead_len, aead_cipher, kdf_hash].any?(&:nil?)
+      return [nil, nil] \
+        if [kem_id, aead_cipher, kdf_hash].any?(&:nil?)
 
       kem_curve_name, kem_hash = kem_id2dhkem(kem_id)
       dhkem = kem_curve_name2dhkem(kem_curve_name)
       pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
-      return [new_greased_ch(inner, new_grease_ech), nil, nil] if pkr.nil?
+      return [nil, nil] if pkr.nil?
 
       hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
       base_s = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
       enc = base_s[:enc]
       ctx = base_s[:context_s]
       mnl = ech_config.echconfig_contents.maximum_name_length
-      encoded = encode_ch_inner(inner, mnl)
-
-      # Encoding the ClientHelloInner
-      aad = new_ch_outer_aad(
-        inner,
-        cipher_suite,
+      ech_state = EchState.new(
+        mnl,
         config_id,
-        enc,
-        encoded.length + overhead_len,
-        public_name
-      )
-      # Authenticating the ClientHelloOuter
-      # which does not include the Handshake structure's four byte header.
-      outer = new_ch_outer(
-        aad,
         cipher_suite,
-        config_id,
-        enc,
-        ctx.seal(aad.serialize[4..], encoded)
+        public_name,
+        ctx
       )
 
-      ech_state = EchState.new(mnl, config_id, cipher_suite, public_name, ctx)
-      [outer, inner, ech_state]
+      [ech_state, enc]
     end
     # rubocop: enable Metrics/AbcSize
-    # rubocop: enable Metrics/MethodLength
 
     # @param inner [TTTLS13::Message::ClientHello]
     # @param ech_state [TTTLS13::EchState]
