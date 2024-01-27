@@ -3,6 +3,7 @@
 source 'https://rubygems.org'
 
 gem 'ech_config', '~> 0.0.3'
+gem 'hpke'
 gem 'logger'
 gem 'openssl'
 gem 'rake'
