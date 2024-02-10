@@ -99,9 +99,10 @@ module TTTLS13
           # @raise [TTTLS13::Error::ErrorAlerts]
           #
           # @return [TTTLS13::Message::Extensions::ECHClientHello]
+          # rubocop: disable Metrics/AbcSize
           def deserialize_outer_ech(binary)
-            raise Error::ErrorAlerts, :internal_error \
-              if binary.nil? || binary.length < 5
+            raise Error::ErrorAlerts, :internal_error if binary.nil?
+            raise Error::ErrorAlerts, :decode_error if binary.length < 5
 
             kdf_id = \
               HpkeSymmetricCipherSuite::HpkeKdfId.decode(binary.slice(0, 2))
@@ -111,16 +112,16 @@ module TTTLS13
             cid = Convert.bin2i(binary.slice(4, 1))
             enc_len = Convert.bin2i(binary.slice(5, 2))
             i = 7
-            raise Error::ErrorAlerts, :internal_error \
+            raise Error::ErrorAlerts, :decode_error \
               if i + enc_len > binary.length
 
             enc = binary.slice(i, enc_len)
             i += enc_len
-            raise Error::ErrorAlerts, :internal_error \
+            raise Error::ErrorAlerts, :decode_error \
               if i + 2 > binary.length
 
             payload_len = Convert.bin2i(binary.slice(i, 2))
-            raise Error::ErrorAlerts, :internal_error \
+            raise Error::ErrorAlerts, :decode_error \
               if i + payload_len > binary.length
 
             payload = binary.slice(i, payload_len)
@@ -132,6 +133,7 @@ module TTTLS13
               payload: payload
             )
           end
+          # rubocop: enable Metrics/AbcSize
 
           # @param binary [String]
           #
@@ -139,7 +141,7 @@ module TTTLS13
           #
           # @return [TTTLS13::Message::Extensions::ECHClientHello]
           def deserialize_inner_ech(binary)
-            raise Error::ErrorAlerts, :internal_error unless binary.empty?
+            raise Error::ErrorAlerts, :illegal_parameter unless binary.empty?
 
             ECHClientHello.new(type: ECHClientHelloType::INNER)
           end
@@ -195,9 +197,9 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extensions::ECHEncryptedExtensions]
         def self.deserialize(binary)
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
           raise Error::ErrorAlerts, :decode_error \
-            if binary.nil? ||
-               binary.length != binary.slice(0, 2).unpack1('n') + 2
+            if binary.length != binary.slice(0, 2).unpack1('n') + 2
 
           ECHEncryptedExtensions.new(
             ECHConfig.decode_vectors(binary.slice(2..))
@@ -230,8 +232,8 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extensions::ECHHelloRetryRequest]
         def self.deserialize(binary)
-          raise Error::ErrorAlerts, :decode_error \
-            if binary.nil? || binary.length != 8
+          raise Error::ErrorAlerts, :internal_error if binary.nil?
+          raise Error::ErrorAlerts, :decode_error if binary.length != 8
 
           ECHHelloRetryRequest.new(binary)
         end

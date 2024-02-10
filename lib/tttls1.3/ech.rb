@@ -383,11 +383,11 @@ module TTTLS13
   end
 
   class EchState
-    attr_accessor :maximum_name_length
-    attr_accessor :config_id
-    attr_accessor :cipher_suite
-    attr_accessor :public_name
-    attr_accessor :ctx
+    attr_reader :maximum_name_length
+    attr_reader :config_id
+    attr_reader :cipher_suite
+    attr_reader :public_name
+    attr_reader :ctx
 
     # @param maximum_name_length [Integer]
     # @param config_id [Integer]

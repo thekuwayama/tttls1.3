@@ -6,9 +6,9 @@ module TTTLS13
   module Message
     module Extension
       class SupportedVersions
-        attr_reader   :extension_type
-        attr_accessor :msg_type
-        attr_accessor :versions
+        attr_reader :extension_type
+        attr_reader :msg_type
+        attr_reader :versions
 
         # @param msg_type [TTTLS13::Message::ContentType]
         # @param versions [Array of ProtocolVersion]

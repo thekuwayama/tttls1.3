@@ -9,8 +9,8 @@ module TTTLS13
       # Client/Server MUST ignore unrecognized extensions,
       # but transcript MUST include unrecognized extensions.
       class UnknownExtension
-        attr_accessor :extension_type
-        attr_accessor :extension_data
+        attr_reader :extension_type
+        attr_reader :extension_data
 
         # @param extension_type [String]
         # @param extension_data [String]

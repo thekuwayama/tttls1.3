@@ -47,7 +47,7 @@ module TTTLS13
         signature_scheme = binary.slice(4, 2)
         signature_len = Convert.bin2i(binary.slice(6, 2))
         signature = binary.slice(8, signature_len)
-        raise Error::ErrorAlerts, :internal_error \
+        raise Error::ErrorAlerts, :decode_error \
           unless signature_len + 4 == msg_len &&
                  signature_len + 8 == binary.length
 

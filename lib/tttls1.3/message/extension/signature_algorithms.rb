@@ -21,8 +21,8 @@ module TTTLS13
           SignatureScheme::RSA_PKCS1_SHA512
         ].freeze
 
-        attr_accessor :extension_type # for signature_algorithms_cert getter
-        attr_reader   :supported_signature_algorithms
+        attr_reader :extension_type # for signature_algorithms_cert getter
+        attr_reader :supported_signature_algorithms
 
         # @param supported_signature_algorithms [Array of SignatureScheme]
         def initialize(supported_signature_algorithms)
