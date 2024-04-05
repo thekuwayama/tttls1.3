@@ -7,7 +7,7 @@ module TTTLS13
   SUPPORTED_ECHCONFIG_VERSIONS = ["\xfe\x0d"].freeze
   private_constant :SUPPORTED_ECHCONFIG_VERSIONS
 
-  # rubocop: disable Metrics/ModuleLength
+  # rubocop: disable Metrics/ClassLength
   class Ech
     # @param inner [TTTLS13::Message::ClientHello]
     # @param ech_config [ECHConfig]
@@ -406,5 +406,5 @@ module TTTLS13
       @ctx = ctx
     end
   end
-  # rubocop: enable Metrics/ModuleLength
+  # rubocop: enable Metrics/ClassLength
 end
