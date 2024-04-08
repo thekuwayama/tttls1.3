@@ -26,12 +26,12 @@ module TTTLS13
       #         };
       #     } ECHClientHello;
       class ECHClientHello
-        attr_accessor :extension_type
-        attr_accessor :type
-        attr_accessor :cipher_suite
-        attr_accessor :config_id
-        attr_accessor :enc
-        attr_accessor :payload
+        attr_reader :extension_type
+        attr_reader :type
+        attr_reader :cipher_suite
+        attr_reader :config_id
+        attr_reader :enc
+        attr_reader :payload
 
         # @param type [TTTLS13::Message::Extension::ECHClientHelloType]
         # @param cipher_suite [HpkeSymmetricCipherSuite]
@@ -170,8 +170,8 @@ module TTTLS13
       #         ECHConfigList retry_configs;
       #     } ECHEncryptedExtensions;
       class ECHEncryptedExtensions
-        attr_accessor :extension_type
-        attr_accessor :retry_configs
+        attr_reader :extension_type
+        attr_reader :retry_configs
 
         # @param retry_configs [Array of ECHConfig]
         def initialize(retry_configs)
@@ -207,8 +207,8 @@ module TTTLS13
       #         opaque confirmation[8];
       #     } ECHHelloRetryRequest;
       class ECHHelloRetryRequest
-        attr_accessor :extension_type
-        attr_accessor :confirmation
+        attr_reader :extension_type
+        attr_reader :confirmation
 
         # @param confirmation [String]
         def initialize(confirmation)
