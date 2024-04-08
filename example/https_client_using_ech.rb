@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 require_relative 'helper'
-HpkeSymmetricCipherSuite = \
-  ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
 
 uri = URI.parse(ARGV[0] || 'https://localhost:4433')
 ca_file = __dir__ + '/../tmp/ca.crt'
