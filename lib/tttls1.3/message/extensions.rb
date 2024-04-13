@@ -173,6 +173,8 @@ module TTTLS13
             else
               Extension::UnknownExtension.deserialize(binary, extension_type)
             end
+          when ExtensionType::ECH_OUTER_EXTENSIONS
+            Extension::ECHOuterExtensions.deserialize(binary)
           else
             Extension::UnknownExtension.deserialize(binary, extension_type)
           end
