@@ -7,6 +7,7 @@ require 'time'
 require 'uri'
 require 'webrick'
 
+require 'ech_config'
 require 'http/parser'
 require 'svcb_rr_patch'
 
@@ -82,4 +83,14 @@ def transcript_htmlize(transcript)
   transcript.map do |k, v|
     format(m[k], TTTLS13::Convert.obj2html(v.first))
   end.join('<br>')
+end
+
+def parse_echconfigs_pem(pem)
+  s = pem.gsub(/-----(BEGIN|END) ECH CONFIGS-----/, '')
+         .gsub("\n", '')
+  b = Base64.decode64(s)
+  raise 'failed to parse ECHConfigs' \
+    unless b.length == b.slice(0, 2).unpack1('n') + 2
+
+  ECHConfig.decode_vectors(b.slice(2..))
 end
