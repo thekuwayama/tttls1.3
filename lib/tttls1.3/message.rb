@@ -74,6 +74,7 @@ module TTTLS13
       KEY_SHARE                              = "\x00\x33"
       # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-11.1
       ENCRYPTED_CLIENT_HELLO                 = "\xfe\x0d"
+      ECH_OUTER_EXTENSIONS                   = "\xfd\x00"
     end
 
     DEFINED_EXTENSIONS = ExtensionType.constants.map do |c|
