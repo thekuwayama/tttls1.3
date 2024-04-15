@@ -10,6 +10,9 @@ Style/ConditionalAssignment:
 Style/Documentation:
   Enabled: false
 
+Style/EachWithObject:
+  Enabled: false
+
 Style/NumericLiterals:
   Enabled: false
 
