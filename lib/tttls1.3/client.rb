@@ -194,7 +194,6 @@ module TTTLS13
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
           ch, inner, ech_state = send_client_hello(extensions, binder_key)
           ch_outer = ch
-          @outer_exs = ch_outer.extensions # FIXME
           # use ClientHelloInner messages for the transcript hash
           ch = inner.nil? ? ch : inner
           @transcript[CH] = [ch, ch.serialize]
@@ -294,7 +293,6 @@ module TTTLS13
             )
             # use ClientHelloInner messages for the transcript hash
             ch_outer = ch
-            @outer_exs = ch_outer.extensions # FIXME
             ch = inner.nil? ? ch : inner
             @transcript[CH] = [ch, ch.serialize]
 
@@ -308,8 +306,7 @@ module TTTLS13
           else
             psk = nil
           end
-
-          ch_ks = @outer_exs[Message::ExtensionType::KEY_SHARE]
+          ch_ks = ch.extensions[Message::ExtensionType::KEY_SHARE]
                     .key_share_entry.map(&:group)
           sh_ks = sh.extensions[Message::ExtensionType::KEY_SHARE]
                     .key_share_entry.first.group

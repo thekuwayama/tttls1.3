@@ -78,7 +78,9 @@ RSpec.describe ECHClientHello do
       expect(extension.confirmation).to eq "\x00" * 8
     end
   end
+end
 
+RSpec.describe Ech do
   context 'EncodedClientHelloInner length' do
     let(:server_name) do
       'localhost'
@@ -115,6 +117,47 @@ RSpec.describe ECHClientHello do
     it 'should be equal placeholder_encoded_ch_inner_len' do
       expect(Ech.placeholder_encoded_ch_inner_len)
         .to eq padding_encoded_ch_inner.length
+    end
+  end
+
+  context 'removing and replacing extensions from EncodedClientHelloInner' do
+    let(:extensions) do
+      extensions, = Client.new(nil, 'localhost').send(:gen_ch_extensions)
+      extensions
+    end
+
+    let(:no_key_share_exs) do
+      extensions.filter { |k, _| k != ExtensionType::KEY_SHARE }
+    end
+
+    it 'should be equal remove_and_replace_exs with extensions & []' do
+      expect(Ech.remove_and_replace_exs(extensions, []))
+        .to eq extensions
+    end
+
+    it 'should be equal remove_and_replace_exs with extensions & [key_share]' do
+      got = Ech.remove_and_replace_exs(extensions, [ExtensionType::KEY_SHARE])
+      expected = extensions.map do |k, v|
+        if k == ExtensionType::KEY_SHARE
+          [
+            ExtensionType::ECH_OUTER_EXTENSIONS,
+            Extension::ECHOuterExtensions.new([ExtensionType::KEY_SHARE])
+          ]
+        else
+          [k, v]
+        end
+      end
+      expected = expected.to_h
+      expect(got.keys).to eq expected.keys
+      expect(got[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions)
+        .to eq expected[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions
+    end
+
+    it 'should be equal remove_and_replace_exs with no key_share extensions' \
+       ' & [key_share]' do
+      expect(Ech.remove_and_replace_exs(no_key_share_exs,
+                                        [ExtensionType::KEY_SHARE]))
+        .to eq no_key_share_exs
     end
   end
 end

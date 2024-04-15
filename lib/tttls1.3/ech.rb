@@ -7,6 +7,11 @@ module TTTLS13
   SUPPORTED_ECHCONFIG_VERSIONS = ["\xfe\x0d"].freeze
   private_constant :SUPPORTED_ECHCONFIG_VERSIONS
 
+  DEFAULT_ECH_OUTER_EXTENSIONS = [
+    Message::ExtensionType::KEY_SHARE
+  ].freeze
+  private_constant :DEFAULT_ECH_OUTER_EXTENSIONS
+
   # rubocop: disable Metrics/ClassLength
   class Ech
     # @param inner [TTTLS13::Message::ClientHello]
@@ -31,13 +36,12 @@ module TTTLS13
         if ech_state.nil? || enc.nil?
 
       # for ech_outer_extensions
-      replaced_exs = remove_and_replace_exs(inner.extensions)
+      replaced = \
+        remove_and_replace_exs(inner.extensions, DEFAULT_ECH_OUTER_EXTENSIONS)
 
       # Encoding the ClientHelloInner
-      encoded = encode_ch_inner(inner, ech_state.maximum_name_length, replaced_exs)
-      overhead_len = aead_id2overhead_len(
-        ech_state.cipher_suite.aead_id.uint16
-      )
+      encoded = encode_ch_inner(inner, ech_state.maximum_name_length, replaced)
+      overhead_len = aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
 
       # Authenticating the ClientHelloOuter
       aad = new_ch_outer_aad(
@@ -109,11 +113,11 @@ module TTTLS13
     # @return [TTTLS13::Message::ClientHello]
     def self.offer_new_ech(inner, ech_state)
       # for ech_outer_extensions
-      outer_exs = inner.extensions.clone
-      encoded_exs = remove_and_replace_exs(inner.extensions)
+      replaced = \
+        remove_and_replace_exs(inner.extensions, DEFAULT_ECH_OUTER_EXTENSIONS)
 
       # Encoding the ClientHelloInner
-      encoded = encode_ch_inner(inner, ech_state.maximum_name_length, encoded_exs)
+      encoded = encode_ch_inner(inner, ech_state.maximum_name_length, replaced)
       overhead_len \
         = aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
 
@@ -147,20 +151,20 @@ module TTTLS13
 
     # @param inner [TTTLS13::Message::ClientHello]
     # @param maximum_name_length [Integer]
-    # @param replaced_exs [TTTLS13::Message::Extensions]
+    # @param replaced [TTTLS13::Message::Extensions]
     #
     # @return [String] EncodedClientHelloInner
-    def self.encode_ch_inner(inner, maximum_name_length, replaced_exs)
+    def self.encode_ch_inner(inner, maximum_name_length, replaced)
       encoded = Message::ClientHello.new(
         legacy_version: inner.legacy_version,
         random: inner.random,
         legacy_session_id: '',
         cipher_suites: inner.cipher_suites,
         legacy_compression_methods: inner.legacy_compression_methods,
-        extensions: replaced_exs
+        extensions: replaced
       )
       server_name_length = \
-        replaced_exs[Message::ExtensionType::SERVER_NAME].server_name.length
+        replaced[Message::ExtensionType::SERVER_NAME].server_name.length
 
       padding_encoded_ch_inner(
         # which does not include the Handshake structure's four byte header.
@@ -310,12 +314,10 @@ module TTTLS13
     end
 
     # @param exs [TTTLS13::Message::Extensions] from ClientHelloInner
+    # @param ex_types [Array of TTTLS13::Message::ExtensionType]
     #
     # @return [TTTLS13::Message::Extensions] for EncodedClientHelloInner
-    def self.remove_and_replace_exs(exs)
-      # TODO: specify ex_types
-      ex_types = [Message::ExtensionType::KEY_SHARE]
-
+    def self.remove_and_replace_exs(exs, ex_types)
       # removing and replacing extensions from EncodedClientHelloInner
       # with a single "ech_outer_extensions"
       exs.reduce(Message::Extensions.new) do |acc, (k, v)|
