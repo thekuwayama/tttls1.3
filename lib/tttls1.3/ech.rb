@@ -318,13 +318,21 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::Extensions] for EncodedClientHelloInner
     def self.remove_and_replace_exs(exs, ex_types)
+      # NOTE: sort external_extensions in descending order.
+      tmp1 = exs.filter { |k, _| !ex_types.include?(k) }
+      tmp2 = exs.filter { |k, _| ex_types.include?(k) }.sort
+      exs.clear
+      tmp1.each { |k, v| exs[k] = v }
+      tmp2.each { |k, v| exs[k] = v }
+
       # removing and replacing extensions from EncodedClientHelloInner
       # with a single "ech_outer_extensions"
       exs.reduce(Message::Extensions.new) do |acc, (k, v)|
         if ex_types.include?(k) &&
            !acc.include?(Message::ExtensionType::ECH_OUTER_EXTENSIONS)
+          outer_extensions = (ex_types - (ex_types - exs.keys)).sort
           acc[Message::ExtensionType::ECH_OUTER_EXTENSIONS] = \
-            Message::Extension::ECHOuterExtensions.new(ex_types)
+            Message::Extension::ECHOuterExtensions.new(outer_extensions)
         elsif !ex_types.include?(k)
           acc[k] = v
         end
