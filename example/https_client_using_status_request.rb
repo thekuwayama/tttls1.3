@@ -19,7 +19,8 @@ settings = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1'],
   check_certificate_status: true,
-  process_certificate_status: process_certificate_status
+  process_certificate_status: process_certificate_status,
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 client = TTTLS13::Client.new(socket, uri.host, **settings)
 client.connect

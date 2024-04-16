@@ -21,7 +21,8 @@ settings_2nd = {
   alpn: ['http/1.1'],
   ech_config: ech_config,
   ech_hpke_cipher_suites:
-    TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES
+    TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 process_new_session_ticket = lambda do |nst, rms, cs|
   return if Time.now.to_i - nst.timestamp > nst.ticket_lifetime
@@ -39,7 +40,8 @@ settings_1st = {
   ech_config: ech_config,
   ech_hpke_cipher_suites:
     TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
-  process_new_session_ticket: process_new_session_ticket
+  process_new_session_ticket: process_new_session_ticket,
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 
 [

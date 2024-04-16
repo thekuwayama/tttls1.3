@@ -9,7 +9,8 @@ req = simple_http_request(uri.host, uri.path)
 
 settings_2nd = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
-  alpn: ['http/1.1']
+  alpn: ['http/1.1'],
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 process_new_session_ticket = lambda do |nst, rms, cs|
   return if Time.now.to_i - nst.timestamp > nst.ticket_lifetime
@@ -24,7 +25,8 @@ end
 settings_1st = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1'],
-  process_new_session_ticket: process_new_session_ticket
+  process_new_session_ticket: process_new_session_ticket,
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 
 [

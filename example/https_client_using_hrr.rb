@@ -11,7 +11,8 @@ socket = TCPSocket.new(uri.host, uri.port)
 settings = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   key_share_groups: [], # empty KeyShareClientHello.client_shares
-  alpn: ['http/1.1']
+  alpn: ['http/1.1'],
+  sslkeylogfile: '/tmp/sslkeylogfile.log'
 }
 client = TTTLS13::Client.new(socket, uri.host, **settings)
 client.connect
