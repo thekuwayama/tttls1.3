@@ -105,12 +105,12 @@ module TTTLS13
         store(ex.extension_type, ex)
       end
 
-      # @param ex_types [Array of TTTLS13::Message::ExtensionType]
+      # @param outer_extensions [Array of TTTLS13::Message::ExtensionType]
       #
       # @return [TTTLS13::Message::Extensions] for EncodedClientHelloInner
-      def remove_and_replace!(ex_types)
-        tmp1 = filter { |k, _| !ex_types.include?(k) }
-        tmp2 = filter { |k, _| ex_types.include?(k) }
+      def remove_and_replace!(outer_extensions)
+        tmp1 = filter { |k, _| !outer_extensions.include?(k) }
+        tmp2 = filter { |k, _| outer_extensions.include?(k) }
         clear
         tmp1.each { |k, v| self[k] = v }
         tmp2.each { |k, v| self[k] = v }
@@ -118,11 +118,11 @@ module TTTLS13
         # removing and replacing extensions from EncodedClientHelloInner
         # with a single "ech_outer_extensions"
         reduce(Message::Extensions.new) do |acc, (k, v)|
-          if ex_types.include?(k) &&
+          if outer_extensions.include?(k) &&
              !acc.include?(Message::ExtensionType::ECH_OUTER_EXTENSIONS)
             acc[Message::ExtensionType::ECH_OUTER_EXTENSIONS] = \
               Message::Extension::ECHOuterExtensions.new(tmp2.keys)
-          elsif !ex_types.include?(k)
+          elsif !outer_extensions.include?(k)
             acc[k] = v
           end
 
