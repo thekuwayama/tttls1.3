@@ -111,23 +111,18 @@ module TTTLS13
       def remove_and_replace!(outer_extensions)
         tmp1 = filter { |k, _| !outer_extensions.include?(k) }
         tmp2 = filter { |k, _| outer_extensions.include?(k) }
+
         clear
-        tmp1.each { |k, v| self[k] = v }
-        tmp2.each { |k, v| self[k] = v }
+        replaced = Message::Extensions.new
+        tmp1.each { |_, v| self << v; replaced << v }
+        tmp2.each { |_, v| self << v }
 
         # removing and replacing extensions from EncodedClientHelloInner
         # with a single "ech_outer_extensions"
-        reduce(Message::Extensions.new) do |acc, (k, v)|
-          if outer_extensions.include?(k) &&
-             !acc.include?(Message::ExtensionType::ECH_OUTER_EXTENSIONS)
-            acc[Message::ExtensionType::ECH_OUTER_EXTENSIONS] = \
-              Message::Extension::ECHOuterExtensions.new(tmp2.keys)
-          elsif !outer_extensions.include?(k)
-            acc[k] = v
-          end
+        replaced << Message::Extension::ECHOuterExtensions.new(tmp2.keys) \
+          unless tmp2.keys.empty?
 
-          acc
-        end
+        replaced
       end
 
       class << self

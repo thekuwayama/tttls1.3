@@ -4,13 +4,13 @@ AllCops:
 Gemspec/RequiredRubyVersion:
   Enabled: false
 
+Semicolon:
+  AllowAsExpressionSeparator: true
+
 Style/ConditionalAssignment:
   Enabled: false
 
 Style/Documentation:
-  Enabled: false
-
-Style/EachWithObject:
   Enabled: false
 
 Style/NumericLiterals:
