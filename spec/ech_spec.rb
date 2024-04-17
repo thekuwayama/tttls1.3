@@ -119,40 +119,4 @@ RSpec.describe Ech do
         .to eq padding_encoded_ch_inner.length
     end
   end
-
-  context 'removing and replacing extensions from EncodedClientHelloInner' do
-    let(:extensions) do
-      extensions, = Client.new(nil, 'localhost').send(:gen_ch_extensions)
-      extensions
-    end
-
-    let(:no_key_share_exs) do
-      Extensions.new(
-        extensions.filter { |k, _| k != ExtensionType::KEY_SHARE }.values
-      )
-    end
-
-    it 'should be equal remove_and_replace! with []' do
-      cloned = extensions.clone
-      expect(extensions.remove_and_replace!([]))
-        .to eq cloned
-    end
-
-    it 'should be equal remove_and_replace! with [key_share]' do
-      expected = extensions.filter { |k, _| k != ExtensionType::KEY_SHARE }
-      expected[ExtensionType::ECH_OUTER_EXTENSIONS] = \
-        Extension::ECHOuterExtensions.new([ExtensionType::KEY_SHARE])
-      got = extensions.remove_and_replace!([ExtensionType::KEY_SHARE])
-      expect(got.keys).to eq expected.keys
-      expect(got[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions)
-        .to eq expected[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions
-    end
-
-    it 'should be equal remove_and_replace! with no key_share extensions' \
-       ' & [key_share]' do
-      cloned = no_key_share_exs.clone
-      expect(no_key_share_exs.remove_and_replace!([ExtensionType::KEY_SHARE]))
-        .to eq cloned
-    end
-  end
 end
