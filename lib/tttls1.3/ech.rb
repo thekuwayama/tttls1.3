@@ -2,37 +2,6 @@
 # frozen_string_literal: true
 
 module TTTLS13
-  module Refinements
-    refine TTTLS13::Message::Extensions do
-      # @param ex_types [Array of TTTLS13::Message::ExtensionType]
-      #
-      # @return [TTTLS13::Message::Extensions] for EncodedClientHelloInner
-      define_method(:remove_and_replace!) do |ex_types|
-        # NOTE: sort external_extensions in descending order.
-        tmp1 = filter { |k, _| !ex_types.include?(k) }
-        tmp2 = filter { |k, _| ex_types.include?(k) }.sort
-        clear
-        tmp1.each { |k, v| self[k] = v }
-        tmp2.each { |k, v| self[k] = v }
-
-        # removing and replacing extensions from EncodedClientHelloInner
-        # with a single "ech_outer_extensions"
-        reduce(Message::Extensions.new) do |acc, (k, v)|
-          if ex_types.include?(k) &&
-             !acc.include?(Message::ExtensionType::ECH_OUTER_EXTENSIONS)
-            outer_extensions = (ex_types - (ex_types - keys)).sort
-            acc[Message::ExtensionType::ECH_OUTER_EXTENSIONS] = \
-              Message::Extension::ECHOuterExtensions.new(outer_extensions)
-          elsif !ex_types.include?(k)
-            acc[k] = v
-          end
-
-          acc
-        end
-      end
-    end
-  end
-
   using Refinements
 
   SUPPORTED_ECHCONFIG_VERSIONS = ["\xfe\x0d"].freeze
