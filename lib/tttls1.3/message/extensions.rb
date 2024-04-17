@@ -105,6 +105,16 @@ module TTTLS13
         store(ex.extension_type, ex)
       end
 
+      # removing and replacing extensions from EncodedClientHelloInner
+      # with a single "ech_outer_extensions"
+      #
+      # for example
+      # - before
+      #   - self.keys:  [A B C D E]
+      #   - param    :  [D B]
+      # - after remove_and_replace!
+      #   - self.keys:  [A C E B D]
+      #   - return   :  [A C E ech_outer_extensions[B D]]
       # @param outer_extensions [Array of TTTLS13::Message::ExtensionType]
       #
       # @return [TTTLS13::Message::Extensions] for EncodedClientHelloInner
@@ -117,11 +127,8 @@ module TTTLS13
         tmp1.each { |_, v| self << v; replaced << v }
         tmp2.each { |_, v| self << v }
 
-        # removing and replacing extensions from EncodedClientHelloInner
-        # with a single "ech_outer_extensions"
         replaced << Message::Extension::ECHOuterExtensions.new(tmp2.keys) \
           unless tmp2.keys.empty?
-
         replaced
       end
 
