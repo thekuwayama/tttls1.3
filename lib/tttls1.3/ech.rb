@@ -2,6 +2,37 @@
 # frozen_string_literal: true
 
 module TTTLS13
+  module Refinements
+    refine TTTLS13::Message::Extensions do
+      # @param ex_types [Array of TTTLS13::Message::ExtensionType]
+      #
+      # @return [TTTLS13::Message::Extensions] for EncodedClientHelloInner
+      define_method(:remove_and_replace!) do |ex_types|
+        # NOTE: sort external_extensions in descending order.
+        tmp1 = filter { |k, _| !ex_types.include?(k) }
+        tmp2 = filter { |k, _| ex_types.include?(k) }.sort
+        clear
+        tmp1.each { |k, v| self[k] = v }
+        tmp2.each { |k, v| self[k] = v }
+
+        # removing and replacing extensions from EncodedClientHelloInner
+        # with a single "ech_outer_extensions"
+        reduce(Message::Extensions.new) do |acc, (k, v)|
+          if ex_types.include?(k) &&
+             !acc.include?(Message::ExtensionType::ECH_OUTER_EXTENSIONS)
+            outer_extensions = (ex_types - (ex_types - keys)).sort
+            acc[Message::ExtensionType::ECH_OUTER_EXTENSIONS] = \
+              Message::Extension::ECHOuterExtensions.new(outer_extensions)
+          elsif !ex_types.include?(k)
+            acc[k] = v
+          end
+
+          acc
+        end
+      end
+    end
+  end
+
   using Refinements
 
   SUPPORTED_ECHCONFIG_VERSIONS = ["\xfe\x0d"].freeze
@@ -37,7 +68,7 @@ module TTTLS13
 
       # for ech_outer_extensions
       replaced = \
-        remove_and_replace_exs(inner.extensions, DEFAULT_ECH_OUTER_EXTENSIONS)
+        inner.extensions.remove_and_replace!(DEFAULT_ECH_OUTER_EXTENSIONS)
 
       # Encoding the ClientHelloInner
       encoded = encode_ch_inner(inner, ech_state.maximum_name_length, replaced)
@@ -114,12 +145,12 @@ module TTTLS13
     def self.offer_new_ech(inner, ech_state)
       # for ech_outer_extensions
       replaced = \
-        remove_and_replace_exs(inner.extensions, DEFAULT_ECH_OUTER_EXTENSIONS)
+        inner.extensions.remove_and_replace!(DEFAULT_ECH_OUTER_EXTENSIONS)
 
       # Encoding the ClientHelloInner
       encoded = encode_ch_inner(inner, ech_state.maximum_name_length, replaced)
-      overhead_len \
-        = aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
+      overhead_len = \
+        aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
 
       # It encrypts EncodedClientHelloInner as described in Section 6.1.1, using
       # the second partial ClientHelloOuterAAD, to obtain a second
@@ -311,26 +342,6 @@ module TTTLS13
           Message::ExtensionType::ENCRYPTED_CLIENT_HELLO => ech
         )
       )
-    end
-
-    # @param exs [TTTLS13::Message::Extensions] from ClientHelloInner
-    # @param ex_types [Array of TTTLS13::Message::ExtensionType]
-    #
-    # @return [TTTLS13::Message::Extensions] for EncodedClientHelloInner
-    def self.remove_and_replace_exs(exs, ex_types)
-      # removing and replacing extensions from EncodedClientHelloInner
-      # with a single "ech_outer_extensions"
-      exs.reduce(Message::Extensions.new) do |acc, (k, v)|
-        if ex_types.include?(k) &&
-           !acc.include?(Message::ExtensionType::ECH_OUTER_EXTENSIONS)
-          acc[Message::ExtensionType::ECH_OUTER_EXTENSIONS] = \
-            Message::Extension::ECHOuterExtensions.new(ex_types)
-        elsif !ex_types.include?(k)
-          acc[k] = v
-        end
-
-        acc
-      end
     end
 
     module KemId

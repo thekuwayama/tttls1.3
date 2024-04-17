@@ -127,37 +127,32 @@ RSpec.describe Ech do
     end
 
     let(:no_key_share_exs) do
-      extensions.filter { |k, _| k != ExtensionType::KEY_SHARE }
+      Extensions.new(
+        extensions.filter { |k, _| k != ExtensionType::KEY_SHARE }.values
+      )
     end
 
-    it 'should be equal remove_and_replace_exs with extensions & []' do
-      expect(Ech.remove_and_replace_exs(extensions, []))
-        .to eq extensions
+    it 'should be equal remove_and_replace! with []' do
+      cloned = extensions.clone
+      expect(extensions.remove_and_replace!([]))
+        .to eq cloned
     end
 
-    it 'should be equal remove_and_replace_exs with extensions & [key_share]' do
-      got = Ech.remove_and_replace_exs(extensions, [ExtensionType::KEY_SHARE])
-      expected = extensions.map do |k, v|
-        if k == ExtensionType::KEY_SHARE
-          [
-            ExtensionType::ECH_OUTER_EXTENSIONS,
-            Extension::ECHOuterExtensions.new([ExtensionType::KEY_SHARE])
-          ]
-        else
-          [k, v]
-        end
-      end
-      expected = expected.to_h
+    it 'should be equal remove_and_replace! with [key_share]' do
+      expected = extensions.filter { |k, _| k != ExtensionType::KEY_SHARE }
+      expected[ExtensionType::ECH_OUTER_EXTENSIONS] = \
+        Extension::ECHOuterExtensions.new([ExtensionType::KEY_SHARE])
+      got = extensions.remove_and_replace!([ExtensionType::KEY_SHARE])
       expect(got.keys).to eq expected.keys
       expect(got[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions)
         .to eq expected[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions
     end
 
-    it 'should be equal remove_and_replace_exs with no key_share extensions' \
+    it 'should be equal remove_and_replace! with no key_share extensions' \
        ' & [key_share]' do
-      expect(Ech.remove_and_replace_exs(no_key_share_exs,
-                                        [ExtensionType::KEY_SHARE]))
-        .to eq no_key_share_exs
+      cloned = no_key_share_exs.clone
+      expect(no_key_share_exs.remove_and_replace!([ExtensionType::KEY_SHARE]))
+        .to eq cloned
     end
   end
 end
