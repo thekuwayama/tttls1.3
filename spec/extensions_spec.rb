@@ -211,6 +211,23 @@ RSpec.describe Extensions do
         .to eq expected[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions
     end
 
+    it 'should be equal remove_and_replace! with' \
+       ' [key_share,supported_versions]' do
+      outer_extensions = [
+        ExtensionType::KEY_SHARE,
+        ExtensionType::SUPPORTED_VERSIONS
+      ]
+      expected = extensions.filter { |k, _| !outer_extensions.include?(k) }
+      expected[ExtensionType::ECH_OUTER_EXTENSIONS] = \
+        Extension::ECHOuterExtensions.new(
+          extensions.filter { |k, _| outer_extensions.include?(k) }.keys
+        )
+      got = extensions.remove_and_replace!(outer_extensions)
+      expect(got.keys).to eq expected.keys
+      expect(got[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions)
+        .to eq expected[ExtensionType::ECH_OUTER_EXTENSIONS].outer_extensions
+    end
+
     it 'should be equal remove_and_replace! with no key_share extensions' \
        ' & [key_share]' do
       cloned = no_key_share_exs.clone
