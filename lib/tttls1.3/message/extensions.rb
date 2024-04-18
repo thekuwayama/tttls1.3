@@ -124,11 +124,12 @@ module TTTLS13
 
         clear
         replaced = Message::Extensions.new
-        tmp1.each { |_, v| self << v; replaced << v }
-        tmp2.each { |_, v| self << v }
 
+        tmp1.each_value { |v| self << v; replaced << v }
+        tmp2.each_value { |v| self << v }
         replaced << Message::Extension::ECHOuterExtensions.new(tmp2.keys) \
           unless tmp2.keys.empty?
+
         replaced
       end
 
