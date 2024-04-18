@@ -7,6 +7,11 @@ module TTTLS13
   SUPPORTED_ECHCONFIG_VERSIONS = ["\xfe\x0d"].freeze
   private_constant :SUPPORTED_ECHCONFIG_VERSIONS
 
+  DEFAULT_ECH_OUTER_EXTENSIONS = [
+    Message::ExtensionType::KEY_SHARE
+  ].freeze
+  private_constant :DEFAULT_ECH_OUTER_EXTENSIONS
+
   # rubocop: disable Metrics/ClassLength
   class Ech
     # @param inner [TTTLS13::Message::ClientHello]
@@ -30,12 +35,15 @@ module TTTLS13
       return [new_greased_ch(inner, new_grease_ech), nil, nil] \
         if ech_state.nil? || enc.nil?
 
-      encoded = encode_ch_inner(inner, ech_state.maximum_name_length)
-      overhead_len = aead_id2overhead_len(
-        ech_state.cipher_suite.aead_id.uint16
-      )
+      # for ech_outer_extensions
+      replaced = \
+        inner.extensions.remove_and_replace!(DEFAULT_ECH_OUTER_EXTENSIONS)
 
       # Encoding the ClientHelloInner
+      encoded = encode_ch_inner(inner, ech_state.maximum_name_length, replaced)
+      overhead_len = aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
+
+      # Authenticating the ClientHelloOuter
       aad = new_ch_outer_aad(
         inner,
         ech_state.cipher_suite,
@@ -44,13 +52,13 @@ module TTTLS13
         encoded.length + overhead_len,
         ech_state.public_name
       )
-      # Authenticating the ClientHelloOuter
-      # which does not include the Handshake structure's four byte header.
+
       outer = new_ch_outer(
         aad,
         ech_state.cipher_suite,
         ech_state.config_id,
         enc,
+        # which does not include the Handshake structure's four byte header.
         ech_state.ctx.seal(aad.serialize[4..], encoded)
       )
 
@@ -104,9 +112,14 @@ module TTTLS13
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello]
     def self.offer_new_ech(inner, ech_state)
-      encoded = encode_ch_inner(inner, ech_state.maximum_name_length)
-      overhead_len \
-        = aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
+      # for ech_outer_extensions
+      replaced = \
+        inner.extensions.remove_and_replace!(DEFAULT_ECH_OUTER_EXTENSIONS)
+
+      # Encoding the ClientHelloInner
+      encoded = encode_ch_inner(inner, ech_state.maximum_name_length, replaced)
+      overhead_len = \
+        aead_id2overhead_len(ech_state.cipher_suite.aead_id.uint16)
 
       # It encrypts EncodedClientHelloInner as described in Section 6.1.1, using
       # the second partial ClientHelloOuterAAD, to obtain a second
@@ -122,13 +135,14 @@ module TTTLS13
         encoded.length + overhead_len,
         ech_state.public_name
       )
+
       # Authenticating the ClientHelloOuter
-      # which does not include the Handshake structure's four byte header.
       outer = new_ch_outer(
         aad,
         ech_state.cipher_suite,
         ech_state.config_id,
         '',
+        # which does not include the Handshake structure's four byte header.
         ech_state.ctx.seal(aad.serialize[4..], encoded)
       )
 
@@ -137,23 +151,23 @@ module TTTLS13
 
     # @param inner [TTTLS13::Message::ClientHello]
     # @param maximum_name_length [Integer]
+    # @param replaced [TTTLS13::Message::Extensions]
     #
     # @return [String] EncodedClientHelloInner
-    def self.encode_ch_inner(inner, maximum_name_length)
-      # TODO: ech_outer_extensions
+    def self.encode_ch_inner(inner, maximum_name_length, replaced)
       encoded = Message::ClientHello.new(
         legacy_version: inner.legacy_version,
         random: inner.random,
         legacy_session_id: '',
         cipher_suites: inner.cipher_suites,
         legacy_compression_methods: inner.legacy_compression_methods,
-        extensions: inner.extensions
+        extensions: replaced
       )
       server_name_length = \
-        inner.extensions[Message::ExtensionType::SERVER_NAME].server_name.length
+        replaced[Message::ExtensionType::SERVER_NAME].server_name.length
 
-      # which does not include the Handshake structure's four byte header.
       padding_encoded_ch_inner(
+        # which does not include the Handshake structure's four byte header.
         encoded.serialize[4..],
         server_name_length,
         maximum_name_length
@@ -284,6 +298,8 @@ module TTTLS13
 
     # @param inner [TTTLS13::Message::ClientHello]
     # @param ech [Message::Extension::ECHClientHello]
+    #
+    # @return [TTTLS13::Message::ClientHello]
     def self.new_greased_ch(inner, ech)
       Message::ClientHello.new(
         legacy_version: inner.legacy_version,
@@ -393,7 +409,7 @@ module TTTLS13
     # @param config_id [Integer]
     # @param cipher_suite [HpkeSymmetricCipherSuite]
     # @param public_name [String]
-    # @param ctx [[HPKE::ContextS]
+    # @param ctx [HPKE::ContextS]
     def initialize(maximum_name_length,
                    config_id,
                    cipher_suite,

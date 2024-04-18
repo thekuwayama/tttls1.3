@@ -9,11 +9,7 @@ req = simple_http_request(uri.host, uri.path)
 ech_config = if ARGV.length > 1
                parse_echconfigs_pem(File.open(ARGV[1]).read).first
              else
-               rr = Resolv::DNS.new.getresources(
-                 uri.host,
-                 Resolv::DNS::Resource::IN::HTTPS
-               )
-               rr.first.svc_params['ech'].echconfiglist.first
+               resolve_echconfig(uri.host)
              end
 
 socket = TCPSocket.new(uri.host, uri.port)

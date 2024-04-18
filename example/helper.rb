@@ -94,3 +94,14 @@ def parse_echconfigs_pem(pem)
 
   ECHConfig.decode_vectors(b.slice(2..))
 end
+
+def resolve_echconfig(hostname)
+  rr = Resolv::DNS.new.getresources(
+    hostname,
+    Resolv::DNS::Resource::IN::HTTPS
+  )
+  raise "failed to resolve echconfig via #{hostname} HTTPS RR" \
+    if rr.first.nil? || !rr.first.svc_params.keys.include?('ech')
+
+  rr.first.svc_params['ech'].echconfiglist.first
+end

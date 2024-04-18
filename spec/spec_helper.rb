@@ -245,6 +245,10 @@ TESTBINARY_ECH_HRR = <<BIN.split.map(&:hex).map(&:chr).join
   00 00 00 00 00 00 00 00
 BIN
 
+TESTBINARY_ECH_OUTER_EXTENSIONS = <<BIN.split.map(&:hex).map(&:chr).join
+  02 00 33
+BIN
+
 # https://datatracker.ietf.org/doc/html/rfc8448#section-3
 # 3.  Simple 1-RTT Handshake
 TESTBINARY_CLIENT_HELLO = <<BIN.split.map(&:hex).map(&:chr).join

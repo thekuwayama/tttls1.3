@@ -78,7 +78,9 @@ RSpec.describe ECHClientHello do
       expect(extension.confirmation).to eq "\x00" * 8
     end
   end
+end
 
+RSpec.describe Ech do
   context 'EncodedClientHelloInner length' do
     let(:server_name) do
       'localhost'

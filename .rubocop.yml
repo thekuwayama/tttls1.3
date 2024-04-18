@@ -4,6 +4,9 @@ AllCops:
 Gemspec/RequiredRubyVersion:
   Enabled: false
 
+Semicolon:
+  AllowAsExpressionSeparator: true
+
 Style/ConditionalAssignment:
   Enabled: false
 
