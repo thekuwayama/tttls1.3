@@ -2,6 +2,7 @@
 
 $LOAD_PATH << __dir__ + '/../lib'
 
+require 'resolv'
 require 'socket'
 require 'time'
 require 'uri'
@@ -9,7 +10,6 @@ require 'webrick'
 
 require 'ech_config'
 require 'http/parser'
-require 'svcb_rr_patch'
 
 require 'tttls1.3'
 
@@ -100,8 +100,13 @@ def resolve_echconfig(hostname)
     hostname,
     Resolv::DNS::Resource::IN::HTTPS
   )
+  ech = 5
   raise "failed to resolve echconfig via #{hostname} HTTPS RR" \
-    if rr.first.nil? || !rr.first.svc_params.keys.include?('ech')
+    if rr.first.nil? || rr.first.params[ech].nil?
 
-  rr.first.svc_params['ech'].echconfiglist.first
+  octet = rr.first.params[ech].value
+  raise 'failed to parse ECHConfigs' \
+    unless octet.length == octet.slice(0, 2).unpack1('n') + 2
+
+  ECHConfig.decode_vectors(octet.slice(2..)).first
 end
