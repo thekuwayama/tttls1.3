@@ -101,6 +101,8 @@ def resolve_echconfig(hostname)
     hostname,
     Resolv::DNS::Resource::IN::HTTPS
   )
+
+  # https://datatracker.ietf.org/doc/html/draft-ietf-tls-svcb-ech-01#section-6
   ech = 5
   raise "failed to resolve echconfig via #{hostname} HTTPS RR" \
     if rr.first.nil? || rr.first.params[ech].nil?
