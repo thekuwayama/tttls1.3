@@ -2,6 +2,7 @@
 
 $LOAD_PATH << __dir__ + '/../lib'
 
+require 'base64'
 require 'resolv'
 require 'socket'
 require 'time'

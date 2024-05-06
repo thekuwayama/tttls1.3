@@ -9,6 +9,7 @@ gem 'openssl'
 gem 'rake'
 
 group :development do
+  gem 'base64'
   gem 'byebug'
   gem 'http_parser.rb'
   gem 'resolv', '~> 0.4.0'
