@@ -9,7 +9,6 @@ module TTTLS13
         HOST_NAME = "\x00"
       end
 
-      # NOTE:
       # The extension_data field SHALL be empty when @server_name is empty.
       # Then, serialized extension_data is
       #

@@ -5,7 +5,6 @@ module TTTLS13
   using Refinements
   module Message
     module Extension
-      # NOTE:
       #     struct {
       #         select (Handshake.msg_type) {
       #             case client_hello: OfferedPsks;
@@ -83,7 +82,6 @@ module TTTLS13
         end
       end
 
-      # NOTE:
       #     opaque PskBinderEntry<32..255>;
       #
       #     struct {
@@ -172,7 +170,6 @@ module TTTLS13
         # rubocop: enable Metrics/PerceivedComplexity
       end
 
-      # NOTE:
       #     struct {
       #         opaque identity<1..2^16-1>;
       #         uint32 obfuscated_ticket_age;

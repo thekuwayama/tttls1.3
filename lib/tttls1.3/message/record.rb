@@ -27,7 +27,6 @@ module TTTLS13
         @cipher = cipher
       end
 
-      # NOTE:
       # serialize joins messages.
       # If serialize is received Server Parameters(EE, CT, CV),
       # it returns one binary.
@@ -50,7 +49,6 @@ module TTTLS13
         end.join
       end
 
-      # NOTE:
       # If previous Record has surplus_binary,
       # surplus_binary should is given to Record.deserialize as buffered.
       #

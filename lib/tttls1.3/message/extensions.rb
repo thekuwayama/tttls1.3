@@ -21,7 +21,6 @@ module TTTLS13
 
       alias super_fetch fetch
 
-      # NOTE:
       # "pre_shared_key" MUST be the last extension in the ClientHello
       #
       # @return [String]
@@ -136,7 +135,6 @@ module TTTLS13
       class << self
         private
 
-        # NOTE:
         # deserialize_extension ignores unparsable extension.
         # Received unparsable binary, returns nil, doesn't raise
         # ErrorAlerts :decode_error.

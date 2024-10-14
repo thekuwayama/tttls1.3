@@ -23,8 +23,6 @@ module TTTLS13
         when CipherSuite::TLS_CHACHA20_POLY1305_SHA256
           @cipher = OpenSSL::Cipher.new('chacha20-poly1305')
         else
-          # Note:
-          # not supported
           # CipherSuite::TLS_AES_128_CCM_SHA256
           # CipherSuite::TLS_AES_128_CCM_8_SHA256
           raise Error::ErrorAlerts, :internal_error
@@ -36,7 +34,6 @@ module TTTLS13
         @auth_tag_len = CipherSuite.auth_tag_len(@cipher_suite)
       end
 
-      # NOTE:
       #     AEAD-Encrypt(write_key, nonce, additional_data, plaintext)
       #
       # @param content [String]
@@ -53,7 +50,6 @@ module TTTLS13
         encrypted_data + cipher.auth_tag
       end
 
-      # NOTE:
       #     AEAD-Decrypt(peer_write_key, nonce,
       #                  additional_data, AEADEncrypted)
       #
@@ -78,7 +74,6 @@ module TTTLS13
         [clear[0...-postfix_len], clear[-postfix_len]]
       end
 
-      # NOTE:
       #     struct {
       #         opaque content[TLSPlaintext.length];
       #         ContentType type;

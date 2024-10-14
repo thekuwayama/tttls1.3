@@ -96,7 +96,6 @@ module TTTLS13
       end
     end
 
-    # NOTE:
     #                              START <-----+
     #               Recv ClientHello |         | Send HelloRetryRequest
     #                                v         |

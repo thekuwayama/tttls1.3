@@ -17,7 +17,6 @@ module TTTLS13
     # ecdhe_private_use "\xfe\x00" ~ "\xfe\xff"
 
     class << self
-      # NOTE:
       # For secp256r1, secp384r1, and secp521r1
       #
       #     struct {
@@ -57,7 +56,6 @@ module TTTLS13
         end
       end
 
-      # NOTE:
       # SECG        |  ANSI X9.62   |  NIST
       # ------------+---------------+-------------
       # secp256r1   |  prime256v1   |   NIST P-256
