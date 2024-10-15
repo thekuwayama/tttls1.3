@@ -143,7 +143,6 @@ module TTTLS13
         class << self
           private
 
-          # NOTE:
           #     struct {
           #         KeyShareEntry client_shares<0..2^16-1>;
           #     } KeyShareClientHello;
@@ -178,7 +177,6 @@ module TTTLS13
             key_share_entry
           end
 
-          # NOTE:
           #     struct {
           #         KeyShareEntry server_share;
           #     } KeyShareServerHello;
@@ -201,7 +199,6 @@ module TTTLS13
             [KeyShareEntry.new(group: group, key_exchange: key_exchange)]
           end
 
-          # NOTE:
           #     struct {
           #         NamedGroup selected_group;
           #     } KeyShareHelloRetryRequest;

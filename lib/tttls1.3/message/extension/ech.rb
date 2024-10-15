@@ -12,7 +12,6 @@ module TTTLS13
         INNER = "\x01"
       end
 
-      # NOTE:
       #     struct {
       #         ECHClientHelloType type;
       #         select (ECHClientHello.type) {
@@ -165,7 +164,6 @@ module TTTLS13
         end
       end
 
-      # NOTE:
       #     struct {
       #         ECHConfigList retry_configs;
       #     } ECHEncryptedExtensions;
@@ -202,7 +200,6 @@ module TTTLS13
         end
       end
 
-      # NOTE:
       #     struct {
       #         opaque confirmation[8];
       #     } ECHHelloRetryRequest;

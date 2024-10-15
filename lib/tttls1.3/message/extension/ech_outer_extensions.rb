@@ -5,7 +5,6 @@ module TTTLS13
   using Refinements
   module Message
     module Extension
-      # NOTE:
       #     ExtensionType OuterExtensions<2..254>;
       class ECHOuterExtensions
         attr_reader :extension_type

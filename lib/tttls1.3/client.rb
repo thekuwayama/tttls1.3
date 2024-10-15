@@ -110,7 +110,6 @@ module TTTLS13
       raise Error::ConfigError unless valid_settings?
     end
 
-    # NOTE:
     #                           START <----+
     #            Send ClientHello |        | Recv HelloRetryRequest
     #       [K_send = early data] |        |
@@ -327,7 +326,7 @@ module TTTLS13
           )
 
           # rejected ECH
-          # NOTE: It can compute (hrr_)accept_ech until client selects the
+          # It can compute (hrr_)accept_ech until client selects the
           # cipher_suite.
           if !sh.hrr? && use_ech?
             if !@transcript.include?(HRR) && !key_schedule.accept_ech?
@@ -1008,7 +1007,6 @@ module TTTLS13
       [new_exs, priv_keys]
     end
 
-    # NOTE:
     # https://datatracker.ietf.org/doc/html/rfc8446#section-4.1.2
     #
     # @param ch1 [TTTLS13::Message::ClientHello]

@@ -5,7 +5,6 @@ module TTTLS13
   using Refinements
   module Message
     module Extension
-      # NOTE:
       # Client/Server MUST ignore unrecognized extensions,
       # but transcript MUST include unrecognized extensions.
       class UnknownExtension
