@@ -11,7 +11,7 @@ module TTTLS13
         attr_reader :msg_type
         attr_reader :key_share_entry
 
-        # @param msg_type [TTTLS13::Message::ContentType]
+        # @param msg_type [TTTLS13::Message::HandshakeType]
         # @param key_share_entry [Array of KeyShareEntry]
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
