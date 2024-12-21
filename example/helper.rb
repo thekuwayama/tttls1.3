@@ -87,7 +87,8 @@ def transcript_htmlize(transcript)
 end
 
 def parse_echconfigs_pem(pem)
-  s = pem.gsub(/-----(BEGIN|END) ECH CONFIGS-----/, '')
+  # https://datatracker.ietf.org/doc/html/draft-farrell-tls-pemesni-08#section-3-4
+  s = pem.gsub(/-----(BEGIN|END) (ECH CONFIGS|ECHCONFIG)-----/, '')
          .gsub("\n", '')
   b = Base64.decode64(s)
   raise 'failed to parse ECHConfigs' \
