@@ -108,7 +108,7 @@ module TTTLS13
           [key_share, priv_keys]
         end
 
-        # @param groups [TTTLS13::NamedGroup]
+        # @param group [TTTLS13::NamedGroup]
         #
         # @return [TTTLS13::Message::Extensions::KeyShare]
         # @return [OpenSSL::PKey::EC.$Object]
@@ -129,7 +129,7 @@ module TTTLS13
           [key_share, ec]
         end
 
-        # @param groups [TTTLS13::NamedGroup]
+        # @param group [TTTLS13::NamedGroup]
         #
         # @return [TTTLS13::Message::Extensions::KeyShare]
         def self.gen_hrr_key_share(group)

@@ -6,7 +6,7 @@ module TTTLS13
     class ApplicationData
       attr_reader :fragment
 
-      # @param [String]
+      # @param fragment [String]
       def initialize(fragment)
         @fragment = fragment
       end

@@ -64,7 +64,7 @@ module TTTLS13
       #
       # https://datatracker.ietf.org/doc/html/rfc4492#appendix-A
       #
-      # @param groups [Array of TTTLS13::Message::Extension::NamedGroup]
+      # @param group [TTTLS13::Message::Extension::NamedGroup]
       #
       # @raise [TTTLS13::Error::ErrorAlerts]
       #

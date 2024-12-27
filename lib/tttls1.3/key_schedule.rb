@@ -250,7 +250,7 @@ module TTTLS13
     #
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
-    # @param [String]
+    # @return [String]
     def self.hkdf_expand(secret, info, length, digest)
       hash_len = OpenSSL::Digest.new(digest).digest_length
       raise Error::ErrorAlerts, :internal_error if length > 255 * hash_len

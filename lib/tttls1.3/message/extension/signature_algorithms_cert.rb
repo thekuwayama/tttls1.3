@@ -5,7 +5,7 @@ module TTTLS13
   module Message
     module Extension
       class SignatureAlgorithmsCert < SignatureAlgorithms
-        # @param versions [Array of SignatureScheme]
+        # @param supported_signature_algorithms [Array] Array of SignatureScheme
         def initialize(supported_signature_algorithms)
           super(supported_signature_algorithms)
           @extension_type = ExtensionType::SIGNATURE_ALGORITHMS_CERT

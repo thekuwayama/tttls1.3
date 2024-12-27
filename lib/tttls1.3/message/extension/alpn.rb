@@ -9,7 +9,7 @@ module TTTLS13
         attr_reader :extension_type
         attr_reader :protocol_name_list
 
-        # @param named_group_list [Array of String]
+        # @param protocol_name_list [Array] Array of String
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
