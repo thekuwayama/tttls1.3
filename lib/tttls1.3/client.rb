@@ -89,8 +89,8 @@ module TTTLS13
   class Client
     include Logging
 
-    HpkeSymmetricCipherSuit = \
-      ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
+    HpkeSymmetricCipherSuit \
+      = ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite
 
     attr_reader :transcript
 
