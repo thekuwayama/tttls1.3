@@ -19,7 +19,7 @@ module TTTLS13
     # @param hpke_cipher_suite_selector [Method]
     #
     # @return [TTTLS13::Message::ClientHello]
-    # @return [TTTLS13::Message::ClientHello]
+    # @return [TTTLS13::Message::ClientHello] ClientHelloInner
     # @return [TTTLS13::EchState]
     # rubocop: disable Metrics/AbcSize
     def self.offer_ech(inner, ech_config, hpke_cipher_suite_selector)
@@ -110,7 +110,7 @@ module TTTLS13
     # @param ech_state [TTTLS13::EchState]
     #
     # @return [TTTLS13::Message::ClientHello]
-    # @return [TTTLS13::Message::ClientHello]
+    # @return [TTTLS13::Message::ClientHello] ClientHelloInner
     def self.offer_new_ech(inner, ech_state)
       # for ech_outer_extensions
       replaced = \
