@@ -160,6 +160,14 @@ module TTTLS13
           sg_groups.filter { |g| ks_groups.include?(g) } == ks_groups &&
           ks_groups.uniq == ks_groups
       end
+
+      # @return [Boolean]
+      def ch_inner?
+        ech = @extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
+        return false if ech.nil?
+
+        ech.type == Message::Extension::ECHClientHelloType::INNER
+      end
     end
   end
 end
