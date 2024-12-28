@@ -37,6 +37,7 @@ RSpec.describe ClientHello do
       expect(message.legacy_compression_methods).to eq ["\x00"]
       expect(message.extensions).to be_empty
       expect(message.negotiated_tls_1_3?).to be false
+      expect(message.ch_inner?).to be false
     end
 
     it 'should be serialized' do
@@ -81,6 +82,24 @@ RSpec.describe ClientHello do
 
     it 'should generate valid serializable object' do
       expect(message.serialize).to eq TESTBINARY_0_RTT_CLIENT_HELLO
+    end
+  end
+
+  context 'valid inner client_hello' do
+    let(:message) do
+      cipher_suites = CipherSuites.new([TLS_AES_256_GCM_SHA384,
+                                        TLS_CHACHA20_POLY1305_SHA256,
+                                        TLS_AES_128_GCM_SHA256])
+      ch = ClientHello.new(random: OpenSSL::Random.random_bytes(32),
+                           legacy_session_id: Array.new(32, 0).map(&:chr).join,
+                           cipher_suites: cipher_suites)
+      ch.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
+        = Message::Extension::ECHClientHello.new_inner
+      ch
+    end
+
+    it 'should generate ClientHelloInner' do
+      expect(message.ch_inner?).to be true
     end
   end
 end
