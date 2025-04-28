@@ -86,47 +86,30 @@ module TTTLS13
         # @param groups [Array of TTTLS13::NamedGroup]
         #
         # @return [TTTLS13::Message::Extensions::KeyShare]
-        # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
+        # @return [TTTLS13::SharedSecret]
         def self.gen_ch_key_share(groups)
-          priv_keys = {}
-          kse = groups.map do |group|
-            curve = NamedGroup.curve_name(group)
-            ec = OpenSSL::PKey::EC.generate(curve)
-            # store private key to do the key-exchange
-            priv_keys.store(group, ec)
-            KeyShareEntry.new(
-              group: group,
-              key_exchange: ec.public_key.to_octet_string(:uncompressed)
-            )
-          end
-
+          shared_secret = SharedSecret.gen_from_named_groups(groups)
           key_share = KeyShare.new(
             msg_type: HandshakeType::CLIENT_HELLO,
-            key_share_entry: kse
+            key_share_entry: shared_secret.key_share_entries
           )
 
-          [key_share, priv_keys]
+          [key_share, shared_secret]
         end
 
         # @param group [TTTLS13::NamedGroup]
         #
         # @return [TTTLS13::Message::Extensions::KeyShare]
-        # @return [OpenSSL::PKey::EC.$Object]
+        # @return [TTTLS13::SharedSecret]
         def self.gen_sh_key_share(group)
-          curve = NamedGroup.curve_name(group)
-          ec = OpenSSL::PKey::EC.generate(curve)
+          shared_secret = SharedSecret.gen_from_named_groups([group])
 
           key_share = KeyShare.new(
             msg_type: HandshakeType::SERVER_HELLO,
-            key_share_entry: [
-              KeyShareEntry.new(
-                group: group,
-                key_exchange: ec.public_key.to_octet_string(:uncompressed)
-              )
-            ]
+            key_share_entry: shared_secret.key_share_entries
           )
 
-          [key_share, ec]
+          [key_share, shared_secret]
         end
 
         # @param group [TTTLS13::NamedGroup]

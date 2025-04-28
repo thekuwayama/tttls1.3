@@ -38,9 +38,9 @@ module TTTLS13
           97
         when SECP521R1
           133
-        # not supported other NamedGroup
         # when X25519
         #   32
+        # not supported other NamedGroup
         # when X448
         #   56
         # when FFDHE2048

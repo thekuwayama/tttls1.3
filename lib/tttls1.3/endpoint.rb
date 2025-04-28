@@ -158,23 +158,6 @@ module TTTLS13
       == finished.verify_data
     end
 
-    # @param key_exchange [String]
-    # @param priv_key [OpenSSL::PKey::$Object]
-    # @param group [TTTLS13::NamedGroup]
-    #
-    # @return [String]
-    def self.gen_shared_secret(key_exchange, priv_key, group)
-      curve = NamedGroup.curve_name(group)
-      terminate(:internal_error) if curve.nil?
-
-      pub_key = OpenSSL::PKey::EC::Point.new(
-        OpenSSL::PKey::EC::Group.new(curve),
-        OpenSSL::BN.new(key_exchange, 2)
-      )
-
-      priv_key.dh_compute_key(pub_key)
-    end
-
     # @param certificate_list [Array of CertificateEntry]
     # @param ca_file [String] path to ca.crt
     # @param hostname [String]

@@ -152,7 +152,6 @@ module TTTLS13
       @transcript = Transcript.new
       key_schedule = nil # TTTLS13::KeySchedule
       psk = nil
-      priv_keys = {} # Hash of NamedGroup => OpenSSL::PKey::$Object
       if use_psk?
         psk = gen_psk_from_nst(
           @settings[:resumption_secret],
@@ -167,6 +166,7 @@ module TTTLS13
         )
       end
 
+      shared_secret = nil # TTTLS13::SharedSecret
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
@@ -189,7 +189,7 @@ module TTTLS13
         when ClientState::START
           logger.debug('ClientState::START')
 
-          extensions, priv_keys = gen_ch_extensions
+          extensions, shared_secret = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
           ch, inner, ech_state = send_client_hello(extensions, binder_key)
           ch_outer = ch
@@ -280,8 +280,7 @@ module TTTLS13
               unless ngl.include?(group) && !kse.map(&:group).include?(group)
 
             # send new client_hello
-            extensions, pk = gen_newch_extensions(ch1, hrr)
-            priv_keys = pk.merge(priv_keys)
+            extensions, shared_secret = gen_newch_extensions(ch1, hrr)
             binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
             ch, inner = send_new_client_hello(
               ch1,
@@ -312,15 +311,14 @@ module TTTLS13
           @connection.terminate(:illegal_parameter) unless ch_ks.include?(sh_ks)
 
           kse = sh.extensions[Message::ExtensionType::KEY_SHARE]
-                  .key_share_entry.first
+                  .key_share_entry
+                  .first
           ke = kse.key_exchange
           @named_group = kse.group
-          priv_key = priv_keys[@named_group]
-          shared_secret = Endpoint.gen_shared_secret(ke, priv_key, @named_group)
           @cipher_suite = sh.cipher_suite
           key_schedule = KeySchedule.new(
             psk: psk,
-            shared_secret: shared_secret,
+            shared_secret: shared_secret.build(@named_group, ke),
             cipher_suite: @cipher_suite,
             transcript: @transcript
           )
@@ -735,7 +733,7 @@ module TTTLS13
     end
 
     # @return [TTTLS13::Message::Extensions]
-    # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
+    # @return [TTTLS13::SharedSecret]
     # rubocop: disable Metrics/AbcSize
     # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/MethodLength
@@ -776,7 +774,7 @@ module TTTLS13
 
       # key_share
       ksg = @settings[:key_share_groups] || groups
-      key_share, priv_keys \
+      key_share, shared_secret \
                  = Message::Extension::KeyShare.gen_ch_key_share(ksg)
       exs << key_share
 
@@ -799,7 +797,7 @@ module TTTLS13
         )
       end
 
-      [exs, priv_keys]
+      [exs, shared_secret]
     end
     # rubocop: enable Metrics/AbcSize
     # rubocop: enable Metrics/CyclomaticComplexity
@@ -977,14 +975,14 @@ module TTTLS13
     # @param hrr [TTTLS13::Message::ServerHello]
     #
     # @return [TTTLS13::Message::Extensions]
-    # @return [Hash of NamedGroup => OpenSSL::PKey::EC.$Object]
+    # @return [TTTLS13::SharedSecret]
     def gen_newch_extensions(ch1, hrr)
       exs = Message::Extensions.new
       # key_share
       if hrr.extensions.include?(Message::ExtensionType::KEY_SHARE)
         group = hrr.extensions[Message::ExtensionType::KEY_SHARE]
                    .key_share_entry.first.group
-        key_share, priv_keys \
+        key_share, shared_secret \
           = Message::Extension::KeyShare.gen_ch_key_share([group])
         exs << key_share
       end
@@ -1004,7 +1002,7 @@ module TTTLS13
       new_exs = ch1.extensions.merge(exs)
       new_exs.delete(Message::ExtensionType::EARLY_DATA)
 
-      [new_exs, priv_keys]
+      [new_exs, shared_secret]
     end
 
     # https://datatracker.ietf.org/doc/html/rfc8446#section-4.1.2
