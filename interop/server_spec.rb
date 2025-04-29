@@ -53,6 +53,13 @@ RSpec.describe Server do
     ],
     [
       true,
+      '-groups X448',
+      FIXTURES_DIR + '/rsa_rsa.crt',
+      FIXTURES_DIR + '/rsa_rsa.key',
+      supported_groups: [NamedGroup::X448]
+    ],
+    [
+      true,
       '-groups P-256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
