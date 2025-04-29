@@ -147,7 +147,7 @@ module TTTLS13
     def accept
       @transcript = Transcript.new
       key_schedule = nil # TTTLS13::KeySchedule
-      priv_key = nil # OpenSSL::PKey::$Object
+      shared_secret = nil # TTTLS13::SharedSecret
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
@@ -222,7 +222,7 @@ module TTTLS13
           logger.debug('ServerState::NEGOTIATED')
 
           ch, = @transcript[CH]
-          extensions, priv_key = gen_sh_extensions(@named_group)
+          extensions, shared_secret = gen_sh_extensions(@named_group)
           sh = send_server_hello(
             extensions,
             @cipher_suite,
@@ -236,10 +236,9 @@ module TTTLS13
                 &.key_share_entry
                 &.find { |kse| kse.group == @named_group }
                 &.key_exchange
-          shared_secret = Endpoint.gen_shared_secret(ke, priv_key, @named_group)
           key_schedule = KeySchedule.new(
             psk: @psk,
-            shared_secret: shared_secret,
+            shared_secret: shared_secret.build(@named_group, ke),
             cipher_suite: @cipher_suite,
             transcript: @transcript
           )
@@ -575,7 +574,7 @@ module TTTLS13
     # @param named_group [TTTLS13::NamedGroup]
     #
     # @return [TTTLS13::Message::Extensions]
-    # @return [OpenSSL::PKey::EC.$Object]
+    # @return [TTTLS13::SharedSecret]
     def gen_sh_extensions(named_group)
       exs = Message::Extensions.new
       # supported_versions: only TLS 1.3
@@ -584,11 +583,11 @@ module TTTLS13
       )
 
       # key_share
-      key_share, priv_key \
+      key_share, shared_secret \
                  = Message::Extension::KeyShare.gen_sh_key_share(named_group)
       exs << key_share
 
-      [exs, priv_key]
+      [exs, shared_secret]
     end
 
     # @param ch [TTTLS13::Message::ClientHello]
