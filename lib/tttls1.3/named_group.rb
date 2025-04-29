@@ -6,7 +6,7 @@ module TTTLS13
     SECP256R1 = "\x00\x17"
     SECP384R1 = "\x00\x18"
     SECP521R1 = "\x00\x19"
-    # X25519    = "\x00\x1d" # UNSUPPORTED
+    X25519    = "\x00\x1d"
     # X448      = "\x00\x1e" # UNSUPPORTED
     # FFDHE2048 = "\x01\x00" # UNSUPPORTED
     # FFDHE3072 = "\x01\x01" # UNSUPPORTED
@@ -38,8 +38,8 @@ module TTTLS13
           97
         when SECP521R1
           133
-        # when X25519
-        #   32
+        when X25519
+          32
         # not supported other NamedGroup
         # when X448
         #   56
@@ -77,6 +77,8 @@ module TTTLS13
           'secp384r1'
         when SECP521R1
           'secp521r1'
+        when X25519
+          'X25519'
         else
           # not supported other NamedGroup
           raise Error::ErrorAlerts, :internal_error

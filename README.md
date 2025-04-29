@@ -24,7 +24,7 @@ tttls1.3 provides client API with the following features:
 * Resumed 0-RTT Handshake (with PSK from NST)
 * [ECH](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/)
 
-**NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
+**NOT supports** certificate with OID RSASSA-PSS, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
 
 ### Server
 
@@ -33,7 +33,7 @@ tttls1.3 provides server API with the following features:
 * Simple 1-RTT Handshake
 * HelloRetryRequest
 
-**NOT supports** certificate with OID RSASSA-PSS, X25519, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs and Resumed 0-RTT Handshake.
+**NOT supports** certificate with OID RSASSA-PSS, X448, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs and Resumed 0-RTT Handshake.
 
 
 ## Getting started
@@ -90,7 +90,7 @@ tttls1.3 client is configurable using keyword arguments.
 | `:cipher_suites` | Array of TTTLS13::CipherSuite constant | `TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256`, `TLS_AES_128_GCM_SHA256` | List of cipher suites offered in ClientHello. |
 | `:signature_algorithms` | Array of TTTLS13::SignatureScheme constant | `ECDSA_SECP256R1_SHA256`, `ECDSA_SECP384R1_SHA384`, `ECDSA_SECP521R1_SHA512`, `RSA_PSS_RSAE_SHA256`, `RSA_PSS_RSAE_SHA384`, `RSA_PSS_RSAE_SHA512`, `RSA_PKCS1_SHA256`, `RSA_PKCS1_SHA384`, `RSA_PKCS1_SHA512` | List of signature algorithms offered in ClientHello extensions. |
 | `:signature_algorithms_cert` | Array of TTTLS13::SignatureScheme constant | nil | List of certificate signature algorithms offered in ClientHello extensions. You can set this to signal the difference between the signature algorithm and `:signature_algorithms`. |
-| `:supported_groups` | Array of TTTLS13::NamedGroup constant | `SECP256R1`, `SECP384R1`, `SECP521R1` | List of named groups offered in ClientHello extensions. |
+| `:supported_groups` | Array of TTTLS13::NamedGroup constant | `X25519`, `SECP256R1`, `SECP384R1`, `SECP521R1` | List of named groups offered in ClientHello extensions. |
 | `:key_share_groups` | Array of TTTLS13::NamedGroup constant | nil | List of named groups offered in KeyShareClientHello. In default, KeyShareClientHello has only a KeyShareEntry of most preferred named group in `:supported_groups`. You can set this to send KeyShareClientHello that has multiple KeyShareEntry. |
 | `:alpn` | Array of String | nil | List of application protocols offered in ClientHello extensions. If not needed to be present, set nil. |
 | `:process_new_session_ticket` | Proc | nil | Proc that processes received NewSessionTicket. Its 3 arguments are TTTLS13::Message::NewSessionTicket, resumption main secret and cipher suite. If not needed to process NewSessionTicket, set nil. |
@@ -122,7 +122,7 @@ tttls1.3 server is configurable using keyword arguments.
 | `:key_file` | String | nil | Path to the private key file. This is a required setting. |
 | `:cipher_suites` | Array of TTTLS13::CipherSuite constant | `TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256`, `TLS_AES_128_GCM_SHA256` | List of supported cipher suites. |
 | `:signature_algorithms` | Array of TTTLS13::SignatureScheme constant | `ECDSA_SECP256R1_SHA256`, `ECDSA_SECP384R1_SHA384`, `ECDSA_SECP521R1_SHA512`, `RSA_PSS_RSAE_SHA256`, `RSA_PSS_RSAE_SHA384`, `RSA_PSS_RSAE_SHA512`, `RSA_PKCS1_SHA256`, `RSA_PKCS1_SHA384`, `RSA_PKCS1_SHA512` | List of supported signature algorithms. |
-| `:supported_groups` | Array of TTTLS13::NamedGroup constant | `SECP256R1`, `SECP384R1`, `SECP521R1` | List of supported named groups. |
+| `:supported_groups` | Array of TTTLS13::NamedGroup constant | `X25519`, `SECP256R1`, `SECP384R1`, `SECP521R1` | List of supported named groups. |
 | `:alpn` | Array of String | nil | List of supported application protocols. If not needed to check this extension, set nil. |
 | `:process_ocsp_response` | Proc | nil | Proc that gets OpenSSL::OCSP::Response. If not needed to staple OCSP::Response, set nil. |
 | `:compress_certificate_algorithms` | Array of TTTLS13::Message::Extension::CertificateCompressionAlgorithm constant | `ZLIB` | The compression algorithms are supported for compressing the Certificate message. |

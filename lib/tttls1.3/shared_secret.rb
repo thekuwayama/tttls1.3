@@ -26,6 +26,19 @@ module TTTLS13
           OpenSSL::BN.new(key_exchange, 2)
         )
         @priv_keys[group].dh_compute_key(pub_key)
+      when NamedGroup::X25519
+        asn1_seq = OpenSSL::ASN1.Sequence(
+          [
+            OpenSSL::ASN1.Sequence(
+              [
+                OpenSSL::ASN1.ObjectId('1.3.101.110')
+              ]
+            ),
+            OpenSSL::ASN1.BitString(key_exchange)
+          ]
+        )
+
+        @priv_keys[group].derive(OpenSSL::PKey.read(asn1_seq.to_der))
       else
         # not supported other NamedGroup
         raise Error::ErrorAlerts, :internal_error
@@ -40,6 +53,12 @@ module TTTLS13
           Message::Extension::KeyShareEntry.new(
             group: group,
             key_exchange: priv_key.public_key.to_octet_string(:uncompressed)
+          )
+        when NamedGroup::X25519
+          n_pk = 32
+          Message::Extension::KeyShareEntry.new(
+            group: group,
+            key_exchange: priv_key.public_to_der[-n_pk, n_pk]
           )
         else
           # not supported other NamedGroup
@@ -67,6 +86,9 @@ module TTTLS13
           curve = NamedGroup.curve_name(group)
           ec = OpenSSL::PKey::EC.generate(curve)
           shared_secret.store!(group, ec)
+        when NamedGroup::X25519
+          pkey = OpenSSL::PKey.generate_key('X25519')
+          shared_secret.store!(group, pkey)
         else
           # not supported other NamedGroup
           raise Error::ErrorAlerts, :internal_error
