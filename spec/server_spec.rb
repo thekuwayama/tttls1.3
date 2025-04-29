@@ -34,7 +34,6 @@ RSpec.describe Server do
     let(:ch) do
       ch = ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
 
-      # X25519 is unsupported so @named_group uses SECP256R1.
       key_share = KeyShare.new(
         msg_type: HandshakeType::CLIENT_HELLO,
         key_share_entry: [
@@ -78,6 +77,7 @@ RSpec.describe Server do
       expect(ee.extensions).to include(ExtensionType::SUPPORTED_GROUPS)
       expect(ee.extensions[ExtensionType::SUPPORTED_GROUPS].named_group_list)
         .to eq [NamedGroup::X25519,
+                NamedGroup::X448,
                 NamedGroup::SECP256R1,
                 NamedGroup::SECP384R1,
                 NamedGroup::SECP521R1]

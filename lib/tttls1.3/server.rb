@@ -39,6 +39,7 @@ module TTTLS13
 
   DEFAULT_SP_NAMED_GROUP_LIST = [
     NamedGroup::X25519,
+    NamedGroup::X448,
     NamedGroup::SECP256R1,
     NamedGroup::SECP384R1,
     NamedGroup::SECP521R1

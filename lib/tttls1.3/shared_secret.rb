@@ -17,6 +17,7 @@ module TTTLS13
     # @param key_exchange [String]
     #
     # @return String
+    # rubocop: disable Metrics/MethodLength
     def build(group, key_exchange)
       case group
       when NamedGroup::SECP256R1, NamedGroup::SECP384R1, NamedGroup::SECP521R1
@@ -31,7 +32,22 @@ module TTTLS13
           [
             OpenSSL::ASN1.Sequence(
               [
+                # https://datatracker.ietf.org/doc/html/rfc8410#section-3
                 OpenSSL::ASN1.ObjectId('1.3.101.110')
+              ]
+            ),
+            OpenSSL::ASN1.BitString(key_exchange)
+          ]
+        )
+
+        @priv_keys[group].derive(OpenSSL::PKey.read(asn1_seq.to_der))
+      when NamedGroup::X448
+        asn1_seq = OpenSSL::ASN1.Sequence(
+          [
+            OpenSSL::ASN1.Sequence(
+              [
+                # https://datatracker.ietf.org/doc/html/rfc8410#section-3
+                OpenSSL::ASN1.ObjectId('1.3.101.111')
               ]
             ),
             OpenSSL::ASN1.BitString(key_exchange)
@@ -44,6 +60,7 @@ module TTTLS13
         raise Error::ErrorAlerts, :internal_error
       end
     end
+    # rubocop: enable Metrics/MethodLength
 
     # @return [Array of TTTLS13::Message::Extensions::KeyShare]
     def key_share_entries
@@ -54,8 +71,8 @@ module TTTLS13
             group: group,
             key_exchange: priv_key.public_key.to_octet_string(:uncompressed)
           )
-        when NamedGroup::X25519
-          n_pk = 32
+        when NamedGroup::X25519, NamedGroup::X448
+          n_pk = NamedGroup.key_exchange_len(group)
           Message::Extension::KeyShareEntry.new(
             group: group,
             key_exchange: priv_key.public_to_der[-n_pk, n_pk]
@@ -86,8 +103,8 @@ module TTTLS13
           curve = NamedGroup.curve_name(group)
           ec = OpenSSL::PKey::EC.generate(curve)
           shared_secret.store!(group, ec)
-        when NamedGroup::X25519
-          pkey = OpenSSL::PKey.generate_key('X25519')
+        when NamedGroup::X25519, NamedGroup::X448
+          pkey = OpenSSL::PKey.generate_key(NamedGroup.curve_name(group))
           shared_secret.store!(group, pkey)
         else
           # not supported other NamedGroup

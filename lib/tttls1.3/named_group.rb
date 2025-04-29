@@ -7,7 +7,7 @@ module TTTLS13
     SECP384R1 = "\x00\x18"
     SECP521R1 = "\x00\x19"
     X25519    = "\x00\x1d"
-    # X448      = "\x00\x1e" # UNSUPPORTED
+    X448      = "\x00\x1e"
     # FFDHE2048 = "\x01\x00" # UNSUPPORTED
     # FFDHE3072 = "\x01\x01" # UNSUPPORTED
     # FFDHE4096 = "\x01\x02" # UNSUPPORTED
@@ -25,6 +25,8 @@ module TTTLS13
       #         opaque Y[coordinate_length];
       #     } UncompressedPointRepresentation;
       #
+      # https://datatracker.ietf.org/doc/html/rfc8446#section-4.2.8.2
+      #
       # @param group [TTTLS13::Message::Extension::NamedGroup]
       #
       # @raise [TTTLS13::Error::ErrorAlerts]
@@ -40,9 +42,9 @@ module TTTLS13
           133
         when X25519
           32
+        when X448
+          56
         # not supported other NamedGroup
-        # when X448
-        #   56
         # when FFDHE2048
         #   256
         # when FFDHE4096
@@ -79,6 +81,8 @@ module TTTLS13
           'secp521r1'
         when X25519
           'X25519'
+        when X448
+          'X448'
         else
           # not supported other NamedGroup
           raise Error::ErrorAlerts, :internal_error
