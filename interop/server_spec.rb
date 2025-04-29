@@ -46,6 +46,13 @@ RSpec.describe Server do
     ],
     [
       true,
+      '-groups X25519',
+      FIXTURES_DIR + '/rsa_rsa.crt',
+      FIXTURES_DIR + '/rsa_rsa.key',
+      supported_groups: [NamedGroup::X25519]
+    ],
+    [
+      true,
       '-groups P-256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',

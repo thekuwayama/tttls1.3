@@ -44,6 +44,13 @@ RSpec.describe Client do
     ],
     [
       true,
+      '-groups X25519',
+      'rsa_rsa.crt',
+      'rsa_rsa.key',
+      supported_groups: [NamedGroup::X25519]
+    ],
+    [
+      true,
       '-groups P-256',
       'rsa_rsa.crt',
       'rsa_rsa.key',
