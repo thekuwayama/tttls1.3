@@ -293,7 +293,7 @@ module TTTLS13
 
     # @return [Integer]
     def self.placeholder_encoded_ch_inner_len
-      448
+      480
     end
 
     # @param inner [TTTLS13::Message::ClientHello]
