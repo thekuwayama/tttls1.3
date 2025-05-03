@@ -79,10 +79,10 @@ RSpec.describe Client do
     ],
     [
       false,
-      '-groups P-256:P-384',
+      '-groups P-256:P-384:P-521:X448',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP521R1]
+      supported_groups: [NamedGroup::X25519]
     ],
     [
       true,
