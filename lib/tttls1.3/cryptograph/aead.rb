@@ -17,14 +17,15 @@ module TTTLS13
         @cipher_suite = cipher_suite
         case cipher_suite
         when CipherSuite::TLS_AES_128_GCM_SHA256
-          @cipher = OpenSSL::Cipher::AES128.new(:GCM)
+          @cipher = OpenSSL::Cipher.new('aes-128-gcm')
         when CipherSuite::TLS_AES_256_GCM_SHA384
-          @cipher = OpenSSL::Cipher::AES256.new(:GCM)
+          @cipher = OpenSSL::Cipher.new('aes-256-gcm')
         when CipherSuite::TLS_CHACHA20_POLY1305_SHA256
           @cipher = OpenSSL::Cipher.new('chacha20-poly1305')
-        else
-          # CipherSuite::TLS_AES_128_CCM_SHA256
+        when CipherSuite::TLS_AES_128_CCM_SHA256
+          @cipher = OpenSSL::Cipher.new('aes-128-ccm')
           # CipherSuite::TLS_AES_128_CCM_8_SHA256
+        else
           raise Error::ErrorAlerts, :internal_error
         end
         @write_key = write_key
@@ -42,12 +43,14 @@ module TTTLS13
       # @return [String]
       def encrypt(content, type)
         cipher = reset_cipher
-        plaintext = content + type + @length_of_padding.zeros
-        cipher.auth_data = additional_data(plaintext.length)
-        encrypted_data = cipher.update(plaintext) + cipher.final
+        plain_text = content + type + @length_of_padding.zeros
+        cipher.ccm_data_len = plain_text.length \
+          if @cipher_suite == CipherSuite::TLS_AES_128_CCM_SHA256
+        cipher.auth_data = additional_data(plain_text.length)
+        cipher_text = cipher.update(plain_text) + cipher.final
         @sequence_number.succ
 
-        encrypted_data + cipher.auth_tag
+        cipher_text + cipher.auth_tag
       end
 
       #     AEAD-Decrypt(peer_write_key, nonce,
@@ -62,16 +65,19 @@ module TTTLS13
       # @return [TTTLS13::Message::ContentType]
       def decrypt(encrypted_record, auth_data)
         decipher = reset_decipher
-        auth_tag = encrypted_record[-@auth_tag_len..-1]
+        cipher_text = encrypted_record[0...-@auth_tag_len]
+        auth_tag = encrypted_record[-@auth_tag_len..]
         decipher.auth_tag = auth_tag
+        decipher.ccm_data_len = cipher_text.length \
+          if @cipher_suite == CipherSuite::TLS_AES_128_CCM_SHA256
         decipher.auth_data = auth_data # record header of TLSCiphertext
-        clear = decipher.update(encrypted_record[0...-@auth_tag_len])
+        plain_text = decipher.update(cipher_text)
         decipher.final
-        zeros_len = scan_zeros(clear)
+        zeros_len = scan_zeros(plain_text)
         postfix_len = 1 + zeros_len # type || zeros
         @sequence_number.succ
 
-        [clear[0...-postfix_len], clear[-postfix_len]]
+        [plain_text[0...-postfix_len], plain_text[-postfix_len]]
       end
 
       #     struct {
@@ -103,8 +109,8 @@ module TTTLS13
         cipher = @cipher.encrypt
         cipher.reset
         cipher.key = @write_key
-        iv_len = CipherSuite.iv_len(@cipher_suite)
-        cipher.iv = @sequence_number.xor(@write_iv, iv_len)
+        cipher.iv_len = CipherSuite.iv_len(@cipher_suite)
+        cipher.iv = @sequence_number.xor(@write_iv, cipher.iv_len)
 
         cipher
       end
@@ -114,8 +120,8 @@ module TTTLS13
         decipher = @cipher.decrypt
         decipher.reset
         decipher.key = @write_key
-        iv_len = CipherSuite.iv_len(@cipher_suite)
-        decipher.iv = @sequence_number.xor(@write_iv, iv_len)
+        decipher.iv_len = CipherSuite.iv_len(@cipher_suite)
+        decipher.iv = @sequence_number.xor(@write_iv, decipher.iv_len)
 
         decipher
       end

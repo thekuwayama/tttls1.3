@@ -38,6 +38,13 @@ RSpec.describe Server do
       cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
     ],
     [
+      true,
+      '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_128_CCM_SHA256',
+      FIXTURES_DIR + '/rsa_rsa.crt',
+      FIXTURES_DIR + '/rsa_rsa.key',
+      cipher_suites: [CipherSuite::TLS_AES_128_CCM_SHA256]
+    ],
+    [
       false,
       '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
