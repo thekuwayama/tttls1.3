@@ -18,28 +18,28 @@ RSpec.describe Server do
   testcases = [
     [
       true,
-      '-groups P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384',
+      '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       cipher_suites: [CipherSuite::TLS_AES_256_GCM_SHA384]
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -ciphersuites TLS_CHACHA20_POLY1305_SHA256',
+      '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_CHACHA20_POLY1305_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       cipher_suites: [CipherSuite::TLS_CHACHA20_POLY1305_SHA256]
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -ciphersuites TLS_AES_128_GCM_SHA256',
+      '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_128_GCM_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
     ],
     [
       false,
-      '-groups P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
+      '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
@@ -81,14 +81,14 @@ RSpec.describe Server do
     ],
     [
       false,
-      '-groups P-256:P-384',
+      '-groups X25519:P-256:P-384',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       supported_groups: [NamedGroup::SECP521R1]
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
@@ -96,7 +96,7 @@ RSpec.describe Server do
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -sigalgs RSA-PSS+SHA384',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA384',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
@@ -104,7 +104,7 @@ RSpec.describe Server do
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -sigalgs RSA-PSS+SHA512',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA512',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
@@ -112,7 +112,7 @@ RSpec.describe Server do
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -sigalgs ECDSA+SHA256',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA256',
       FIXTURES_DIR + '/rsa_secp256r1.crt',
       FIXTURES_DIR + '/rsa_secp256r1.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
@@ -120,7 +120,7 @@ RSpec.describe Server do
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -sigalgs ECDSA+SHA384',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA384',
       FIXTURES_DIR + '/rsa_secp384r1.crt',
       FIXTURES_DIR + '/rsa_secp384r1.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
@@ -128,7 +128,7 @@ RSpec.describe Server do
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -sigalgs ECDSA+SHA512',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA512',
       FIXTURES_DIR + '/rsa_secp521r1.crt',
       FIXTURES_DIR + '/rsa_secp521r1.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
@@ -136,7 +136,7 @@ RSpec.describe Server do
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
       FIXTURES_DIR + '/rsa_rsassaPss.crt',
       FIXTURES_DIR + '/rsa_rsassaPss.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PSS_RSAE_SHA256],
@@ -144,7 +144,7 @@ RSpec.describe Server do
     ],
     [
       false,
-      '-groups P-256:P-384:P-521 -sigalgs ECDSA+SHA256:ECDSA+SHA384:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:RSA+SHA256',
+      '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA256:ECDSA+SHA384:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:RSA+SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
@@ -152,35 +152,35 @@ RSpec.describe Server do
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -record_padding 8446',
+      '-groups X25519:P-256:P-384:P-521 -record_padding 8446',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       {}
     ],
     [
       true,
-      '-groups P-256:P-384:P-521 -alpn pingpong',
+      '-groups X25519:P-256:P-384:P-521 -alpn pingpong',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       alpn: ['pingpong']
     ],
     [
       true,
-      '-groups P-256:P-384:P-521',
+      '-groups X25519:P-256:P-384:P-521',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       alpn: ['pingpong']
     ],
     [
       false,
-      '-groups P-256:P-384:P-521 -alpn foo',
+      '-groups X25519:P-256:P-384:P-521 -alpn foo',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       alpn: ['pingpong']
     ],
     [
       true,
-      '-groups P-256:P-384:P-521',
+      '-groups X25519:P-256:P-384:P-521',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
       compatibility_mode: false
