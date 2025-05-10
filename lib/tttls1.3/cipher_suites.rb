@@ -64,6 +64,7 @@ module TTTLS13
              TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256
           16
         when TLS_AES_128_CCM_8_SHA256
+          # https://datatracker.ietf.org/doc/html/rfc6655#section-6.2
           8
         else
           raise Error::ErrorAlerts, :internal_error
