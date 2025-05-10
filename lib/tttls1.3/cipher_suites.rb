@@ -69,6 +69,11 @@ module TTTLS13
           raise Error::ErrorAlerts, :internal_error
         end
       end
+
+      def ccm?(cipher_suite)
+        # TLS_AES_128_CCM_8_SHA256
+        cipher_suite == TLS_AES_128_CCM_SHA256
+      end
     end
   end
 

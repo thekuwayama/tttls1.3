@@ -45,7 +45,7 @@ module TTTLS13
         cipher = reset_cipher
         plain_text = content + type + @length_of_padding.zeros
         cipher.ccm_data_len = plain_text.length \
-          if @cipher_suite == CipherSuite::TLS_AES_128_CCM_SHA256
+          if CipherSuite.ccm?(@cipher_suite)
         cipher.auth_data = additional_data(plain_text.length)
         cipher_text = cipher.update(plain_text) + cipher.final
         @sequence_number.succ
@@ -69,7 +69,7 @@ module TTTLS13
         auth_tag = encrypted_record[-@auth_tag_len..]
         decipher.auth_tag = auth_tag
         decipher.ccm_data_len = cipher_text.length \
-          if @cipher_suite == CipherSuite::TLS_AES_128_CCM_SHA256
+          if CipherSuite.ccm?(@cipher_suite)
         decipher.auth_data = auth_data # record header of TLSCiphertext
         plain_text = decipher.update(cipher_text)
         decipher.final
