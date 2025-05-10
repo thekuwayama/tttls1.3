@@ -8,13 +8,13 @@ module TTTLS13
     TLS_AES_256_GCM_SHA384       = "\x13\x02"
     TLS_CHACHA20_POLY1305_SHA256 = "\x13\x03"
     TLS_AES_128_CCM_SHA256       = "\x13\x04"
-    # TLS_AES_128_CCM_8_SHA256     = "\x13\x05" # UNSUPPORTED
+    TLS_AES_128_CCM_8_SHA256     = "\x13\x05"
 
     class << self
       def digest(cipher_suite)
         case cipher_suite
         when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
-          TLS_AES_128_CCM_SHA256 # , TLS_AES_128_CCM_8_SHA256
+             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_8_SHA256
           'SHA256'
         when TLS_AES_256_GCM_SHA384
           'SHA384'
@@ -26,11 +26,10 @@ module TTTLS13
       def hash_len(cipher_suite)
         case cipher_suite
         when TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
-          TLS_AES_128_CCM_SHA256
+             TLS_AES_128_CCM_SHA256, TLS_AES_128_CCM_8_SHA256
           32
         when TLS_AES_256_GCM_SHA384
           48
-        # TLS_AES_128_CCM_8_SHA256
         else
           raise Error::ErrorAlerts, :internal_error
         end
@@ -38,11 +37,11 @@ module TTTLS13
 
       def key_len(cipher_suite)
         case cipher_suite
-        when TLS_AES_128_GCM_SHA256, TLS_AES_128_CCM_SHA256
+        when TLS_AES_128_GCM_SHA256, TLS_AES_128_CCM_SHA256,
+             TLS_AES_128_CCM_8_SHA256
           16
         when TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256
           32
-        # TLS_AES_128_CCM_8_SHA256
         else
           raise Error::ErrorAlerts, :internal_error
         end
@@ -51,9 +50,9 @@ module TTTLS13
       def iv_len(cipher_suite)
         case cipher_suite
         when TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384,
-             TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256
+             TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256,
+             TLS_AES_128_CCM_8_SHA256
           12
-        # TLS_AES_128_CCM_8_SHA256
         else
           raise Error::ErrorAlerts, :internal_error
         end
@@ -64,15 +63,18 @@ module TTTLS13
         when TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384,
              TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256
           16
-        # TLS_AES_128_CCM_8_SHA256
+        when TLS_AES_128_CCM_8_SHA256
+          8
         else
           raise Error::ErrorAlerts, :internal_error
         end
       end
 
       def ccm?(cipher_suite)
-        # TLS_AES_128_CCM_8_SHA256
-        cipher_suite == TLS_AES_128_CCM_SHA256
+        [
+          TLS_AES_128_CCM_SHA256,
+          TLS_AES_128_CCM_8_SHA256
+        ].include?(cipher_suite)
       end
     end
   end

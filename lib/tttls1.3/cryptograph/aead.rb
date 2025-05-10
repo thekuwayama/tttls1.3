@@ -22,9 +22,9 @@ module TTTLS13
           @cipher = OpenSSL::Cipher.new('aes-256-gcm')
         when CipherSuite::TLS_CHACHA20_POLY1305_SHA256
           @cipher = OpenSSL::Cipher.new('chacha20-poly1305')
-        when CipherSuite::TLS_AES_128_CCM_SHA256
+        when CipherSuite::TLS_AES_128_CCM_SHA256,
+             CipherSuite::TLS_AES_128_CCM_8_SHA256
           @cipher = OpenSSL::Cipher.new('aes-128-ccm')
-          # CipherSuite::TLS_AES_128_CCM_8_SHA256
         else
           raise Error::ErrorAlerts, :internal_error
         end
