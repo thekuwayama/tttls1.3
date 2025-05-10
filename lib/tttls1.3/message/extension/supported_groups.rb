@@ -6,8 +6,7 @@ module TTTLS13
   module Message
     module Extension
       class SupportedGroups
-        attr_reader :extension_type
-        attr_reader :named_group_list
+        attr_reader :extension_type, :named_group_list
 
         # @param named_group_list [Array of NamedGroup]
         #
@@ -31,7 +30,6 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [TTTLS13::Message::Extension::SupportedGroups, nil]
-        # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -51,7 +49,6 @@ module TTTLS13
 
           SupportedGroups.new(named_group_list)
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
       end
     end
   end

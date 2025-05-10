@@ -12,10 +12,7 @@ module TTTLS13
       #         };
       #     } PreSharedKeyExtension;
       class PreSharedKey
-        attr_reader :extension_type
-        attr_reader :msg_type
-        attr_reader :offered_psks
-        attr_reader :selected_identity
+        attr_reader :extension_type, :msg_type, :offered_psks, :selected_identity
 
         # @param msg_type [TTTLS13::Message::ContentType]
         # @param offered_psks [TTTLS13::Message::Extension::OfferedPsks]
@@ -69,13 +66,13 @@ module TTTLS13
             return nil if offered_psks.nil?
 
             PreSharedKey.new(msg_type: HandshakeType::CLIENT_HELLO,
-                             offered_psks: offered_psks)
+                             offered_psks:)
           when HandshakeType::SERVER_HELLO
             return nil unless binary.length == 2
 
             selected_identity = binary
             PreSharedKey.new(msg_type: HandshakeType::SERVER_HELLO,
-                             selected_identity: selected_identity)
+                             selected_identity:)
           else
             raise Error::ErrorAlerts, :internal_error
           end
@@ -89,8 +86,7 @@ module TTTLS13
       #         PskBinderEntry binders<33..2^16-1>;
       #     } OfferedPsks;
       class OfferedPsks
-        attr_reader :identities
-        attr_reader :binders
+        attr_reader :identities, :binders
 
         # @param identities [Array of PskIdentity]
         # @param binders [Array of String]
@@ -118,9 +114,7 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extensions::OfferedPsks, nil]
         # rubocop: disable Metrics/AbcSize
-        # rubocop: disable Metrics/CyclomaticComplexity
         # rubocop: disable Metrics/MethodLength
-        # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
           return nil if binary.length < 2
@@ -143,8 +137,8 @@ module TTTLS13
             obfuscated_ticket_age = Convert.bin2i(binary.slice(i, 4))
             i += 4
             identities << PskIdentity.new(
-              identity: identity,
-              obfuscated_ticket_age: obfuscated_ticket_age
+              identity:,
+              obfuscated_ticket_age:
             )
           end
 
@@ -162,12 +156,10 @@ module TTTLS13
           end
           return nil unless i == binary.length
 
-          OfferedPsks.new(identities: identities, binders: binders)
+          OfferedPsks.new(identities:, binders:)
         end
         # rubocop: enable Metrics/AbcSize
-        # rubocop: enable Metrics/CyclomaticComplexity
         # rubocop: enable Metrics/MethodLength
-        # rubocop: enable Metrics/PerceivedComplexity
       end
 
       #     struct {
@@ -175,8 +167,7 @@ module TTTLS13
       #         uint32 obfuscated_ticket_age;
       #     } PskIdentity;
       class PskIdentity
-        attr_reader :identity
-        attr_reader :obfuscated_ticket_age
+        attr_reader :identity, :obfuscated_ticket_age
 
         # @param identity [String]
         # @param obfuscated_ticket_age [Integer]

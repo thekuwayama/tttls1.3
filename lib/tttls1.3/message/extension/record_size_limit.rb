@@ -6,8 +6,7 @@ module TTTLS13
   module Message
     module Extension
       class RecordSizeLimit
-        attr_reader :extension_type
-        attr_reader :record_size_limit
+        attr_reader :extension_type, :record_size_limit
 
         # @param record_size_limit [Integer]
         #

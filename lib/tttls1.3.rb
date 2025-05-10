@@ -2,7 +2,6 @@
 
 require 'openssl'
 require 'net/http'
-require 'pp'
 require 'logger'
 
 require 'ech_config'

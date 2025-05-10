@@ -7,16 +7,12 @@ module TTTLS13
     module Extension
       # rubocop: disable Metrics/ClassLength
       class KeyShare
-        attr_reader :extension_type
-        attr_reader :msg_type
-        attr_reader :key_share_entry
+        attr_reader :extension_type, :msg_type, :key_share_entry
 
         # @param msg_type [TTTLS13::Message::HandshakeType]
         # @param key_share_entry [Array of KeyShareEntry]
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
-        # rubocop: disable Metrics/CyclomaticComplexity
-        # rubocop: disable Metrics/PerceivedComplexity
         def initialize(msg_type:, key_share_entry: [])
           @extension_type = ExtensionType::KEY_SHARE
           @msg_type = msg_type
@@ -32,8 +28,6 @@ module TTTLS13
                     @key_share_entry.length == 1 &&
                     @key_share_entry.first.valid_key_share_hello_retry_request?)
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
-        # rubocop: enable Metrics/PerceivedComplexity
 
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
@@ -56,7 +50,6 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [TTTLS13::Message::Extensions::KeyShare, nil]
-        # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize(binary, msg_type)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -78,10 +71,9 @@ module TTTLS13
           end
           return nil if key_share_entry.nil?
 
-          KeyShare.new(msg_type: msg_type,
-                       key_share_entry: key_share_entry)
+          KeyShare.new(msg_type:,
+                       key_share_entry:)
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
 
         # @param groups [Array of TTTLS13::NamedGroup]
         #
@@ -116,7 +108,7 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extensions::KeyShare]
         def self.gen_hrr_key_share(group)
-          kse = KeyShareEntry.new(group: group)
+          kse = KeyShareEntry.new(group:)
           KeyShare.new(
             msg_type: HandshakeType::HELLO_RETRY_REQUEST,
             key_share_entry: [kse]
@@ -151,8 +143,8 @@ module TTTLS13
               ke_len = Convert.bin2i(binary.slice(itr, 2))
               itr += 2
               key_exchange = binary.slice(itr, ke_len)
-              key_share_entry << KeyShareEntry.new(group: group,
-                                                   key_exchange: key_exchange)
+              key_share_entry << KeyShareEntry.new(group:,
+                                                   key_exchange:)
               itr += ke_len
             end
             return nil unless itr == binary.length
@@ -179,7 +171,7 @@ module TTTLS13
             key_exchange = binary.slice(4, ke_len)
             return nil unless ke_len + 4 == binary.length
 
-            [KeyShareEntry.new(group: group, key_exchange: key_exchange)]
+            [KeyShareEntry.new(group:, key_exchange:)]
           end
 
           #     struct {
@@ -197,15 +189,14 @@ module TTTLS13
             return nil unless binary.length == 2
 
             group = binary.slice(0, 2)
-            [KeyShareEntry.new(group: group)]
+            [KeyShareEntry.new(group:)]
           end
         end
       end
       # rubocop: enable Metrics/ClassLength
 
       class KeyShareEntry
-        attr_reader :group
-        attr_reader :key_exchange
+        attr_reader :group, :key_exchange
 
         # @param group [TTTLS13::NamedGroup]
         # @param key_exchange [String]

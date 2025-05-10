@@ -6,8 +6,7 @@ module TTTLS13
   module Message
     module Extension
       class Alpn
-        attr_reader :extension_type
-        attr_reader :protocol_name_list
+        attr_reader :extension_type, :protocol_name_list
 
         # @param protocol_name_list [Array] Array of String
         #
@@ -39,8 +38,6 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [TTTLS13::Message::Extension::Alpn, nil]
-        # rubocop: disable Metrics/CyclomaticComplexity
-        # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -64,8 +61,6 @@ module TTTLS13
 
           Alpn.new(protocol_name_list)
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
-        # rubocop: enable Metrics/PerceivedComplexity
       end
     end
   end

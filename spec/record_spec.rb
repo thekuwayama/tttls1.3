@@ -39,7 +39,7 @@ RSpec.describe Record do
     end
 
     it 'should generate valid serializable object' do
-      expect(record.serialize).to eq  ContentType::CCS \
+      expect(record.serialize).to eq ContentType::CCS \
                                      + ProtocolVersion::TLS_1_2 \
                                      + 1.to_uint16 \
                                      + ChangeCipherSpec.new.serialize

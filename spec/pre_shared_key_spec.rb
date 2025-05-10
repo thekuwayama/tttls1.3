@@ -23,22 +23,22 @@ RSpec.describe PreSharedKey do
     let(:identities) do
       [
         PskIdentity.new(
-          identity: identity,
-          obfuscated_ticket_age: obfuscated_ticket_age
+          identity:,
+          obfuscated_ticket_age:
         )
       ]
     end
 
     let(:offered_psks) do
       OfferedPsks.new(
-        identities: identities,
-        binders: binders
+        identities:,
+        binders:
       )
     end
 
     let(:extension) do
       PreSharedKey.new(msg_type: HandshakeType::CLIENT_HELLO,
-                       offered_psks: offered_psks)
+                       offered_psks:)
     end
 
     it 'should be generated' do
@@ -98,14 +98,14 @@ RSpec.describe PreSharedKey do
 
     let(:offered_psks) do
       OfferedPsks.new(
-        identities: identities,
-        binders: binders
+        identities:,
+        binders:
       )
     end
 
     let(:extension) do
       PreSharedKey.new(msg_type: HandshakeType::CLIENT_HELLO,
-                       offered_psks: offered_psks)
+                       offered_psks:)
     end
 
     it 'should be generated' do

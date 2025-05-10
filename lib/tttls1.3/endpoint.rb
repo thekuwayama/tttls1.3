@@ -26,9 +26,9 @@ module TTTLS13
     def self.gen_cipher(cipher_suite, write_key, write_iv)
       seq_num = SequenceNumber.new
       Cryptograph::Aead.new(
-        cipher_suite: cipher_suite,
-        write_key: write_key,
-        write_iv: write_iv,
+        cipher_suite:,
+        write_key:,
+        write_iv:,
         sequence_number: seq_num
       )
     end
@@ -60,7 +60,6 @@ module TTTLS13
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [String]
-    # rubocop: disable Metrics/CyclomaticComplexity
     def self.sign_certificate_verify(key:, signature_scheme:, context:, hash:)
       content = "\x20" * 64 + context + "\x00" + hash
 
@@ -92,7 +91,6 @@ module TTTLS13
         terminate(:internal_error)
       end
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param public_key [OpenSSL::PKey::PKey]
     # @param signature_scheme [TTTLS13::SignatureScheme]
@@ -103,7 +101,6 @@ module TTTLS13
     # @raise [TTTLS13::Error::ErrorAlerts]
     #
     # @return [Boolean]
-    # rubocop: disable Metrics/CyclomaticComplexity
     def self.verified_certificate_verify?(public_key:, signature_scheme:,
                                           signature:, context:, hash:)
       content = "\x20" * 64 + context + "\x00" + hash
@@ -136,7 +133,6 @@ module TTTLS13
         terminate(:internal_error)
       end
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param digest [String] name of digest algorithm
     # @param finished_key [String]
@@ -154,7 +150,7 @@ module TTTLS13
     #
     # @return [Boolean]
     def self.verified_finished?(finished:, digest:, finished_key:, hash:)
-      sign_finished(digest: digest, finished_key: finished_key, hash: hash) \
+      sign_finished(digest:, finished_key:, hash:) \
       == finished.verify_data
     end
 

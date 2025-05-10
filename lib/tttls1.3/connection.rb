@@ -9,10 +9,7 @@ module TTTLS13
   class Connection
     include Logging
 
-    attr_accessor :state
-    attr_accessor :ap_wcipher
-    attr_accessor :ap_rcipher
-    attr_accessor :alert_wcipher
+    attr_accessor :state, :ap_wcipher, :ap_rcipher, :alert_wcipher
 
     # @param socket [Socket]
     # @param side [:client or :server]
@@ -34,8 +31,6 @@ module TTTLS13
     # @raise [TTTLS13::Error::ConfigError]
     #
     # @return [String]
-    # rubocop: disable Metrics/CyclomaticComplexity
-    # rubocop: disable Metrics/PerceivedComplexity
     def read(nst_process)
       # secure channel has not established yet
       raise Error::ConfigError \
@@ -58,8 +53,6 @@ module TTTLS13
 
       message.fragment
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
-    # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [Boolean]
     def eof?
@@ -91,9 +84,9 @@ module TTTLS13
     # @param cipher [TTTLS13::Cryptograph::Aead, Passer]
     def send_handshakes(type, messages, cipher)
       record = Message::Record.new(
-        type: type,
-        messages: messages,
-        cipher: cipher
+        type:,
+        messages:,
+        cipher:
       )
       send_record(record)
     end
@@ -115,7 +108,7 @@ module TTTLS13
         type: Message::ContentType::APPLICATION_DATA,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
-        cipher: cipher
+        cipher:
       )
       send_record(ap_record)
     end
@@ -129,7 +122,7 @@ module TTTLS13
       type = Message::ContentType::APPLICATION_DATA \
         if @alert_wcipher.is_a?(Cryptograph::Aead)
       alert_record = Message::Record.new(
-        type: type,
+        type:,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [message],
         cipher: @alert_wcipher
@@ -150,7 +143,6 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::$Object]
     # @return [String]
-    # rubocop: disable Metrics/CyclomaticComplexity
     def recv_message(receivable_ccs:, cipher:)
       return @message_queue.shift unless @message_queue.empty?
 
@@ -184,7 +176,6 @@ module TTTLS13
 
       [message, orig_msg]
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param cipher [TTTLS13::Cryptograph::Aead, Passer]
     #

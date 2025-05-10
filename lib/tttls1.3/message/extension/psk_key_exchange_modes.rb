@@ -11,8 +11,7 @@ module TTTLS13
       end
 
       class PskKeyExchangeModes
-        attr_reader :extension_type
-        attr_reader :ke_modes
+        attr_reader :extension_type, :ke_modes
 
         # @param ke_modes [Array of PskKeyExchangeMode]
         def initialize(ke_modes = [])

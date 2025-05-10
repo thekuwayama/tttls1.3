@@ -13,7 +13,7 @@ RSpec.describe CertificateVerify do
     let(:message) do
       CertificateVerify.new(
         signature_scheme: SignatureScheme::RSA_PSS_RSAE_SHA256,
-        signature: signature
+        signature:
       )
     end
 

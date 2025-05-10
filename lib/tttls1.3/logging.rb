@@ -8,7 +8,7 @@ module TTTLS13
     end
 
     def self.logger
-      @logger ||= Logger.new(STDERR, Logger::WARN)
+      @logger ||= Logger.new($stderr, Logger::WARN)
     end
   end
 end

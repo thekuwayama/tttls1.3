@@ -80,7 +80,7 @@ def transcript_htmlize(transcript)
     TTTLS13::CCT => 'Certificate',
     TTTLS13::CCV => 'CertificateVerify',
     TTTLS13::CF => 'Finished'
-  }.map { |k, v| [k, '<details><summary>' + v + '</summary>%s</details>'] }.to_h
+  }.transform_values { |v| '<details><summary>' + v + '</summary>%s</details>' }
   transcript.map do |k, v|
     format(m[k], TTTLS13::Convert.obj2html(v.first))
   end.join('<br>')

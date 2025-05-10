@@ -43,8 +43,6 @@ module TTTLS13
       # @raise [TTTLS13::Error::ErrorAlerts]
       #
       # @return [TTTLS13::Message::Extensions]
-      # rubocop: disable Metrics/CyclomaticComplexity
-      # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, msg_type)
         raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -64,7 +62,7 @@ module TTTLS13
           ex = deserialize_extension(ex_bin, extension_type, msg_type)
           if ex.nil?
             # ignore unparsable binary, but only transcript
-            ex = Extension::UnknownExtension.new(extension_type: extension_type,
+            ex = Extension::UnknownExtension.new(extension_type:,
                                                  extension_data: ex_bin)
           end
 
@@ -80,8 +78,6 @@ module TTTLS13
 
         exs
       end
-      # rubocop: enable Metrics/CyclomaticComplexity
-      # rubocop: enable Metrics/PerceivedComplexity
 
       # @param key [TTTLS13::Message::ExtensionType]
       # @param default
@@ -149,7 +145,6 @@ module TTTLS13
         # rubocop: disable Metrics/AbcSize
         # rubocop: disable Metrics/CyclomaticComplexity
         # rubocop: disable Metrics/MethodLength
-        # rubocop: disable Metrics/PerceivedComplexity
         def deserialize_extension(binary, extension_type, msg_type)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -208,7 +203,6 @@ module TTTLS13
         # rubocop: enable Metrics/AbcSize
         # rubocop: enable Metrics/CyclomaticComplexity
         # rubocop: enable Metrics/MethodLength
-        # rubocop: enable Metrics/PerceivedComplexity
       end
     end
     # rubocop: enable Metrics/ClassLength

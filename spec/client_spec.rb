@@ -118,8 +118,8 @@ RSpec.describe Client do
     let(:finished_key) do
       key_schedule = KeySchedule.new(
         shared_secret: TESTBINARY_SHARED_SECRET,
-        cipher_suite: cipher_suite,
-        transcript: transcript
+        cipher_suite:,
+        transcript:
       )
       key_schedule.client_finished_key
     end
@@ -130,19 +130,19 @@ RSpec.describe Client do
       digest = CipherSuite.digest(cipher_suite)
       hash = transcript.hash(digest, EOED)
       signature = Endpoint.sign_finished(
-        digest: digest,
-        finished_key: finished_key,
-        hash: hash
+        digest:,
+        finished_key:,
+        hash:
       )
       hs_wcipher = Cryptograph::Aead.new(
-        cipher_suite: cipher_suite,
+        cipher_suite:,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new
       )
       client.send(:send_finished, signature, hs_wcipher)
       hs_rcipher = Cryptograph::Aead.new(
-        cipher_suite: cipher_suite,
+        cipher_suite:,
         write_key: TESTBINARY_CLIENT_FINISHED_WRITE_KEY,
         write_iv: TESTBINARY_CLIENT_FINISHED_WRITE_IV,
         sequence_number: SequenceNumber.new
@@ -194,8 +194,8 @@ RSpec.describe Client do
     let(:key_schedule) do
       KeySchedule.new(
         shared_secret: TESTBINARY_SHARED_SECRET,
-        cipher_suite: cipher_suite,
-        transcript: transcript
+        cipher_suite:,
+        transcript:
       )
     end
 
@@ -218,9 +218,9 @@ RSpec.describe Client do
       hash = transcript.hash(digest, CV)
       expect(Endpoint.verified_finished?(
                finished: sf,
-               digest: digest,
+               digest:,
                finished_key: key_schedule.server_finished_key,
-               hash: hash
+               hash:
              )).to be true
     end
 
@@ -228,9 +228,9 @@ RSpec.describe Client do
       digest = CipherSuite.digest(cipher_suite)
       hash = transcript.hash(digest, EOED)
       expect(Endpoint.sign_finished(
-               digest: digest,
+               digest:,
                finished_key: key_schedule.client_finished_key,
-               hash: hash
+               hash:
              )).to eq cf.verify_data
     end
   end

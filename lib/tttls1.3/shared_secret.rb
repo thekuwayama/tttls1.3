@@ -68,13 +68,13 @@ module TTTLS13
         case group
         when NamedGroup::SECP256R1, NamedGroup::SECP384R1, NamedGroup::SECP521R1
           Message::Extension::KeyShareEntry.new(
-            group: group,
+            group:,
             key_exchange: priv_key.public_key.to_octet_string(:uncompressed)
           )
         when NamedGroup::X25519, NamedGroup::X448
           n_pk = NamedGroup.key_exchange_len(group)
           Message::Extension::KeyShareEntry.new(
-            group: group,
+            group:,
             key_exchange: priv_key.public_to_der[-n_pk, n_pk]
           )
         else

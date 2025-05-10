@@ -21,9 +21,9 @@ RSpec.describe ClientHello do
     end
 
     let(:message) do
-      ClientHello.new(random: random,
-                      legacy_session_id: legacy_session_id,
-                      cipher_suites: cipher_suites)
+      ClientHello.new(random:,
+                      legacy_session_id:,
+                      cipher_suites:)
     end
 
     it 'should be generated' do
@@ -92,7 +92,7 @@ RSpec.describe ClientHello do
                                         TLS_AES_128_GCM_SHA256])
       ch = ClientHello.new(random: OpenSSL::Random.random_bytes(32),
                            legacy_session_id: Array.new(32, 0).map(&:chr).join,
-                           cipher_suites: cipher_suites)
+                           cipher_suites:)
       ch.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
         = Message::Extension::ECHClientHello.new_inner
       ch

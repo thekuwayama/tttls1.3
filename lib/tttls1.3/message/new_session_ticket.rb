@@ -11,13 +11,7 @@ module TTTLS13
     private_constant :APPEARABLE_NST_EXTENSIONS
 
     class NewSessionTicket
-      attr_reader :msg_type
-      attr_reader :ticket_lifetime
-      attr_reader :ticket_age_add
-      attr_reader :ticket_nonce
-      attr_reader :ticket
-      attr_reader :extensions
-      attr_reader :timestamp
+      attr_reader :msg_type, :ticket_lifetime, :ticket_age_add, :ticket_nonce, :ticket, :extensions, :timestamp
 
       # @param ticket_lifetime [Integer]
       # @param ticket_age_add [String]
@@ -83,11 +77,11 @@ module TTTLS13
         raise Error::ErrorAlerts, :decode_error unless i == msg_len + 4 &&
                                                        i == binary.length
 
-        NewSessionTicket.new(ticket_lifetime: ticket_lifetime,
-                             ticket_age_add: ticket_age_add,
-                             ticket_nonce: ticket_nonce,
-                             ticket: ticket,
-                             extensions: extensions)
+        NewSessionTicket.new(ticket_lifetime:,
+                             ticket_age_add:,
+                             ticket_nonce:,
+                             ticket:,
+                             extensions:)
       end
       # rubocop: enable Metrics/AbcSize
 

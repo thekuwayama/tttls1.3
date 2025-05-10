@@ -8,8 +8,7 @@ module TTTLS13
       # Client/Server MUST ignore unrecognized extensions,
       # but transcript MUST include unrecognized extensions.
       class UnknownExtension
-        attr_reader :extension_type
-        attr_reader :extension_data
+        attr_reader :extension_type, :extension_data
 
         # @param extension_type [String]
         # @param extension_data [String]
@@ -28,7 +27,7 @@ module TTTLS13
         #
         # @return [TTTLS13::Message::Extension::UnknownExtension]
         def self.deserialize(binary, extension_type)
-          UnknownExtension.new(extension_type: extension_type,
+          UnknownExtension.new(extension_type:,
                                extension_data: binary)
         end
       end

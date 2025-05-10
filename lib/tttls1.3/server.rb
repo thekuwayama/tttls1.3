@@ -74,6 +74,7 @@ module TTTLS13
 
     # @param socket [Socket]
     # @param settings [Hash]
+    # rubocop: disable Metrics/AbcSize
     def initialize(socket, **settings)
       @connection = Connection.new(socket, :server)
       @settings = DEFAULT_SERVER_SETTINGS.merge(settings)
@@ -96,6 +97,7 @@ module TTTLS13
         raise Error::ConfigError unless cert.verify(sign.public_key)
       end
     end
+    # rubocop: enable Metrics/AbcSize
 
     #                              START <-----+
     #               Recv ClientHello |         | Send HelloRetryRequest
@@ -234,9 +236,9 @@ module TTTLS13
 
           # generate shared secret
           ke = ch.extensions[Message::ExtensionType::KEY_SHARE]
-                &.key_share_entry
-                &.find { |kse| kse.group == @named_group }
-                &.key_exchange
+                 &.key_share_entry
+                 &.find { |kse| kse.group == @named_group }
+                 &.key_exchange
           key_schedule = KeySchedule.new(
             psk: @psk,
             shared_secret: shared_secret.build(@named_group, ke),
@@ -285,8 +287,8 @@ module TTTLS13
           @transcript[CV] = [cv, cv.serialize]
           finished_key = key_schedule.server_finished_key
           signature = Endpoint.sign_finished(
-            digest: digest,
-            finished_key: finished_key,
+            digest:,
+            finished_key:,
             hash: @transcript.hash(digest, CV)
           )
           sf = Message::Finished.new(signature)
@@ -304,7 +306,7 @@ module TTTLS13
           digest = CipherSuite.digest(@cipher_suite)
           verified = Endpoint.verified_finished?(
             finished: cf,
-            digest: digest,
+            digest:,
             finished_key: key_schedule.client_finished_key,
             hash: @transcript.hash(digest, EOED)
           )
@@ -424,7 +426,7 @@ module TTTLS13
     # @return [String]
     def recv_client_hello(receivable_ccs)
       ch, orig_msg = @connection.recv_message(
-        receivable_ccs: receivable_ccs,
+        receivable_ccs:,
         cipher: Cryptograph::Passer.new
       )
       @connection.terminate(:unexpected_message) \
@@ -441,8 +443,8 @@ module TTTLS13
     def send_server_hello(extensions, cipher_suite, session_id)
       sh = Message::ServerHello.new(
         legacy_session_id_echo: session_id,
-        cipher_suite: cipher_suite,
-        extensions: extensions
+        cipher_suite:,
+        extensions:
       )
       @connection.send_handshakes(Message::ContentType::HANDSHAKE, [sh],
                                   Cryptograph::Passer.new)
@@ -463,9 +465,9 @@ module TTTLS13
 
       # key_share
       sp_groups = ch1.extensions[Message::ExtensionType::SUPPORTED_GROUPS]
-                    &.named_group_list || []
+                     &.named_group_list || []
       ks_groups = ch1.extensions[Message::ExtensionType::KEY_SHARE]
-                    &.key_share_entry&.map(&:group) || []
+                     &.key_share_entry&.map(&:group) || []
       ksg = sp_groups.find do |g|
         !ks_groups.include?(g) && @settings[:supported_groups].include?(g)
       end
@@ -476,7 +478,7 @@ module TTTLS13
       sh = Message::ServerHello.new(
         random: Message::HRR_RANDOM,
         legacy_session_id_echo: ch1.legacy_session_id,
-        cipher_suite: cipher_suite,
+        cipher_suite:,
         extensions: exs
       )
       @connection.send_handshakes(Message::ContentType::HANDSHAKE, [sh],
@@ -513,7 +515,6 @@ module TTTLS13
     # @param ocsp_response [OpenSSL::OCSP::Response]
     #
     # @return [TTTLS13::Message::Certificate, CompressedCertificate, nil]
-    # rubocop: disable Metrics/CyclomaticComplexity
     def gen_certificate(crt, ch, chain = [], ocsp_response = nil)
       exs = Message::Extensions.new
       # status_request
@@ -540,7 +541,6 @@ module TTTLS13
 
       ct
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
 
     # @param key [OpenSSL::PKey::PKey]
     # @param signature_scheme [TTTLS13::SignatureScheme]
@@ -549,12 +549,12 @@ module TTTLS13
     # @return [TTTLS13::Message::CertificateVerify, nil]
     def gen_certificate_verify(key, signature_scheme, hash)
       signature = sign_certificate_verify(
-        key: key,
-        signature_scheme: signature_scheme,
-        hash: hash
+        key:,
+        signature_scheme:,
+        hash:
       )
-      Message::CertificateVerify.new(signature_scheme: signature_scheme,
-                                     signature: signature)
+      Message::CertificateVerify.new(signature_scheme:,
+                                     signature:)
     end
 
     # @param cipher [TTTLS13::Cryptograph::Aead]
@@ -565,7 +565,7 @@ module TTTLS13
     # @return [String]
     def recv_finished(cipher)
       cf, orig_msg \
-        = @connection.recv_message(receivable_ccs: true, cipher: cipher)
+        = @connection.recv_message(receivable_ccs: true, cipher:)
       @connection.terminate(:unexpected_message) \
         unless cf.is_a?(Message::Finished)
 
@@ -625,10 +625,10 @@ module TTTLS13
     # @return [String]
     def sign_certificate_verify(key:, signature_scheme:, hash:)
       Endpoint.sign_certificate_verify(
-        key: key,
-        signature_scheme: signature_scheme,
+        key:,
+        signature_scheme:,
         context: 'TLS 1.3, server CertificateVerify',
-        hash: hash
+        hash:
       )
     end
 
@@ -646,7 +646,7 @@ module TTTLS13
     # @return [TTTLS13::NamedGroup, nil]
     def select_named_group(ch)
       ks_groups = ch.extensions[Message::ExtensionType::KEY_SHARE]
-                   &.key_share_entry&.map(&:group) || []
+                    &.key_share_entry&.map(&:group) || []
 
       ks_groups.find do |g|
         @settings[:supported_groups].include?(g)
@@ -659,7 +659,7 @@ module TTTLS13
     # @return [TTTLS13::SignatureScheme, nil]
     def select_signature_scheme(ch, crt)
       algorithms = ch.extensions[Message::ExtensionType::SIGNATURE_ALGORITHMS]
-                    &.supported_signature_algorithms || []
+                     &.supported_signature_algorithms || []
 
       Endpoint.select_signature_algorithms(algorithms, crt).find do |ss|
         @settings[:signature_algorithms].include?(ss)
@@ -672,7 +672,7 @@ module TTTLS13
     # @return [Boolean]
     def recognized_server_name?(ch, crt)
       server_name = ch.extensions[Message::ExtensionType::SERVER_NAME]
-                     &.server_name
+                      &.server_name
       return true if server_name.nil?
 
       Endpoint.matching_san?(crt, server_name)

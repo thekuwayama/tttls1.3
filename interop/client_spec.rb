@@ -12,155 +12,154 @@ RSpec.describe Client do
   # crt [String] server crt file path
   # key [String] server key file path
   # settings [Hash] TTTLS13::Server settings
-  # rubocop: disable Layout/LineLength
   testcases = [
     [
       true,
       '-ciphersuites TLS_AES_256_GCM_SHA384',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_256_GCM_SHA384]
+      { cipher_suites: [CipherSuite::TLS_AES_256_GCM_SHA384] }
     ],
     [
       true,
       '-ciphersuites TLS_CHACHA20_POLY1305_SHA256',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_CHACHA20_POLY1305_SHA256]
+      { cipher_suites: [CipherSuite::TLS_CHACHA20_POLY1305_SHA256] }
     ],
     [
       true,
       '-ciphersuites TLS_AES_128_GCM_SHA256',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256] }
     ],
     [
       true,
       '-ciphersuites TLS_AES_128_CCM_SHA256',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_CCM_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_CCM_SHA256] }
     ],
     [
       true,
       "-ciphersuites TLS_AES_128_CCM_8_SHA256 -cipher 'DEFAULT:@SECLEVEL=0'",
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_CCM_8_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_CCM_8_SHA256] }
     ],
     [
       false,
       '-ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256] }
     ],
     [
       true,
       '-groups X25519',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      supported_groups: [NamedGroup::X25519]
+      { supported_groups: [NamedGroup::X25519] }
     ],
     [
       true,
       '-groups X448',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      supported_groups: [NamedGroup::X448]
+      { supported_groups: [NamedGroup::X448] }
     ],
     [
       true,
       '-groups P-256',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP256R1]
+      { supported_groups: [NamedGroup::SECP256R1] }
     ],
     [
       true,
       '-groups P-384',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP384R1]
+      { supported_groups: [NamedGroup::SECP384R1] }
     ],
     [
       true,
       '-groups P-521',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP521R1]
+      { supported_groups: [NamedGroup::SECP521R1] }
     ],
     [
       false,
       '-groups P-256:P-384:P-521:X448',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      supported_groups: [NamedGroup::X25519]
+      { supported_groups: [NamedGroup::X25519] }
     ],
     [
       true,
       '-sigalgs RSA-PSS+SHA256',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256] }
     ],
     [
       true,
       '-sigalgs RSA-PSS+SHA384',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA384]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA384] }
     ],
     [
       true,
       '-sigalgs RSA-PSS+SHA512',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA512]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA512] }
     ],
     [
       true,
       '-sigalgs ECDSA+SHA256',
       'rsa_secp256r1.crt',
       'rsa_secp256r1.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP256R1_SHA256]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP256R1_SHA256] }
     ],
     [
       true,
       '-sigalgs ECDSA+SHA384',
       'rsa_secp384r1.crt',
       'rsa_secp384r1.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP384R1_SHA384]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP384R1_SHA384] }
     ],
     [
       true,
       '-sigalgs ECDSA+SHA512',
       'rsa_secp521r1.crt',
       'rsa_secp521r1.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512] }
     ],
     [
       true,
       '-sigalgs RSA-PSS+SHA256',
       'rsa_rsassaPss.crt',
       'rsa_rsassaPss.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PSS_RSAE_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PSS_RSAE_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256] }
     ],
     [
       false,
       '-sigalgs ECDSA+SHA256:ECDSA+SHA384:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:RSA+SHA256',
       'rsa_secp521r1.crt',
       'rsa_secp521r1.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512] }
     ],
     [
       true,
@@ -174,24 +173,23 @@ RSpec.describe Client do
       '',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      key_share_groups: []
+      { key_share_groups: [] }
     ],
     [
       true,
       '-alpn http/1.0',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      alpn: ['http/1.0']
+      { alpn: ['http/1.0'] }
     ],
     [
       true,
       '',
       'rsa_rsa.crt',
       'rsa_rsa.key',
-      compatibility_mode: false
+      { compatibility_mode: false }
     ]
   ]
-  # rubocop: enable Layout/LineLength
   testcases.each do |normal, opt, crt, key, settings|
     context 'client interop' do
       before do

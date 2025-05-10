@@ -42,12 +42,11 @@ module TTTLS13
     # rubocop: enable Layout/HashAlignment
 
     class Alert
-      attr_reader :level
-      attr_reader :description
+      attr_reader :level, :description
 
       # @param level [TTTLS13::Message::AlertLevel]
       # @param description [String] value of ALERT_DESCRIPTION
-      def initialize(level: nil, description:)
+      def initialize(description:, level: nil)
         @level = level
         @description = description
         if @level.nil? && (@description == ALERT_DESCRIPTION[:user_canceled] ||
@@ -74,7 +73,7 @@ module TTTLS13
 
         level = binary[0]
         description = binary[1]
-        Alert.new(level: level, description: description)
+        Alert.new(level:, description:)
       end
 
       # @return [TTTLS13::Error::ErrorAlerts]

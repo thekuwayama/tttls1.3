@@ -21,8 +21,7 @@ module TTTLS13
     private_constant :APPEARABLE_EE_EXTENSIONS
 
     class EncryptedExtensions
-      attr_reader :msg_type
-      attr_reader :extensions
+      attr_reader :msg_type, :extensions
 
       # @param extensions [TTTLS13::Message::Extensions]
       def initialize(extensions = Extensions.new)
