@@ -66,10 +66,10 @@ module TTTLS13
       def decrypt(encrypted_record, auth_data)
         decipher = reset_decipher
         cipher_text = encrypted_record[0...-@auth_tag_len]
-        auth_tag = encrypted_record[-@auth_tag_len..]
-        decipher.auth_tag = auth_tag
         decipher.ccm_data_len = cipher_text.length \
           if CipherSuite.ccm?(@cipher_suite)
+        auth_tag = encrypted_record[-@auth_tag_len..]
+        decipher.auth_tag = auth_tag
         decipher.auth_data = auth_data # record header of TLSCiphertext
         plain_text = decipher.update(cipher_text)
         decipher.final
@@ -108,8 +108,10 @@ module TTTLS13
       def reset_cipher
         cipher = @cipher.encrypt
         cipher.reset
-        cipher.key = @write_key
+        cipher.auth_tag_len = @auth_tag_len \
+          if CipherSuite.ccm?(@cipher_suite)
         cipher.iv_len = CipherSuite.iv_len(@cipher_suite)
+        cipher.key = @write_key
         cipher.iv = @sequence_number.xor(@write_iv, cipher.iv_len)
 
         cipher
@@ -119,8 +121,10 @@ module TTTLS13
       def reset_decipher
         decipher = @cipher.decrypt
         decipher.reset
-        decipher.key = @write_key
+        decipher.auth_tag_len = @auth_tag_len \
+          if CipherSuite.ccm?(@cipher_suite)
         decipher.iv_len = CipherSuite.iv_len(@cipher_suite)
+        decipher.key = @write_key
         decipher.iv = @sequence_number.xor(@write_iv, decipher.iv_len)
 
         decipher
