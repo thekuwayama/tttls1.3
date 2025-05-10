@@ -24,7 +24,7 @@ tttls1.3 provides client API with the following features:
 * Resumed 0-RTT Handshake (with PSK from NST)
 * [ECH](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/)
 
-**NOT supports** certificate with OID RSASSA-PSS, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
+**NOT supports** certificate with OID RSASSA-PSS, FFDHE, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
 
 ### Server
 
@@ -33,7 +33,7 @@ tttls1.3 provides server API with the following features:
 * Simple 1-RTT Handshake
 * HelloRetryRequest
 
-**NOT supports** certificate with OID RSASSA-PSS, FFDHE, AES-CCM, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs and Resumed 0-RTT Handshake.
+**NOT supports** certificate with OID RSASSA-PSS, FFDHE, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs and Resumed 0-RTT Handshake.
 
 
 ## Getting started
