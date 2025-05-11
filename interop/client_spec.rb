@@ -207,7 +207,7 @@ RSpec.describe Client do
                     + 'thekuwayama/openssl ' + cmd)
         Process.detach(pid)
 
-        wait_to_listen('127.0.0.1', PORT)
+        wait_to_listen('127.0.0.1', PORT, ENV['SPEC_VERBOSE'])
       end
 
       let(:client) do
