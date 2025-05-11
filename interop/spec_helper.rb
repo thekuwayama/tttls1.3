@@ -12,7 +12,7 @@ include TTTLS13::Message::Extension
 include TTTLS13::Error
 # rubocop: enable Style/MixinUsage
 
-def wait_to_listen(host, port)
+def wait_to_listen(host, port, verbose)
   10.times do
     soc = TCPSocket.open(host, port)
     ctx = OpenSSL::SSL::SSLContext.new
@@ -21,7 +21,7 @@ def wait_to_listen(host, port)
     ssl.sync_close = true
     ssl.connect
   rescue => e # rubocop: disable Style/RescueStandardError
-    p e
+    p e if verbose
     soc&.close
     sleep(0.5)
     next
