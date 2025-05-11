@@ -189,7 +189,7 @@ module TTTLS13
           ch_alpn = ch.extensions[
             Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
           ]
-          if !@settings[:alpn].nil? && !@settings[:alpn].empty? && !ch_alpn.nil?
+          if use_alpn? && !ch_alpn.nil?
             @alpn = ch_alpn.protocol_name_list
                            .find { |p| @settings[:alpn].include?(p) }
 
@@ -416,6 +416,11 @@ module TTTLS13
       return false unless (@settings[:supported_groups] - defined).empty?
 
       true
+    end
+
+    # @return [Boolean]
+    def use_alpn?
+      !@settings[:alpn].nil? && !@settings[:alpn].empty?
     end
 
     # @param receivable_ccs [Boolean]

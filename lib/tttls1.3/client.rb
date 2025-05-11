@@ -690,6 +690,28 @@ module TTTLS13
     # rubocop: enable Metrics/PerceivedComplexity
 
     # @return [Boolean]
+    def use_alpn?
+      !@settings[:alpn].nil? && !@settings[:alpn].empty?
+    end
+
+    # @return [Boolean]
+    def use_signature_algorithms_cert?
+      !@settings[:signature_algorithms_cert].nil? &&
+        !@settings[:signature_algorithms_cert].empty?
+    end
+
+    # @return [Boolean]
+    def use_compress_certificate?
+      !@settings[:compress_certificate_algorithms].nil? &&
+        !@settings[:compress_certificate_algorithms].empty?
+    end
+
+    # @return [Boolean]
+    def use_record_size_limit?
+      !@settings[:record_size_limit].nil?
+    end
+
+    # @return [Boolean]
     def use_psk?
       %i[
         ticket
@@ -703,13 +725,13 @@ module TTTLS13
 
     # @return [Boolean]
     def use_early_data?
-      !(@early_data.nil? || @early_data.empty?)
+      !@early_data.nil? && !@early_data.empty?
     end
 
     # @return [Boolean]
     def use_ech?
-      !@settings[:ech_hpke_cipher_suites].nil? &&
-        !@settings[:ech_hpke_cipher_suites].empty?
+      ehcs = @settings[:ech_hpke_cipher_suites]
+      !ehcs.nil? && !ehcs.empty?
     end
 
     # @param cipher [TTTLS13::Cryptograph::Aead]
@@ -745,7 +767,7 @@ module TTTLS13
       exs << Message::Extension::ServerName.new(@hostname)
 
       # record_size_limit
-      unless @settings[:record_size_limit].nil?
+      if use_record_size_limit?
         exs << Message::Extension::RecordSizeLimit.new(
           @settings[:record_size_limit]
         )
@@ -762,8 +784,7 @@ module TTTLS13
       )
 
       # signature_algorithms_cert
-      if !@settings[:signature_algorithms_cert].nil? &&
-         !@settings[:signature_algorithms_cert].empty?
+      if use_signature_algorithms_cert?
         exs << Message::Extension::SignatureAlgorithmsCert.new(
           @settings[:signature_algorithms_cert]
         )
@@ -783,16 +804,14 @@ module TTTLS13
       exs << Message::Extension::EarlyDataIndication.new if use_early_data?
 
       # alpn
-      exs << Message::Extension::Alpn.new(@settings[:alpn].reject(&:empty?)) \
-        if !@settings[:alpn].nil? && !@settings[:alpn].empty?
+      exs << Message::Extension::Alpn.new(@settings[:alpn]) if use_alpn?
 
       # status_request
       exs << Message::Extension::OCSPStatusRequest.new \
         if @settings[:check_certificate_status]
 
       # compress_certificate
-      if !@settings[:compress_certificate_algorithms].nil? &&
-         !@settings[:compress_certificate_algorithms].empty?
+      if use_compress_certificate?
         exs << Message::Extension::CompressCertificate.new(
           @settings[:compress_certificate_algorithms]
         )
