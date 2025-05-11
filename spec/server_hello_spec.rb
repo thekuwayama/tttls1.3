@@ -19,9 +19,9 @@ RSpec.describe ServerHello do
     end
 
     let(:message) do
-      ServerHello.new(random: random,
-                      legacy_session_id_echo: legacy_session_id_echo,
-                      cipher_suite: cipher_suite)
+      ServerHello.new(random:,
+                      legacy_session_id_echo:,
+                      cipher_suite:)
     end
 
     it 'should be generated' do
@@ -121,8 +121,8 @@ RSpec.describe ServerHello do
 
     let(:message) do
       ServerHello.new(random: Message::HRR_RANDOM,
-                      legacy_session_id_echo: legacy_session_id_echo,
-                      cipher_suite: cipher_suite)
+                      legacy_session_id_echo:,
+                      cipher_suite:)
     end
 
     it 'should be generated' do

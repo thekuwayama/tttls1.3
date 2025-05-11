@@ -34,7 +34,7 @@ end
 settings_1st = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   alpn: ['http/1.1'],
-  process_new_session_ticket: process_new_session_ticket,
+  process_new_session_ticket:,
   ech_config: rr.first.svc_params['ech'].echconfiglist.first,
   ech_hpke_cipher_suites:
     TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,

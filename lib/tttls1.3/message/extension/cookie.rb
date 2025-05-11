@@ -6,8 +6,7 @@ module TTTLS13
   module Message
     module Extension
       class Cookie
-        attr_reader :extension_type
-        attr_reader :cookie
+        attr_reader :extension_type, :cookie
 
         # @param cookie [String]
         #

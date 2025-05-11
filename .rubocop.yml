@@ -1,11 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.7
-
-Gemspec/RequiredRubyVersion:
-  Enabled: false
-
-Semicolon:
-  AllowAsExpressionSeparator: true
+  TargetRubyVersion: 3.1
 
 Style/ConditionalAssignment:
   Enabled: false
@@ -16,24 +10,35 @@ Style/Documentation:
 Style/NumericLiterals:
   Enabled: false
 
+Style/Semicolon:
+  Enabled: false
+
+Style/StringConcatenation:
+  Enabled: false
+
 Metrics/AbcSize:
   Max: 30
+
+Metrics/CyclomaticComplexity:
+  Max: 15
 
 Metrics/MethodLength:
   Max: 30
 
+Metrics/PerceivedComplexity:
+  Max: 15
+
 Naming/MethodParameterName:
   MinNameLength: 1
+
+Naming/VariableNumber:
+  Enabled: false
 
 Metrics/BlockLength:
   Exclude:
     - 'Rakefile'
     - 'spec/*.rb'
     - 'interop/*.rb'
-
-Layout/LineLength:
-  Exclude:
-    - 'tttls1.3.gemspec'
 
 # https://github.com/rubocop/rubocop/issues/10258
 Layout/BlockAlignment:

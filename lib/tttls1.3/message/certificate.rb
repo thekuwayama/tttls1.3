@@ -12,9 +12,7 @@ module TTTLS13
     private_constant :APPEARABLE_CT_EXTENSIONS
 
     class Certificate
-      attr_reader :msg_type
-      attr_reader :certificate_request_context
-      attr_reader :certificate_list
+      attr_reader :msg_type, :certificate_request_context, :certificate_list
 
       # @param certificate_request_context [String]
       # @param certificate_list [Array of CertificateEntry]
@@ -60,8 +58,8 @@ module TTTLS13
                                                        i == binary.length
 
         Certificate.new(
-          certificate_request_context: certificate_request_context,
-          certificate_list: certificate_list
+          certificate_request_context:,
+          certificate_list:
         )
       end
 
@@ -115,8 +113,7 @@ module TTTLS13
     end
 
     class CertificateEntry
-      attr_reader :cert_data
-      attr_reader :extensions
+      attr_reader :cert_data, :extensions
 
       # @param cert_data [OpenSSL::X509::Certificate]
       # @param extensions [TTTLS13::Message::Extensions]

@@ -23,10 +23,10 @@ RSpec.describe NewSessionTicket do
     end
 
     let(:message) do
-      NewSessionTicket.new(ticket_lifetime: ticket_lifetime,
-                           ticket_age_add: ticket_age_add,
-                           ticket_nonce: ticket_nonce,
-                           ticket: ticket)
+      NewSessionTicket.new(ticket_lifetime:,
+                           ticket_age_add:,
+                           ticket_nonce:,
+                           ticket:)
     end
 
     it 'should be generated' do

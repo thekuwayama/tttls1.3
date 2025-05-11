@@ -160,7 +160,7 @@ module TTTLS13
           CipherSuite.digest(@settings[:psk_cipher_suite])
         )
         key_schedule = KeySchedule.new(
-          psk: psk,
+          psk:,
           shared_secret: nil,
           cipher_suite: @settings[:psk_cipher_suite],
           transcript: @transcript
@@ -318,7 +318,7 @@ module TTTLS13
           @named_group = kse.group
           @cipher_suite = sh.cipher_suite
           key_schedule = KeySchedule.new(
-            psk: psk,
+            psk:,
             shared_secret: shared_secret.build(@named_group, ke),
             cipher_suite: @cipher_suite,
             transcript: @transcript
@@ -455,7 +455,7 @@ module TTTLS13
           @connection.terminate(:decrypt_error) \
             unless Endpoint.verified_finished?(
               finished: sf,
-              digest: digest,
+              digest:,
               finished_key: key_schedule.server_finished_key,
               hash: @transcript.hash(digest, CV)
             )
@@ -466,7 +466,7 @@ module TTTLS13
           end
           # TODO: Send Certificate [+ CertificateVerify]
           signature = Endpoint.sign_finished(
-            digest: digest,
+            digest:,
             finished_key: key_schedule.client_finished_key,
             hash: @transcript.hash(digest, EOED)
           )
@@ -691,12 +691,14 @@ module TTTLS13
 
     # @return [Boolean]
     def use_psk?
-      !@settings[:ticket].nil? &&
-        !@settings[:resumption_secret].nil? &&
-        !@settings[:psk_cipher_suite].nil? &&
-        !@settings[:ticket_nonce].nil? &&
-        !@settings[:ticket_age_add].nil? &&
-        !@settings[:ticket_timestamp].nil?
+      %i[
+        ticket
+        resumption_secret
+        psk_cipher_suite
+        ticket_nonce
+        ticket_age_add
+        ticket_timestamp
+      ].all? { |sy| !@settings[sy].nil? }
     end
 
     # @return [Boolean]
@@ -717,7 +719,7 @@ module TTTLS13
         type: Message::ContentType::APPLICATION_DATA,
         legacy_record_version: Message::ProtocolVersion::TLS_1_2,
         messages: [ap],
-        cipher: cipher
+        cipher:
       )
       @connection.send_record(ap_record)
     end
@@ -736,9 +738,7 @@ module TTTLS13
     # @return [TTTLS13::Message::Extensions]
     # @return [TTTLS13::SharedSecret]
     # rubocop: disable Metrics/AbcSize
-    # rubocop: disable Metrics/CyclomaticComplexity
     # rubocop: disable Metrics/MethodLength
-    # rubocop: disable Metrics/PerceivedComplexity
     def gen_ch_extensions
       exs = Message::Extensions.new
       # server_name
@@ -800,11 +800,9 @@ module TTTLS13
 
       [exs, shared_secret]
     end
-    # rubocop: enable Metrics/AbcSize
-    # rubocop: enable Metrics/CyclomaticComplexity
-    # rubocop: enable Metrics/MethodLength
-    # rubocop: enable Metrics/PerceivedComplexity
 
+    # rubocop: enable Metrics/AbcSize
+    # rubocop: enable Metrics/MethodLength
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
     #
@@ -815,7 +813,7 @@ module TTTLS13
     def send_client_hello(extensions, binder_key = nil)
       ch = Message::ClientHello.new(
         cipher_suites: CipherSuites.new(@settings[:cipher_suites]),
-        extensions: extensions
+        extensions:
       )
 
       # encrypted_client_hello
@@ -848,8 +846,8 @@ module TTTLS13
       # at the end, sign PSK binder
       if use_psk?
         sign_psk_binder(
-          ch: ch,
-          binder_key: binder_key
+          ch:,
+          binder_key:
         )
 
         if use_ech?
@@ -873,7 +871,7 @@ module TTTLS13
     # @param binder_key [String]
     #
     # @return [String]
-    def sign_psk_binder(ch1: nil, hrr: nil, ch:, binder_key:)
+    def sign_psk_binder(ch:, binder_key:, ch1: nil, hrr: nil)
       # pre_shared_key
       #
       # binder is computed as an HMAC over a transcript hash containing a
@@ -897,11 +895,11 @@ module TTTLS13
       ch.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
 
       psk.offered_psks.binders[0] = Endpoint.sign_psk_binder(
-        ch1: ch1,
-        hrr: hrr,
-        ch: ch,
-        binder_key: binder_key,
-        digest: digest
+        ch1:,
+        hrr:,
+        ch:,
+        binder_key:,
+        digest:
       )
     end
 
@@ -912,11 +910,8 @@ module TTTLS13
     # @param binder_key [String]
     #
     # @return [String]
-    def sign_grease_psk_binder(ch1: nil,
-                               hrr: nil,
-                               ch_outer:,
-                               inner_psk:,
-                               binder_key:)
+    def sign_grease_psk_binder(ch_outer:, inner_psk:, binder_key:, ch1: nil,
+                               hrr: nil)
       digest = CipherSuite.digest(@settings[:psk_cipher_suite])
       hash_len = OpenSSL::Digest.new(digest).digest_length
       placeholder_binders = [hash_len.zeros]
@@ -938,7 +933,7 @@ module TTTLS13
         msg_type: Message::HandshakeType::CLIENT_HELLO,
         offered_psks: Message::Extension::OfferedPsks.new(
           identities: [Message::Extension::PskIdentity.new(
-            identity: identity,
+            identity:,
             obfuscated_ticket_age: ota
           )],
           binders: placeholder_binders
@@ -947,11 +942,11 @@ module TTTLS13
       ch_outer.extensions[Message::ExtensionType::PRE_SHARED_KEY] = psk
 
       psk.offered_psks.binders[0] = Endpoint.sign_psk_binder(
-        ch1: ch1,
-        hrr: hrr,
+        ch1:,
+        hrr:,
         ch: ch_outer,
-        binder_key: binder_key,
-        digest: digest
+        binder_key:,
+        digest:
       )
     end
 
@@ -1029,7 +1024,7 @@ module TTTLS13
         legacy_session_id: ch1.legacy_session_id,
         cipher_suites: ch1.cipher_suites,
         legacy_compression_methods: ch1.legacy_compression_methods,
-        extensions: extensions
+        extensions:
       )
 
       # encrypted_client_hello
@@ -1051,7 +1046,7 @@ module TTTLS13
       # Updating the "pre_shared_key" extension if present by recomputing
       # the "obfuscated_ticket_age" and binder values.
       if ch1.extensions.include?(Message::ExtensionType::PRE_SHARED_KEY)
-        sign_psk_binder(ch1: ch1, hrr: hrr, ch: ch, binder_key: binder_key)
+        sign_psk_binder(ch1:, hrr:, ch:, binder_key:)
 
         if use_ech?
           # it MUST also copy the "psk_key_exchange_modes" from the
@@ -1062,11 +1057,11 @@ module TTTLS13
           ch.extensions[Message::ExtensionType::EARLY_DATA] \
             = inner.extensions[Message::ExtensionType::EARLY_DATA]
           sign_grease_psk_binder(
-            ch1: ch1,
-            hrr: hrr,
+            ch1:,
+            hrr:,
             ch_outer: ch,
             inner_psk: inner.extensions[Message::ExtensionType::PRE_SHARED_KEY],
-            binder_key: binder_key
+            binder_key:
           )
         end
       end
@@ -1102,7 +1097,7 @@ module TTTLS13
     # @return [String]
     def recv_encrypted_extensions(cipher)
       ee, orig_msg \
-        = @connection.recv_message(receivable_ccs: true, cipher: cipher)
+        = @connection.recv_message(receivable_ccs: true, cipher:)
       @connection.terminate(:unexpected_message) \
         unless ee.is_a?(Message::EncryptedExtensions)
 
@@ -1117,7 +1112,7 @@ module TTTLS13
     # @return [String]
     def recv_certificate(cipher)
       ct, orig_msg \
-        = @connection.recv_message(receivable_ccs: true, cipher: cipher)
+        = @connection.recv_message(receivable_ccs: true, cipher:)
       @connection.terminate(:unexpected_message) \
         unless ct.is_a?(Message::Certificate)
 
@@ -1132,7 +1127,7 @@ module TTTLS13
     # @return [String]
     def recv_certificate_verify(cipher)
       cv, orig_msg \
-        = @connection.recv_message(receivable_ccs: true, cipher: cipher)
+        = @connection.recv_message(receivable_ccs: true, cipher:)
       @connection.terminate(:unexpected_message) \
         unless cv.is_a?(Message::CertificateVerify)
 
@@ -1147,7 +1142,7 @@ module TTTLS13
     # @return [String]
     def recv_finished(cipher)
       sf, orig_msg \
-        = @connection.recv_message(receivable_ccs: true, cipher: cipher)
+        = @connection.recv_message(receivable_ccs: true, cipher:)
       @connection.terminate(:unexpected_message) \
         unless sf.is_a?(Message::Finished)
 
@@ -1202,7 +1197,7 @@ module TTTLS13
       if @settings[:check_certificate_status]
         ee = ct.certificate_list.first
         ocsp_response = ee.extensions[Message::ExtensionType::STATUS_REQUEST]
-                         &.ocsp_response
+                          &.ocsp_response
         cert = ee.cert_data
         chain = ct.certificate_list[1..]&.map(&:cert_data)
         return :bad_certificate_status_response \
@@ -1223,11 +1218,11 @@ module TTTLS13
       signature = cv.signature
 
       Endpoint.verified_certificate_verify?(
-        public_key: public_key,
-        signature_scheme: signature_scheme,
-        signature: signature,
+        public_key:,
+        signature_scheme:,
+        signature:,
         context: 'TLS 1.3, server CertificateVerify',
-        hash: hash
+        hash:
       )
     end
 

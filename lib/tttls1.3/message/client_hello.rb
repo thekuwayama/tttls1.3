@@ -37,13 +37,8 @@ module TTTLS13
     private_constant :APPEARABLE_CH_EXTENSIONS
 
     class ClientHello
-      attr_reader :msg_type
-      attr_reader :legacy_version
-      attr_reader :random
-      attr_reader :legacy_session_id
-      attr_reader :cipher_suites
-      attr_reader :legacy_compression_methods
-      attr_reader :extensions
+      attr_reader :msg_type, :legacy_version, :random, :legacy_session_id, :cipher_suites, :legacy_compression_methods,
+                  :extensions
 
       # @param legacy_version [String]
       # @param random [String]
@@ -52,10 +47,9 @@ module TTTLS13
       # @param legacy_compression_methods [Array of String]
       # @param extensions [TTTLS13::Message::Extensions]
       # rubocop: disable Metrics/ParameterLists
-      def initialize(legacy_version: ProtocolVersion::TLS_1_2,
+      def initialize(cipher_suites:, legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
                      legacy_session_id: OpenSSL::Random.random_bytes(32),
-                     cipher_suites:,
                      legacy_compression_methods: ["\x00"],
                      extensions: Extensions.new)
         @msg_type = HandshakeType::CLIENT_HELLO
@@ -118,12 +112,12 @@ module TTTLS13
         raise Error::ErrorAlerts, :decode_error unless i == msg_len + 4 &&
                                                        i == binary.length
 
-        ClientHello.new(legacy_version: legacy_version,
-                        random: random,
-                        legacy_session_id: legacy_session_id,
-                        cipher_suites: cipher_suites,
-                        legacy_compression_methods: legacy_compression_methods,
-                        extensions: extensions)
+        ClientHello.new(legacy_version:,
+                        random:,
+                        legacy_session_id:,
+                        cipher_suites:,
+                        legacy_compression_methods:,
+                        extensions:)
       end
       # rubocop: enable Metrics/AbcSize
       # rubocop: enable Metrics/MethodLength

@@ -16,8 +16,7 @@ module TTTLS13
       #
       # https://datatracker.ietf.org/doc/html/rfc6066#section-3
       class ServerName
-        attr_reader :extension_type
-        attr_reader :server_name
+        attr_reader :extension_type, :server_name
 
         # @param server_name [String]
         #

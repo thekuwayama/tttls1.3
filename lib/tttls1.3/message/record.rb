@@ -8,19 +8,14 @@ module TTTLS13
 
     # rubocop: disable Metrics/ClassLength
     class Record
-      attr_reader :type
-      attr_reader :legacy_record_version
-      attr_reader :messages
-      attr_reader :cipher
+      attr_reader :type, :legacy_record_version, :messages, :cipher
 
       # @param type [TTTLS13::Message::ContentType]
       # @param legacy_record_version [TTTLS13::Message::ProtocolVersion]
       # @param messages [Array of TTTLS13::Message::$Object]
       # @param cipher [TTTLS13::Cryptograph::$Object]
       def initialize(type:,
-                     legacy_record_version: ProtocolVersion::TLS_1_2,
-                     messages:,
-                     cipher:)
+                     messages:, cipher:, legacy_record_version: ProtocolVersion::TLS_1_2)
         @type = type
         @legacy_record_version = legacy_record_version
         @messages = messages
@@ -63,8 +58,6 @@ module TTTLS13
       # @return [Array of String]
       # @return [String]
       # rubocop: disable Metrics/AbcSize
-      # rubocop: disable Metrics/CyclomaticComplexity
-      # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary, cipher, buffered = '',
                            record_size_limit = DEFAULT_RECORD_SIZE_LIMIT)
         raise Error::ErrorAlerts, :internal_error if binary.nil?
@@ -82,9 +75,7 @@ module TTTLS13
           unless binary.length == 5 + fragment_len
 
         if type == ContentType::APPLICATION_DATA
-          if fragment.length - cipher.auth_tag_len > record_size_limit
-            raise Error::ErrorAlerts, :record_overflow
-          end
+          raise Error::ErrorAlerts, :record_overflow if fragment.length - cipher.auth_tag_len > record_size_limit
 
           fragment, inner_type = cipher.decrypt(fragment, binary.slice(0, 5))
         end
@@ -94,16 +85,14 @@ module TTTLS13
           inner_type || type
         )
         record = Record.new(
-          type: type,
-          legacy_record_version: legacy_record_version,
-          messages: messages,
-          cipher: cipher
+          type:,
+          legacy_record_version:,
+          messages:,
+          cipher:
         )
         [record, orig_msgs, surplus_binary]
       end
       # rubocop: enable Metrics/AbcSize
-      # rubocop: enable Metrics/CyclomaticComplexity
-      # rubocop: enable Metrics/PerceivedComplexity
 
       private
 
@@ -122,11 +111,11 @@ module TTTLS13
               Message::EndOfEarlyData,
               Message::NewSessionTicket].include?(m.class)
             ContentType::HANDSHAKE
-          elsif m.class == ChangeCipherSpec
+          elsif m.instance_of?(ChangeCipherSpec)
             ContentType::CCS
-          elsif m.class == Message::ApplicationData
+          elsif m.instance_of?(Message::ApplicationData)
             ContentType::APPLICATION_DATA
-          elsif m.class == Message::Alert
+          elsif m.instance_of?(Message::Alert)
             ContentType::ALERT
           else
             raise Error::ErrorAlerts, :internal_error
@@ -212,7 +201,6 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [Array of TTTLS13::Message::$Object]
-        # rubocop: disable Metrics/CyclomaticComplexity
         def do_deserialize_handshake(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
           raise Error::ErrorAlerts, :decode_error if binary.empty?
@@ -240,7 +228,6 @@ module TTTLS13
             raise Error::ErrorAlerts, :unexpected_message
           end
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
       end
     end
     # rubocop: enable Metrics/ClassLength

@@ -61,7 +61,7 @@ file CA_CRT => [TMP_DIR, CA_KEY] do
     )
   )
 
-  digest = OpenSSL::Digest::SHA256.new
+  digest = OpenSSL::Digest.new('SHA256')
   ca_crt.sign(ca_key, digest)
   File.write(CA_CRT, ca_crt.to_pem)
 end
@@ -112,7 +112,7 @@ file INTER_CRT => [TMP_DIR, INTER_KEY] do
     )
   )
 
-  digest = OpenSSL::Digest::SHA256.new
+  digest = OpenSSL::Digest.new('SHA256')
   inter_crt.sign(ca_key, digest)
   File.write(INTER_CRT, inter_crt.to_pem)
 end
@@ -169,7 +169,7 @@ file SERVER_CRT => [TMP_DIR, INTER_CRT, SERVER_KEY] do
     )
   )
 
-  digest = OpenSSL::Digest::SHA256.new
+  digest = OpenSSL::Digest.new('SHA256')
   server_crt.sign(inter_key, digest)
   File.write(SERVER_CRT, server_crt.to_pem)
 end

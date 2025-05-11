@@ -10,9 +10,7 @@ module TTTLS13
       end
 
       class OCSPStatusRequest
-        attr_reader :extension_type
-        attr_reader :responder_id_list
-        attr_reader :request_extensions
+        attr_reader :extension_type, :responder_id_list, :request_extensions
 
         # @param responder_id_list [Array of OpenSSL::ASN1::ASN1Data]
         # @param request_extensions [Array of OpenSSL::ASN1::ASN1Data]
@@ -43,8 +41,6 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [TTTLS13::Message::Extension::OCSPStatusRequest, nil]
-        # rubocop: disable Metrics/CyclomaticComplexity
-        # rubocop: disable Metrics/PerceivedComplexity
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
           return nil if binary.length < 5 ||
@@ -71,12 +67,9 @@ module TTTLS13
           i += re_len
           return nil unless i == binary.length
 
-          OCSPStatusRequest.new(responder_id_list: responder_id_list,
-                                request_extensions: request_extensions)
+          OCSPStatusRequest.new(responder_id_list:,
+                                request_extensions:)
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
-        # rubocop: enable Metrics/PerceivedComplexity
-
         class << self
           private
 
@@ -111,8 +104,7 @@ module TTTLS13
       end
 
       class OCSPResponse
-        attr_reader :extension_type
-        attr_reader :ocsp_response
+        attr_reader :extension_type, :ocsp_response
 
         # @param ocsp_response [OpenSSL::OCSP::Response]
         #

@@ -25,12 +25,7 @@ module TTTLS13
       #         };
       #     } ECHClientHello;
       class ECHClientHello
-        attr_reader :extension_type
-        attr_reader :type
-        attr_reader :cipher_suite
-        attr_reader :config_id
-        attr_reader :enc
-        attr_reader :payload
+        attr_reader :extension_type, :type, :cipher_suite, :config_id, :enc, :payload
 
         # @param type [TTTLS13::Message::Extension::ECHClientHelloType]
         # @param cipher_suite [HpkeSymmetricCipherSuite]
@@ -125,8 +120,8 @@ module TTTLS13
               type: ECHClientHelloType::OUTER,
               cipher_suite: cs,
               config_id: cid,
-              enc: enc,
-              payload: payload
+              enc:,
+              payload:
             )
           end
 
@@ -156,10 +151,10 @@ module TTTLS13
         def self.new_outer(cipher_suite:, config_id:, enc:, payload:)
           ECHClientHello.new(
             type: ECHClientHelloType::OUTER,
-            cipher_suite: cipher_suite,
-            config_id: config_id,
-            enc: enc,
-            payload: payload
+            cipher_suite:,
+            config_id:,
+            enc:,
+            payload:
           )
         end
       end
@@ -168,8 +163,7 @@ module TTTLS13
       #         ECHConfigList retry_configs;
       #     } ECHEncryptedExtensions;
       class ECHEncryptedExtensions
-        attr_reader :extension_type
-        attr_reader :retry_configs
+        attr_reader :extension_type, :retry_configs
 
         # @param retry_configs [Array of ECHConfig]
         def initialize(retry_configs)
@@ -204,8 +198,7 @@ module TTTLS13
       #         opaque confirmation[8];
       #     } ECHHelloRetryRequest;
       class ECHHelloRetryRequest
-        attr_reader :extension_type
-        attr_reader :confirmation
+        attr_reader :extension_type, :confirmation
 
         # @param confirmation [String]
         def initialize(confirmation)

@@ -175,9 +175,9 @@ RSpec.describe Server do
       signature = cv.signature
       digest = CipherSuite.digest(cipher_suite)
       expect(Endpoint.verified_certificate_verify?(
-               public_key: public_key,
-               signature_scheme: signature_scheme,
-               signature: signature,
+               public_key:,
+               signature_scheme:,
+               signature:,
                context: 'TLS 1.3, server CertificateVerify',
                hash: transcript.hash(digest, CT)
              )).to be true
@@ -208,14 +208,14 @@ RSpec.describe Server do
 
     let(:key_schedule) do
       KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
-                      cipher_suite: cipher_suite,
-                      transcript: transcript)
+                      cipher_suite:,
+                      transcript:)
     end
 
     let(:signature) do
       digest = CipherSuite.digest(cipher_suite)
       Endpoint.sign_finished(
-        digest: digest,
+        digest:,
         finished_key: key_schedule.server_finished_key,
         hash: transcript.hash(digest, CV)
       )

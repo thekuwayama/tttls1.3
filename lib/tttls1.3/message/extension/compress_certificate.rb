@@ -13,8 +13,7 @@ module TTTLS13
 
       # https://datatracker.ietf.org/doc/html/rfc8879
       class CompressCertificate
-        attr_reader :extension_type
-        attr_reader :algorithms
+        attr_reader :extension_type, :algorithms
 
         # @param algorithms [Array of CertificateCompressionAlgorithm]
         #

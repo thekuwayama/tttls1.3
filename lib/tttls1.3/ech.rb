@@ -209,9 +209,9 @@ module TTTLS13
                               payload_len,
                               server_name)
       aad_ech = Message::Extension::ECHClientHello.new_outer(
-        cipher_suite: cipher_suite,
-        config_id: config_id,
-        enc: enc,
+        cipher_suite:,
+        config_id:,
+        enc:,
         payload: payload_len.zeros
       )
       Message::ClientHello.new(
@@ -237,10 +237,10 @@ module TTTLS13
     # @return [TTTLS13::Message::ClientHello]
     def self.new_ch_outer(aad, cipher_suite, config_id, enc, payload)
       outer_ech = Message::Extension::ECHClientHello.new_outer(
-        cipher_suite: cipher_suite,
-        config_id: config_id,
-        enc: enc,
-        payload: payload
+        cipher_suite:,
+        config_id:,
+        enc:,
+        payload:
       )
       Message::ClientHello.new(
         legacy_version: aad.legacy_version,
@@ -284,9 +284,9 @@ module TTTLS13
                     + aead_id2overhead_len(AeadId::AES_128_GCM)
 
       Message::Extension::ECHClientHello.new_outer(
-        cipher_suite: cipher_suite,
+        cipher_suite:,
         config_id: Convert.bin2i(OpenSSL::Random.random_bytes(1)),
-        enc: enc,
+        enc:,
         payload: OpenSSL::Random.random_bytes(payload_len)
       )
     end
@@ -399,11 +399,7 @@ module TTTLS13
   end
 
   class EchState
-    attr_reader :maximum_name_length
-    attr_reader :config_id
-    attr_reader :cipher_suite
-    attr_reader :public_name
-    attr_reader :ctx
+    attr_reader :maximum_name_length, :config_id, :cipher_suite, :public_name, :ctx
 
     # @param maximum_name_length [Integer]
     # @param config_id [Integer]

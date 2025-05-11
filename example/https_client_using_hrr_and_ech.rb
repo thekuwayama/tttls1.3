@@ -17,7 +17,7 @@ settings = {
   ca_file: File.exist?(ca_file) ? ca_file : nil,
   key_share_groups: [], # empty KeyShareClientHello.client_shares
   alpn: ['http/1.1'],
-  ech_config: ech_config,
+  ech_config:,
   ech_hpke_cipher_suites:
     TTTLS13::STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
   sslkeylogfile: '/tmp/sslkeylogfile.log'

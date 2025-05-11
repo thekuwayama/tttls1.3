@@ -34,13 +34,8 @@ module TTTLS13
       "\xc2\xa2\x11\x16\x7a\xbb\x8c\x5e\x07\x9e\x09\xe2\xc8\xa8\x33\x9c"
 
     class ServerHello
-      attr_reader :msg_type
-      attr_reader :legacy_version
-      attr_reader :random
-      attr_reader :legacy_session_id_echo
-      attr_reader :cipher_suite
-      attr_reader :legacy_compression_method
-      attr_reader :extensions
+      attr_reader :msg_type, :legacy_version, :random, :legacy_session_id_echo, :cipher_suite,
+                  :legacy_compression_method, :extensions
 
       # @param legacy_version [String]
       # @param random [String]
@@ -49,10 +44,8 @@ module TTTLS13
       # @param legacy_compression_method [String]
       # @param extensions [TTTLS13::Message::Extensions]
       # rubocop: disable Metrics/ParameterLists
-      def initialize(legacy_version: ProtocolVersion::TLS_1_2,
+      def initialize(legacy_session_id_echo:, cipher_suite:, legacy_version: ProtocolVersion::TLS_1_2,
                      random: OpenSSL::Random.random_bytes(32),
-                     legacy_session_id_echo:,
-                     cipher_suite:,
                      legacy_compression_method: "\x00",
                      extensions: Extensions.new)
         @msg_type = HandshakeType::SERVER_HELLO
@@ -84,9 +77,7 @@ module TTTLS13
       #
       # @return [TTTLS13::Message::ServerHello]
       # rubocop: disable Metrics/AbcSize
-      # rubocop: disable Metrics/CyclomaticComplexity
       # rubocop: disable Metrics/MethodLength
-      # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary)
         raise Error::ErrorAlerts, :internal_error if binary.nil?
         raise Error::ErrorAlerts, :decode_error if binary.length < 39
@@ -116,18 +107,16 @@ module TTTLS13
         raise Error::ErrorAlerts, :decode_error unless i == msg_len + 4 &&
                                                        i == binary.length
 
-        ServerHello.new(legacy_version: legacy_version,
-                        random: random,
-                        legacy_session_id_echo: legacy_session_id_echo,
-                        cipher_suite: cipher_suite,
-                        legacy_compression_method: legacy_compression_method,
-                        extensions: extensions)
+        ServerHello.new(legacy_version:,
+                        random:,
+                        legacy_session_id_echo:,
+                        cipher_suite:,
+                        legacy_compression_method:,
+                        extensions:)
       end
-      # rubocop: enable Metrics/AbcSize
-      # rubocop: enable Metrics/CyclomaticComplexity
-      # rubocop: enable Metrics/MethodLength
-      # rubocop: enable Metrics/PerceivedComplexity
 
+      # rubocop: enable Metrics/AbcSize
+      # rubocop: enable Metrics/MethodLength
       # @return [Boolean]
       def hrr?
         @random == HRR_RANDOM

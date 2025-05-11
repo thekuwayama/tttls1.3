@@ -25,7 +25,7 @@ RSpec.describe KeySchedule do
       )
       KeySchedule.new(shared_secret: TESTBINARY_SHARED_SECRET,
                       cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                      transcript: transcript)
+                      transcript:)
     end
 
     it 'should generate secret' do
@@ -104,7 +104,7 @@ RSpec.describe KeySchedule do
       KeySchedule.new(psk: TESTBINARY_0_RTT_PSK,
                       shared_secret: TESTBINARY_0_RTT_SHARED_SECRET,
                       cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                      transcript: transcript)
+                      transcript:)
     end
 
     it 'should generate server parameters write_key, iv' do
@@ -131,7 +131,7 @@ RSpec.describe KeySchedule do
       KeySchedule.new(psk: TESTBINARY_0_RTT_PSK,
                       shared_secret: nil,
                       cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                      transcript: transcript)
+                      transcript:)
     end
 
     it 'should generate binder key for resumption PSKs' do
@@ -177,7 +177,7 @@ RSpec.describe KeySchedule do
       )
       KeySchedule.new(shared_secret: TESTBINARY_HRR_SHARED_SECRET,
                       cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
-                      transcript: transcript)
+                      transcript:)
     end
 
     it 'should generate server finished_key' do

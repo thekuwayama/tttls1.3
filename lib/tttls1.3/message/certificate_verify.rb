@@ -5,9 +5,7 @@ module TTTLS13
   using Refinements
   module Message
     class CertificateVerify
-      attr_reader :msg_type
-      attr_reader :signature_scheme
-      attr_reader :signature
+      attr_reader :msg_type, :signature_scheme, :signature
 
       # @param signature_scheme [TTTLS13::SignatureScheme]
       # @param signature [String]
@@ -51,8 +49,8 @@ module TTTLS13
           unless signature_len + 4 == msg_len &&
                  signature_len + 8 == binary.length
 
-        CertificateVerify.new(signature_scheme: signature_scheme,
-                              signature: signature)
+        CertificateVerify.new(signature_scheme:,
+                              signature:)
       end
     end
   end

@@ -89,9 +89,6 @@ module TTTLS13
     #     CipherSuite::TLS_CHACHA20_POLY1305_SHA256,
     #     CipherSuite::TLS_AES_128_GCM_SHA256
     #   ])
-    def initialize(cipher_suites)
-      super(cipher_suites)
-    end
 
     # @return [String]
     def serialize

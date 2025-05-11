@@ -17,7 +17,7 @@ settings = {
 }
 
 q = Queue.new
-logger = Logger.new(STDERR, Logger::WARN)
+logger = Logger.new($stderr, Logger::WARN)
 # rubocop: disable Metrics/BlockLength
 Etc.nprocessors.times do
   Thread.start do

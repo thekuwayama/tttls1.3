@@ -21,148 +21,148 @@ RSpec.describe Server do
       '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_256_GCM_SHA384]
+      { cipher_suites: [CipherSuite::TLS_AES_256_GCM_SHA384] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_CHACHA20_POLY1305_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_CHACHA20_POLY1305_SHA256]
+      { cipher_suites: [CipherSuite::TLS_CHACHA20_POLY1305_SHA256] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_128_GCM_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_128_CCM_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_CCM_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_CCM_SHA256] }
     ],
     [
       true,
       "-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_128_CCM_8_SHA256 -cipher 'DEFAULT:@SECLEVEL=0'",
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_CCM_8_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_CCM_8_SHA256] }
     ],
     [
       false,
       '-groups X25519:P-256:P-384:P-521 -ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256]
+      { cipher_suites: [CipherSuite::TLS_AES_128_GCM_SHA256] }
     ],
     [
       true,
       '-groups X25519',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      supported_groups: [NamedGroup::X25519]
+      { supported_groups: [NamedGroup::X25519] }
     ],
     [
       true,
       '-groups X448',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      supported_groups: [NamedGroup::X448]
+      { supported_groups: [NamedGroup::X448] }
     ],
     [
       true,
       '-groups P-256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP256R1]
+      { supported_groups: [NamedGroup::SECP256R1] }
     ],
     [
       true,
       '-groups P-384',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP384R1]
+      { supported_groups: [NamedGroup::SECP384R1] }
     ],
     [
       true,
       '-groups P-521',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP521R1]
+      { supported_groups: [NamedGroup::SECP521R1] }
     ],
     [
       false,
       '-groups X25519:P-256:P-384',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      supported_groups: [NamedGroup::SECP521R1]
+      { supported_groups: [NamedGroup::SECP521R1] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA384',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA384]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA384] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA512',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA512]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA512] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA256',
       FIXTURES_DIR + '/rsa_secp256r1.crt',
       FIXTURES_DIR + '/rsa_secp256r1.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP256R1_SHA256]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP256R1_SHA256] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA384',
       FIXTURES_DIR + '/rsa_secp384r1.crt',
       FIXTURES_DIR + '/rsa_secp384r1.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP384R1_SHA384]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP384R1_SHA384] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA512',
       FIXTURES_DIR + '/rsa_secp521r1.crt',
       FIXTURES_DIR + '/rsa_secp521r1.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
       FIXTURES_DIR + '/rsa_rsassaPss.crt',
       FIXTURES_DIR + '/rsa_rsassaPss.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PSS_RSAE_SHA256],
-      signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PSS_RSAE_SHA256],
+        signature_algorithms: [SignatureScheme::RSA_PSS_RSAE_SHA256] }
     ],
     [
       false,
       '-groups X25519:P-256:P-384:P-521 -sigalgs ECDSA+SHA256:ECDSA+SHA384:RSA-PSS+SHA256:RSA-PSS+SHA384:RSA-PSS+SHA512:RSA+SHA256',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
-      signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512]
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ECDSA_SECP521R1_SHA512] }
     ],
     [
       true,
@@ -176,28 +176,28 @@ RSpec.describe Server do
       '-groups X25519:P-256:P-384:P-521 -alpn pingpong',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      alpn: ['pingpong']
+      { alpn: ['pingpong'] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      alpn: ['pingpong']
+      { alpn: ['pingpong'] }
     ],
     [
       false,
       '-groups X25519:P-256:P-384:P-521 -alpn foo',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      alpn: ['pingpong']
+      { alpn: ['pingpong'] }
     ],
     [
       true,
       '-groups X25519:P-256:P-384:P-521',
       FIXTURES_DIR + '/rsa_rsa.crt',
       FIXTURES_DIR + '/rsa_rsa.key',
-      compatibility_mode: false
+      { compatibility_mode: false }
     ]
   ]
   # rubocop: enable Layout/LineLength

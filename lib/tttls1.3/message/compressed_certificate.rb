@@ -5,9 +5,7 @@ module TTTLS13
   using Refinements
   module Message
     class CompressedCertificate
-      attr_reader :msg_type
-      attr_reader :certificate_message
-      attr_reader :algorithm
+      attr_reader :msg_type, :certificate_message, :algorithm
 
       # @param certificate_message [TTTLS13::Message::Certificate]
       # @param algorithm [CertificateCompressionAlgorithm]
@@ -41,8 +39,6 @@ module TTTLS13
       #
       # @return [TTTLS13::Message::CompressedCertificate]
       # rubocop: disable Metrics/AbcSize
-      # rubocop: disable Metrics/CyclomaticComplexity
-      # rubocop: disable Metrics/PerceivedComplexity
       def self.deserialize(binary)
         raise Error::ErrorAlerts, :internal_error if binary.nil?
         raise Error::ErrorAlerts, :decode_error if binary.length < 5
@@ -70,13 +66,11 @@ module TTTLS13
           HandshakeType::CERTIFICATE + ct_bin.prefix_uint24_length
         )
         CompressedCertificate.new(
-          certificate_message: certificate_message,
-          algorithm: algorithm
+          certificate_message:,
+          algorithm:
         )
       end
       # rubocop: enable Metrics/AbcSize
-      # rubocop: enable Metrics/CyclomaticComplexity
-      # rubocop: enable Metrics/PerceivedComplexity
     end
   end
 end

@@ -72,9 +72,9 @@ RSpec.describe Endpoint do
       signature = cv.signature
 
       expect(Endpoint.verified_certificate_verify?(
-               public_key: public_key,
-               signature_scheme: signature_scheme,
-               signature: signature,
+               public_key:,
+               signature_scheme:,
+               signature:,
                context: 'TLS 1.3, server CertificateVerify',
                hash: transcript.hash(digest, CT)
              )).to be true
@@ -104,15 +104,15 @@ RSpec.describe Endpoint do
       # used RSASSA-PSS signature_scheme, salt is a random sequence.
       # CertificateVerify.signature is random.
       signature = Endpoint.sign_certificate_verify(
-        key: key,
-        signature_scheme: signature_scheme,
+        key:,
+        signature_scheme:,
         context: 'TLS 1.3, server CertificateVerify',
         hash: transcript.hash(digest, CT)
       )
       expect(Endpoint.verified_certificate_verify?(
-               public_key: public_key,
-               signature_scheme: signature_scheme,
-               signature: signature,
+               public_key:,
+               signature_scheme:,
+               signature:,
                context: 'TLS 1.3, server CertificateVerify',
                hash: transcript.hash(digest, CT)
              )).to be true
@@ -156,9 +156,9 @@ RSpec.describe Endpoint do
       signature = cv.signature
 
       expect(Endpoint.verified_certificate_verify?(
-               public_key: public_key,
-               signature_scheme: signature_scheme,
-               signature: signature,
+               public_key:,
+               signature_scheme:,
+               signature:,
                context: 'TLS 1.3, server CertificateVerify',
                hash: transcript.hash(digest, CT)
              )).to be true

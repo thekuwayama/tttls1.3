@@ -9,7 +9,7 @@ module TTTLS13
     # @param shared_secret [String]
     # @param cipher_suite [TTTLS13::CipherSuite]
     # @param transcript [TTTLS13::Transcript]
-    def initialize(psk: nil, shared_secret:, cipher_suite:, transcript:)
+    def initialize(shared_secret:, cipher_suite:, transcript:, psk: nil)
       @digest = CipherSuite.digest(cipher_suite)
       @hash_len = CipherSuite.hash_len(cipher_suite)
       @key_len = CipherSuite.key_len(cipher_suite)

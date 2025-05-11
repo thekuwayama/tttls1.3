@@ -6,8 +6,7 @@ module TTTLS13
   module Message
     module Extension
       class EarlyDataIndication
-        attr_reader :extension_type
-        attr_reader :max_early_data_size
+        attr_reader :extension_type, :max_early_data_size
 
         # @param max_early_data_size [Integer, nil]
         #

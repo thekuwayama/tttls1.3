@@ -5,8 +5,7 @@ module TTTLS13
   using Refinements
   module Message
     class Finished
-      attr_reader :msg_type
-      attr_reader :verify_data
+      attr_reader :msg_type, :verify_data
 
       # @param verify_data [String]
       def initialize(verify_data)

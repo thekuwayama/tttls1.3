@@ -6,15 +6,12 @@ module TTTLS13
   module Message
     module Extension
       class SupportedVersions
-        attr_reader :extension_type
-        attr_reader :msg_type
-        attr_reader :versions
+        attr_reader :extension_type, :msg_type, :versions
 
         # @param msg_type [TTTLS13::Message::ContentType]
         # @param versions [Array of ProtocolVersion]
         #
         # @raise [TTTLS13::Error::ErrorAlerts]
-        # rubocop: disable Metrics/CyclomaticComplexity
         def initialize(msg_type:, versions: DEFAULT_VERSIONS)
           @extension_type = ExtensionType::SUPPORTED_VERSIONS
           @msg_type = msg_type
@@ -30,7 +27,6 @@ module TTTLS13
             raise Error::ErrorAlerts, :internal_error
           end
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
 
         # @return [String]
         def serialize
@@ -64,7 +60,7 @@ module TTTLS13
           else
             return nil
           end
-          SupportedVersions.new(msg_type: msg_type, versions: versions)
+          SupportedVersions.new(msg_type:, versions:)
         end
 
         # @param binary [String]
@@ -72,7 +68,6 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [Array of String, nil]
-        # rubocop: disable Metrics/CyclomaticComplexity
         def self.deserialize_versions(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
 
@@ -91,7 +86,6 @@ module TTTLS13
 
           versions
         end
-        # rubocop: enable Metrics/CyclomaticComplexity
       end
     end
   end

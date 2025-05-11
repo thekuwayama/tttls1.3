@@ -7,8 +7,7 @@ module TTTLS13
     module Extension
       #     ExtensionType OuterExtensions<2..254>;
       class ECHOuterExtensions
-        attr_reader :extension_type
-        attr_reader :outer_extensions
+        attr_reader :extension_type, :outer_extensions
 
         # @param outer_extensions [Array of TTTLS13::Message::ExtensionType]
         def initialize(outer_extensions)
