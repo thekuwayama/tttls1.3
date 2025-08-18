@@ -12,7 +12,7 @@ group :development do
   gem 'byebug'
   gem 'http_parser.rb'
   gem 'rake'
-  gem 'resolv', '~> 0.4.0'
+  gem 'resolv', '>= 0.6.2'
   gem 'rspec'
   gem 'rubocop', '1.62.0'
   gem 'webrick'
