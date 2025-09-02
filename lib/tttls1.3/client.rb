@@ -79,10 +79,10 @@ module TTTLS13
   STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES = [
     HpkeSymmetricCipherSuite.new(
       HpkeSymmetricCipherSuite::HpkeKdfId.new(
-        Ech::KdfId::HKDF_SHA256
+        HPKE::HKDF_SHA256
       ),
       HpkeSymmetricCipherSuite::HpkeAeadId.new(
-        Ech::AeadId::AES_128_GCM
+        HPKE::AES_128_GCM
       )
     )
   ].freeze
