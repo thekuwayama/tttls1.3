@@ -21,18 +21,19 @@ module TTTLS13
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello] ClientHelloInner
     # @return [TTTLS13::EchState]
+    # @return [String]
     # rubocop: disable Metrics/AbcSize
     def self.offer_ech(inner, ech_config, hpke_cipher_suite_selector)
-      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
+      return [new_greased_ch(inner, new_grease_ech), nil, nil, nil] \
         if ech_config.nil? ||
            !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
       # Encrypted ClientHello Configuration
-      ech_state, enc = encrypted_ech_config(
+      ech_state, enc, ech_secret = encrypted_ech_config(
         ech_config,
         hpke_cipher_suite_selector
       )
-      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
+      return [new_greased_ch(inner, new_grease_ech), nil, nil, nil] \
         if ech_state.nil? || enc.nil?
 
       # for ech_outer_extensions
@@ -62,7 +63,7 @@ module TTTLS13
         ech_state.ctx.seal(aad.serialize[4..], encoded)
       )
 
-      [outer, inner, ech_state]
+      [outer, inner, ech_state, ech_secret]
     end
     # rubocop: enable Metrics/AbcSize
 
@@ -70,6 +71,7 @@ module TTTLS13
     # @param hpke_cipher_suite_selector [Method]
     #
     # @return [TTTLS13::EchState or nil]
+    # @return [String or nil]
     # @return [String or nil]
     # rubocop: disable Metrics/AbcSize
     def self.encrypted_ech_config(ech_config, hpke_cipher_suite_selector)
@@ -80,17 +82,18 @@ module TTTLS13
       config_id = key_config.config_id
       cipher_suite = hpke_cipher_suite_selector.call(key_config)
       aead_cipher = cipher_suite&.aead_id&.uint16
-      return [nil, nil] \
+      return [nil, nil, nil] \
         if [kem_id, aead_cipher].any?(&:nil?)
 
       kem_curve, hash = kem_id2dhkem(kem_id)
       pkr = kem_curve&.new(hash)&.deserialize_public_key(public_key)
-      return [nil, nil] if pkr.nil?
+      return [nil, nil, nil] if pkr.nil?
 
       hpke = HPKE.new(kem_id, hash, aead_cipher)
       base_s = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
       enc = base_s[:enc]
       ctx = base_s[:context_s]
+      ech_secret = base_s[:shared_secret]
       mnl = ech_config.echconfig_contents.maximum_name_length
       ech_state = EchState.new(
         mnl,
@@ -100,7 +103,7 @@ module TTTLS13
         ctx
       )
 
-      [ech_state, enc]
+      [ech_state, enc, ech_secret]
     end
     # rubocop: enable Metrics/AbcSize
 
