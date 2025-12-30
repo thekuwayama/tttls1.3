@@ -2,7 +2,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/tttls1.3.svg)](https://badge.fury.io/rb/tttls1.3)
 [![Actions Status](https://github.com/thekuwayama/tttls1.3/workflows/CI/badge.svg)](https://github.com/thekuwayama/tttls1.3/actions?workflow=CI)
-[![Maintainability](https://api.codeclimate.com/v1/badges/b5ae1b3a43828142d2fa/maintainability)](https://codeclimate.com/github/thekuwayama/tttls1.3/maintainability)
+[![Maintainability](https://qlty.sh/gh/thekuwayama/projects/tttls1.3/maintainability.svg)](https://qlty.sh/gh/thekuwayama/projects/tttls1.3)
 
 tttls1.3 is Ruby implementation of [TLS 1.3](https://datatracker.ietf.org/doc/rfc8446/) protocol.
 

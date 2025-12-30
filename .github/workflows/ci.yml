@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           gem --version
-          gem install bundler
+          gem install bundler:2.6.9
           bundle --version
           bundle install
       - name: Run rubocop
