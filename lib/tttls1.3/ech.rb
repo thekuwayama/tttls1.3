@@ -79,17 +79,15 @@ module TTTLS13
       kem_id = key_config&.kem_id&.uint16
       config_id = key_config.config_id
       cipher_suite = hpke_cipher_suite_selector.call(key_config)
-      aead_cipher = aead_id2aead_cipher(cipher_suite&.aead_id&.uint16)
-      kdf_hash = kdf_id2kdf_hash(cipher_suite&.kdf_id&.uint16)
+      aead_cipher = cipher_suite&.aead_id&.uint16
       return [nil, nil] \
-        if [kem_id, aead_cipher, kdf_hash].any?(&:nil?)
+        if [kem_id, aead_cipher].any?(&:nil?)
 
-      kem_curve_name, kem_hash = kem_id2dhkem(kem_id)
-      dhkem = kem_curve_name2dhkem(kem_curve_name)
-      pkr = dhkem&.new(kem_hash)&.deserialize_public_key(public_key)
+      kem_curve, hash = kem_id2dhkem(kem_id)
+      pkr = kem_curve&.new(hash)&.deserialize_public_key(public_key)
       return [nil, nil] if pkr.nil?
 
-      hpke = HPKE.new(kem_curve_name, kem_hash, kdf_hash, aead_cipher)
+      hpke = HPKE.new(kem_id, hash, aead_cipher)
       base_s = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
       enc = base_s[:enc]
       ctx = base_s[:context_s]
@@ -259,10 +257,10 @@ module TTTLS13
       # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#name-compliance-requirements
       cipher_suite = HpkeSymmetricCipherSuite.new(
         HpkeSymmetricCipherSuite::HpkeKdfId.new(
-          KdfId::HKDF_SHA256
+          HPKE::HKDF_SHA256
         ),
         HpkeSymmetricCipherSuite::HpkeAeadId.new(
-          AeadId::AES_128_GCM
+          HPKE::AES_128_GCM
         )
       )
       # Set the enc field to a randomly-generated valid encapsulated public key
@@ -272,7 +270,7 @@ module TTTLS13
       public_key = OpenSSL::PKey.read(
         OpenSSL::PKey.generate_key('X25519').public_to_pem
       )
-      hpke = HPKE.new(:x25519, :sha256, :sha256, :aes_128_gcm)
+      hpke = HPKE.new(HPKE::DHKEM_X25519_HKDF_SHA256, HPKE::HKDF_SHA256, HPKE::AES_128_GCM)
       enc = hpke.setup_base_s(public_key, '')[:enc]
       # Set the payload field to a randomly-generated string of L+C bytes, where
       # C is the ciphertext expansion of the selected AEAD scheme and L is the
@@ -281,7 +279,7 @@ module TTTLS13
       #
       # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.4.1
       payload_len = placeholder_encoded_ch_inner_len \
-                    + aead_id2overhead_len(AeadId::AES_128_GCM)
+                    + aead_id2overhead_len(HPKE::AES_128_GCM)
 
       Message::Extension::ECHClientHello.new_outer(
         cipher_suite:,
@@ -313,87 +311,27 @@ module TTTLS13
       )
     end
 
-    module KemId
-      # https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kem-ids
-      P_256_SHA256  = 0x0010
-      P_384_SHA384  = 0x0011
-      P_521_SHA512  = 0x0012
-      X25519_SHA256 = 0x0020
-      X448_SHA512   = 0x0021
-    end
-
     def self.kem_id2dhkem(kem_id)
       case kem_id
-      when KemId::P_256_SHA256
-        %i[p_256 sha256]
-      when KemId::P_384_SHA384
-        %i[p_384 sha384]
-      when KemId::P_521_SHA512
-        %i[p_521 sha512]
-      when KemId::X25519_SHA256
-        %i[x25519 sha256]
-      when KemId::X448_SHA512
-        %i[x448 sha512]
+      when HPKE::DHKEM_P256_HKDF_SHA256
+        [HPKE::DHKEM::EC::P_256, HPKE::HKDF_SHA256]
+      when HPKE::DHKEM_P384_HKDF_SHA384
+        [HPKE::DHKEM::EC::P_384, HPKE::HKDF_SHA384]
+      when HPKE::DHKEM_P521_HKDF_SHA512
+        [HPKE::DHKEM::EC::P_521, HPKE::HKDF_SHA512]
+      when HPKE::DHKEM_X25519_HKDF_SHA256
+        [HPKE::DHKEM::X25519, HPKE::HKDF_SHA256]
+      when HPKE::DHKEM_X448_HKDF_SHA512
+        [HPKE::DHKEM::X448, HPKE::HKDF_SHA512]
       end
-    end
-
-    def self.kem_curve_name2dhkem(kem_curve_name)
-      case kem_curve_name
-      when :p_256
-        HPKE::DHKEM::EC::P_256
-      when :p_384
-        HPKE::DHKEM::EC::P_384
-      when :p_521
-        HPKE::DHKEM::EC::P_521
-      when :x25519
-        HPKE::DHKEM::X25519
-      when :x448
-        HPKE::DHKEM::X448
-      end
-    end
-
-    module KdfId
-      # https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kdf-ids
-      HKDF_SHA256 = 0x0001
-      HKDF_SHA384 = 0x0002
-      HKDF_SHA512 = 0x0003
-    end
-
-    def self.kdf_id2kdf_hash(kdf_id)
-      case kdf_id
-      when KdfId::HKDF_SHA256
-        :sha256
-      when KdfId::HKDF_SHA384
-        :sha384
-      when KdfId::HKDF_SHA512
-        :sha512
-      end
-    end
-
-    module AeadId
-      # https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-aead-ids
-      AES_128_GCM       = 0x0001
-      AES_256_GCM       = 0x0002
-      CHACHA20_POLY1305 = 0x0003
     end
 
     def self.aead_id2overhead_len(aead_id)
       case aead_id
-      when AeadId::AES_128_GCM, AeadId::CHACHA20_POLY1305
+      when HPKE::AES_128_GCM, HPKE::CHACHA20_POLY1305
         16
-      when AeadId::AES_256_GCM
+      when HPKE::AES_256_GCM
         32
-      end
-    end
-
-    def self.aead_id2aead_cipher(aead_id)
-      case aead_id
-      when AeadId::AES_128_GCM
-        :aes_128_gcm
-      when AeadId::AES_256_GCM
-        :aes_256_gcm
-      when AeadId::CHACHA20_POLY1305
-        :chacha20_poly1305
       end
     end
   end
