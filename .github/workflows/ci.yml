@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby-version: ['3.1', '3.2', '3.3']
+        ruby-version: ['3.3', '3.4', '4.0']
     env:
       SPEC_VERBOSE: true
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           gem --version
-          gem install bundler:2.6.9
+          gem install bundler
           bundle --version
           bundle install
       - name: Run rubocop
