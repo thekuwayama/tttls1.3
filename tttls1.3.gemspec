@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_dependency             'ech_config', '~> 0.0.3'
-  spec.add_dependency             'hpke'
+  spec.add_dependency             'hpke', '~> 1.0.0'
   spec.add_dependency             'logger'
   spec.add_dependency             'openssl', '>= 3'
 end
