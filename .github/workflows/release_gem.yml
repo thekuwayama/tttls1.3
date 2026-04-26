@@ -8,10 +8,6 @@ jobs:
     if: github.repository == 'thekuwayama/tttls1.3'
     runs-on: ubuntu-latest
 
-    environment:
-      name: rubygems.org
-      url: https://rubygems.org/gems/tttls1.3
-
     permissions:
       contents: write
       id-token: write
@@ -25,8 +21,8 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@ae195bbe749a7cef685ac729197124a48305c1cb # v1.276.0
         with:
-          ruby-version: 4.0
-     - name: Publish to RubyGems
+          ruby-version: '4.0'
+      - name: Publish to RubyGems
         uses: rubygems/release-gem@6317d8d1f7e28c24d28f6eff169ea854948bd9f7 # v1.2.0
       - name: Create GitHub release
         run: |
