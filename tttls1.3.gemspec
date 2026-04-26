@@ -15,8 +15,11 @@ Gem::Specification.new do |spec|
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 3.1.0'
 
-  spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR)
-  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
+  spec.files = Dir.chdir(File.expand_path(__dir__)) do
+    `git ls-files -z`.split("\x0").reject do |f|
+      (f == __FILE__) || f.match(%r{\A(?:(?:bin|test|spec|features)/|\.(?:git|travis|circleci)|appveyor)})
+    end
+  end
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler'
