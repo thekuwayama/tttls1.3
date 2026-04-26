@@ -19,7 +19,7 @@ GEM
     hpke (1.0.0)
       openssl (~> 3.3.0, >= 3.0)
     http_parser.rb (0.8.1)
-    json (2.18.0)
+    json (2.19.2)
     language_server-protocol (3.17.0.5)
     logger (1.7.0)
     openssl (3.3.2)
