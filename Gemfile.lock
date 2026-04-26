@@ -1,0 +1,89 @@
+PATH
+  remote: .
+  specs:
+    tttls1.3 (0.3.7)
+      ech_config (~> 0.0.3)
+      hpke (~> 1.0.0)
+      logger
+      openssl (>= 3)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ast (2.4.3)
+    base64 (0.3.0)
+    byebug (12.0.0)
+    diff-lcs (1.6.2)
+    ech_config (0.0.3)
+      sorbet-runtime
+    hpke (1.0.0)
+      openssl (~> 3.3.0, >= 3.0)
+    http_parser.rb (0.8.1)
+    json (2.18.0)
+    language_server-protocol (3.17.0.5)
+    logger (1.7.0)
+    openssl (3.3.2)
+    parallel (1.27.0)
+    parser (3.3.10.0)
+      ast (~> 2.4.1)
+      racc
+    prism (1.7.0)
+    racc (1.8.1)
+    rainbow (3.1.1)
+    rake (13.3.1)
+    regexp_parser (2.11.3)
+    resolv (0.7.0)
+    rexml (3.4.4)
+    rspec (3.13.2)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.6)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.7)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.6)
+    rubocop (1.62.0)
+      json (~> 2.3)
+      language_server-protocol (>= 3.17.0)
+      parallel (~> 1.10)
+      parser (>= 3.3.0.2)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 1.8, < 3.0)
+      rexml (>= 3.2.5, < 4.0)
+      rubocop-ast (>= 1.31.1, < 2.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (>= 2.4.0, < 3.0)
+    rubocop-ast (1.49.0)
+      parser (>= 3.3.7.2)
+      prism (~> 1.7)
+    ruby-progressbar (1.13.0)
+    sorbet-runtime (0.6.12872)
+    unicode-display_width (2.6.0)
+    webrick (1.9.2)
+
+PLATFORMS
+  arm64-darwin-23
+  ruby
+
+DEPENDENCIES
+  base64
+  bundler
+  byebug
+  ech_config (~> 0.0.3)
+  hpke (~> 1.0.0)
+  http_parser.rb
+  logger
+  rake
+  resolv (>= 0.6.2)
+  rspec
+  rubocop (= 1.62.0)
+  tttls1.3!
+  webrick
+
+BUNDLED WITH
+   2.6.9

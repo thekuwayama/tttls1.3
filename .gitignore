@@ -1,6 +1,5 @@
 *.gem
 *.rbc
-Gemfile.lock
 .config
 .rvmrc
 /.bundle/

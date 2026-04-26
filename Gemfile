@@ -5,7 +5,6 @@ source 'https://rubygems.org'
 gem 'ech_config', '~> 0.0.3'
 gem 'hpke', '~> 1.0.0'
 gem 'logger'
-gem 'openssl'
 
 group :development do
   gem 'base64'
