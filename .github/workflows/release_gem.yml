@@ -21,6 +21,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@0cb964fd540e0a24c900370abf38a33466142735 # v1.305.0
         with:
+          # https://github.com/rubygems/release-gem/issues/28
           ruby-version: '3.4'
       - name: Bundle install
         run: bundle install
