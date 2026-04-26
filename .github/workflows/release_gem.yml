@@ -21,8 +21,9 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@0cb964fd540e0a24c900370abf38a33466142735 # v1.305.0
         with:
-          ruby-version: '4.0'
-          bundler-cache: true
+          ruby-version: '3.4'
+      - name: Bundle install
+        run: bundle install
       - name: Publish to RubyGems
         uses: rubygems/release-gem@6317d8d1f7e28c24d28f6eff169ea854948bd9f7 # v1.2.0
       - name: Create GitHub release
