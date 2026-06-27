@@ -73,7 +73,6 @@ module TTTLS13
     # @return [TTTLS13::EchState or nil]
     # @return [String or nil]
     # @return [String or nil]
-    # rubocop: disable Metrics/AbcSize
     def self.encrypted_ech_config(ech_config, hpke_cipher_suite_selector)
       public_name = ech_config.echconfig_contents.public_name
       key_config = ech_config.echconfig_contents.key_config
@@ -81,19 +80,19 @@ module TTTLS13
       kem_id = key_config&.kem_id&.uint16
       config_id = key_config.config_id
       cipher_suite = hpke_cipher_suite_selector.call(key_config)
-      aead_cipher = cipher_suite&.aead_id&.uint16
+      kdf_id = cipher_suite&.kdf_id&.uint16
+      aead_id = cipher_suite&.aead_id&.uint16
       return [nil, nil, nil] \
-        if [kem_id, aead_cipher].any?(&:nil?)
+        if [kem_id, kdf_id, aead_id].any?(&:nil?)
 
-      kem_curve, hash = kem_id2dhkem(kem_id)
-      pkr = kem_curve&.new(hash)&.deserialize_public_key(public_key)
-      return [nil, nil, nil] if pkr.nil?
+      suite = begin
+        OpenSSL::HPKE::Suite.new(kem_id, kdf_id, aead_id)
+      rescue OpenSSL::HPKE::HPKEError
+        return [nil, nil, nil]
+      end
 
-      hpke = HPKE.new(kem_id, hash, aead_cipher)
-      base_s = hpke.setup_base_s(pkr, "tls ech\x00" + ech_config.encode)
-      enc = base_s[:enc]
-      ctx = base_s[:context_s]
-      ech_secret = base_s[:shared_secret]
+      ctx = OpenSSL::HPKE::Context::Sender.new(suite)
+      enc = ctx.encap(public_key, "tls ech\x00" + ech_config.encode)
       mnl = ech_config.echconfig_contents.maximum_name_length
       ech_state = EchState.new(
         mnl,
@@ -103,9 +102,9 @@ module TTTLS13
         ctx
       )
 
-      [ech_state, enc, ech_secret]
+      # shared_secret is not exposed by OpenSSL::HPKE
+      [ech_state, enc, nil]
     end
-    # rubocop: enable Metrics/AbcSize
 
     # @param inner [TTTLS13::Message::ClientHello]
     # @param ech_state [TTTLS13::EchState]
@@ -259,22 +258,17 @@ module TTTLS13
     def self.new_grease_ech
       # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#name-compliance-requirements
       cipher_suite = HpkeSymmetricCipherSuite.new(
-        HpkeSymmetricCipherSuite::HpkeKdfId.new(
-          HPKE::HKDF_SHA256
-        ),
-        HpkeSymmetricCipherSuite::HpkeAeadId.new(
-          HPKE::AES_128_GCM
-        )
+        HpkeSymmetricCipherSuite::HpkeKdfId.new(0x0001),  # HKDF-SHA256
+        HpkeSymmetricCipherSuite::HpkeAeadId.new(0x0001)  # AES-128-GCM
       )
       # Set the enc field to a randomly-generated valid encapsulated public key
       # output by the HPKE KEM.
       #
       # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.3.1
-      public_key = OpenSSL::PKey.read(
-        OpenSSL::PKey.generate_key('X25519').public_to_pem
-      )
-      hpke = HPKE.new(HPKE::DHKEM_X25519_HKDF_SHA256, HPKE::HKDF_SHA256, HPKE::AES_128_GCM)
-      enc = hpke.setup_base_s(public_key, '')[:enc]
+      suite = OpenSSL::HPKE::Suite.new(0x0020, 0x0001, 0x0001) # DHKEM(X25519), HKDF-SHA256, AES-128-GCM
+      pub_raw = OpenSSL::PKey.generate_key('X25519').raw_public_key
+      sender = OpenSSL::HPKE::Context::Sender.new(suite)
+      enc = sender.encap(pub_raw, '')
       # Set the payload field to a randomly-generated string of L+C bytes, where
       # C is the ciphertext expansion of the selected AEAD scheme and L is the
       # size of the EncodedClientHelloInner the client would compute when
@@ -282,7 +276,7 @@ module TTTLS13
       #
       # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.4.1
       payload_len = placeholder_encoded_ch_inner_len \
-                    + aead_id2overhead_len(HPKE::AES_128_GCM)
+                    + aead_id2overhead_len(0x0001) # AES-128-GCM
 
       Message::Extension::ECHClientHello.new_outer(
         cipher_suite:,
@@ -314,26 +308,11 @@ module TTTLS13
       )
     end
 
-    def self.kem_id2dhkem(kem_id)
-      case kem_id
-      when HPKE::DHKEM_P256_HKDF_SHA256
-        [HPKE::DHKEM::EC::P_256, HPKE::HKDF_SHA256]
-      when HPKE::DHKEM_P384_HKDF_SHA384
-        [HPKE::DHKEM::EC::P_384, HPKE::HKDF_SHA384]
-      when HPKE::DHKEM_P521_HKDF_SHA512
-        [HPKE::DHKEM::EC::P_521, HPKE::HKDF_SHA512]
-      when HPKE::DHKEM_X25519_HKDF_SHA256
-        [HPKE::DHKEM::X25519, HPKE::HKDF_SHA256]
-      when HPKE::DHKEM_X448_HKDF_SHA512
-        [HPKE::DHKEM::X448, HPKE::HKDF_SHA512]
-      end
-    end
-
     def self.aead_id2overhead_len(aead_id)
       case aead_id
-      when HPKE::AES_128_GCM, HPKE::CHACHA20_POLY1305
+      when 0x0001, 0x0003 # AES-128-GCM, ChaCha20Poly1305
         16
-      when HPKE::AES_256_GCM
+      when 0x0002 # AES-256-GCM
         32
       end
     end
@@ -346,7 +325,7 @@ module TTTLS13
     # @param config_id [Integer]
     # @param cipher_suite [HpkeSymmetricCipherSuite]
     # @param public_name [String]
-    # @param ctx [HPKE::ContextS]
+    # @param ctx [OpenSSL::HPKE::Context::Sender]
     def initialize(maximum_name_length,
                    config_id,
                    cipher_suite,
