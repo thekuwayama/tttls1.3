@@ -23,7 +23,9 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler'
+  # TODO: tighten to '>= 0.0.6' once ech_config releases the ech_auth extensions
   spec.add_dependency             'ech_config', '~> 0.0.5'
   spec.add_dependency             'logger'
+  # TODO: tighten to '>= 4.0.3' once ruby/openssl releases OpenSSL::HPKE
   spec.add_dependency             'openssl', '>= 4'
 end
