@@ -265,7 +265,7 @@ module TTTLS13
       # output by the HPKE KEM.
       #
       # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.3.1
-      suite = OpenSSL::HPKE::Suite.new(0x0020, 0x0001, 0x0001) # DHKEM(X25519), HKDF-SHA256, AES-128-GCM
+      suite = OpenSSL::HPKE::Suite.new('X25519', 'HKDF-SHA256', 'AES-128-GCM')
       pub_raw = OpenSSL::PKey.generate_key('X25519').raw_public_key
       sender = OpenSSL::HPKE::Context::Sender.new(suite)
       enc = sender.encap(pub_raw, '')
