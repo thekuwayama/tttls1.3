@@ -9,7 +9,6 @@ module TTTLS13
       SERVER_HANDSHAKE_TRAFFIC_SECRET = 'SERVER_HANDSHAKE_TRAFFIC_SECRET'
       CLIENT_TRAFFIC_SECRET_0         = 'CLIENT_TRAFFIC_SECRET_0'
       SERVER_TRAFFIC_SECRET_0         = 'SERVER_TRAFFIC_SECRET_0'
-      ECH_SECRET                      = 'ECH_SECRET'
       ECH_CONFIG                      = 'ECH_CONFIG'
     end
 
@@ -68,16 +67,6 @@ module TTTLS13
           Label::SERVER_TRAFFIC_SECRET_0,
           client_random,
           secret
-        )
-      end
-
-      # @param client_random [String]
-      # @param ech_secret [String]
-      def write_ech_secret(client_random, ech_secret)
-        write_key_log(
-          Label::ECH_SECRET,
-          client_random,
-          ech_secret
         )
       end
 
