@@ -188,11 +188,9 @@ module TTTLS13
 
           extensions, shared_secret = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
-          ch, inner, ech_state, ech_secret = send_client_hello(extensions, binder_key)
-          unless ech_secret.nil?
-            sslkeylogfile&.write_ech_secret(ch.random, ech_secret)
-            sslkeylogfile&.write_ech_config(ch.random, @settings[:ech_config].encode)
-          end
+          ch, inner, ech_state = send_client_hello(extensions, binder_key)
+          sslkeylogfile&.write_ech_config(ch.random, @settings[:ech_config].encode) \
+            if ech_state
 
           ch_outer = ch
           # use ClientHelloInner messages for the transcript hash
@@ -844,7 +842,7 @@ module TTTLS13
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = inner_ech
-        ch, inner, ech_state, ech_secret = Ech.offer_ech(
+        ch, inner, ech_state = Ech.offer_ech(
           inner,
           @settings[:ech_config],
           method(:select_ech_hpke_cipher_suite)
@@ -882,7 +880,7 @@ module TTTLS13
       @connection.send_handshakes(Message::ContentType::HANDSHAKE, [ch],
                                   Cryptograph::Passer.new)
 
-      [ch, inner, ech_state, ech_secret]
+      [ch, inner, ech_state]
     end
     # rubocop: enable Metrics/MethodLength
 

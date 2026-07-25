@@ -24,16 +24,16 @@ module TTTLS13
     # @return [String]
     # rubocop: disable Metrics/AbcSize
     def self.offer_ech(inner, ech_config, hpke_cipher_suite_selector)
-      return [new_greased_ch(inner, new_grease_ech), nil, nil, nil] \
+      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
         if ech_config.nil? ||
            !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
 
       # Encrypted ClientHello Configuration
-      ech_state, enc, ech_secret = encrypted_ech_config(
+      ech_state, enc = encrypted_ech_config(
         ech_config,
         hpke_cipher_suite_selector
       )
-      return [new_greased_ch(inner, new_grease_ech), nil, nil, nil] \
+      return [new_greased_ch(inner, new_grease_ech), nil, nil] \
         if ech_state.nil? || enc.nil?
 
       # for ech_outer_extensions
@@ -63,7 +63,7 @@ module TTTLS13
         ech_state.ctx.seal(aad.serialize[4..], encoded)
       )
 
-      [outer, inner, ech_state, ech_secret]
+      [outer, inner, ech_state]
     end
     # rubocop: enable Metrics/AbcSize
 
@@ -71,7 +71,6 @@ module TTTLS13
     # @param hpke_cipher_suite_selector [Method]
     #
     # @return [TTTLS13::EchState or nil]
-    # @return [String or nil]
     # @return [String or nil]
     def self.encrypted_ech_config(ech_config, hpke_cipher_suite_selector)
       public_name = ech_config.echconfig_contents.public_name
@@ -102,8 +101,7 @@ module TTTLS13
         ctx
       )
 
-      # shared_secret is not exposed by OpenSSL::HPKE
-      [ech_state, enc, nil]
+      [ech_state, enc]
     end
 
     # @param inner [TTTLS13::Message::ClientHello]
