@@ -78,12 +78,8 @@ module TTTLS13
 
   STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES = [
     HpkeSymmetricCipherSuite.new(
-      HpkeSymmetricCipherSuite::HpkeKdfId.new(
-        HPKE::HKDF_SHA256
-      ),
-      HpkeSymmetricCipherSuite::HpkeAeadId.new(
-        HPKE::AES_128_GCM
-      )
+      HpkeSymmetricCipherSuite::HpkeKdfId.new(0x0001),
+      HpkeSymmetricCipherSuite::HpkeAeadId.new(0x0001)
     )
   ].freeze
   # rubocop: disable Metrics/ClassLength

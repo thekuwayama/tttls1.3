@@ -6,7 +6,6 @@ require 'net/http'
 require 'logger'
 
 require 'ech_config'
-require 'hpke'
 
 require 'tttls1.3/version'
 require 'tttls1.3/utils'
