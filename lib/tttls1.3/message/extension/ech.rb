@@ -186,11 +186,14 @@ module TTTLS13
         # @return [TTTLS13::Message::Extensions::ECHEncryptedExtensions]
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
-          return nil if binary.length != binary.slice(0, 2).unpack1('n') + 2
+          return nil if binary.length < 2 ||
+                        binary.length != binary.slice(0, 2).unpack1('n') + 2
 
           ECHEncryptedExtensions.new(
             ECHConfig.decode_vectors(binary.slice(2..))
           )
+        rescue ECHConfig::DecodeError
+          nil
         end
       end
 

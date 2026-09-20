@@ -67,6 +67,17 @@ RSpec.describe ECHClientHello do
     end
   end
 
+  context 'invalid ECHEncryptedExtensions binary' do
+    let(:malformed) do
+      "\xfe\x0d\x00\x02\xaa\xbb".prefix_uint16_length
+    end
+
+    it 'should NOT be deserialized' do
+      expect(ECHEncryptedExtensions.deserialize(malformed)).to be_nil
+      expect(ECHEncryptedExtensions.deserialize('')).to be_nil
+    end
+  end
+
   context 'valid ECHHelloRetryRequest binary' do
     let(:extension) do
       ECHHelloRetryRequest.deserialize(TESTBINARY_ECH_HRR)
