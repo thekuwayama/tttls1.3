@@ -23,6 +23,7 @@ tttls1.3 provides client API with the following features:
 * HelloRetryRequest
 * Resumed 0-RTT Handshake (with PSK from NST)
 * [ECH](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/)
+* [Authenticated ECH Config Distribution and Rotation](https://datatracker.ietf.org/doc/html/draft-sullivan-tls-signed-ech-updates-02)
 
 **NOT supports** certificate with OID RSASSA-PSS, FFDHE, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
 
@@ -77,6 +78,27 @@ server.close
 
 [Here](https://github.com/thekuwayama/tttls1.3/tree/main/example) are some examples of HTTPS.
 
+### Authenticated ECH Config Distribution and Rotation
+
+When a server rejects ECH it returns retry\_configs. If `:ech_config` carries an `ech_authinfo` extension, `TTTLS13::Client#retry_configs` returns only the retry\_configs whose `ech_auth` is signed by a key listed in its `trusted_keys` and whose `not_after` has not passed. Retrying the handshake is your code's responsibility:
+
+```ruby
+if client.rejected_ech?
+  retry_config = client.retry_configs.first
+  ech_auth = retry_config&.echconfig_contents
+                         &.extensions
+                         &.[](ECHConfig::ECHConfigContents::Extensions::ECHAuth::TYPE)
+
+  # When set to 1, the client MUST NOT attempt ECH on the retry.
+  # https://datatracker.ietf.org/doc/html/draft-sullivan-tls-signed-ech-updates-02#section-5.1-7
+  next_ech_config = retry_config unless ech_auth&.disable?
+
+  # retry the handshake with a new transport connection
+end
+```
+
+Both ECHConfig extension codepoints are placeholders until IANA assigns them, so this is NOT interoperable yet.
+
 
 ## Settings
 
@@ -104,7 +126,7 @@ tttls1.3 client is configurable using keyword arguments.
 | `:check_certificate_status` | Boolean | false | If needed to check certificate status, set true. |
 | `:process_certificate_status` | Proc | `TTTLS13::Client.method(:softfail_check_certificate_status)` | Proc(or Method) that checks received OCSPResponse. Its 3 arguments are OpenSSL::OCSP::Response, end-entity certificate(OpenSSL::X509::Certificate) and certificates chain(Array of Certificate) used for verification and it returns Boolean. |
 | `:compress_certificate_algorithms` | Array of TTTLS13::Message::Extension::CertificateCompressionAlgorithm constant | `ZLIB` | The compression algorithms are supported for compressing the Certificate message. |
-| `:ech_config` | ECHConfig | nil | ECHConfig to use ECH. See [ech_config](https://github.com/thekuwayama/ech_config). |
+| `:ech_config` | ECHConfig | nil | ECHConfig to use ECH. See [ech_config](https://github.com/thekuwayama/ech_config). If it carries an `ech_authinfo` extension, `TTTLS13::Client#retry_configs` returns only the retry\_configs whose `ech_auth` signature is verified against its `trusted_keys`. |
 | `:ech_hpke_cipher_suites` | Array of ECHConfig::ECHConfigContents::HpkeKeyConfig::HpkeSymmetricCipherSuite | nil | If needed to use ECH, set client preference HPKE cipher suites. For example, you can set TTTLS13::STANDARD\_CLIENT\_ECH_HPKE\_SYMMETRIC\_CIPHER\_SUITES. |
 | `:compatibility_mode` | Boolean | true | If needed to send ChangeCipherSpec, set true. |
 | `:sslkeylogfile` | String | nil | If needed to log SSLKEYLOGFILE, set the file path. |
