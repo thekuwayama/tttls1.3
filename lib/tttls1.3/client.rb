@@ -105,6 +105,7 @@ module TTTLS13
       @succeed_early_data = false
       @retry_configs = []
       @rejected_ech = false
+      @trusted_keys = EchAuth.trusted_keys(@settings[:ech_config])
       raise Error::ConfigError unless valid_settings?
     end
 
@@ -386,6 +387,7 @@ module TTTLS13
           ]&.retry_configs
           @connection.terminate(:unsupported_extension) \
             if !rejected_ech? && !@retry_configs.nil?
+          @retry_configs ||= []
 
           @connection.state = ClientState::WAIT_CERT_CR
           @connection.state = ClientState::WAIT_FINISHED unless psk.nil?
@@ -498,7 +500,7 @@ module TTTLS13
           logger.debug('ClientState::CONNECTED')
 
           @connection.send_alert(:ech_required) \
-            if use_ech? && !@retry_configs.nil? && !@retry_configs.empty?
+            if use_ech? && !@retry_configs.empty?
           break
         end
       end
@@ -523,7 +525,7 @@ module TTTLS13
       # the client can regard ECH as securely disabled by the server, and it
       # SHOULD retry the handshake with a new transport connection and ECH
       # disabled.
-      if !@retry_configs.nil? && !@retry_configs.empty?
+      unless @retry_configs.empty?
         msg = 'SHOULD retry the handshake with a new transport connection'
         logger.warn(msg)
         return
@@ -582,11 +584,20 @@ module TTTLS13
       @early_data = binary
     end
 
+    # If no retry_config can be successfully authenticated, the client behaves
+    # as though the validation process described in 6.1.7 of [RFC9849] has
+    # failed.
+    #
+    # https://datatracker.ietf.org/doc/html/draft-sullivan-tls-signed-ech-updates-02#section-5.2.2-3
+    #
     # @return [Array of ECHConfig]
     def retry_configs
-      @retry_configs.filter do |c|
+      configs = @retry_configs.filter do |c|
         SUPPORTED_ECHCONFIG_VERSIONS.include?(c.version)
       end
+      return configs if @trusted_keys.nil?
+
+      EchAuth.authenticate(configs, @trusted_keys, Time.now)
     end
 
     # @return [Boolean]
