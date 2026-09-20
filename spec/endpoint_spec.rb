@@ -164,4 +164,41 @@ RSpec.describe Endpoint do
              )).to be true
     end
   end
+
+  context 'endpoint, using ED25519,' do
+    let(:key) do
+      OpenSSL::PKey.generate_key('ED25519')
+    end
+
+    let(:hash) do
+      OpenSSL::Digest.digest('SHA256', 'transcript')
+    end
+
+    it 'should sign and verify CertificateVerify.signature' do
+      signature = Endpoint.sign_certificate_verify(
+        key:,
+        signature_scheme: SignatureScheme::ED25519,
+        context: 'TLS 1.3, server CertificateVerify',
+        hash:
+      )
+      expect(Endpoint.verified_certificate_verify?(
+               public_key: key,
+               signature_scheme: SignatureScheme::ED25519,
+               signature:,
+               context: 'TLS 1.3, server CertificateVerify',
+               hash:
+             )).to be true
+    end
+
+    it 'should NOT verify CertificateVerify.signature, signed over other bytes' do
+      signature = key.sign(nil, 'not the CertificateVerify content')
+      expect(Endpoint.verified_certificate_verify?(
+               public_key: key,
+               signature_scheme: SignatureScheme::ED25519,
+               signature:,
+               context: 'TLS 1.3, server CertificateVerify',
+               hash:
+             )).to be false
+    end
+  end
 end

@@ -27,6 +27,7 @@ module TTTLS13
     SignatureScheme::ECDSA_SECP256R1_SHA256,
     SignatureScheme::ECDSA_SECP384R1_SHA384,
     SignatureScheme::ECDSA_SECP521R1_SHA512,
+    SignatureScheme::ED25519,
     SignatureScheme::RSA_PSS_RSAE_SHA256,
     SignatureScheme::RSA_PSS_RSAE_SHA384,
     SignatureScheme::RSA_PSS_RSAE_SHA512,

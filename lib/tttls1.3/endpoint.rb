@@ -87,7 +87,9 @@ module TTTLS13
         key.sign('SHA384', content)
       when SignatureScheme::ECDSA_SECP521R1_SHA512
         key.sign('SHA512', content)
-      else # TODO: ED25519, ED448
+      when SignatureScheme::ED25519
+        key.sign(nil, content)
+      else # TODO: ED448
         terminate(:internal_error)
       end
     end
@@ -129,7 +131,9 @@ module TTTLS13
         public_key.verify('SHA384', signature, content)
       when SignatureScheme::ECDSA_SECP521R1_SHA512
         public_key.verify('SHA512', signature, content)
-      else # TODO: ED25519, ED448
+      when SignatureScheme::ED25519
+        public_key.verify(nil, signature, content)
+      else # TODO: ED448
         terminate(:internal_error)
       end
     end
