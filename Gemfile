@@ -2,7 +2,8 @@
 
 source 'https://rubygems.org'
 
-gem 'ech_config', '~> 0.0.5'
+gem 'ech_config', github: 'thekuwayama/ech_config',
+                  ref: '8e3a3fd16e317697ac345c55c085ffe6740cfa71'
 gem 'logger'
 gem 'openssl', github: 'ruby/openssl'
 
