@@ -13,7 +13,7 @@ group :development do
   gem 'rake'
   gem 'resolv', '>= 0.6.2'
   gem 'rspec'
-  gem 'rubocop', '1.62.0'
+  gem 'rubocop', '1.82.1'
   gem 'webrick'
 end
 
