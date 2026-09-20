@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-gem 'ech_config', '~> 0.0.3'
+gem 'ech_config', '~> 0.0.5'
 gem 'logger'
 gem 'openssl', github: 'ruby/openssl'
 
