@@ -256,6 +256,39 @@ RSpec.describe Client do
     end
   end
 
+  context 'client using ECH' do
+    let(:client) do
+      Client.new(
+        nil,
+        'localhost',
+        ech_hpke_cipher_suites: STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES
+      )
+    end
+
+    let(:ech_state) do
+      ECH::State.new(0, 0, nil, 'localhost', nil)
+    end
+
+    it 'should be greasing, without an ECH::State' do
+      expect(client.send(:ech_status_of, nil)).to eq ECH::Status::GREASE
+    end
+
+    it 'should be offering an encrypted ClientHello, with an ECH::State' do
+      expect(client.send(:ech_status_of, ech_state))
+        .to eq ECH::Status::OFFERED
+    end
+  end
+
+  context 'client NOT using ECH' do
+    let(:client) do
+      Client.new(nil, 'localhost')
+    end
+
+    it 'should be neither offering nor greasing' do
+      expect(client.send(:ech_status_of, nil)).to eq ECH::Status::NONE
+    end
+  end
+
   context 'client using PSK' do
     let(:client) do
       Client.new(nil, 'localhost')
