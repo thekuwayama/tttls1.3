@@ -294,11 +294,20 @@ RSpec.describe Client do
       SimpleStream.new
     end
 
+    let(:buff) do
+      []
+    end
+
+    let(:nst) do
+      NewSessionTicket.deserialize(TESTBINARY_NEW_SESSION_TICKET)
+    end
+
     let(:client) do
       client = Client.new(
         mock_socket,
         'localhost',
         ech_hpke_cipher_suites: STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
+        process_new_session_ticket: ->(n, _rms, _cs) { buff << n },
         loglevel: Logger::FATAL
       )
       connection = client.instance_variable_get(:@connection)
@@ -311,6 +320,11 @@ RSpec.describe Client do
       client.instance_variable_set(:@ech_status, ECH::Status::ACCEPTED)
       client.write('ping')
       expect(mock_socket.read).to include 'ping'
+    end
+
+    it 'should process NewSessionTicket, if its ECH was accepted' do
+      client.send(:process_new_session_ticket, nst)
+      expect(buff).to eq [nst]
     end
 
     context 'rejected ECH' do
@@ -327,6 +341,11 @@ RSpec.describe Client do
         client.instance_variable_set(:@retry_configs, [])
         client.write('ping')
         expect(mock_socket.read).to be_empty
+      end
+
+      it 'should NOT process NewSessionTicket' do
+        client.send(:process_new_session_ticket, nst)
+        expect(buff).to be_empty
       end
     end
   end
