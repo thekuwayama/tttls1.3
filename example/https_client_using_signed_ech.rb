@@ -30,7 +30,9 @@ if client.rejected_ech?
   retry_config = client.retry_configs.first
   client.close unless client.eof?
   socket.close
-  raise 'failed to authenticate retry_configs' if retry_config.nil?
+  # without ech_authinfo an empty retry_configs means ECH was securely disabled
+  raise 'failed to authenticate retry_configs' \
+    if retry_config.nil? && client.ech_auth_required?
 
   ech_auth_type = ECHConfig::ECHConfigContents::Extensions::ECHAuth::TYPE
   ech_auth = retry_config.echconfig_contents.extensions[ech_auth_type]

@@ -78,27 +78,6 @@ server.close
 
 [Here](https://github.com/thekuwayama/tttls1.3/tree/main/example) are some examples of HTTPS.
 
-### Authenticated ECH Config Distribution and Rotation
-
-When a server rejects ECH it returns retry\_configs. If `:ech_config` carries an `ech_authinfo` extension, `TTTLS13::Client#retry_configs` returns only the retry\_configs whose `ech_auth` is signed by a key listed in its `trusted_keys` and whose `not_after` has not passed. Retrying the handshake is your code's responsibility:
-
-```ruby
-if client.rejected_ech?
-  retry_config = client.retry_configs.first
-  ech_auth = retry_config&.echconfig_contents
-                         &.extensions
-                         &.[](ECHConfig::ECHConfigContents::Extensions::ECHAuth::TYPE)
-
-  # When set to 1, the client MUST NOT attempt ECH on the retry.
-  # https://datatracker.ietf.org/doc/html/draft-sullivan-tls-signed-ech-updates-02#section-5.1-7
-  next_ech_config = retry_config unless ech_auth&.disable?
-
-  # retry the handshake with a new transport connection
-end
-```
-
-Both ECHConfig extension codepoints are placeholders until IANA assigns them, so this is NOT interoperable yet.
-
 
 ## Settings
 
