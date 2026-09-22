@@ -350,6 +350,63 @@ RSpec.describe Client do
     end
   end
 
+  context 'client, whose ECH was rejected' do
+    let(:public_name) do
+      'public.example'
+    end
+
+    let(:ech_config) do
+      hkc = ECHConfig::ECHConfigContents::HpkeKeyConfig
+      key_config = hkc.new(
+        0,
+        hkc::HpkeKemId.new(0x0020),
+        hkc::HpkePublicKey.new("\x00" * 32),
+        [
+          hkc::HpkeSymmetricCipherSuite.new(
+            hkc::HpkeSymmetricCipherSuite::HpkeKdfId.new(0x0001),
+            hkc::HpkeSymmetricCipherSuite::HpkeAeadId.new(0x0001)
+          )
+        ]
+      )
+      ECHConfig.new(
+        "\xfe\x0d",
+        ECHConfig::ECHConfigContents.new(
+          key_config,
+          0,
+          public_name,
+          ECHConfig::ECHConfigContents::Extensions.new([])
+        )
+      )
+    end
+
+    let(:client) do
+      client = Client.new(
+        nil,
+        'backend.example',
+        ech_config:,
+        ech_hpke_cipher_suites:
+          STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES
+      )
+      client.instance_variable_set(:@ech_status, ECH::Status::REJECTED)
+      client
+    end
+
+    # the certificate is the client-facing server's, not the backend's
+    it 'should expect the certificate of public_name' do
+      expect(client.send(:expected_hostname)).to eq public_name
+    end
+
+    context 'which was NOT rejected' do
+      before do
+        client.instance_variable_set(:@ech_status, ECH::Status::ACCEPTED)
+      end
+
+      it 'should expect the certificate of the hostname' do
+        expect(client.send(:expected_hostname)).to eq 'backend.example'
+      end
+    end
+  end
+
   context 'client using PSK' do
     let(:client) do
       Client.new(nil, 'localhost')

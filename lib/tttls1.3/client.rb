@@ -1244,6 +1244,19 @@ module TTTLS13
       eoed
     end
 
+    # The client MUST verify that the certificate is valid for
+    # ECHConfig.contents.public_name. If invalid, it MUST abort the connection
+    # with the appropriate alert.
+    #
+    # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.7-2.1.1
+    #
+    # @return [String]
+    def expected_hostname
+      return @hostname unless rejected_ech?
+
+      @settings[:ech_config].echconfig_contents.public_name
+    end
+
     # @param ct [TTTLS13::Message::Certificate]
     # @param ch [TTTLS13::Message::ClientHello]
     #
@@ -1258,7 +1271,7 @@ module TTTLS13
       return :certificate_unknown unless Endpoint.trusted_certificate?(
         ct.certificate_list,
         @settings[:ca_file],
-        @hostname
+        expected_hostname
       )
 
       if @settings[:check_certificate_status]
