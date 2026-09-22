@@ -150,6 +150,14 @@ RSpec.describe Server do
     ],
     [
       true,
+      '-groups X25519:P-256:P-384:P-521 -sigalgs ed25519',
+      FIXTURES_DIR + '/rsa_ed25519.crt',
+      FIXTURES_DIR + '/rsa_ed25519.key',
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ED25519] }
+    ],
+    [
+      true,
       '-groups X25519:P-256:P-384:P-521 -sigalgs RSA-PSS+SHA256',
       FIXTURES_DIR + '/rsa_rsassaPss.crt',
       FIXTURES_DIR + '/rsa_rsassaPss.key',
