@@ -14,6 +14,21 @@ module TTTLS13
 
   # rubocop: disable Metrics/ClassLength
   class Ech
+    # Clients MUST parse the extension list and check for unsupported
+    # mandatory extensions. If an unsupported mandatory extension is present,
+    # clients MUST ignore the ECHConfig.
+    #
+    # https://datatracker.ietf.org/doc/html/rfc9849#section-4.2-2
+    #
+    # @param ech_config [ECHConfig, nil]
+    #
+    # @return [Boolean]
+    def self.usable?(ech_config)
+      !ech_config.nil? &&
+        SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version) &&
+        !ech_config.echconfig_contents.extensions.any_unsupported_mandatory?
+    end
+
     # @param inner [TTTLS13::Message::ClientHello]
     # @param ech_config [ECHConfig]
     # @param hpke_cipher_suite_selector [Method]
@@ -22,11 +37,9 @@ module TTTLS13
     # @return [TTTLS13::Message::ClientHello] ClientHelloInner
     # @return [TTTLS13::EchState]
     # @return [String]
-    # rubocop: disable Metrics/AbcSize
     def self.offer_ech(inner, ech_config, hpke_cipher_suite_selector)
       return [new_greased_ch(inner, new_grease_ech), nil, nil] \
-        if ech_config.nil? ||
-           !SUPPORTED_ECHCONFIG_VERSIONS.include?(ech_config.version)
+        unless usable?(ech_config)
 
       # Encrypted ClientHello Configuration
       ech_state, enc = encrypted_ech_config(
@@ -65,7 +78,6 @@ module TTTLS13
 
       [outer, inner, ech_state]
     end
-    # rubocop: enable Metrics/AbcSize
 
     # @param ech_config [ECHConfig]
     # @param hpke_cipher_suite_selector [Method]

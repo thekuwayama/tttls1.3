@@ -67,6 +67,17 @@ RSpec.describe ECHClientHello do
     end
   end
 
+  context 'invalid ECHEncryptedExtensions binary' do
+    let(:malformed) do
+      "\xfe\x0d\x00\x02\xaa\xbb".prefix_uint16_length
+    end
+
+    it 'should NOT be deserialized' do
+      expect(ECHEncryptedExtensions.deserialize(malformed)).to be_nil
+      expect(ECHEncryptedExtensions.deserialize('')).to be_nil
+    end
+  end
+
   context 'valid ECHHelloRetryRequest binary' do
     let(:extension) do
       ECHHelloRetryRequest.deserialize(TESTBINARY_ECH_HRR)
@@ -117,6 +128,68 @@ RSpec.describe Ech do
     it 'should be equal placeholder_encoded_ch_inner_len' do
       expect(Ech.placeholder_encoded_ch_inner_len)
         .to eq padding_encoded_ch_inner.length
+    end
+  end
+end
+
+RSpec.describe Ech do
+  let(:key_config) do
+    hkc = ECHConfig::ECHConfigContents::HpkeKeyConfig
+    hkc.new(
+      0,
+      hkc::HpkeKemId.new(0x0020),
+      hkc::HpkePublicKey.new("\x00" * 32),
+      [
+        hkc::HpkeSymmetricCipherSuite.new(
+          hkc::HpkeSymmetricCipherSuite::HpkeKdfId.new(0x0001),
+          hkc::HpkeSymmetricCipherSuite::HpkeAeadId.new(0x0001)
+        )
+      ]
+    )
+  end
+
+  # an extension type whose high order bit is set is mandatory
+  let(:unsupported_mandatory) do
+    ECHConfig::ECHConfigContents::Extensions::UnknownExtension.new(0x8001)
+  end
+
+  let(:unsupported_optional) do
+    ECHConfig::ECHConfigContents::Extensions::UnknownExtension.new(0x0001)
+  end
+
+  def echconfig(version, *extensions)
+    ECHConfig.new(
+      version,
+      ECHConfig::ECHConfigContents.new(
+        key_config,
+        0,
+        'localhost',
+        ECHConfig::ECHConfigContents::Extensions.new(extensions.compact)
+      )
+    )
+  end
+
+  context 'ECHConfig' do
+    it 'should be usable' do
+      expect(Ech.usable?(echconfig("\xfe\x0d"))).to be true
+    end
+
+    it 'should NOT be usable, if it is nil' do
+      expect(Ech.usable?(nil)).to be false
+    end
+
+    it 'should NOT be usable, whose version is unsupported' do
+      expect(Ech.usable?(echconfig("\xfe\x0c"))).to be false
+    end
+
+    it 'should NOT be usable, which has an unsupported mandatory extension' do
+      expect(Ech.usable?(echconfig("\xfe\x0d", unsupported_mandatory)))
+        .to be false
+    end
+
+    it 'should be usable, which has an unsupported optional extension' do
+      expect(Ech.usable?(echconfig("\xfe\x0d", unsupported_optional)))
+        .to be true
     end
   end
 end
