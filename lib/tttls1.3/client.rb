@@ -1300,6 +1300,13 @@ module TTTLS13
     #
     # @raise [TTTLS13::Error::ErrorAlerts]
     def process_new_session_ticket(nst)
+      # The TLS implementation MUST NOT report such connections as successful
+      # to the application. It additionally MUST ignore all session tickets
+      # and session IDs presented by the server.
+      #
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.7-4
+      return if rejected_ech?
+
       rms = @resumption_secret
       cs = @cipher_suite
       @settings[:process_new_session_ticket]&.call(nst, rms, cs)
