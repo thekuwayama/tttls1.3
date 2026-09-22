@@ -172,7 +172,7 @@ module TTTLS13
       sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
       ch1_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
       ch_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
-      ech_state = nil # TTTLS13::EchState for ECH with HRR
+      ech_state = nil # TTTLS13::ECH::State for ECH with HRR
       unless @settings[:sslkeylogfile].nil?
         begin
           sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
@@ -836,7 +836,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
-    # @return [TTTLS13::EchState]
+    # @return [TTTLS13::ECH::State]
     # @return [String]
     # rubocop: disable Metrics/MethodLength
     def send_client_hello(extensions, binder_key = nil)
@@ -1036,7 +1036,7 @@ module TTTLS13
     # @param hrr [TTTLS13::Message::ServerHello]
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
-    # @param ech_state [TTTLS13::EchState]
+    # @param ech_state [TTTLS13::ECH::State]
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner

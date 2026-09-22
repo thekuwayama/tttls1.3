@@ -35,7 +35,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello] ClientHelloInner
-    # @return [TTTLS13::EchState]
+    # @return [TTTLS13::ECH::State]
     # @return [String]
     def self.offer_ech(inner, ech_config, hpke_cipher_suite_selector)
       return [new_greased_ch(inner, new_grease_ech), nil, nil] \
@@ -82,7 +82,7 @@ module TTTLS13
     # @param ech_config [ECHConfig]
     # @param hpke_cipher_suite_selector [Method]
     #
-    # @return [TTTLS13::EchState or nil]
+    # @return [TTTLS13::ECH::State or nil]
     # @return [String or nil]
     def self.encrypted_ech_config(ech_config, hpke_cipher_suite_selector)
       public_name = ech_config.echconfig_contents.public_name
@@ -105,7 +105,7 @@ module TTTLS13
       ctx = OpenSSL::HPKE::Context::Sender.new(suite)
       enc = ctx.encap(public_key, "tls ech\x00" + ech_config.encode)
       mnl = ech_config.echconfig_contents.maximum_name_length
-      ech_state = EchState.new(
+      ech_state = State.new(
         mnl,
         config_id,
         cipher_suite,
@@ -117,7 +117,7 @@ module TTTLS13
     end
 
     # @param inner [TTTLS13::Message::ClientHello]
-    # @param ech_state [TTTLS13::EchState]
+    # @param ech_state [TTTLS13::ECH::State]
     #
     # @return [TTTLS13::Message::ClientHello]
     # @return [TTTLS13::Message::ClientHello] ClientHelloInner
@@ -326,26 +326,26 @@ module TTTLS13
         32
       end
     end
-  end
 
-  class EchState
-    attr_reader :maximum_name_length, :config_id, :cipher_suite, :public_name, :ctx
+    class State
+      attr_reader :maximum_name_length, :config_id, :cipher_suite, :public_name, :ctx
 
-    # @param maximum_name_length [Integer]
-    # @param config_id [Integer]
-    # @param cipher_suite [HpkeSymmetricCipherSuite]
-    # @param public_name [String]
-    # @param ctx [OpenSSL::HPKE::Context::Sender]
-    def initialize(maximum_name_length,
-                   config_id,
-                   cipher_suite,
-                   public_name,
-                   ctx)
-      @maximum_name_length = maximum_name_length
-      @config_id = config_id
-      @cipher_suite = cipher_suite
-      @public_name = public_name
-      @ctx = ctx
+      # @param maximum_name_length [Integer]
+      # @param config_id [Integer]
+      # @param cipher_suite [HpkeSymmetricCipherSuite]
+      # @param public_name [String]
+      # @param ctx [OpenSSL::HPKE::Context::Sender]
+      def initialize(maximum_name_length,
+                     config_id,
+                     cipher_suite,
+                     public_name,
+                     ctx)
+        @maximum_name_length = maximum_name_length
+        @config_id = config_id
+        @cipher_suite = cipher_suite
+        @public_name = public_name
+        @ctx = ctx
+      end
     end
   end
   # rubocop: enable Metrics/ModuleLength
