@@ -225,10 +225,12 @@ module TTTLS13
       return false if san.nil?
 
       ostr = OpenSSL::ASN1.decode(san.to_der).value.last
-      OpenSSL::ASN1.decode(ostr.value)
-                   .map(&:value)
-                   .map { |s| s.gsub('.', '\.').gsub('*', '.*') }
-                   .any? { |s| name.match(/#{s}/) }
+      OpenSSL::ASN1.decode(ostr.value).value.any? do |gn|
+        # dNSName in GeneralName
+        #
+        # https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.6
+        gn.tag == 2 && OpenSSL::SSL.verify_hostname(name, gn.value)
+      end
     end
 
     class << self
