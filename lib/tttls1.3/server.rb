@@ -75,7 +75,6 @@ module TTTLS13
 
     # @param socket [Socket]
     # @param settings [Hash]
-    # rubocop: disable Metrics/AbcSize
     def initialize(socket, **settings)
       @connection = Connection.new(socket, :server)
       @settings = DEFAULT_SERVER_SETTINGS.merge(settings)
@@ -86,8 +85,8 @@ module TTTLS13
 
       crt_str = File.read(@settings[:crt_file])
       @crt = OpenSSL::X509::Certificate.new(crt_str) # TODO: spki rsassaPss
-      klass = @crt.public_key.class
-      @key = klass.new(File.read(@settings[:key_file]))
+      # Ed25519 public keys are OpenSSL::PKey::PKey, which is not instantiable.
+      @key = OpenSSL::PKey.read(File.read(@settings[:key_file]))
       raise Error::ConfigError unless @crt.check_private_key(@key)
 
       @chain = @settings[:chain_files]&.map do |f|
@@ -98,7 +97,6 @@ module TTTLS13
         raise Error::ConfigError unless cert.verify(sign.public_key)
       end
     end
-    # rubocop: enable Metrics/AbcSize
 
     #                              START <-----+
     #               Recv ClientHello |         | Send HelloRetryRequest
