@@ -73,8 +73,12 @@ RSpec.describe ECHClientHello do
     end
 
     it 'should NOT be deserialized' do
-      expect(ECHEncryptedExtensions.deserialize(malformed)).to be_nil
-      expect(ECHEncryptedExtensions.deserialize('')).to be_nil
+      expect { ECHEncryptedExtensions.deserialize(malformed) }
+        .to raise_error(ErrorAlerts, 'decode_error')
+      expect { ECHEncryptedExtensions.deserialize('') }
+        .to raise_error(ErrorAlerts, 'decode_error')
+      expect { ECHEncryptedExtensions.deserialize("\x00\x01") }
+        .to raise_error(ErrorAlerts, 'decode_error')
     end
   end
 
@@ -87,6 +91,17 @@ RSpec.describe ECHClientHello do
       expect(extension.extension_type)
         .to eq ExtensionType::ENCRYPTED_CLIENT_HELLO
       expect(extension.confirmation).to eq "\x00" * 8
+    end
+  end
+
+  context 'invalid ECHHelloRetryRequest binary' do
+    it 'should NOT be deserialized' do
+      expect { ECHHelloRetryRequest.deserialize("\x00" * 7) }
+        .to raise_error(ErrorAlerts, 'decode_error')
+      expect { ECHHelloRetryRequest.deserialize("\x00" * 9) }
+        .to raise_error(ErrorAlerts, 'decode_error')
+      expect { ECHHelloRetryRequest.deserialize('') }
+        .to raise_error(ErrorAlerts, 'decode_error')
     end
   end
 end

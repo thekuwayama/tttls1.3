@@ -334,12 +334,18 @@ module TTTLS13
       )
     end
 
+    # If the message is a HelloRetryRequest, the client checks for the
+    # "encrypted_client_hello" extension. If none is found, the server has
+    # rejected ECH.
+    #
+    # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.4-4
+    #
     # @return [Boolean]
     def hrr_accept_ech?
       hrr_ech = @transcript[HRR]
                 .first
                 .extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
-      hrr_accept_confirmation == hrr_ech.confirmation
+      hrr_accept_confirmation == hrr_ech&.confirmation
     end
   end
   # rubocop: enable Metrics/ClassLength
