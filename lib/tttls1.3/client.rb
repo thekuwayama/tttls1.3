@@ -169,13 +169,13 @@ module TTTLS13
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
-      sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      sslkeylogfile = nil # TTTLS13::SSLKeyLogFile::Writer
       ch1_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
       ch_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
       ech_state = nil # TTTLS13::ECH::State for ECH with HRR
       unless @settings[:sslkeylogfile].nil?
         begin
-          sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
+          sslkeylogfile = SSLKeyLogFile::Writer.new(@settings[:sslkeylogfile])
         rescue SystemCallError => e
           msg = "\"#{@settings[:sslkeylogfile]}\" file can NOT open: #{e}"
           logger.warn(msg)
