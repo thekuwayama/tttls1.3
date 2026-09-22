@@ -205,7 +205,7 @@ RSpec.describe Endpoint do
         hash:
       )
       expect(Endpoint.verified_certificate_verify?(
-               public_key: key,
+               public_key: crt.public_key,
                signature_scheme: SignatureScheme::ED25519,
                signature:,
                context: 'TLS 1.3, server CertificateVerify',
@@ -216,7 +216,7 @@ RSpec.describe Endpoint do
     it 'should NOT verify CertificateVerify.signature, signed over other bytes' do
       signature = key.sign(nil, 'not the CertificateVerify content')
       expect(Endpoint.verified_certificate_verify?(
-               public_key: key,
+               public_key: crt.public_key,
                signature_scheme: SignatureScheme::ED25519,
                signature:,
                context: 'TLS 1.3, server CertificateVerify',
