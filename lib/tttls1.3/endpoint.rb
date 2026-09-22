@@ -226,7 +226,20 @@ module TTTLS13
 
       ostr = OpenSSL::ASN1.decode(san.to_der).value.last
       OpenSSL::ASN1.decode(ostr.value).value.any? do |gn|
-        # dNSName in GeneralName
+        # SubjectAltName ::= GeneralNames
+        #
+        # GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
+        #
+        # GeneralName ::= CHOICE {
+        #      otherName                       [0]     OtherName,
+        #      rfc822Name                      [1]     IA5String,
+        #      dNSName                         [2]     IA5String,
+        #      x400Address                     [3]     ORAddress,
+        #      directoryName                   [4]     Name,
+        #      ediPartyName                    [5]     EDIPartyName,
+        #      uniformResourceIdentifier       [6]     IA5String,
+        #      iPAddress                       [7]     OCTET STRING,
+        #      registeredID                    [8]     OBJECT IDENTIFIER }
         #
         # https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.6
         gn.tag == 2 && OpenSSL::SSL.verify_hostname(name, gn.value)
