@@ -54,15 +54,20 @@ RSpec.describe EchAuth do
     echconfig(EchAuth::ECHAuth.new(not_after, 0, spki, algorithm, signature))
   end
 
-  # the extension is the only part these examples vary
-  def echconfig(extension)
+  # an extension type whose high order bit is set is mandatory
+  let(:unsupported_mandatory) do
+    ECHConfig::ECHConfigContents::Extensions::UnknownExtension.new(0x8001)
+  end
+
+  # the extensions are the only part these examples vary
+  def echconfig(*extensions)
     ECHConfig.new(
       "\xfe\x0d",
       ECHConfig::ECHConfigContents.new(
         key_config,
         0,
         'localhost',
-        ECHConfig::ECHConfigContents::Extensions.new([extension].compact)
+        ECHConfig::ECHConfigContents::Extensions.new(extensions.compact)
       )
     )
   end
@@ -161,6 +166,12 @@ RSpec.describe EchAuth do
       expect(EchAuth.trusted_keys(echconfig(nil))).to be_nil
       expect(EchAuth.trusted_keys(nil)).to be_nil
     end
+
+    it 'should NOT record trusted_keys, if it is ignored' do
+      ech_config = echconfig(EchAuth::ECHAuthInfo.new(trusted_keys),
+                             unsupported_mandatory)
+      expect(EchAuth.trusted_keys(ech_config)).to be_nil
+    end
   end
 
   context 'client, whose ech_config has ech_authinfo' do
@@ -198,6 +209,12 @@ RSpec.describe EchAuth do
     end
 
     it 'should return empty, before EncryptedExtensions is received' do
+      expect(client.retry_configs).to eq []
+    end
+
+    it 'should NOT return retry_configs, which have to be ignored' do
+      client.instance_variable_set(:@retry_configs,
+                                   [echconfig(unsupported_mandatory)])
       expect(client.retry_configs).to eq []
     end
   end

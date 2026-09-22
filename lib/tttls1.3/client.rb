@@ -592,9 +592,7 @@ module TTTLS13
     #
     # @return [Array of ECHConfig]
     def retry_configs
-      configs = @retry_configs.filter do |c|
-        SUPPORTED_ECHCONFIG_VERSIONS.include?(c.version)
-      end
+      configs = @retry_configs.filter { |c| Ech.usable?(c) }
       return configs if @trusted_keys.nil?
 
       EchAuth.authenticate(configs, @trusted_keys, Time.now)

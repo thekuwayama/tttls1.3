@@ -18,9 +18,9 @@ module TTTLS13
     #
     # @return [Array of String, nil]
     def self.trusted_keys(ech_config)
-      ex = ech_config&.echconfig_contents
-                     &.extensions
-                     &.[](ECHAuthInfo::TYPE)
+      return nil unless Ech.usable?(ech_config)
+
+      ex = ech_config.echconfig_contents.extensions[ECHAuthInfo::TYPE]
       return nil unless ex.is_a?(ECHAuthInfo)
 
       ex.trusted_keys
