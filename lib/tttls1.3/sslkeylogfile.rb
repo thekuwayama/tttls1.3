@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module TTTLS13
-  module SslKeyLogFile
+  module SSLKeyLogFile
     module Label
       CLIENT_EARLY_TRAFFIC_SECRET     = 'CLIENT_EARLY_TRAFFIC_SECRET'
       CLIENT_HANDSHAKE_TRAFFIC_SECRET = 'CLIENT_HANDSHAKE_TRAFFIC_SECRET'
@@ -86,7 +86,7 @@ module TTTLS13
 
       private
 
-      # @param label [TTTLS13::SslKeyLogFile::Label]
+      # @param label [TTTLS13::SSLKeyLogFile::Label]
       # @param client_random [String]
       # @param secret [String]
       def write_key_log(label, client_random, secret)

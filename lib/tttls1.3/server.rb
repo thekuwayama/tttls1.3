@@ -152,10 +152,10 @@ module TTTLS13
       shared_secret = nil # TTTLS13::SharedSecret
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
-      sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      sslkeylogfile = nil # TTTLS13::SSLKeyLogFile::Writer
       unless @settings[:sslkeylogfile].nil?
         begin
-          sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
+          sslkeylogfile = SSLKeyLogFile::Writer.new(@settings[:sslkeylogfile])
         rescue SystemCallError => e
           msg = "\"#{@settings[:sslkeylogfile]}\" file can NOT open: #{e}"
           logger.warn(msg)

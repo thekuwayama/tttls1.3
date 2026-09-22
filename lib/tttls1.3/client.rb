@@ -105,7 +105,7 @@ module TTTLS13
       @succeed_early_data = false
       @retry_configs = []
       @rejected_ech = false
-      @trusted_keys = EchAuth.trusted_keys(@settings[:ech_config])
+      @trusted_keys = ECH::Auth.trusted_keys(@settings[:ech_config])
       raise Error::ConfigError unless valid_settings?
     end
 
@@ -169,13 +169,13 @@ module TTTLS13
       hs_wcipher = nil # TTTLS13::Cryptograph::$Object
       hs_rcipher = nil # TTTLS13::Cryptograph::$Object
       e_wcipher = nil # TTTLS13::Cryptograph::$Object
-      sslkeylogfile = nil # TTTLS13::SslKeyLogFile::Writer
+      sslkeylogfile = nil # TTTLS13::SSLKeyLogFile::Writer
       ch1_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
       ch_outer = nil # TTTLS13::Message::ClientHello for rejected ECH
-      ech_state = nil # TTTLS13::EchState for ECH with HRR
+      ech_state = nil # TTTLS13::ECH::State for ECH with HRR
       unless @settings[:sslkeylogfile].nil?
         begin
-          sslkeylogfile = SslKeyLogFile::Writer.new(@settings[:sslkeylogfile])
+          sslkeylogfile = SSLKeyLogFile::Writer.new(@settings[:sslkeylogfile])
         rescue SystemCallError => e
           msg = "\"#{@settings[:sslkeylogfile]}\" file can NOT open: #{e}"
           logger.warn(msg)
@@ -592,10 +592,10 @@ module TTTLS13
     #
     # @return [Array of ECHConfig]
     def retry_configs
-      configs = @retry_configs.filter { |c| Ech.usable?(c) }
+      configs = @retry_configs.filter { |c| ECH.usable?(c) }
       return configs if @trusted_keys.nil?
 
-      EchAuth.authenticate(configs, @trusted_keys, Time.now)
+      ECH::Auth.authenticate(configs, @trusted_keys, Time.now)
     end
 
     # @return [Boolean]
@@ -836,7 +836,7 @@ module TTTLS13
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
-    # @return [TTTLS13::EchState]
+    # @return [TTTLS13::ECH::State]
     # @return [String]
     # rubocop: disable Metrics/MethodLength
     def send_client_hello(extensions, binder_key = nil)
@@ -852,7 +852,7 @@ module TTTLS13
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = inner_ech
-        ch, inner, ech_state = Ech.offer_ech(
+        ch, inner, ech_state = ECH.offer_ech(
           inner,
           @settings[:ech_config],
           method(:select_ech_hpke_cipher_suite)
@@ -1036,7 +1036,7 @@ module TTTLS13
     # @param hrr [TTTLS13::Message::ServerHello]
     # @param extensions [TTTLS13::Message::Extensions]
     # @param binder_key [String, nil]
-    # @param ech_state [TTTLS13::EchState]
+    # @param ech_state [TTTLS13::ECH::State]
     #
     # @return [TTTLS13::Message::ClientHello] outer
     # @return [TTTLS13::Message::ClientHello] inner
@@ -1067,7 +1067,7 @@ module TTTLS13
         ch.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = ch1.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
       elsif use_ech?
-        ch, inner = Ech.offer_new_ech(ch, ech_state)
+        ch, inner = ECH.offer_new_ech(ch, ech_state)
       end
 
       # pre_shared_key
