@@ -592,7 +592,7 @@ module TTTLS13
     #
     # @return [Array of ECHConfig]
     def retry_configs
-      configs = @retry_configs.filter { |c| Ech.usable?(c) }
+      configs = @retry_configs.filter { |c| ECH.usable?(c) }
       return configs if @trusted_keys.nil?
 
       EchAuth.authenticate(configs, @trusted_keys, Time.now)
@@ -852,7 +852,7 @@ module TTTLS13
         inner_ech = Message::Extension::ECHClientHello.new_inner
         inner.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = inner_ech
-        ch, inner, ech_state = Ech.offer_ech(
+        ch, inner, ech_state = ECH.offer_ech(
           inner,
           @settings[:ech_config],
           method(:select_ech_hpke_cipher_suite)
@@ -1067,7 +1067,7 @@ module TTTLS13
         ch.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = ch1.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
       elsif use_ech?
-        ch, inner = Ech.offer_new_ech(ch, ech_state)
+        ch, inner = ECH.offer_new_ech(ch, ech_state)
       end
 
       # pre_shared_key

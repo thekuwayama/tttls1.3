@@ -13,7 +13,7 @@ module TTTLS13
   private_constant :DEFAULT_ECH_OUTER_EXTENSIONS
 
   # rubocop: disable Metrics/ClassLength
-  class Ech
+  class ECH
     # Clients MUST parse the extension list and check for unsupported
     # mandatory extensions. If an unsupported mandatory extension is present,
     # clients MUST ignore the ECHConfig.

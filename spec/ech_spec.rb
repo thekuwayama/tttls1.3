@@ -91,7 +91,7 @@ RSpec.describe ECHClientHello do
   end
 end
 
-RSpec.describe Ech do
+RSpec.describe ECH do
   context 'EncodedClientHelloInner length' do
     let(:server_name) do
       'localhost'
@@ -118,7 +118,7 @@ RSpec.describe Ech do
     end
 
     let(:padding_encoded_ch_inner) do
-      Ech.padding_encoded_ch_inner(
+      ECH.padding_encoded_ch_inner(
         encoded.serialize[4..],
         server_name.length,
         maximum_name_length
@@ -126,13 +126,13 @@ RSpec.describe Ech do
     end
 
     it 'should be equal placeholder_encoded_ch_inner_len' do
-      expect(Ech.placeholder_encoded_ch_inner_len)
+      expect(ECH.placeholder_encoded_ch_inner_len)
         .to eq padding_encoded_ch_inner.length
     end
   end
 end
 
-RSpec.describe Ech do
+RSpec.describe ECH do
   let(:key_config) do
     hkc = ECHConfig::ECHConfigContents::HpkeKeyConfig
     hkc.new(
@@ -171,24 +171,24 @@ RSpec.describe Ech do
 
   context 'ECHConfig' do
     it 'should be usable' do
-      expect(Ech.usable?(echconfig("\xfe\x0d"))).to be true
+      expect(ECH.usable?(echconfig("\xfe\x0d"))).to be true
     end
 
     it 'should NOT be usable, if it is nil' do
-      expect(Ech.usable?(nil)).to be false
+      expect(ECH.usable?(nil)).to be false
     end
 
     it 'should NOT be usable, whose version is unsupported' do
-      expect(Ech.usable?(echconfig("\xfe\x0c"))).to be false
+      expect(ECH.usable?(echconfig("\xfe\x0c"))).to be false
     end
 
     it 'should NOT be usable, which has an unsupported mandatory extension' do
-      expect(Ech.usable?(echconfig("\xfe\x0d", unsupported_mandatory)))
+      expect(ECH.usable?(echconfig("\xfe\x0d", unsupported_mandatory)))
         .to be false
     end
 
     it 'should be usable, which has an unsupported optional extension' do
-      expect(Ech.usable?(echconfig("\xfe\x0d", unsupported_optional)))
+      expect(ECH.usable?(echconfig("\xfe\x0d", unsupported_optional)))
         .to be true
     end
   end
