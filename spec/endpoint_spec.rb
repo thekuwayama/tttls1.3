@@ -164,4 +164,64 @@ RSpec.describe Endpoint do
              )).to be true
     end
   end
+
+  context 'endpoint, using ED25519,' do
+    let(:key) do
+      OpenSSL::PKey.generate_key('ED25519')
+    end
+
+    let(:hash) do
+      OpenSSL::Digest.digest('SHA256', 'transcript')
+    end
+
+    let(:crt) do
+      crt = OpenSSL::X509::Certificate.new
+      crt.version = 2
+      crt.serial = 1
+      crt.subject = crt.issuer = OpenSSL::X509::Name.parse('/CN=localhost')
+      crt.not_before = Time.now - 60
+      crt.not_after = Time.now + 3600
+      crt.public_key = key
+      crt.sign(key, nil)
+      OpenSSL::X509::Certificate.new(crt.to_der)
+    end
+
+    it 'should be selected for ED25519 certificate' do
+      algorithms = [
+        SignatureScheme::ECDSA_SECP256R1_SHA256,
+        SignatureScheme::ED25519,
+        SignatureScheme::RSA_PSS_RSAE_SHA256,
+        SignatureScheme::RSA_PKCS1_SHA256
+      ]
+      expect(Endpoint.select_signature_algorithms(algorithms, crt))
+        .to eq [SignatureScheme::ED25519]
+    end
+
+    it 'should sign and verify CertificateVerify.signature' do
+      signature = Endpoint.sign_certificate_verify(
+        key:,
+        signature_scheme: SignatureScheme::ED25519,
+        context: 'TLS 1.3, server CertificateVerify',
+        hash:
+      )
+      expect(Endpoint.verified_certificate_verify?(
+               public_key: crt.public_key,
+               signature_scheme: SignatureScheme::ED25519,
+               signature:,
+               context: 'TLS 1.3, server CertificateVerify',
+               hash:
+             )).to be true
+    end
+
+    it 'should NOT verify CertificateVerify.signature, signed over other bytes' do
+      signature = key.sign(nil, 'not the CertificateVerify content')
+      expect(Endpoint.verified_certificate_verify?(
+               public_key: crt.public_key,
+               signature_scheme: SignatureScheme::ED25519,
+               signature:,
+               context: 'TLS 1.3, server CertificateVerify',
+               hash:
+             )).to be false
+    end
+  end
 end

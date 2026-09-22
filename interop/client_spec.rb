@@ -147,6 +147,14 @@ RSpec.describe Client do
     ],
     [
       true,
+      '-sigalgs ed25519',
+      'rsa_ed25519.crt',
+      'rsa_ed25519.key',
+      { signature_algorithms_cert: [SignatureScheme::RSA_PKCS1_SHA256],
+        signature_algorithms: [SignatureScheme::ED25519] }
+    ],
+    [
+      true,
       '-sigalgs RSA-PSS+SHA256',
       'rsa_rsassaPss.crt',
       'rsa_rsassaPss.key',
