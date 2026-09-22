@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-gem 'ech_config', '~> 0.0.3'
+gem 'ech_config', '~> 0.0.5'
 gem 'logger'
 gem 'openssl', github: 'ruby/openssl'
 
@@ -13,7 +13,7 @@ group :development do
   gem 'rake'
   gem 'resolv', '>= 0.6.2'
   gem 'rspec'
-  gem 'rubocop', '1.62.0'
+  gem 'rubocop', '1.82.1'
   gem 'webrick'
 end
 

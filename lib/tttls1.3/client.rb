@@ -497,7 +497,7 @@ module TTTLS13
           logger.debug('ClientState::CONNECTED')
 
           @connection.send_alert(:ech_required) \
-            if use_ech? && (!@retry_configs.nil? && !@retry_configs.empty?)
+            if use_ech? && !@retry_configs.nil? && !@retry_configs.empty?
           break
         end
       end

@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 4.0
 
 Style/ConditionalAssignment:
   Enabled: false

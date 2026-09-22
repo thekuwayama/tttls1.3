@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'openssl'
-require 'pp' # rubocop:disable Lint/RedundantRequireStatement
+require 'pp'
 require 'net/http'
 require 'logger'
 
