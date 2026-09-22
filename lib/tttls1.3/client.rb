@@ -104,7 +104,7 @@ module TTTLS13
       @early_data = ''
       @succeed_early_data = false
       @retry_configs = []
-      @rejected_ech = false
+      @ech_status = ECH::Status::NONE
       @trusted_keys = ECH::Auth.trusted_keys(@settings[:ech_config])
       raise Error::ConfigError unless valid_settings?
     end
@@ -191,8 +191,9 @@ module TTTLS13
           extensions, shared_secret = gen_ch_extensions
           binder_key = (use_psk? ? key_schedule.binder_key_res : nil)
           ch, inner, ech_state = send_client_hello(extensions, binder_key)
+          @ech_status = ech_status_of(ech_state)
           sslkeylogfile&.write_ech_config(ch.random, @settings[:ech_config].encode) \
-            if ech_state
+            if offered_ech?
 
           ch_outer = ch
           # use ClientHelloInner messages for the transcript hash
@@ -325,14 +326,14 @@ module TTTLS13
             transcript: @transcript
           )
 
-          # rejected ECH
-          # It can compute (hrr_)accept_ech until client selects the
-          # cipher_suite.
-          if !sh.hrr? && use_ech?
+          # The KeySchedule is not built until the ServerHello, so the HRR
+          # confirmation is checked here, on the second ServerHello, rather
+          # than when the HelloRetryRequest arrived.
+          if offered_ech?
             if !@transcript.include?(HRR) && !key_schedule.accept_ech?
               # 1sh SH
               @transcript[CH] = [ch_outer, ch_outer.serialize]
-              @rejected_ech = true
+              @ech_status = ECH::Status::REJECTED
             elsif @transcript.include?(HRR) &&
                   key_schedule.hrr_accept_ech? != key_schedule.accept_ech?
               # 2nd SH
@@ -341,7 +342,9 @@ module TTTLS13
               # 2nd SH
               @transcript[CH1] = [ch1_outer, ch1_outer.serialize]
               @transcript[CH] = [ch_outer, ch_outer.serialize]
-              @rejected_ech = true
+              @ech_status = ECH::Status::REJECTED
+            else
+              @ech_status = ECH::Status::ACCEPTED
             end
           end
 
@@ -382,12 +385,13 @@ module TTTLS13
           @alpn = ee.extensions[
             Message::ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION
           ]&.protocol_name_list&.first
-          @retry_configs = ee.extensions[
-            Message::ExtensionType::ENCRYPTED_CLIENT_HELLO
-          ]&.retry_configs
+          # The extension only carries retry_configs, so receiving it is an
+          # error unless ECH was rejected. A GREASE ECH is the exception;
+          # it ignores the extension and saves nothing.
+          ech = ee.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]
           @connection.terminate(:unsupported_extension) \
-            if !rejected_ech? && !@retry_configs.nil?
-          @retry_configs ||= []
+            if !ech.nil? && !greased_ech? && !rejected_ech?
+          @retry_configs = rejected_ech? && !ech.nil? ? ech.retry_configs : []
 
           @connection.state = ClientState::WAIT_CERT_CR
           @connection.state = ClientState::WAIT_FINISHED unless psk.nil?
@@ -605,7 +609,7 @@ module TTTLS13
 
     # @return [Boolean]
     def rejected_ech?
-      @rejected_ech
+      @ech_status == ECH::Status::REJECTED
     end
 
     # @param res [OpenSSL::OCSP::Response]
@@ -741,6 +745,27 @@ module TTTLS13
     def use_ech?
       ehcs = @settings[:ech_hpke_cipher_suites]
       !ehcs.nil? && !ehcs.empty?
+    end
+
+    # @return [Boolean]
+    def offered_ech?
+      @ech_status == ECH::Status::OFFERED
+    end
+
+    # @return [Boolean]
+    def greased_ech?
+      @ech_status == ECH::Status::GREASE
+    end
+
+    # @return [Integer] TTTLS13::ECH::Status constant
+    def ech_status_of(ech_state)
+      if !ech_state.nil?
+        ECH::Status::OFFERED
+      elsif use_ech?
+        ECH::Status::GREASE
+      else
+        ECH::Status::NONE
+      end
     end
 
     # @param cipher [TTTLS13::Cryptograph::Aead]

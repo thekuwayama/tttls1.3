@@ -327,6 +327,14 @@ module TTTLS13
       end
     end
 
+    module Status
+      NONE     = 0 # ECH is not used
+      GREASE   = 1 # a GREASE ECH was sent
+      OFFERED  = 2 # an encrypted ClientHello was offered, not yet confirmed
+      ACCEPTED = 3
+      REJECTED = 4
+    end
+
     class State
       attr_reader :maximum_name_length, :config_id, :cipher_suite, :public_name, :ctx
 
