@@ -188,7 +188,8 @@ module TTTLS13
     #
     # @return [Array of TTTLS13::Message::Extension::SignatureAlgorithms]
     def self.select_signature_algorithms(signature_algorithms, crt)
-      pka = OpenSSL::ASN1.decode(crt.public_key.to_der)
+      # Ed25519 public keys are OpenSSL::PKey::PKey, which has no #to_der.
+      pka = OpenSSL::ASN1.decode(crt.public_key.public_to_der)
                          .value.first.value.first.value
       signature_algorithms.select do |sa|
         case sa
@@ -204,6 +205,8 @@ module TTTLS13
              SignatureScheme::RSA_PSS_RSAE_SHA384,
              SignatureScheme::RSA_PSS_RSAE_SHA512
           pka == 'rsaEncryption'
+        when SignatureScheme::ED25519
+          pka == 'ED25519'
         else
           # RSASSA-PKCS1-v1_5 algorithms refer solely to signatures which appear
           # in certificates and are not defined for use in signed TLS handshake
