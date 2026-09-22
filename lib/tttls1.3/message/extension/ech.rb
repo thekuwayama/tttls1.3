@@ -186,14 +186,15 @@ module TTTLS13
         # @return [TTTLS13::Message::Extensions::ECHEncryptedExtensions]
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
-          return nil if binary.length < 2 ||
-                        binary.length != binary.slice(0, 2).unpack1('n') + 2
+          raise Error::ErrorAlerts, :decode_error \
+            if binary.length < 2 ||
+               binary.length != binary.slice(0, 2).unpack1('n') + 2
 
           ECHEncryptedExtensions.new(
             ECHConfig.decode_vectors(binary.slice(2..))
           )
         rescue ECHConfig::DecodeError
-          nil
+          raise Error::ErrorAlerts, :decode_error
         end
       end
 
@@ -219,9 +220,15 @@ module TTTLS13
         # @raise [TTTLS13::Error::ErrorAlerts]
         #
         # @return [TTTLS13::Message::Extensions::ECHHelloRetryRequest]
+        # If the message is a HelloRetryRequest, the client checks for the
+        # "encrypted_client_hello" extension. If none is found, the server has
+        # rejected ECH. Otherwise, if the extension has a length other than 8,
+        # the client MUST abort the handshake with a "decode_error" alert.
+        #
+        # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.4-4
         def self.deserialize(binary)
           raise Error::ErrorAlerts, :internal_error if binary.nil?
-          return nil if binary.length != 8
+          raise Error::ErrorAlerts, :decode_error if binary.length != 8
 
           ECHHelloRetryRequest.new(binary)
         end
