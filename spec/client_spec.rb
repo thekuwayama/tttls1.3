@@ -289,6 +289,48 @@ RSpec.describe Client do
     end
   end
 
+  context 'client, which offered an encrypted ClientHello' do
+    let(:mock_socket) do
+      SimpleStream.new
+    end
+
+    let(:client) do
+      client = Client.new(
+        mock_socket,
+        'localhost',
+        ech_hpke_cipher_suites: STANDARD_CLIENT_ECH_HPKE_SYMMETRIC_CIPHER_SUITES,
+        loglevel: Logger::FATAL
+      )
+      connection = client.instance_variable_get(:@connection)
+      connection.instance_variable_set(:@state, ClientState::CONNECTED)
+      connection.instance_variable_set(:@ap_wcipher, Cryptograph::Passer.new)
+      client
+    end
+
+    it 'should write application data, if its ECH was accepted' do
+      client.instance_variable_set(:@ech_status, ECH::Status::ACCEPTED)
+      client.write('ping')
+      expect(mock_socket.read).to include 'ping'
+    end
+
+    context 'rejected ECH' do
+      before do
+        client.instance_variable_set(:@ech_status, ECH::Status::REJECTED)
+      end
+
+      it 'should NOT write application data' do
+        client.write('ping')
+        expect(mock_socket.read).to be_empty
+      end
+
+      it 'should NOT write application data, without retry_configs' do
+        client.instance_variable_set(:@retry_configs, [])
+        client.write('ping')
+        expect(mock_socket.read).to be_empty
+      end
+    end
+  end
+
   context 'client using PSK' do
     let(:client) do
       Client.new(nil, 'localhost')
