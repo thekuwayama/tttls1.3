@@ -597,9 +597,10 @@ module TTTLS13
 
     # If no retry_config can be successfully authenticated, the client behaves
     # as though the validation process described in 6.1.7 of [RFC9849] has
-    # failed.
+    # failed. The client MUST abort the connection with the appropriate alert
+    # and report the error to the calling application.
     #
-    # https://datatracker.ietf.org/doc/html/draft-sullivan-tls-signed-ech-updates-02#section-5.2.2-3
+    # https://datatracker.ietf.org/doc/html/draft-sullivan-tls-signed-ech-updates-02#section-5.2.2-4.5
     #
     # @return [Array of ECHConfig]
     def retry_configs
@@ -607,6 +608,11 @@ module TTTLS13
       return configs if @trusted_keys.nil?
 
       ECH::Auth.authenticate(configs, @trusted_keys, Time.now)
+    end
+
+    # @return [Boolean] Whether the ech_config carried an ech_authinfo
+    def ech_auth_required?
+      !@trusted_keys.nil?
     end
 
     # @return [Boolean]

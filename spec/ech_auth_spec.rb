@@ -185,6 +185,10 @@ RSpec.describe ECH::Auth do
       )
     end
 
+    it 'should authenticate retry_configs' do
+      expect(client.ech_auth_required?).to be true
+    end
+
     it 'should return only authenticated retry_configs' do
       client.instance_variable_set(:@retry_configs,
                                    [unauthentic, retry_config])
@@ -204,6 +208,7 @@ RSpec.describe ECH::Auth do
     end
 
     it 'should NOT authenticate retry_configs' do
+      expect(client.ech_auth_required?).to be false
       client.instance_variable_set(:@retry_configs, [unauthentic])
       expect(client.retry_configs).to eq [unauthentic]
     end
