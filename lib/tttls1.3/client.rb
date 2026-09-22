@@ -105,7 +105,7 @@ module TTTLS13
       @succeed_early_data = false
       @retry_configs = []
       @rejected_ech = false
-      @trusted_keys = EchAuth.trusted_keys(@settings[:ech_config])
+      @trusted_keys = ECH::Auth.trusted_keys(@settings[:ech_config])
       raise Error::ConfigError unless valid_settings?
     end
 
@@ -595,7 +595,7 @@ module TTTLS13
       configs = @retry_configs.filter { |c| ECH.usable?(c) }
       return configs if @trusted_keys.nil?
 
-      EchAuth.authenticate(configs, @trusted_keys, Time.now)
+      ECH::Auth.authenticate(configs, @trusted_keys, Time.now)
     end
 
     # @return [Boolean]
