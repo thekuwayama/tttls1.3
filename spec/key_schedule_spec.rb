@@ -218,4 +218,56 @@ RSpec.describe KeySchedule do
         .to eq TESTBINARY_HRR_CLIENT_APPLICATION_WRITE_IV
     end
   end
+
+  context 'key_schedule, HelloRetryRequest with ECH,' do
+    let(:ch1) do
+      ClientHello.deserialize(TESTBINARY_CLIENT_HELLO)
+    end
+
+    let(:extensions) do
+      Extensions.new([ECHHelloRetryRequest.new("\x00" * 8)])
+    end
+
+    let(:hrr) do
+      ServerHello.new(
+        random: Message::HRR_RANDOM,
+        legacy_session_id_echo: ch1.legacy_session_id,
+        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        extensions:
+      )
+    end
+
+    let(:key_schedule) do
+      transcript = Transcript.new
+      transcript.merge!(
+        CH1 => [ch1, TESTBINARY_CLIENT_HELLO],
+        HRR => [hrr, hrr.serialize]
+      )
+      KeySchedule.new(
+        shared_secret: TESTBINARY_SHARED_SECRET,
+        cipher_suite: CipherSuite::TLS_AES_128_GCM_SHA256,
+        transcript:
+      )
+    end
+
+    it 'should NOT accept ECH, if the confirmation does NOT match' do
+      expect(key_schedule.hrr_accept_ech?).to be false
+    end
+
+    it 'should accept ECH, if the confirmation matches' do
+      hrr.extensions[ExtensionType::ENCRYPTED_CLIENT_HELLO] =
+        ECHHelloRetryRequest.new(key_schedule.hrr_accept_confirmation)
+      expect(key_schedule.hrr_accept_ech?).to be true
+    end
+
+    context 'HelloRetryRequest, which has NO encrypted_client_hello' do
+      let(:extensions) do
+        Extensions.new([])
+      end
+
+      it 'should NOT accept ECH' do
+        expect(key_schedule.hrr_accept_ech?).to be false
+      end
+    end
+  end
 end
