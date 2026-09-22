@@ -503,8 +503,12 @@ module TTTLS13
         when ClientState::CONNECTED
           logger.debug('ClientState::CONNECTED')
 
-          @connection.send_alert(:ech_required) \
-            if use_ech? && !@retry_configs.empty?
+          # This document also defines the "ech_required" alert, which the
+          # client MUST send when it offered an "encrypted_client_hello"
+          # extension that was not accepted by the server.
+          #
+          # https://datatracker.ietf.org/doc/html/rfc9849#section-5-14
+          @connection.send_alert(:ech_required) if rejected_ech?
           break
         end
       end
@@ -526,10 +530,13 @@ module TTTLS13
 
     # @param binary [String]
     def write(binary)
-      # the client can regard ECH as securely disabled by the server, and it
-      # SHOULD retry the handshake with a new transport connection and ECH
-      # disabled.
-      unless @retry_configs.empty?
+      # If both authentication and the handshake complete successfully, the
+      # client MUST perform the processing described below and then abort the
+      # connection with an "ech_required" alert before sending any application
+      # data to the server.
+      #
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.6-2
+      if rejected_ech?
         msg = 'SHOULD retry the handshake with a new transport connection'
         logger.warn(msg)
         return
