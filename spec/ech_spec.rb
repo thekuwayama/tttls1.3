@@ -104,9 +104,7 @@ RSpec.describe ECHClientHello do
         .to raise_error(ErrorAlerts, 'decode_error')
     end
   end
-end
 
-RSpec.describe ECH do
   context 'EncodedClientHelloInner length' do
     let(:server_name) do
       'localhost'
@@ -145,9 +143,59 @@ RSpec.describe ECH do
         .to eq padding_encoded_ch_inner.length
     end
   end
-end
 
-RSpec.describe ECH do
+  context 'padding_encoded_ch_inner' do
+    def padding(s_len, server_name_length, maximum_name_length)
+      ECH.padding_encoded_ch_inner(
+        "\x01" * s_len,
+        server_name_length,
+        maximum_name_length
+      )
+    end
+
+    it 'should pad the entire message to a multiple of 32' do
+      [
+        [105, 5, 32],
+        [125, 25, 32],
+        [473, 9, 0],
+        [473, 9, 64],
+        [473, 9, 128],
+        [100, 0, 32],
+        [100, 40, 32]
+      ].each do |sl, d, m|
+        expect(padding(sl, d, m).length % 32).to eq 0
+      end
+    end
+
+    it 'should add padding for server_name before rounding up' do
+      expect(padding(473, 9, 32).length).to eq 512
+      expect(padding(473, 9, 64).length).to eq 544
+      expect(padding(473, 9, 128).length).to eq 608
+    end
+
+    it 'should hide the length of server_name within maximum_name_length' do
+      expect(padding(105, 5, 32).length).to eq 160
+      expect(padding(125, 25, 32).length).to eq 160
+    end
+
+    it 'should add maximum_name_length + 9 without server_name' do
+      expect(padding(100, 0, 32).length).to eq 160
+      expect(padding(119, 0, 0).length).to eq 128
+      expect(padding(120, 0, 0).length).to eq 160
+    end
+
+    it 'should not add padding if already padded' do
+      expect(padding(128, 32, 32).length).to eq 128
+    end
+
+    it 'should keep the input and pad with zeros' do
+      s = "\x01" * 105
+      padded = ECH.padding_encoded_ch_inner(s, 5, 32)
+      expect(padded).to start_with s
+      expect(padded[s.length..]).to eq "\x00" * (padded.length - s.length)
+    end
+  end
+
   let(:key_config) do
     hkc = ECHConfig::ECHConfigContents::HpkeKeyConfig
     hkc.new(
