@@ -192,6 +192,7 @@ module TTTLS13
     def self.padding_encoded_ch_inner(s,
                                       server_name_length,
                                       maximum_name_length)
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.3-4
       padding_len =
         if server_name_length.positive?
           [maximum_name_length - server_name_length, 0].max
@@ -199,7 +200,8 @@ module TTTLS13
           9 + maximum_name_length
         end
 
-      padding_len = 31 - ((s.length + padding_len - 1) % 32)
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.3-6
+      padding_len += 31 - ((s.length + padding_len - 1) % 32)
       s + padding_len.zeros
     end
 
