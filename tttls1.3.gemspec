@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler'
-  spec.add_dependency             'ech_config', '~> 0.0.5'
+  spec.add_dependency             'ech_config', '~> 0.1.0'
   spec.add_dependency             'logger'
   spec.add_dependency             'openssl', '>= 4'
 end
