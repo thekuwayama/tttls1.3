@@ -136,7 +136,7 @@ module TTTLS13
       # ClientHelloOuter. It reuses the original HPKE encryption context
       # computed in Section 6.1 and uses the empty string for enc.
       #
-      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.1.5-4.4.1
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.5-4.4.1
       aad = new_ch_outer_aad(
         inner,
         ech_state.cipher_suite,
@@ -268,7 +268,7 @@ module TTTLS13
 
     # @return [Message::Extension::ECHClientHello]
     def self.new_grease_ech
-      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#name-compliance-requirements
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-9
       cipher_suite = HpkeSymmetricCipherSuite.new(
         HpkeSymmetricCipherSuite::HpkeKdfId.new(0x0001),  # HKDF-SHA256
         HpkeSymmetricCipherSuite::HpkeAeadId.new(0x0001)  # AES-128-GCM
@@ -276,7 +276,7 @@ module TTTLS13
       # Set the enc field to a randomly-generated valid encapsulated public key
       # output by the HPKE KEM.
       #
-      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.3.1
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.2.1-2.3.1
       suite = OpenSSL::HPKE::Suite.new('X25519', 'HKDF-SHA256', 'AES-128-GCM')
       pub_raw = OpenSSL::PKey.generate_key('X25519').raw_public_key
       sender = OpenSSL::HPKE::Context::Sender.new(suite)
@@ -286,7 +286,7 @@ module TTTLS13
       # size of the EncodedClientHelloInner the client would compute when
       # offering ECH, padded according to Section 6.1.3.
       #
-      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-2.4.1
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.2.1-2.4.1
       payload_len = placeholder_encoded_ch_inner_len \
                     + aead_id2overhead_len(0x0001) # AES-128-GCM
 

@@ -988,7 +988,7 @@ module TTTLS13
       # Likewise, for each inner PSK binder, the client generates a random
       # string of the same length.
       #
-      # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.1.2-2
+      # https://datatracker.ietf.org/doc/html/rfc9849#section-6.1.2-2
       identity = inner_psk.offered_psks
                           .identities
                           .first
@@ -1100,7 +1100,7 @@ module TTTLS13
         # the client copies the entire "encrypted_client_hello" extension from
         # the first ClientHello.
         #
-        # https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-17#section-6.2-3
+        # https://datatracker.ietf.org/doc/html/rfc9849#section-6.2.1-3
         inner = ch.clone
         ch.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO] \
           = ch1.extensions[Message::ExtensionType::ENCRYPTED_CLIENT_HELLO]

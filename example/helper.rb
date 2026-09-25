@@ -87,7 +87,7 @@ def transcript_htmlize(transcript)
 end
 
 def parse_echconfigs_pem(pem)
-  # https://datatracker.ietf.org/doc/html/draft-farrell-tls-pemesni-08#section-3-4
+  # https://datatracker.ietf.org/doc/html/rfc9934#section-3-4
   s = pem.gsub(/-----(BEGIN|END) (ECH CONFIGS|ECHCONFIG)-----/, '')
          .gsub("\n", '')
   b = Base64.decode64(s)
@@ -103,7 +103,7 @@ def resolve_echconfig(hostname)
     Resolv::DNS::Resource::IN::HTTPS
   )
 
-  # https://datatracker.ietf.org/doc/html/draft-ietf-tls-svcb-ech-01#section-6
+  # https://datatracker.ietf.org/doc/html/rfc9848#section-9
   ech = 5
   raise "failed to resolve echconfig via #{hostname} HTTPS RR" \
     if rr.first.nil? || rr.first.params[ech].nil?

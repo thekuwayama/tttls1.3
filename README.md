@@ -22,7 +22,9 @@ tttls1.3 provides client API with the following features:
 * Simple 1-RTT Handshake
 * HelloRetryRequest
 * Resumed 0-RTT Handshake (with PSK from NST)
-* [ECH](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/)
+* [Certificate Compression](https://datatracker.ietf.org/doc/html/rfc8879)
+* [Record Size Limit](https://datatracker.ietf.org/doc/html/rfc8449)
+* [ECH](https://datatracker.ietf.org/doc/rfc9849/)
 * [Authenticated ECH Config Distribution and Rotation](https://datatracker.ietf.org/doc/html/draft-sullivan-tls-signed-ech-updates-02)
 
 **NOT supports** certificate with OID RSASSA-PSS, FFDHE, Client Authentication, Post-Handshake Authentication, KeyUpdate and external PSKs.
@@ -33,6 +35,8 @@ tttls1.3 provides server API with the following features:
 
 * Simple 1-RTT Handshake
 * HelloRetryRequest
+* [Certificate Compression](https://datatracker.ietf.org/doc/html/rfc8879)
+* [Record Size Limit](https://datatracker.ietf.org/doc/html/rfc8449)
 
 **NOT supports** certificate with OID RSASSA-PSS, FFDHE, Client Authentication, Post-Handshake Authentication, KeyUpdate, external PSKs and Resumed 0-RTT Handshake.
 
