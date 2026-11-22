@@ -9,7 +9,6 @@ gem 'openssl', github: 'ruby/openssl'
 
 group :development do
   gem 'base64'
-  gem 'byebug'
   gem 'http_parser.rb'
   gem 'rake'
   gem 'resolv', '>= 0.6.2'
