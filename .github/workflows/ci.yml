@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby-version: ['4.0']
+        ruby-version: ['4.0', '4.1']
     env:
       SPEC_VERBOSE: true
     steps:
